@@ -4,7 +4,7 @@ const child_process = require('child_process');
 
 module.exports = {
     listFormats: (url) => new Promise(async res => {
-        console.log(`going to path ${path}`)
+        console.log(`going to path ${path}; url "${url}"`)
 
         const proc = child_process.spawn(path, [url, `--dump-single-json`]);
 
