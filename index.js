@@ -1,17 +1,23 @@
 const { app, BrowserWindow } = require('electron');
 
+const { autoUpdater } = require(`electron-updater`);
+
 global.app = app;
 
 global.configPath = require(`appdata-path`)(`ezytdl`);
 
 app.on('window-all-closed', () => app.quit())
 
-const errorAndExit = require(`./util/errorAndExit`);
+const errorHandler = require(`./util/errorHandler`);
 
-process.on(`uncaughtException`, (err) => {errorAndExit(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)})
-process.on(`unhandledRejection`, (err) => {errorAndExit(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)})
+process.on(`uncaughtException`, (err) => {errorHandler(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)})
+process.on(`unhandledRejection`, (err) => {errorHandler(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)})
+
+autoUpdater.checkForUpdatesAndNotify();
 
 app.whenReady().then(async () => {
+    const app = await require(`./server`)();
+    
     const window = new BrowserWindow({
         width: 800,
         height: 500,
@@ -21,9 +27,9 @@ app.whenReady().then(async () => {
         //icon: `./html/assets/img/logo.jpg`,
     });
 
-    window.loadFile(`./html/loading.html`);
+    global.window = window;
 
-    const app = await require(`./server`)();
+    window.loadFile(`./html/loading.html`);
     
     const config = require(`./getConfig`)();
 
