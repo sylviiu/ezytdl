@@ -1,6 +1,6 @@
 {
   "name": "ezytdl",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Open source electron-based application acting as a wrapper of the YT-DLP client. ",
   "main": "index.js",
   "dependencies": {
@@ -33,15 +33,6 @@
   "build": {
     "appId": "dev.sylviiu.ezytdl",
     "productName": "ezytdl",
-    "portable": {
-      "artifactName": "ezytdl-portable.exe"
-    },
-    "appImage": {
-      "artifactName": "ezytdl-appimage.${ext}"
-    },
-    "dmg": {
-      "artifactName": "ezytdl-dmg.${ext}"
-    },
     "win": {
       "target": [
         "portable", "nsis"
