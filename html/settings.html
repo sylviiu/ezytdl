@@ -52,7 +52,7 @@
     const updateConfig = (json) => {
         let req = new XMLHttpRequest();
         toggleButtons(false)
-        req.open("POST", "http://localhost:3000/config");
+        req.open("POST", "http://localhost:3000/config", true);
         req.setRequestHeader("Content-Type", "application/json");
         req.onload = () => {
             const config = JSON.parse(req.responseText);

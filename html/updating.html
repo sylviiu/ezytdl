@@ -51,8 +51,6 @@
         const m = JSON.parse(o.data);
 
         if(m.message) {
-            ws.onclose = () => {};
-
             heading.innerHTML = m.message
         }
         
@@ -71,7 +69,7 @@
         console.log(`WS CLOSED`);
 
         homeButton.classList.replace(`d-none`, `d-flex`);
-            bar.classList.add(`d-none`)
+        bar.classList.add(`d-none`)
     }
 </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>

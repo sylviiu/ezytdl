@@ -2,7 +2,7 @@
   "name": "ezytdl",
   "version": "1.0.0",
   "description": "Open source electron-based application acting as a wrapper of the YT-DLP client. ",
-  "main": "app/index.js",
+  "main": "index.js",
   "dependencies": {
     "@types/express": "^4.17.17",
     "@types/ws": "^8.5.4",
@@ -45,7 +45,13 @@
     "win": {
       "target": "portable"
     },
-    "compression": "store",
+    "linux": {
+      "target": "AppImage"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "compression": "maximum",
     "asar": true,
     "files": [
       "html/*.html",

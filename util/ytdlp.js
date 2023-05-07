@@ -31,7 +31,7 @@ module.exports = {
     download: (url, format, updateFunc) => new Promise(async res => {
         const { saveLocation } = require(`../getConfig`)()
 
-        const proc = child_process.spawn(path, [`-f`, format, url, `-o`, `${saveLocation}/%(title)s.%(ext)s`]);
+        const proc = child_process.spawn(path, [`-f`, format, url, `-o`, `${saveLocation}/%(title)s.%(ext)s`, `--embed-thumbnail`, `--embed-metadata`]);
 
         let lastPercent = 0;
 

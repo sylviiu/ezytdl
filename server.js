@@ -20,7 +20,8 @@ module.exports = () => new Promise(async res => {
         return errorAndExit(`Failed to start internal server; is the app already running?`);
     }
 
-    const endpoints = fs.readdirSync(`./endpoints/`).filter(f => f.endsWith(`.js`));
+    //const endpoints = fs.readdirSync(`./endpoints/`).filter(f => f.endsWith(`.js`));
+    const endpoints = [`config.js`, `download.js`, `fetchInfo.js`] // i can't figure out how to make this work with the above line
 
     for(const file of endpoints) {
         const endpoint = require(`./endpoints/${file}`);
