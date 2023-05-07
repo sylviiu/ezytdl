@@ -14,8 +14,11 @@
 
 <body style="background: rgb(10,10,10);width: 100vw;font-family: Alata, sans-serif;overflow-x: hidden;overflow-y: hidden;">
     <div class="d-flex justify-content-between align-items-center" style="width: 100vw;height: 80px;padding: 24px;background: rgba(0,0,0,0.5);">
-        <h1 style="color: rgb(255,255,255);">ezytdl</h1>
-        <div class="container d-flex justify-content-end align-items-center"><a class="btn btn-primary" role="button" style="background: rgb(25,25,25);border-style: none;border-radius: 100px;margin: 0px 6px;" href="settings.html"><i class="fas fa-cog" style="margin-right: 6px;"></i>Settings</a></div>
+        <div class="container-fluid d-flex justify-content-start align-items-end" style="padding: 0px;">
+            <h1 style="color: rgb(255,255,255);">ezytdl</h1>
+            <h6 id="version" style="color: rgb(71,71,71);margin-bottom: 13px;">v0.0.0</h6>
+        </div>
+        <div class="container-fluid d-flex justify-content-end align-items-center" style="padding: 0px;"><a class="btn btn-primary" role="button" style="background: rgb(25,25,25);border-style: none;border-radius: 100px;margin: 0px 6px;" href="settings.html"><i class="fas fa-cog" style="margin-right: 6px;"></i>Settings</a></div>
     </div>
     <div class="d-inline-flex flex-column justify-content-start align-items-center" id="mainContainer" style="width: 100vw;/*overflow-y: scroll;*/">
         <div class="container-fluid d-flex justify-content-center align-items-center" id="urlBox" style="--bs-primary: #680dfd;--bs-primary-rgb: 104,13,253;--bs-success: #04a5ff;--bs-success-rgb: 4,165,255;--bs-info: #c29ad5;--bs-info-rgb: 194,154,213;--bs-dark: #1f1f1f;--bs-dark-rgb: 31,31,31;--bs-body-color: #ffffff;--bs-body-bg: #080808;width: min(500px, 80vw);height: calc(100vh - 80px);padding: 0px;"><input class="d-flex justify-content-center align-items-center" type="text" id="urlInput" style="background: rgb(20,20,20);border-width: 0px;border-radius: 100px;padding: 6px 16px;border-bottom-right-radius: 0px;border-top-right-radius: 0px;color: rgb(255,255,255);height: 36px;border-top-left-radius: 100px;width: 100%;" placeholder="Enter URL..."><button class="btn btn-primary" id="urlEnter" type="button" style="height: 36px;border-width: 0px;border-bottom-right-radius: 100px;border-top-right-radius: 100px;border-top-left-radius: 0px;border-bottom-left-radius: 0px;background: rgb(255,255,255);color: rgb(0,0,0);padding-right: 15px;"><i class="fas fa-chevron-circle-right"></i></button></div>
@@ -256,6 +259,7 @@
 </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/addFormatTags.js"></script>
+    <script src="assets/js/version.js"></script>
 </body>
 
 </html>
