@@ -29,9 +29,11 @@ module.exports = {
         })
     }),
     download: (url, format, updateFunc) => new Promise(async res => {
-        const { saveLocation } = require(`../getConfig`)()
+        const { saveLocation } = require(`../getConfig`)();
 
-        const proc = child_process.spawn(path, [`-f`, format, url, `-o`, `${saveLocation}/%(title)s.%(ext)s`, `--embed-thumbnail`, `--embed-metadata`]);
+        const pathBeginning = `${saveLocation}/${format} - `
+
+        const proc = child_process.spawn(path, [`-f`, format, url, `-o`, pathBeginning + `%(title)s.%(ext)s`, `--embed-thumbnail`, `--embed-metadata`, `--no-mtime`]);
 
         proc.stdout.on(`data`, data => {
             const string = data.toString();
