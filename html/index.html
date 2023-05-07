@@ -8,31 +8,34 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Alata&amp;display=swap">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css">
+    <link rel="stylesheet" href="assets/css/rotating.compiled.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
 </head>
 
-<body style="background: rgb(10,10,10);width: 100vw;height: 100vh;font-family: Alata, sans-serif;">
+<body style="background: rgb(10,10,10);width: 100vw;font-family: Alata, sans-serif;overflow-x: hidden;overflow-y: hidden;">
     <div class="d-flex justify-content-between align-items-center" style="width: 100vw;height: 80px;padding: 24px;background: rgba(0,0,0,0.5);">
         <h1 style="color: rgb(255,255,255);">ezytdl</h1>
-        <div class="container d-flex justify-content-end align-items-center"><a class="btn btn-primary" role="button" style="background: rgb(25,25,25);border-style: none;border-radius: 100px;margin: 0px 6px;" href="https://github.com/sylviiu/ezytdl"><i class="fab fa-github" style="margin-right: 6px;"></i>GitHub</a><a class="btn btn-primary" role="button" style="background: rgb(25,25,25);border-style: none;border-radius: 100px;margin: 0px 6px;" href="https://github.com/sylviiu/ezytdl"><i class="fas fa-cog" style="margin-right: 6px;"></i>Settings</a></div>
+        <div class="container d-flex justify-content-end align-items-center"><a class="btn btn-primary" role="button" style="background: rgb(25,25,25);border-style: none;border-radius: 100px;margin: 0px 6px;" href="settings.html"><i class="fas fa-cog" style="margin-right: 6px;"></i>Settings</a></div>
     </div>
-    <div class="d-flex flex-column justify-content-start align-items-center" style="height: calc(100% - 80px);width: 100vw;">
-        <div class="container-fluid d-flex justify-content-center align-items-start" style="--bs-primary: #680dfd;--bs-primary-rgb: 104,13,253;--bs-success: #04a5ff;--bs-success-rgb: 4,165,255;--bs-info: #c29ad5;--bs-info-rgb: 194,154,213;--bs-dark: #1f1f1f;--bs-dark-rgb: 31,31,31;--bs-body-color: #ffffff;--bs-body-bg: #080808;padding: 60px 0px;width: min(500px, 80vw);"><input class="d-flex justify-content-center align-items-center" type="text" id="urlInput" style="background: rgb(20,20,20);border-width: 0px;border-radius: 100px;padding: 6px 16px;border-bottom-right-radius: 0px;border-top-right-radius: 0px;color: rgb(255,255,255);height: 36px;border-top-left-radius: 100px;width: 100%;" placeholder="Enter URL..."><button class="btn btn-primary" id="urlEnter" type="button" style="height: 36px;border-width: 0px;border-bottom-right-radius: 100px;border-top-right-radius: 100px;border-top-left-radius: 0px;border-bottom-left-radius: 0px;background: rgb(255,255,255);color: rgb(0,0,0);padding-right: 15px;"><i class="fas fa-chevron-circle-right"></i></button></div>
-        <div style="width: min(500px, 80vw);">
+    <div class="d-inline-flex flex-column justify-content-start align-items-center" id="mainContainer" style="width: 100vw;/*overflow-y: scroll;*/">
+        <div class="container-fluid d-flex justify-content-center align-items-center" id="urlBox" style="--bs-primary: #680dfd;--bs-primary-rgb: 104,13,253;--bs-success: #04a5ff;--bs-success-rgb: 4,165,255;--bs-info: #c29ad5;--bs-info-rgb: 194,154,213;--bs-dark: #1f1f1f;--bs-dark-rgb: 31,31,31;--bs-body-color: #ffffff;--bs-body-bg: #080808;width: min(500px, 80vw);height: calc(100vh - 80px);padding: 0px;"><input class="d-flex justify-content-center align-items-center" type="text" id="urlInput" style="background: rgb(20,20,20);border-width: 0px;border-radius: 100px;padding: 6px 16px;border-bottom-right-radius: 0px;border-top-right-radius: 0px;color: rgb(255,255,255);height: 36px;border-top-left-radius: 100px;width: 100%;" placeholder="Enter URL..."><button class="btn btn-primary" id="urlEnter" type="button" style="height: 36px;border-width: 0px;border-bottom-right-radius: 100px;border-top-right-radius: 100px;border-top-left-radius: 0px;border-bottom-left-radius: 0px;background: rgb(255,255,255);color: rgb(0,0,0);padding-right: 15px;"><i class="fas fa-chevron-circle-right"></i></button></div>
+        <h5 class="d-none" id="errorMsg" style="color: rgb(255,255,255);">Error Text</h5>
+        <div class="d-none" id="listbox" style="width: min(500px, 80vw);margin-bottom: 30px;">
             <div class="container d-flex justify-content-between" style="background: #212121;border-top-left-radius: 26px;border-top-right-radius: 26px;padding: 4px 20px;padding-top: 8px;">
                 <h3 id="mediaTitle" style="color: rgb(255,255,255);">title</h3>
             </div>
-            <div class="d-flex justify-content-center align-items-start" id="formatList" style="background: #1b1b1b;border-bottom-right-radius: 26px;border-bottom-left-radius: 26px;padding: 12px 0px;padding-bottom: 26px;">
+            <div class="d-flex flex-column justify-content-start align-items-center" id="formatList" style="background: #1b1b1b;border-bottom-right-radius: 26px;border-bottom-left-radius: 26px;padding: 12px 0px;padding-bottom: 26px;">
                 <div class="d-flex justify-content-between align-items-center" id="formatCard" style="width: calc(100% - 40px);min-height: 50px;background: #282828;border-radius: 10px;padding: 0px 12px;margin-top: 12px;">
                     <h6 id="formatName" style="color: rgb(255,255,255);margin-top: 5px;">format name</h6>
                     <div class="d-flex justify-content-between align-items-center" id="formatIdentifiers">
                         <div class="row g-0 row-cols-2">
                             <div class="col d-flex justify-content-center align-items-center" style="padding: 0px 18px;">
-                                <h5 style="color: rgb(255,255,255);margin-top: 7px;">mp3</h5>
+                                <h5 id="fileFormat" style="color: rgb(255,255,255);margin-top: 7px;">mp3</h5>
                             </div>
-                            <div class="col d-flex flex-row justify-content-evenly align-items-center"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" style="color: rgb(255,255,255);font-size: 12px;">
+                            <div class="col d-flex flex-row justify-content-evenly align-items-center"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" id="audioIcon" style="color: rgb(255,255,255);font-size: 12px;">
                                     <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
                                     <path d="M511.1 367.1c0 44.18-42.98 80-95.1 80s-95.1-35.82-95.1-79.1c0-44.18 42.98-79.1 95.1-79.1c11.28 0 21.95 1.92 32.01 4.898V148.1L192 224l-.0023 208.1C191.1 476.2 149 512 95.1 512S0 476.2 0 432c0-44.18 42.98-79.1 95.1-79.1c11.28 0 21.95 1.92 32 4.898V126.5c0-12.97 10.06-26.63 22.41-30.52l319.1-94.49C472.1 .6615 477.3 0 480 0c17.66 0 31.97 14.34 32 31.99L511.1 367.1z"></path>
-                                </svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -32 576 576" width="1em" height="1em" fill="currentColor" style="color: rgb(255,255,255);font-size: 12px;">
+                                </svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -32 576 576" width="1em" height="1em" fill="currentColor" id="videoIcon" style="color: rgb(255,255,255);font-size: 12px;">
                                     <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
                                     <path d="M384 112v288c0 26.51-21.49 48-48 48h-288c-26.51 0-48-21.49-48-48v-288c0-26.51 21.49-48 48-48h288C362.5 64 384 85.49 384 112zM576 127.5v256.9c0 25.5-29.17 40.39-50.39 25.79L416 334.7V177.3l109.6-75.56C546.9 87.13 576 102.1 576 127.5z"></path>
                                 </svg></div>
@@ -44,8 +47,179 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div><script>
+    const mainContainer = document.getElementById(`mainContainer`);
+
+    const searchBoxHeights = () => [`${window.innerHeight - 80}px`, `225px`]
+
+    const urlBox = document.getElementById(`urlBox`);
+
+    const input = document.getElementById(`urlInput`);
+    const button = document.getElementById(`urlEnter`);
+
+    const listbox = document.getElementById(`listbox`);
+
+    const formatList = document.getElementById(`formatList`);
+
+    const formatCard = document.getElementById(`formatCard`).cloneNode(true);
+    document.getElementById(`formatCard`).remove();
+
+    const runSearch = (url) => {
+        const infoRequest = new XMLHttpRequest();
+
+        console.log(`running search for ${url}`)
+
+        infoRequest.open("GET", `http://localhost:3000/fetchInfo/${url}`, true);
+
+        infoRequest.onload = () => {
+            const info = JSON.parse(infoRequest.responseText);
+            
+            input.disabled = false;
+            button.disabled = false;
+            
+            document.body.style.overflowY = `auto`
+
+            if(info.error) {
+                document.getElementById(`errorMsg`).innerHTML = info.error;
+
+                if(document.getElementById(`errorMsg`).classList.contains(`d-none`)) {
+                    document.getElementById(`errorMsg`).classList.remove(`d-none`);
+                };
+
+                return;
+            } else {                    
+                listbox.querySelector(`#mediaTitle`).innerHTML = `[${info.webpage_url_domain}] ${info.title}`;
+
+                console.log(info)
+
+                info.formats.forEach((format) => {
+                    console.log(format)
+
+                    const card = formatCard.cloneNode(true);
+
+                    const formatName = card.querySelector(`#formatName`);
+
+                    const tags = formatToTags(format)
+
+                    formatName.innerHTML = tags.join(` | `)
+
+                    card.querySelector(`#fileFormat`).innerHTML = format.ext;
+
+                    if(format.audio_ext != `none` || format.acodec != `none` || format.asr || format.audio_channels) {
+                        card.querySelector(`#audioIcon`).style.opacity = `100%`;
+                    } else {
+                        card.querySelector(`#audioIcon`).style.opacity = `35%`;
+                    }
+
+                    if(format.aspect_ratio || format.fps || format.height || format.width || format.resolution != `audio only` || format.vcodec != `none` || format.video_ext != `none`) {
+                        card.querySelector(`#videoIcon`).style.opacity = `100%`;
+                    } else {
+                        card.querySelector(`#videoIcon`).style.opacity = `35%`;
+                    }
+
+                    const btn = card.querySelector(`#formatDownload`)
+
+                    btn.onclick = () => {
+                        btn.disabled = true;
+
+                        formatName.innerHTML = `Downloading...`;
+                        
+                        card.querySelector(`#fileFormat`).innerHTML = `--%`;
+
+                        const ws = new WebSocket(`ws://localhost:3000/download`);
+
+                        let location = `Somewhere on your computer :)`
+
+                        ws.onopen = () => {
+                            ws.send(JSON.stringify({
+                                url: url,
+                                format: format.format_id
+                            }));
+                        }
+
+                        ws.onmessage = (o) => {
+                            const m = JSON.parse(o.data);
+
+                            location = m.saveLocation
+
+                            if(m.percentNum) {
+                                let percent = `${m.percentNum}`;
+                                if(percent.length == 1) percent = `0` + percent;
+
+                                card.querySelector(`#fileFormat`).innerHTML = `${percent}%`;
+                            }
+                        }
+
+                        ws.onclose = () => {
+                            card.querySelector(`#fileFormat`).innerHTML = `Done!`;
+
+                            formatName.innerHTML = `Saved to: ${location}`
+
+                            card.style.opacity = 0.5;
+                        }
+                    }
+
+                    formatList.appendChild(card);
+                })
+
+                if(listbox.classList.contains(`d-none`)) {
+                    listbox.classList.remove(`d-none`);
+                }
+
+                anime({
+                    targets: urlBox,
+                    height: searchBoxHeights(),
+                    duration: 500,
+                    easing: `easeOutQuad`,
+                })
+            }
+        }
+
+        infoRequest.send();
+    }
+
+    button.onclick = () => {
+        const url = input.value;
+
+        console.log (`clicc`, url)
+
+        const genericUrlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/;
+
+        const match = url.match(genericUrlRegex);
+
+        console.log (`match`, match)
+
+        if(match) {
+            input.disabled = true;
+            button.disabled = true;
+
+            document.body.style.overflowY = `hidden`
+
+            if(!document.getElementById(`errorMsg`).classList.contains(`d-none`)) {
+                document.getElementById(`errorMsg`).classList.add(`d-none`);
+            }
+
+            if(!listbox.classList.contains(`d-none`)) {
+                anime({
+                    targets: urlBox,
+                    height: searchBoxHeights().reverse(),
+                    duration: 500,
+                    easing: `easeOutQuad`,
+                    complete: () => {
+                        listbox.classList.add(`d-none`);
+                        formatList.childNodes.forEach((node) => node.remove())
+                        
+                        runSearch(url)
+                    }
+                })
+            } else {
+                runSearch(url)
+            }
+        }
+    }
+</script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/addFormatTags.js"></script>
 </body>
 
 </html>
