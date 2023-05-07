@@ -20,6 +20,11 @@ module.exports = () => new Promise(async res => {
         return errorAndExit(`Failed to start internal server; is the app already running?`);
     }
 
+    app.use((req, res, next) => {
+        console.log(`[${req.method}] ${req.path}`);
+        next();
+    })
+
     //const endpoints = fs.readdirSync(`./endpoints/`).filter(f => f.endsWith(`.js`));
     const endpoints = [`config.js`, `download.js`, `fetchInfo.js`, `openFolder.js`, `focus.js`, `version.js`] // i can't figure out how to make this work with the above line
 
