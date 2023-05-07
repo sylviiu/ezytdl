@@ -4,6 +4,7 @@ const fs = require(`fs`);
 
 const express = require(`express`);
 const app = express();
+app.use(express.json());
 
 const errorAndExit = require(`./util/errorAndExit`);
 
@@ -46,6 +47,6 @@ module.exports = () => new Promise(async res => {
             } else console.error(`Failed to import file ${file} -- there is no endpoint type "${endpoint.type}`)
         }
     }
-    
+
     res(app);
 })

@@ -5,7 +5,7 @@ const os = require('os')
 
 let checked = false;
 
-module.exports = () => {
+module.exports = (configObject) => {
     try {
         const defaultConfig = require(`./defaultConfig.json`)
     
@@ -14,7 +14,15 @@ module.exports = () => {
         if(!fs.existsSync(`${global.configPath}/config.json`)) {
             fs.writeFileSync(`${global.configPath}/config.json`, JSON.stringify(defaultConfig, null, 4), { encoding: `utf-8` });
             checked = true;
-        } else if(!checked) {
+        };
+        
+        if(configObject) {
+            const config = JSON.parse(fs.readFileSync(`${global.configPath}/config.json`));
+            
+            fs.writeFileSync(`${global.configPath}/config.json`, JSON.stringify(Object.assign({}, config, configObject), null, 4), { encoding: `utf-8` });
+        };
+        
+        if(!checked) {
             const config = JSON.parse(fs.readFileSync(`${global.configPath}/config.json`));
     
             for(const key in defaultConfig) {

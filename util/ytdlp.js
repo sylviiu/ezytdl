@@ -35,11 +35,12 @@ module.exports = {
 
         let lastPercent = 0;
 
-        proc.stderr.on(`data`, data => {
+        proc.stdout.on(`data`, data => {
             const string = data.toString();
-            const percent = string.match(/\d+\.\d+\%/g);
+            const percent = string.includes(`%`) ? string.split(`%`)[0].split(` `).slice(-1)[0] : null;
             if(percent) {
-                const percentNum = parseFloat(percent[0].replace(`%`, ``));
+                console.log(percent)
+                const percentNum = Number(percent);
                 if(percentNum > lastPercent) {
                     lastPercent = percentNum;
                     updateFunc({percentNum, saveLocation, url, format});
