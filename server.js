@@ -21,7 +21,7 @@ module.exports = () => new Promise(async res => {
     }
 
     //const endpoints = fs.readdirSync(`./endpoints/`).filter(f => f.endsWith(`.js`));
-    const endpoints = [`config.js`, `download.js`, `fetchInfo.js`] // i can't figure out how to make this work with the above line
+    const endpoints = [`config.js`, `download.js`, `fetchInfo.js`, `openFolder.js`] // i can't figure out how to make this work with the above line
 
     for(const file of endpoints) {
         const endpoint = require(`./endpoints/${file}`);

@@ -33,18 +33,12 @@ module.exports = {
 
         const proc = child_process.spawn(path, [`-f`, format, url, `-o`, `${saveLocation}/%(title)s.%(ext)s`, `--embed-thumbnail`, `--embed-metadata`]);
 
-        let lastPercent = 0;
-
         proc.stdout.on(`data`, data => {
             const string = data.toString();
             const percent = string.includes(`%`) ? string.split(`%`)[0].split(` `).slice(-1)[0] : null;
             if(percent) {
                 console.log(percent)
-                const percentNum = Number(percent);
-                if(percentNum > lastPercent) {
-                    lastPercent = percentNum;
-                    updateFunc({percentNum, saveLocation, url, format});
-                }
+                updateFunc({percentNum: Number(percent), saveLocation, url, format});
             }
         });
         

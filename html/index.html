@@ -26,7 +26,14 @@
             </div>
             <div class="d-flex flex-column justify-content-start align-items-center" id="formatList" style="background: #1b1b1b;border-bottom-right-radius: 26px;border-bottom-left-radius: 26px;padding: 12px 0px;padding-bottom: 26px;">
                 <div class="d-flex justify-content-between align-items-center" id="formatCard" style="width: calc(100% - 40px);min-height: 50px;background: #282828;border-radius: 10px;padding: 0px 12px;margin-top: 12px;">
-                    <h6 id="formatName" style="color: rgb(255,255,255);margin-top: 5px;">format name</h6>
+                    <div>
+                        <h6 id="formatName" style="color: rgb(255,255,255);margin-top: 5px;">format name</h6>
+                        <div class="d-none" id="progressBar" style="width: 250px;min-width: 250px;max-width: 250px;height: 10px;min-height: 10px;max-height: 10px;background: #1f1f1f;border-radius: 100px;">
+                            <div class="container" id="progressFill" style="border-radius: 100px;background: #ffffff;height: 10px;min-height: 10px;max-height: 10px;width: 10px;margin: 0px;padding: 0px;">
+                                <h1 style="margin: 0px;"></h1>
+                            </div>
+                        </div>
+                    </div>
                     <div class="d-flex justify-content-between align-items-center" id="formatIdentifiers">
                         <div class="row g-0 row-cols-2">
                             <div class="col d-flex justify-content-center align-items-center" style="padding: 0px 18px;">
@@ -39,9 +46,12 @@
                                     <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
                                     <path d="M384 112v288c0 26.51-21.49 48-48 48h-288c-26.51 0-48-21.49-48-48v-288c0-26.51 21.49-48 48-48h288C362.5 64 384 85.49 384 112zM576 127.5v256.9c0 25.5-29.17 40.39-50.39 25.79L416 334.7V177.3l109.6-75.56C546.9 87.13 576 102.1 576 127.5z"></path>
                                 </svg></div>
-                        </div><button class="btn btn-primary d-flex justify-content-center align-items-center" id="formatDownload" type="button" style="height: 36px;border-width: 0px;background: rgb(255,255,255);color: rgb(0,0,0);border-radius: 100px;width: 36px;margin-left: 10px;padding: 4px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor">
+                        </div><button class="btn btn-primary d-flex justify-content-center align-items-center" id="formatDownload" type="button" style="height: 36px;border-width: 0px;background: rgb(255,255,255);color: rgb(0,0,0);border-radius: 100px;width: 36px;margin-left: 10px;padding: 4px;min-width: 36px;max-width: 36px;min-height: 36px;max-height: 36px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" id="downloadicon">
                                 <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
                                 <path d="M480 352h-133.5l-45.25 45.25C289.2 409.3 273.1 416 256 416s-33.16-6.656-45.25-18.75L165.5 352H32c-17.67 0-32 14.33-32 32v96c0 17.67 14.33 32 32 32h448c17.67 0 32-14.33 32-32v-96C512 366.3 497.7 352 480 352zM432 456c-13.2 0-24-10.8-24-24c0-13.2 10.8-24 24-24s24 10.8 24 24C456 445.2 445.2 456 432 456zM233.4 374.6C239.6 380.9 247.8 384 256 384s16.38-3.125 22.62-9.375l128-128c12.49-12.5 12.49-32.75 0-45.25c-12.5-12.5-32.76-12.5-45.25 0L288 274.8V32c0-17.67-14.33-32-32-32C238.3 0 224 14.33 224 32v242.8L150.6 201.4c-12.49-12.5-32.75-12.5-45.25 0c-12.49 12.5-12.49 32.75 0 45.25L233.4 374.6z"></path>
+                            </svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -32 576 576" width="1em" height="1em" fill="currentColor" class="d-none" id="fileicon">
+                                <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
+                                <path d="M147.8 192H480V144C480 117.5 458.5 96 432 96h-160l-64-64h-160C21.49 32 0 53.49 0 80v328.4l90.54-181.1C101.4 205.6 123.4 192 147.8 192zM543.1 224H147.8C135.7 224 124.6 230.8 119.2 241.7L0 480h447.1c12.12 0 23.2-6.852 28.62-17.69l96-192C583.2 249 567.7 224 543.1 224z"></path>
                             </svg></button>
                     </div>
                 </div>
@@ -122,6 +132,14 @@
                     btn.onclick = () => {
                         btn.disabled = true;
 
+                        const bar = card.querySelector(`#progressBar`);
+                        const fill = card.querySelector(`#progressFill`);
+
+                        const dotSize = Number.parseInt(fill.style.width.replace(`px`, ``));
+                        const range = Number.parseInt(bar.style.width.replace(`px`, ``)) - dotSize;
+
+                        card.style.opacity = 0.5;
+
                         formatName.innerHTML = `Downloading...`;
                         
                         card.querySelector(`#fileFormat`).innerHTML = `--%`;
@@ -143,19 +161,37 @@
                             location = m.saveLocation
 
                             if(m.percentNum) {
+                                if(bar.classList.contains(`d-none`)) bar.classList.remove(`d-none`);
+
+                                const setWidth = `${dotSize + (range * m.percentNum/100)}px`;
+                                console.log(`Downloaded ${m.percentNum} -- bar width: ${setWidth}`)
+                                fill.style.width = setWidth
+
                                 let percent = `${m.percentNum}`;
                                 if(percent.length == 1) percent = `0` + percent;
 
                                 card.querySelector(`#fileFormat`).innerHTML = `${percent}%`;
-                            }
+                            };
                         }
 
                         ws.onclose = () => {
                             card.querySelector(`#fileFormat`).innerHTML = `Done!`;
 
-                            formatName.innerHTML = `Saved to: ${location}`
+                            btn.onclick = () => {
+                                const req = new XMLHttpRequest();
 
-                            card.style.opacity = 0.5;
+                                req.open("GET", `http://localhost:3000/openFolder/${encodeURI(btoa(location))}`, true);
+                                req.send();
+                            }
+
+                            card.querySelector(`#downloadicon`).classList.add(`d-none`);
+                            card.querySelector(`#fileicon`).classList.remove(`d-none`);
+
+                            btn.disabled = false;
+
+                            card.style.opacity = 1;
+
+                            formatName.innerHTML = `Saved to: ${location}`
                         }
                     }
 
