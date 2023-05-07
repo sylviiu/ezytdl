@@ -2,7 +2,7 @@
   "name": "ezytdl",
   "version": "1.0.0",
   "description": "Open source electron-based application acting as a wrapper of the YT-DLP client. ",
-  "main": "index.js",
+  "main": "app/index.js",
   "dependencies": {
     "@types/express": "^4.17.17",
     "@types/ws": "^8.5.4",
@@ -34,34 +34,32 @@
     "appId": "dev.sylviiu.ezytdl",
     "productName": "ezytdl",
     "portable": {
-      "artifactName": "ezytdl-${version}-portable.exe"
+      "artifactName": "ezytdl-portable.exe"
     },
     "appImage": {
-      "artifactName": "ezytdl-${version}-appimage.${ext}"
+      "artifactName": "ezytdl-appimage.${ext}"
     },
     "dmg": {
-      "artifactName": "ezytdl-${version}-dmg.${ext}"
+      "artifactName": "ezytdl-dmg.${ext}"
     },
     "win": {
       "target": "portable"
     },
+    "compression": "store",
+    "asar": true,
     "files": [
-      "**/*",
-      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
-      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
-      "!**/node_modules/*.d.ts",
-      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
-      "!.editorconfig",
-      "!**/._*",
-      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
-      "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
-      "!**/{appveyor.yml,.travis.yml,circle.yml}",
-      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}",
-      "**/checks/*",
-      "**/core/*",
-      "**/endpoints/*",
-      "**/html/*",
-      "**/util/*"
+      "html/*.html",
+      "html/assets/**/*",
+      "node_modules/**/*",
+      "package.json",
+      "index.js",
+      "server.js",
+      "getConfig.js",
+      "defaultConfig.json",
+      "util/*.js",
+      "endpoints/*.js",
+      "core/*.js",
+      "checks/*.js"
     ]
   }
 }
