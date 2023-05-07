@@ -43,7 +43,9 @@
       "artifactName": "ezytdl-dmg.${ext}"
     },
     "win": {
-      "target": "portable"
+      "target": [
+        "portable", "nsis"
+      ]
     },
     "linux": {
       "target": "AppImage"
