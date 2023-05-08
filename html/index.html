@@ -97,7 +97,7 @@
 
     const runSearch = (url) => {
         window.scrollTo(0, 0);
-        
+
         const infoRequest = new XMLHttpRequest();
 
         console.log(`running search for ${url}`)
@@ -230,13 +230,13 @@
 
                     card.querySelector(`#fileFormat`).innerHTML = format.ext;
 
-                    if(format.audio_ext != `none` || format.acodec != `none` || format.asr || format.audio_channels) {
+                    if(format.audio) {
                         card.querySelector(`#audioIcon`).style.opacity = `100%`;
                     } else {
                         card.querySelector(`#audioIcon`).style.opacity = `35%`;
                     }
 
-                    if(format.aspect_ratio || format.fps || format.height || format.width || format.resolution != `audio only` || format.vcodec != `none` || format.video_ext != `none`) {
+                    if(format.video) {
                         card.querySelector(`#videoIcon`).style.opacity = `100%`;
                     } else {
                         card.querySelector(`#videoIcon`).style.opacity = `35%`;
