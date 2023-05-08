@@ -96,6 +96,8 @@
     let currentInfo = null;
 
     const runSearch = (url) => {
+        window.scrollTo(0, 0);
+        
         const infoRequest = new XMLHttpRequest();
 
         console.log(`running search for ${url}`)
