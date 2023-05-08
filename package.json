@@ -35,6 +35,7 @@
   "build": {
     "appId": "dev.sylviiu.ezytdl",
     "productName": "ezytdl",
+    "artifactName": "${productName}-Setup-${version}.${ext}",
     "publish": [
       {
         "provider": "github",
