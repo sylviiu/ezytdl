@@ -1,17 +1,8 @@
 # ezytdl
+
 Open source electron-based application acting as a wrapper of the YT-DLP client.
 
------
-
-### Screenshots (as of v1.0.1)
-
-![Main screen](https://user-images.githubusercontent.com/95180094/236700099-4714338a-e924-4a64-bc92-0459d836d9b4.png)
-
-![Settings page](https://user-images.githubusercontent.com/95180094/236700103-ae7ae836-bf75-4967-8c63-02b339613bed.png)
-
-![Built-in YT-DLP downloader](https://user-images.githubusercontent.com/95180094/236700123-2f5f4892-b6d3-4e62-a2ac-1fc5c52a6644.png)
-
-![Image of a video from YouTube being downloaded](https://user-images.githubusercontent.com/95180094/236700064-82e74118-237e-4902-bd83-94b9dd570c7c.png)
+![Sequence 02_1-min](https://user-images.githubusercontent.com/95180094/236717652-2f7d4514-549f-41da-9c81-5f6105741110.gif)
 
 -----
 
