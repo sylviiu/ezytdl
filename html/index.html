@@ -149,6 +149,11 @@
                 }
 
                 console.log(info)
+                
+                for(entry of formatList.querySelectorAll(`#formatCard`)) {
+                    entry.parentNode.removeChild(entry);
+                    console.log(`removed previous format card`)
+                }
 
                 info.formats.map(format => {
                     if(format.audio_ext != `none` || format.acodec != `none` || format.asr || format.audio_channels) {
@@ -353,7 +358,6 @@
                 easing: `easeOutQuad`,
                 complete: () => {
                     listbox.classList.add(`d-none`);
-                    formatList.childNodes.forEach((node) => node.remove())
                     
                     if(parse) {
                         parseInfo();
