@@ -1,4 +1,6 @@
-const { app, BrowserWindow } = require('electron');
+const { app } = require('electron');
+
+const createWindow = require(`./util/window`)
 
 const { autoUpdater } = require(`electron-updater`);
 
@@ -15,17 +17,10 @@ process.on(`unhandledRejection`, (err) => {errorHandler(`${err}\n\n${err.stack? 
 
 autoUpdater.checkForUpdatesAndNotify();
 
-app.whenReady().then(async () => {
+app.whenReady().then(async () => {    
     const app = await require(`./server`)();
-    
-    const window = new BrowserWindow({
-        width: 800,
-        height: 500,
-        minHeight: 500,
-        minWidth: 700,
-        autoHideMenuBar: true,
-        //icon: `./html/assets/img/logo.jpg`,
-    });
+
+    const window = createWindow()
 
     global.window = window;
 
