@@ -2,7 +2,7 @@
 
 Open source electron-based application acting as a wrapper of the YT-DLP client.
 
-![Sequence 02_1-min](https://user-images.githubusercontent.com/95180094/236717652-2f7d4514-549f-41da-9c81-5f6105741110.gif)
+![Sequence 02_2-min](https://user-images.githubusercontent.com/95180094/236718122-e2252737-0b88-43e0-afba-3458e3bf6b9d.gif)
 
 -----
 
