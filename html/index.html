@@ -359,21 +359,43 @@
                                 ext: card.querySelector(`#formatConversionTextbox`).value || null,
                                 path: card.querySelector(`#saveLocation`).value || null
                             }));
-                        }
+                        };
+
+                        let lastPercentNum = 0;
 
                         ws.onmessage = (o) => {
                             const m = JSON.parse(o.data);
 
-                            location = m.saveLocation
+                            location = m.saveLocation;
 
                             if(m.percentNum) {
                                 if(bar.classList.contains(`d-none`)) bar.classList.remove(`d-none`);
 
-                                const setWidth = `${dotSize + (range * m.percentNum/100)}px`;
-                                console.log(`Downloaded ${m.percentNum} -- bar width: ${setWidth}`)
-                                fill.style.width = setWidth
+                                if(m.percentNum == -1) {
+                                    anime.remove(fill)
+                                    anime({
+                                        targets: fill,
+                                        width: `${dotSize}px`,
+                                        duration: 350,
+                                        easing: `easeOutExpo`,
+                                    })
+                                } else {
+                                    const setWidth = `${dotSize + (range * m.percentNum/100)}px`;
+                                    console.log(`Downloaded ${m.percentNum} -- bar width: ${setWidth}`)
+                                    //fill.style.width = setWidth;
 
-                                card.querySelector(`#fileFormat`).innerHTML = `${m.percentNum}%`;
+                                    lastPercentNum = m.percentNum;
+
+                                    card.querySelector(`#fileFormat`).innerHTML = `${m.percentNum}%`;
+                                    
+                                    anime.remove(fill)
+                                    anime({
+                                        targets: fill,
+                                        width: setWidth,
+                                        duration: 350,
+                                        easing: `easeOutExpo`,
+                                    })
+                                }
                             };
 
                             if(m.downloadSpeed) {
@@ -388,7 +410,7 @@
 
                             if(m.status) card.querySelector(`#formatName`).innerHTML = m.status;
 
-                            if(m.destinationFile) location = m.destinationFile
+                            //if(m.destinationFile) location = m.destinationFile
                         }
 
                         ws.onclose = () => {

@@ -88,7 +88,7 @@ module.exports = {
             updateFunc(obj);
         };
 
-        update({saveLocation, url, format, kill: () => {
+        update({saveLocation: saveTo, url, format, kill: () => {
             if(proc && proc.kill && typeof proc.kill == `function`) proc.kill()
         }, status: `Downloading...`})
 
@@ -126,7 +126,7 @@ module.exports = {
 
                 console.log(`file extension was provided! continuing with ffmpeg...`, obj.destinationFile);
 
-                update({status: `Converting to ${ext.toUpperCase()}...`, percentNum: 0, eta: `--`});
+                update({status: `Converting to ${ext.toUpperCase()}...`, percentNum: -1, eta: `--`});
 
                 const args2 = [`-y`, `-i`, saveTo + previousFilename, saveTo + ytdlFilename + `.${ext}`];
 
@@ -161,10 +161,17 @@ module.exports = {
                 });
 
                 proc2.on(`close`, () => {
-                    console.log(`ffmpeg completed; deleting temporary file...`);
-                    fs.unlinkSync(saveTo + previousFilename);
-                    update({percentNum: 100, status: `Done!`, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.${ext}`, url, format});
-                    res(obj)
+                    if(fs.existsSync(saveTo + ytdlFilename + `.${ext}`)) {
+                        console.log(`ffmpeg completed; deleting temporary file...`);
+                        fs.unlinkSync(saveTo + previousFilename);
+                        update({percentNum: 100, status: `Done!`, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.${ext}`, url, format});
+                        res(obj)
+                    } else {
+                        console.log(`ffmpeg did not save file, renaming temporary file`);
+                        fs.renameSync(saveTo + previousFilename, saveTo + ytdlFilename + `.` + previousFilename.split(`.`).slice(-1)[0]);
+                        update({percentNum: 100, status: `Could not convert to ${ext.toUpperCase()}.`, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.` + previousFilename.split(`.`).slice(-1)[0], url, format});
+                        res(obj)
+                    }
                 })
             } else {
                 update({code, saveLocation, url, format, status: `Done!`})

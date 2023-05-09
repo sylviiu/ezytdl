@@ -42,6 +42,7 @@ module.exports = async (app, server) => {
                 });
     
                 ytdlpProc.then((update) => {
+                    console.log(update)
                     ws.send(JSON.stringify(update));
                     killFunc = null;
                     ws.close();
