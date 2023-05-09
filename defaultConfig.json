@@ -1,5 +1,5 @@
 {
     "saveLocation": null,
-    "outputFilename": "%(title)s.%(ext)s",
+    "outputFilename": "%(title)s",
     "version": "v0.0.0"
 }
