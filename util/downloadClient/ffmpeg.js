@@ -3,6 +3,8 @@ const fs = require('fs');
 const superagent = require('superagent');
 const Stream = require('stream');
 
+const errorHandler = require(`../errorHandler`);
+
 module.exports = async (ws) => {
     console.log(`downloadClient`)
 
@@ -31,7 +33,7 @@ module.exports = async (ws) => {
             console.log(`Downloads: ${downloads.map(d => d.name).join(`, `)}`);
     
             if(!downloads.find(d => d.name === file)) {
-                return errorAndExit(`Failed to find download for ${file} in latest release; please make sure that you are using a supported a platform!\n\nIf you are, please open an issue on GitHub.`)
+                return errorHandler(`Failed to find download for ${file} in latest release; please make sure that you are using a supported a platform!\n\nIf you are, please open an issue on GitHub.`)
             } else {
                 const download = downloads.find(d => d.name === file);
     

@@ -32,53 +32,76 @@
                     <h3 id="mediaTitle" style="color: rgb(255,255,255);font-weight: bold;">title</h3>
                 </div>
                 <div class="d-flex flex-column justify-content-start align-items-center" id="formatList" style="background: rgba(27,27,27,0.55);border-bottom-right-radius: 26px;border-bottom-left-radius: 26px;padding: 12px 0px;padding-bottom: 26px;">
-                    <div class="d-flex justify-content-between align-items-center" id="formatCard" style="width: calc(100% - 40px);min-height: 50px;background: rgba(40,40,40,0.65);border-radius: 10px;padding: 0px 12px;margin-top: 12px;">
-                        <div style="min-width: 310px;width: 310px;margin: 8px 0px;max-width: 310px;">
-                            <div class="d-flex justify-content-start align-items-center" style="margin-bottom: 8px;">
-                                <div class="container d-flex justify-content-between align-items-center" style="max-width: 44px;padding: 6px;background: #ffffff;border-radius: 100px;margin: 0px;margin-right: 6px;min-width: 44px;width: 44px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" id="audioIcon" style="color: rgb(0,0,0);font-size: 12px;">
-                                        <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
-                                        <path d="M511.1 367.1c0 44.18-42.98 80-95.1 80s-95.1-35.82-95.1-79.1c0-44.18 42.98-79.1 95.1-79.1c11.28 0 21.95 1.92 32.01 4.898V148.1L192 224l-.0023 208.1C191.1 476.2 149 512 95.1 512S0 476.2 0 432c0-44.18 42.98-79.1 95.1-79.1c11.28 0 21.95 1.92 32 4.898V126.5c0-12.97 10.06-26.63 22.41-30.52l319.1-94.49C472.1 .6615 477.3 0 480 0c17.66 0 31.97 14.34 32 31.99L511.1 367.1z"></path>
-                                    </svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -32 576 576" width="1em" height="1em" fill="currentColor" id="videoIcon" style="color: rgb(0,0,0);font-size: 12px;">
-                                        <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
-                                        <path d="M384 112v288c0 26.51-21.49 48-48 48h-288c-26.51 0-48-21.49-48-48v-288c0-26.51 21.49-48 48-48h288C362.5 64 384 85.49 384 112zM576 127.5v256.9c0 25.5-29.17 40.39-50.39 25.79L416 334.7V177.3l109.6-75.56C546.9 87.13 576 102.1 576 127.5z"></path>
-                                    </svg></div>
-                                <h5 id="formatName" style="color: rgb(255,255,255);margin: 0px;">format name</h5>
-                            </div>
-                            <ul id="formatMetaList" style="color: rgb(255,255,255);margin: 0px;margin-bottom: 11px;">
-                                <li id="formatMetaVideoItem"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -32 576 576" width="1em" height="1em" fill="currentColor" style="margin-right: 5px;margin-top: -4px;">
-                                        <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
-                                        <path d="M384 112v288c0 26.51-21.49 48-48 48h-288c-26.51 0-48-21.49-48-48v-288c0-26.51 21.49-48 48-48h288C362.5 64 384 85.49 384 112zM576 127.5v256.9c0 25.5-29.17 40.39-50.39 25.79L416 334.7V177.3l109.6-75.56C546.9 87.13 576 102.1 576 127.5z"></path>
-                                    </svg><strong id="txt">Bold</strong></li>
-                                <li id="formatMetaAudioItem"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" style="margin-right: 5px;margin-top: -4px;">
-                                        <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
-                                        <path d="M511.1 367.1c0 44.18-42.98 80-95.1 80s-95.1-35.82-95.1-79.1c0-44.18 42.98-79.1 95.1-79.1c11.28 0 21.95 1.92 32.01 4.898V148.1L192 224l-.0023 208.1C191.1 476.2 149 512 95.1 512S0 476.2 0 432c0-44.18 42.98-79.1 95.1-79.1c11.28 0 21.95 1.92 32 4.898V126.5c0-12.97 10.06-26.63 22.41-30.52l319.1-94.49C472.1 .6615 477.3 0 480 0c17.66 0 31.97 14.34 32 31.99L511.1 367.1z"></path>
-                                    </svg><strong id="txt">Bold</strong></li>
-                            </ul>
-                            <h6 class="d-none" id="formatTags" style="color: rgb(255,255,255);font-size: 10px;">extra format tags</h6>
-                            <div class="d-none" id="progressBar" style="width: 250px;min-width: 250px;max-width: 250px;height: 10px;min-height: 10px;max-height: 10px;background: #1f1f1f;border-radius: 100px;">
-                                <div class="container" id="progressFill" style="border-radius: 100px;background: #ffffff;height: 10px;min-height: 10px;max-height: 10px;width: 10px;margin: 0px;padding: 0px;">
-                                    <h1 style="margin: 0px;"></h1>
+                    <div class="d-flex flex-column justify-content-center align-items-center" id="formatCard" style="width: calc(100% - 40px);min-height: 50px;background: rgba(40,40,40,0.65);border-radius: 10px;padding: 8px 12px;margin-top: 12px;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div style="min-width: 310px;width: 310px;max-width: 310px;">
+                                <div class="d-flex justify-content-start align-items-center" style="margin-bottom: 8px;">
+                                    <div class="container d-flex justify-content-between align-items-center" style="max-width: 44px;padding: 6px;background: #ffffff;border-radius: 100px;margin: 0px;margin-right: 6px;min-width: 44px;width: 44px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" id="audioIcon" style="color: rgb(0,0,0);font-size: 12px;">
+                                            <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
+                                            <path d="M511.1 367.1c0 44.18-42.98 80-95.1 80s-95.1-35.82-95.1-79.1c0-44.18 42.98-79.1 95.1-79.1c11.28 0 21.95 1.92 32.01 4.898V148.1L192 224l-.0023 208.1C191.1 476.2 149 512 95.1 512S0 476.2 0 432c0-44.18 42.98-79.1 95.1-79.1c11.28 0 21.95 1.92 32 4.898V126.5c0-12.97 10.06-26.63 22.41-30.52l319.1-94.49C472.1 .6615 477.3 0 480 0c17.66 0 31.97 14.34 32 31.99L511.1 367.1z"></path>
+                                        </svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -32 576 576" width="1em" height="1em" fill="currentColor" id="videoIcon" style="color: rgb(0,0,0);font-size: 12px;">
+                                            <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
+                                            <path d="M384 112v288c0 26.51-21.49 48-48 48h-288c-26.51 0-48-21.49-48-48v-288c0-26.51 21.49-48 48-48h288C362.5 64 384 85.49 384 112zM576 127.5v256.9c0 25.5-29.17 40.39-50.39 25.79L416 334.7V177.3l109.6-75.56C546.9 87.13 576 102.1 576 127.5z"></path>
+                                        </svg></div>
+                                    <h5 id="formatName" style="color: rgb(255,255,255);margin: 0px;">format name</h5>
+                                </div>
+                                <ul id="formatMetaList" style="color: rgb(255,255,255);margin: 0px;margin-bottom: 11px;">
+                                    <li id="formatMetaVideoItem"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -32 576 576" width="1em" height="1em" fill="currentColor" style="margin-right: 5px;margin-top: -4px;">
+                                            <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
+                                            <path d="M384 112v288c0 26.51-21.49 48-48 48h-288c-26.51 0-48-21.49-48-48v-288c0-26.51 21.49-48 48-48h288C362.5 64 384 85.49 384 112zM576 127.5v256.9c0 25.5-29.17 40.39-50.39 25.79L416 334.7V177.3l109.6-75.56C546.9 87.13 576 102.1 576 127.5z"></path>
+                                        </svg><strong id="txt">Bold</strong></li>
+                                    <li id="formatMetaAudioItem"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" style="margin-right: 5px;margin-top: -4px;">
+                                            <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
+                                            <path d="M511.1 367.1c0 44.18-42.98 80-95.1 80s-95.1-35.82-95.1-79.1c0-44.18 42.98-79.1 95.1-79.1c11.28 0 21.95 1.92 32.01 4.898V148.1L192 224l-.0023 208.1C191.1 476.2 149 512 95.1 512S0 476.2 0 432c0-44.18 42.98-79.1 95.1-79.1c11.28 0 21.95 1.92 32 4.898V126.5c0-12.97 10.06-26.63 22.41-30.52l319.1-94.49C472.1 .6615 477.3 0 480 0c17.66 0 31.97 14.34 32 31.99L511.1 367.1z"></path>
+                                        </svg><strong id="txt">Bold</strong></li>
+                                </ul>
+                                <h6 class="d-none" id="formatTags" style="color: rgb(255,255,255);font-size: 10px;">extra format tags</h6>
+                                <div class="d-none" id="progressBar" style="width: 250px;min-width: 250px;max-width: 250px;height: 10px;min-height: 10px;max-height: 10px;background: #1f1f1f;border-radius: 100px;">
+                                    <div class="container" id="progressFill" style="border-radius: 100px;background: #ffffff;height: 10px;min-height: 10px;max-height: 10px;width: 10px;margin: 0px;padding: 0px;">
+                                        <h1 style="margin: 0px;"></h1>
+                                    </div>
                                 </div>
                             </div>
+                            <div class="d-flex justify-content-between align-items-center" id="formatIdentifiers">
+                                <div class="d-flex flex-column justify-content-center align-items-end" style="min-width: 75px;width: 75px;max-width: 75px;">
+                                    <h5 id="fileFormat" style="color: rgb(255,255,255);margin: 0px;">mp3</h5>
+                                    <h6 class="d-none" id="eta" style="color: rgb(255,255,255);font-size: 8px;margin: 0px;margin-top: 3px;margin-bottom: 3px;">ETA: 00:00</h6>
+                                    <h6 class="d-none" id="speed" style="color: rgb(255,255,255);font-size: 8px;margin: 0px;margin-top: 3px;margin-bottom: 3px;">0B/s</h6>
+                                </div><button class="btn btn-primary d-flex justify-content-center align-items-center" id="formatDownload" type="button" style="height: 36px;border-width: 0px;background: rgb(255,255,255);color: rgb(0,0,0);border-radius: 100px;width: 36px;margin-left: 10px;padding: 4px;min-width: 36px;max-width: 36px;min-height: 36px;max-height: 36px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-96 0 512 512" width="1em" height="1em" fill="currentColor" id="downloadicon">
+                                        <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
+                                        <path d="M281.6 392.3l-104 112.1c-9.498 10.24-25.69 10.24-35.19 0l-104-112.1c-6.484-6.992-8.219-17.18-4.404-25.94c3.811-8.758 12.45-14.42 21.1-14.42H128V32c0-17.69 14.33-32 32-32S192 14.31 192 32v319.9h72c9.547 0 18.19 5.66 22 14.42C289.8 375.1 288.1 385.3 281.6 392.3z"></path>
+                                    </svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -32 576 576" width="1em" height="1em" fill="currentColor" class="d-none" id="fileicon">
+                                        <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
+                                        <path d="M147.8 192H480V144C480 117.5 458.5 96 432 96h-160l-64-64h-160C21.49 32 0 53.49 0 80v328.4l90.54-181.1C101.4 205.6 123.4 192 147.8 192zM543.1 224H147.8C135.7 224 124.6 230.8 119.2 241.7L0 480h447.1c12.12 0 23.2-6.852 28.62-17.69l96-192C583.2 249 567.7 224 543.1 224z"></path>
+                                    </svg></button>
+                            </div>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center" id="formatIdentifiers">
-                            <div class="d-flex flex-column justify-content-center align-items-end" style="min-width: 75px;width: 75px;max-width: 75px;">
-                                <h5 id="fileFormat" style="color: rgb(255,255,255);margin: 0px;">mp3</h5>
-                                <h6 class="d-none" id="eta" style="color: rgb(255,255,255);font-size: 8px;margin: 0px;margin-top: 3px;margin-bottom: 3px;">ETA: 00:00</h6>
-                                <h6 class="d-none" id="speed" style="color: rgb(255,255,255);font-size: 8px;margin: 0px;margin-top: 3px;margin-bottom: 3px;">0B/s</h6>
-                            </div><button class="btn btn-primary d-flex justify-content-center align-items-center" id="formatDownload" type="button" style="height: 36px;border-width: 0px;background: rgb(255,255,255);color: rgb(0,0,0);border-radius: 100px;width: 36px;margin-left: 10px;padding: 4px;min-width: 36px;max-width: 36px;min-height: 36px;max-height: 36px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" id="downloadicon">
+                        <div class="d-none justify-content-between" id="saveOptions" style="width: 100%;max-height: 36px;margin-top: 8px;"><input class="d-flex justify-content-center align-items-center" type="text" id="saveLocation" style="background: rgba(88,88,88,0.11);border-width: 0px;border-radius: 100px;padding: 6px 16px;border-bottom-right-radius: 100px;border-top-right-radius: 100px;color: rgb(255,255,255);height: 36px;border-top-left-radius: 100px;width: 100%;border-bottom-left-radius: 100px;text-align: left;margin: 0px 8px;" placeholder="location"><input class="d-flex justify-content-center align-items-center" type="text" id="formatConversionTextbox" style="background: rgba(88,88,88,0.11);border-width: 0px;border-radius: 100px;padding: 6px 16px;border-bottom-right-radius: 100px;border-top-right-radius: 100px;color: rgb(255,255,255);height: 36px;border-top-left-radius: 100px;width: 83px;border-bottom-left-radius: 100px;text-align: right;margin: 0px 8px;margin-left: 0px;" placeholder="mp3"><button class="btn btn-primary d-flex justify-content-center align-items-center" id="confirmDownload" type="button" style="height: 36px;border-width: 0px;background: rgb(255,255,255);color: rgb(0,0,0);border-radius: 100px;width: 36px;padding: 4px;min-width: 36px;max-width: 36px;min-height: 36px;max-height: 36px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor">
                                     <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
                                     <path d="M480 352h-133.5l-45.25 45.25C289.2 409.3 273.1 416 256 416s-33.16-6.656-45.25-18.75L165.5 352H32c-17.67 0-32 14.33-32 32v96c0 17.67 14.33 32 32 32h448c17.67 0 32-14.33 32-32v-96C512 366.3 497.7 352 480 352zM432 456c-13.2 0-24-10.8-24-24c0-13.2 10.8-24 24-24s24 10.8 24 24C456 445.2 445.2 456 432 456zM233.4 374.6C239.6 380.9 247.8 384 256 384s16.38-3.125 22.62-9.375l128-128c12.49-12.5 12.49-32.75 0-45.25c-12.5-12.5-32.76-12.5-45.25 0L288 274.8V32c0-17.67-14.33-32-32-32C238.3 0 224 14.33 224 32v242.8L150.6 201.4c-12.49-12.5-32.75-12.5-45.25 0c-12.49 12.5-12.49 32.75 0 45.25L233.4 374.6z"></path>
-                                </svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -32 576 576" width="1em" height="1em" fill="currentColor" class="d-none" id="fileicon">
-                                    <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
-                                    <path d="M147.8 192H480V144C480 117.5 458.5 96 432 96h-160l-64-64h-160C21.49 32 0 53.49 0 80v328.4l90.54-181.1C101.4 205.6 123.4 192 147.8 192zM543.1 224H147.8C135.7 224 124.6 230.8 119.2 241.7L0 480h447.1c12.12 0 23.2-6.852 28.62-17.69l96-192C583.2 249 567.7 224 543.1 224z"></path>
-                                </svg></button>
-                        </div>
+                                </svg></button></div>
                     </div>
                 </div>
             </div>
         </div>
     </div><script>
+    let config;
+
+    const updateConfig = (json) => {
+        let req = new XMLHttpRequest();
+        req.open("POST", "http://localhost:3000/config", true);
+        req.setRequestHeader("Content-Type", "application/json");
+        req.onload = () => {
+            config = JSON.parse(req.responseText);
+        }
+        req.send(JSON.stringify(json));
+    }
+
+    const configRequest = new XMLHttpRequest();
+    configRequest.open("POST", "http://localhost:3000/config", true);
+    configRequest.onload = () => config = JSON.parse(configRequest.responseText);
+    configRequest.send();
+
     const mainContainer = document.getElementById(`mainContainer`);
 
     const searchBoxHeights = () => [`${window.innerHeight - 80}px`, `225px`]
@@ -189,6 +212,7 @@
                     }
                 }).forEach((format) => {
                     //console.log(format)
+                    const formatDownloadType = format.audio && format.video ? `both` : format.audio && !format.video ? `audio` : `video`;
 
                     const card = formatCard.cloneNode(true);
 
@@ -245,24 +269,82 @@
 
                     if(format.video) {
                         card.querySelector(`#videoIcon`).style.opacity = `100%`;
+                        card.querySelector(`#formatConversionTextbox`).classList.add(`d-none`);
                     } else {
                         card.querySelector(`#videoIcon`).style.opacity = `35%`;
                     }
 
-                    const btn = card.querySelector(`#formatDownload`)
+                    card.querySelector(`#formatConversionTextbox`).placeholder = `${format.ext}`;
+                    card.querySelector(`#saveLocation`).placeholder = `${config && config.saveLocation ? config.saveLocation : `{default save location}`}`;
 
-                    btn.onclick = () => {
+                    if(config.lastMediaConversionOutputs[formatDownloadType]) card.querySelector(`#formatConversionTextbox`).value = config.lastMediaConversionOutputs[formatDownloadType];
+
+                    const saveOptions = card.querySelector(`#saveOptions`)
+
+                    const btn = card.querySelector(`#formatDownload`);
+                    
+                    let animating = false;
+
+                    const saveOptionsAnimations = {
+                        fadeIn: () => {
+                            animating = true;
+                            btn.onclick = () => {}
+                            saveOptions.classList.remove(`d-none`);
+                            saveOptions.classList.add(`d-flex`);
+                            anime({
+                                targets: saveOptions,
+                                maxHeight: [`0px`, `36px`],
+                                opacity: [`0%`, `100%`],
+                                marginTop: [`0px`, `8px`],
+                                duration: 350,
+                                easing: `easeOutQuad`,
+                                complete: () => {
+                                    animating = false;
+                                    btn.onclick = () => btnClick()
+                                }
+                            })
+                        },
+                        fadeOut: () => {
+                            animating = true;
+                            anime({
+                                targets: saveOptions,
+                                maxHeight: [`36px`, `0px`],
+                                opacity: [`100%`, `0%`],
+                                marginTop: [`8px`, `0px`],
+                                duration: 350,
+                                easing: `easeOutQuad`,
+                                complete: () => {
+                                    animating = false;
+                                    saveOptions.classList.remove(`d-flex`);
+                                    saveOptions.classList.add(`d-none`);
+                                    btn.onclick = () => btnClick()
+                                }
+                            })
+                        }
+                    }
+                    
+                    const confirmDownload = () => {
+                        saveOptionsAnimations.fadeOut();
+
                         btn.disabled = true;
 
                         const bar = card.querySelector(`#progressBar`);
                         const fill = card.querySelector(`#progressFill`);
+
+                        if(card.querySelector(`#formatConversionTextbox`).value != config.lastMediaConversionOutputs[formatDownloadType]) {
+                            let j = {};
+
+                            j[formatDownloadType] = card.querySelector(`#formatConversionTextbox`).value;
+
+                            updateConfig({ lastMediaConversionOutputs: j })
+                        }
 
                         const dotSize = Number.parseInt(fill.style.width.replace(`px`, ``));
                         const range = Number.parseInt(bar.style.width.replace(`px`, ``)) - dotSize;
 
                         card.style.opacity = 0.5;
 
-                        formatName.innerHTML = `Downloading...`;
+                        formatName.innerHTML = `Starting...`;
                         
                         card.querySelector(`#fileFormat`).innerHTML = `0%`;
 
@@ -273,7 +355,9 @@
                         ws.onopen = () => {
                             ws.send(JSON.stringify({
                                 url: url,
-                                format: format.format_id
+                                format: format.format_id,
+                                ext: card.querySelector(`#formatConversionTextbox`).value || null,
+                                path: card.querySelector(`#saveLocation`).value || null
                             }));
                         }
 
@@ -302,12 +386,13 @@
                                 card.querySelector(`#eta`).innerHTML = m.eta
                             };
 
+                            if(m.status) card.querySelector(`#formatName`).innerHTML = m.status;
+
                             if(m.destinationFile) location = m.destinationFile
                         }
 
                         ws.onclose = () => {
                             card.querySelector(`#fileFormat`).innerHTML = `Done!`;
-
 
                             btn.onclick = () => {
                                 const req = new XMLHttpRequest();
@@ -323,11 +408,23 @@
 
                             card.style.opacity = 1;
 
-                            formatName.innerHTML = `Saved to: ${location}`
+                            //formatName.innerHTML = `Saved to: ${location}`
                             if(!card.querySelector(`#eta`).classList.contains(`d-none`)) card.querySelector(`#eta`).classList.add(`d-none`);
                             if(!card.querySelector(`#speed`).classList.contains(`d-none`)) card.querySelector(`#speed`).classList.add(`d-none`);
                         }
                     }
+
+                    card.querySelector(`#confirmDownload`).onclick = () => confirmDownload();
+
+                    const btnClick = () => {
+                        if(!animating && saveOptions.classList.contains(`d-none`)) {
+                            saveOptionsAnimations.fadeIn();
+                        } else if(!animating) {
+                            saveOptionsAnimations.fadeOut();
+                        }
+                    }
+
+                    btn.onclick = () => btnClick()
 
                     formatList.appendChild(card);
                 })

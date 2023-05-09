@@ -12,6 +12,7 @@ module.exports = {
 
         if(req.body && typeof req.body == `object`) {
             for (key of Object.keys(req.body)) {
+                console.log(`modifying ${key}...`)
                 if(config[key] !== undefined) {
                     config[key] = req.body[key];
                     modified++;

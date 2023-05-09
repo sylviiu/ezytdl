@@ -1,8 +1,11 @@
 const superagent = require('superagent')
 
+const errorAndExit = require('./errorAndExit');
+
 module.exports = (err) => {
+    console.error(err)
+
     if(`${err.toString().includes(`EADDRINUSE`)}`) {
-        console.log(`${err}`)
         superagent.get(`http://localhost:3000/focus`).then(() => {
             console.log(`Focused existing window, exiting...`);
             app.quit()

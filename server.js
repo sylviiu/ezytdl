@@ -6,7 +6,7 @@ const express = require(`express`);
 const app = express();
 app.use(express.json());
 
-const errorAndExit = require(`./util/errorAndExit`);
+const errorHandler = require(`./util/errorHandler`);
 
 module.exports = () => new Promise(async res => {
     let server;
@@ -17,7 +17,7 @@ module.exports = () => new Promise(async res => {
         })
     } catch(e) {
         console.error(`Failed starting server on port 3000: ${e}`);
-        return errorAndExit(`Failed to start internal server; is the app already running?`);
+        return errorHandler(`Failed to start internal server; is the app already running?`);
     }
 
     app.use((req, res, next) => {

@@ -1,9 +1,7 @@
-const errorAndExit = require("./util/errorAndExit.js");
+const errorHandler = require("./util/errorHandler.js");
 
 const fs = require('fs');
 const os = require('os')
-
-let checked = false;
 
 module.exports = (configObject) => {
     try {
@@ -22,27 +20,43 @@ module.exports = (configObject) => {
             fs.writeFileSync(`${global.configPath}/config.json`, JSON.stringify(Object.assign({}, config, configObject), null, 4), { encoding: `utf-8` });
         };
         
+        let checked = false;
+
+        const checkKeys = (logPrefix, thisKey, config, defaults) => {
+            console.log(logPrefix + `Checking keys of ${thisKey}...`);
+
+            for(const key of Object.keys(defaults)) {
+                console.log(logPrefix + ` | ${key}...`, defaults[key])
+
+                if(!config[key]) {
+                    config[key] = defaults[key];
+                    checked = true;
+                };
+                
+                if(defaults[key] && typeof defaults[key] == `object`) checkKeys(logPrefix + ` > `, thisKey + ` / ` + key, config[key], defaults[key]);
+            };
+
+            return config;
+        }
+        
         if(!checked) {
             const config = JSON.parse(fs.readFileSync(`${global.configPath}/config.json`));
-    
-            for(const key in defaultConfig) {
-                if(!config[key]) {
-                    config[key] = defaultConfig[key];
-                    checked = true;
-                }
-            }
-    
+
+            const checkedConfig = checkKeys(`> `, `root config object`, config, defaultConfig);
+
+            console.log(config, checkedConfig)
+            
             if(checked) fs.writeFileSync(`${global.configPath}/config.json`, JSON.stringify(config, null, 4), { encoding: `utf-8` });
         };
 
         const userConfig = JSON.parse(fs.readFileSync(`${global.configPath}/config.json`))
 
-        let slashUsed = global.configPath[1] == `:` ? `\\` : `/`
+        let slashUsed = require('os').platform() == `win32` ? `\\` : `/`
 
         if(!userConfig.saveLocation) userConfig.saveLocation = (fs.existsSync(os.homedir() + `${slashUsed}Downloads`) ? os.homedir() + `${slashUsed}Downloads` : os.homedir()) + `${slashUsed}ezytdl`;
 
         return userConfig;
     } catch(e) {
-        errorAndExit(`Failed to create config folder: ${e}`)
+        errorHandler(e)
     }
 }

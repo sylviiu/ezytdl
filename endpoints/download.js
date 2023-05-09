@@ -16,7 +16,7 @@ module.exports = async (app, server) => {
             clearTimeout(timeout);
 
             try {
-                const { url, format } = JSON.parse(o);
+                const { url, format, ext, path } = JSON.parse(o);
 
                 console.log(`Downloading format ${format} from ${url}`);
 
@@ -35,7 +35,7 @@ module.exports = async (app, server) => {
                     }
                 })
     
-                const ytdlpProc = require(`../util/ytdlp`).download(url, format, (update) => {
+                const ytdlpProc = require(`../util/ytdlp`).download({url, format, ext, filePath: path}, (update) => {
                     console.log(`${update.percentNum}% | ${update.destinationFile} | ${update.downloadSpeed} | ${update.eta}`);
                     if(update.killFunc) killFunc = update.killFunc;
                     ws.send(JSON.stringify(update));
