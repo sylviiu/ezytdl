@@ -1,5 +1,5 @@
-module.exports = () => new Promise(async (res, rej) => {
-    const ghRequest = require(`superagent`).get(`https://api.github.com/repos/yt-dlp/yt-dlp/releases?page=1&per_page=1`).set(`User-Agent`, `node`);
+module.exports = (creator, repo) => new Promise(async (res, rej) => {
+    const ghRequest = require(`superagent`).get(`https://api.github.com/repos/${creator}/${repo}/releases?page=1&per_page=1`).set(`User-Agent`, `node`);
 
     ghRequest.then(r => r.body).then(r => {
         return res({

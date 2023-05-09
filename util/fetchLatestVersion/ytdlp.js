@@ -1,0 +1,1 @@
+module.exports = () => require(`../githubReleasesRequest`)(`yt-dlp`, `yt-dlp`)

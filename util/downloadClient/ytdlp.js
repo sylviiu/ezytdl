@@ -6,7 +6,7 @@ const Stream = require('stream');
 module.exports = async (ws) => {
     console.log(`downloadClient`)
 
-    const ghRequest = require(`../getLatestVersion`);
+    const ghRequest = require(`../fetchLatestVersion/ytdlp`);
 
     ghRequest().then(async r => {        
         const latest = r.response;

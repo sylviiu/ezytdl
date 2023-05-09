@@ -6,7 +6,7 @@ module.exports = () => new Promise(async res => {
     console.log(`Looking for file ${file}`)
     
     if(fs.existsSync(`${global.configPath}/${file}`)) {
-        const latestVersion = require(`../util/getLatestVersion`);
+        const latestVersion = require(`../util/fetchLatestVersion/ytdlp`);
     
         latestVersion().then(async o => {
             console.log(`Latest version available is ${o.version}`);
