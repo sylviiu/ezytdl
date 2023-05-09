@@ -69,7 +69,7 @@ module.exports = {
         if(fs.existsSync(ffmpegPath)) {
             args.push(`--ffmpeg-location`, ffmpegPath);
         } else {
-            ext = null;
+            ext = false;
         }
         
         if(ext) {
@@ -115,12 +115,12 @@ module.exports = {
         })
         
         proc.on(`close`, async code => {
+            const ytdlFilename = await module.exports.getFilename(url, format);
+
+            const previousFilename = obj.destinationFile ? `ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0] : temporaryFilename;
+
             if(ext) {
                 console.log(`Retrieving filename`);
-
-                const ytdlFilename = await module.exports.getFilename(url, format);
-
-                const previousFilename = obj.destinationFile ? `ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0] : temporaryFilename;
                 
                 obj.destinationFile = ytdlFilename;
 
@@ -173,6 +173,9 @@ module.exports = {
                         res(obj)
                     }
                 })
+            } else if(ext === false) {
+                update({code, saveLocation, url, format, status: `Could not convert: FFmpeg is not installed! (Install through Settings)`});
+                res(obj)
             } else {
                 update({code, saveLocation, url, format, status: `Done!`})
                 res(obj)
