@@ -31,8 +31,11 @@
                 <div class="container d-flex justify-content-between" style="background: rgba(33,33,33,0.55);border-top-left-radius: 26px;border-top-right-radius: 26px;padding: 4px 20px;padding-top: 8px;">
                     <h3 id="mediaTitle" style="color: rgb(255,255,255);font-weight: bold;">title</h3>
                 </div>
+                <div class="d-flex flex-column justify-content-start" id="qualityButtons" style="padding: 12px 20px;background: rgba(27,27,27,0.55);padding-bottom: 0px;">
+                    <div><button class="btn btn-primary" id="downloadBest" type="button" style="height: 36px;border-width: 0px;border-radius: 100px;background: rgba(255,255,255,0.85);color: rgb(0,0,0);padding-right: 15px;margin-right: 10px;"><i class="fas fa-magic" id="icon"></i>&nbsp;Best Download</button><button class="btn btn-primary" id="downloadBestAudio" type="button" style="height: 36px;border-width: 0px;border-radius: 100px;background: rgba(255,255,255,0.85);color: rgb(0,0,0);padding-right: 15px;margin-right: 10px;"><i class="fas fa-file-audio" id="icon"></i>&nbsp;Best Audio</button><button class="btn btn-primary" id="downloadBestVideo" type="button" style="height: 36px;border-width: 0px;border-radius: 100px;background: rgba(255,255,255,0.85);color: rgb(0,0,0);padding-right: 15px;margin-right: 10px;"><i class="fas fa-file-video" id="icon"></i>&nbsp;Best Video</button></div>
+                </div>
                 <div class="d-flex flex-column justify-content-start align-items-center" id="formatList" style="background: rgba(27,27,27,0.55);border-bottom-right-radius: 26px;border-bottom-left-radius: 26px;padding: 12px 0px;padding-bottom: 26px;">
-                    <div class="d-flex flex-column justify-content-center align-items-center" id="formatCard" style="width: calc(100% - 40px);min-height: 50px;background: rgba(40,40,40,0.65);border-radius: 10px;padding: 8px 12px;margin-top: 12px;">
+                    <div class="d-flex flex-column justify-content-center align-items-center" id="formatCard" style="width: calc(100% - 40px);min-height: 50px;background: rgba(40,40,40,0.65);border-radius: 10px;padding: 12px 12px;margin-top: 12px;">
                         <div class="d-flex justify-content-between align-items-center">
                             <div style="min-width: 310px;width: 310px;max-width: 310px;">
                                 <div class="d-flex justify-content-start align-items-center" style="margin-bottom: 8px;">
@@ -113,12 +116,14 @@
     const input = document.getElementById(`urlInput`);
     const button = document.getElementById(`urlEnter`);
 
-    const listbox = document.getElementById(`listbox`);
-
-    const formatList = document.getElementById(`formatList`);
-
     const formatCard = document.getElementById(`formatCard`).cloneNode(true);
-    document.getElementById(`formatCard`).remove();
+
+    const listboxTemplate = document.getElementById(`listbox`).cloneNode(true);
+    const listboxParent = document.getElementById(`listbox`).parentElement;
+
+    listboxTemplate.querySelector(`#formatCard`).parentElement.removeChild(listboxTemplate.querySelector(`#formatCard`));
+
+    listboxParent.removeChild(document.getElementById(`listbox`));
 
     let currentInfo = null;
 
@@ -132,6 +137,14 @@
         infoRequest.open("GET", `http://localhost:3000/fetchInfo/${url}`, true);
 
         const parseInfo = () => {
+            const listbox = listboxTemplate.cloneNode(true);
+            
+            if(listbox.classList.contains(`d-none`)) listbox.classList.remove(`d-none`);
+
+            listboxParent.appendChild(listbox);
+            
+            const formatList = listbox.querySelector(`#formatList`);
+
             const info = JSON.parse(infoRequest.responseText);
 
             currentInfo = info;
@@ -178,13 +191,8 @@
                 }
 
                 console.log(info)
-                
-                for(entry of formatList.querySelectorAll(`#formatCard`)) {
-                    entry.parentNode.removeChild(entry);
-                    console.log(`removed previous format card`)
-                }
 
-                info.formats.map(format => {
+                const formats = info.formats.map(format => {
                     if(format.audio_ext != `none` || format.acodec != `none` || format.asr || format.audio_channels) {
                         format.audio = true;
                     } else {
@@ -214,7 +222,62 @@
                     } else {
                         return 0;
                     }
-                }).forEach((format) => {
+                });
+
+                if(formats.filter(f => f.audio).length == 0) document.getElementById(`downloadBestAudio`).classList.add(`d-none`);
+                if(formats.filter(f => f.video).length == 0) document.getElementById(`downloadBestVideo`).classList.add(`d-none`);
+
+                let qualities = [`bv*+ba/b`, `ba`, `bv`]
+
+                document.getElementById(`qualityButtons`).querySelectorAll(`.btn`).forEach((btn, i) => {
+                    btn.onclick = () => {
+                        btn.disabled = true;
+                        btn.opacity = 0.5;
+
+                        const prefix = btn.innerHTML.split(`</i>`).slice(0, -1).join(`</i>`) + `</i>&nbsp;`;
+                        const originalText = btn.innerHTML.replace(prefix, ``);
+                        btn.innerHTML = prefix + `Starting...`;
+                        
+                        const ws = new WebSocket(`ws://localhost:3000/download`);
+
+                        let location = `Somewhere on your computer :)`
+
+                        ws.onopen = () => {
+                            ws.send(JSON.stringify({
+                                url: url,
+                                format: qualities[i],
+                            }));
+                        };
+
+                        ws.onmessage = (o) => {
+                            const m = JSON.parse(o.data);
+
+                            if(!btn.querySelector(`#icon`).classList.contains(`d-none`)) btn.querySelector(`#icon`).classList.add(`d-none`);
+
+                            let str = [`Starting...`, `0%`]
+
+                            if(m.status) str[0] = m.status;
+                            if(m.percentNum) str[1] = `${m.percentNum}%`;
+                            if(m.saveLocation) location = m.saveLocation;
+
+                            btn.innerHTML = prefix + str.join(` / `);
+                        }
+
+                        ws.onclose = () => {
+                            btn.onclick = () => {
+                                const req = new XMLHttpRequest();
+
+                                req.open("GET", `http://localhost:3000/openFolder/${encodeURI(btoa(location))}`, true);
+                                req.send();
+                            }
+
+                            btn.disabled = false;
+                            btn.innerHTML = `Open`;
+                        }
+                    }
+                });
+                
+                formats.forEach((format) => {
                     //console.log(format)
                     const formatDownloadType = format.audio && format.video ? `both` : format.audio && !format.video ? `audio` : `video`;
 
@@ -468,10 +531,6 @@
                     formatList.appendChild(card);
                 })
 
-                if(listbox.classList.contains(`d-none`)) {
-                    listbox.classList.remove(`d-none`);
-                }
-
                 anime({
                     targets: urlBox,
                     height: searchBoxHeights(),
@@ -500,14 +559,14 @@
             document.getElementById(`errorMsg`).classList.add(`d-none`);
         }
 
-        if(!listbox.classList.contains(`d-none`)) {
+        if(document.getElementById(`listbox`)) {
             anime({
                 targets: urlBox,
                 height: searchBoxHeights().reverse(),
                 duration: 600,
                 easing: `easeOutExpo`,
                 complete: () => {
-                    listbox.classList.add(`d-none`);
+                    if(document.getElementById(`listbox`)) listboxParent.removeChild(document.getElementById(`listbox`));
                     
                     if(parse) {
                         parseInfo();

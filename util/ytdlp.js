@@ -64,7 +64,7 @@ module.exports = {
 
         const saveTo = (filePath || saveLocation) + (require('os').platform() == `win32` ? `\\` : `/`)
         
-        const args = [`-f`, format, url, `-o`, saveTo + outputFilename + `.%(ext)s`, `--embed-thumbnail`, `--embed-metadata`, `--no-mtime`];
+        const args = [`-f`, format, url, `-o`, saveTo + outputFilename + `.%(ext)s`, `--embed-metadata`, `--no-mtime`];
 
         if(fs.existsSync(ffmpegPath)) {
             args.push(`--ffmpeg-location`, ffmpegPath);
