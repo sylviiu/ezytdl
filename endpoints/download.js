@@ -20,15 +20,32 @@ module.exports = async (app, server) => {
 
                 const { url, format } = JSON.parse(o);
 
-                console.log(`Downloading format ${format} from ${url}`)
+                console.log(`Downloading format ${format} from ${url}`);
+
+                let killFunc = null;
+                let killed = false;
+
+                ws.once(`close`, () => {
+                    if(!killFunc) {
+                        killed = true
+                    } else {
+                        try {
+                            killFunc();
+                        } catch(e) {
+                            console.error(e)
+                        }
+                    }
+                })
     
-                const ytdlpProc = require(`../util/ytdlp`).download(url, format, ({ percentNum, saveLocation, url, format }) => {
-                    console.log(percentNum, saveLocation, url, format)
-                    ws.send(JSON.stringify({ percentNum, saveLocation, url, format }));
+                const ytdlpProc = require(`../util/ytdlp`).download(url, format, (update) => {
+                    console.log(`${update.percentNum}% | ${update.destinationFile} | ${update.downloadSpeed} | ${update.eta}`);
+                    if(update.killFunc) killFunc = update.killFunc;
+                    ws.send(JSON.stringify(update));
                 });
     
-                ytdlpProc.then(({ code, saveLocation, url, format }) => {
-                    ws.send(JSON.stringify({ code, saveLocation, url, format, percentNum: 100 }));
+                ytdlpProc.then((update) => {
+                    ws.send(JSON.stringify(update));
+                    killFunc = null;
                     ws.close();
                 })
             }
