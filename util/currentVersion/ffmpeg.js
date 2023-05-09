@@ -1,4 +1,4 @@
-const { file, path } = require(`./filenames/ytdlp`);
+const { file, path } = require(`../filenames/ffmpeg`);
 
 const fs = require('fs');
 const child_process = require('child_process');
@@ -13,11 +13,11 @@ module.exports = (forceCheck) => new Promise(async res => {
         console.log(`Exists? ${exists}`)
 
         if(exists) {
-            const versionString = child_process.execSync(`${path} --version`).toString().trim();
+            const versionString = child_process.execSync(`${path} -version`).toString().trim();
     
-            currentVersion = versionString;
+            currentVersion = versionString.split(`version `)[1].split(` `)[0].split(`-`)[0];
         
-            return res(versionString)
+            return res(currentVersion)
         } else {
             console.log(`File doesn't exist, returning null`);
             return res(null)

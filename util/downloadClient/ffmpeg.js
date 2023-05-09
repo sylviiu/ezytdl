@@ -1,4 +1,4 @@
-const { file, path } = require(`../filenames/ytdlp`);
+const { file, path } = require(`../filenames/ffmpeg`);
 const fs = require('fs');
 const superagent = require('superagent');
 const Stream = require('stream');
@@ -6,18 +6,18 @@ const Stream = require('stream');
 module.exports = async (ws) => {
     console.log(`downloadClient`)
 
-    const ghRequest = require(`../fetchLatestVersion/ytdlp`);
+    const ghRequest = require(`../fetchLatestVersion/ffmpeg`);
 
     ghRequest().then(async r => {        
         const latest = r.response;
             
-        const version = latest.tag_name;
+        const version = latest.tag_name.replace(`b`, ``);
 
         const downloads = latest.assets;
         
         ws.send(JSON.stringify({ version, progress: 0 }))
         
-        const currentVersion = await require(`../currentVersion/ytdlp`)(true);
+        const currentVersion = await require(`../currentVersion/ffmpeg`)(true);
 
         console.log(`Current version: ${currentVersion}`)
 

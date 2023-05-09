@@ -23,7 +23,7 @@
         <div class="container-fluid d-flex justify-content-end align-items-center" style="padding: 0px;"><button class="btn btn-primary" type="button" style="background: rgb(25,25,25);border-style: none;border-radius: 100px;margin: 0px 6px;opacity: 0.49;"><i class="fas fa-cog" style="margin-right: 6px;"></i>Settings</button></div>
     </div>
     <div class="d-flex flex-column justify-content-center align-items-center" style="height: calc(100% - 80px);width: 100vw;">
-        <h1 id="heading" style="color: rgb(255,255,255);">Downloading YT-DLP...</h1>
+        <h1 id="heading" style="color: rgb(255,255,255);">Downloading...</h1>
         <h6 id="percentageText" style="color: rgb(164,164,164);margin-bottom: 32px;">0%</h6>
         <div id="progressBar" style="width: 315px;min-width: 315px;max-width: 315px;height: 20px;min-height: 20px;max-height: 20px;background: #1f1f1f;border-radius: 100px;">
             <div class="container" id="progressFill" style="border-radius: 100px;background: #ffffff;height: 20px;min-height: 20px;max-height: 20px;width: 20px;margin: 0px;padding: 0px;">
@@ -49,7 +49,7 @@
     const ws = new WebSocket(`ws://localhost:3000/download`);
 
     ws.onopen = () => {
-        ws.send(`client`);
+        ws.send(`${window.location.search.slice(1).slice(0, -1)}`);
     }
 
     ws.onmessage = (o) => {

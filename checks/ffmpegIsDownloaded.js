@@ -1,17 +1,17 @@
 const fs = require('fs');
 
 module.exports = () => new Promise(async res => {
-    const { file } = require(`../util/filenames/ytdlp`);
+    const { file } = require(`../util/filenames/ffmpeg`);
 
     console.log(`Looking for file ${file}`)
     
     if(fs.existsSync(`${global.configPath}/${file}`)) {
-        const latestVersion = require(`../util/fetchLatestVersion/ytdlp`);
+        const latestVersion = require(`../util/fetchLatestVersion/ffmpeg`);
     
         latestVersion().then(async o => {
             console.log(`Latest version available is ${o.version}`);
 
-            const versionDownloaded = await require(`../util/currentDownloadedVersion`)(true);
+            const versionDownloaded = await require(`../util/currentVersion/ffmpeg`)(true);
 
             console.log(`Version downloaded is ${versionDownloaded}`);
 

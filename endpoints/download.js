@@ -11,13 +11,11 @@ module.exports = async (app, server) => {
         }, 5000)
 
         ws.once(`message`, async (o) => {
+            o = o.toString();
+
             clearTimeout(timeout);
 
-            if(o == `client`) {
-                return require(`../util/downloadClient/ytdlp`)(ws)
-            } else {
-                console.log(`Downloading format`)
-
+            try {
                 const { url, format } = JSON.parse(o);
 
                 console.log(`Downloading format ${format} from ${url}`);
@@ -48,6 +46,17 @@ module.exports = async (app, server) => {
                     killFunc = null;
                     ws.close();
                 })
+            } catch(e) {
+                console.log(`Not JSON. falling back to client downloading`, o);
+                
+                if(o == `ytdlp`) {
+                    return require(`../util/downloadClient/ytdlp`)(ws)
+                } else if(o == `ffmpeg`) {
+                    return require(`../util/downloadClient/ffmpeg`)(ws)
+                } else {
+                    ws.send(JSON.stringify({ message: `Unknown client`, version: `--`, progress: 0 }));
+                    ws.close();
+                }
             }
         })
     })

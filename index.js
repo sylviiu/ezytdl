@@ -30,7 +30,7 @@ app.whenReady().then(async () => {
 
     console.log(`Successfully retrieved config!`, config);
 
-    const latestClientDownloaded = await require(`./checks/clientIsDownloaded`)()
+    const latestClientDownloaded = await require(`./checks/ytdlpIsDownloaded`)()
 
     if(!latestClientDownloaded) {
         window.loadFile(`./html/updating.html`);
