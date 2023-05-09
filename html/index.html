@@ -108,6 +108,8 @@
 
     const urlBox = document.getElementById(`urlBox`);
 
+    const background = document.getElementById(`background`);
+
     const input = document.getElementById(`urlInput`);
     const button = document.getElementById(`urlEnter`);
 
@@ -161,10 +163,12 @@
                         if(currentInfo.webpage_url == info.webpage_url) {
                             document.getElementById(`background`).style.backgroundImage = `url(${thumbnail.url})`;
 
+                            anime.remove(background)
+
                             anime({
-                                targets: `#background`,
+                                targets: background,
                                 opacity: [0, 0.15],
-                                duration: 500,
+                                duration: 1000,
                                 easing: `easeOutQuad`
                             })
                         }
@@ -279,7 +283,8 @@
 
                     if(config.lastMediaConversionOutputs[formatDownloadType]) card.querySelector(`#formatConversionTextbox`).value = config.lastMediaConversionOutputs[formatDownloadType];
 
-                    const saveOptions = card.querySelector(`#saveOptions`)
+                    const saveOptions = card.querySelector(`#saveOptions`);
+                    const saveOptionsIcon = card.querySelector(`#downloadicon`)
 
                     const btn = card.querySelector(`#formatDownload`);
                     
@@ -296,12 +301,18 @@
                                 maxHeight: [`0px`, `36px`],
                                 opacity: [`0%`, `100%`],
                                 marginTop: [`0px`, `8px`],
-                                duration: 350,
-                                easing: `easeOutQuad`,
+                                duration: 500,
+                                easing: `easeOutExpo`,
                                 complete: () => {
                                     animating = false;
                                     btn.onclick = () => btnClick()
                                 }
+                            });
+                            anime({
+                                targets: saveOptionsIcon,
+                                rotate: [`0deg`, `180deg`],
+                                duration: 500,
+                                easing: `easeOutExpo`
                             })
                         },
                         fadeOut: () => {
@@ -311,14 +322,20 @@
                                 maxHeight: [`36px`, `0px`],
                                 opacity: [`100%`, `0%`],
                                 marginTop: [`8px`, `0px`],
-                                duration: 350,
-                                easing: `easeOutQuad`,
+                                duration: 500,
+                                easing: `easeOutExpo`,
                                 complete: () => {
                                     animating = false;
                                     saveOptions.classList.remove(`d-flex`);
                                     saveOptions.classList.add(`d-none`);
                                     btn.onclick = () => btnClick()
                                 }
+                            })
+                            anime({
+                                targets: saveOptionsIcon,
+                                rotate: [`180deg`, `0deg`],
+                                duration: 500,
+                                easing: `easeOutExpo`
                             })
                         }
                     }
@@ -458,8 +475,8 @@
                 anime({
                     targets: urlBox,
                     height: searchBoxHeights(),
-                    duration: 500,
-                    easing: `easeOutQuad`,
+                    duration: 1000,
+                    easing: `easeOutExpo`,
                 })
             }
         }
@@ -487,8 +504,8 @@
             anime({
                 targets: urlBox,
                 height: searchBoxHeights().reverse(),
-                duration: 500,
-                easing: `easeOutQuad`,
+                duration: 600,
+                easing: `easeOutExpo`,
                 complete: () => {
                     listbox.classList.add(`d-none`);
                     
@@ -500,11 +517,13 @@
                 }
             });
 
+            anime.remove(background)
+
             anime({
-                targets: `#background`,
+                targets: background,
                 opacity: [0.15, 0],
                 duration: 500,
-                easing: `easeOutQuad`
+                easing: `easeOutExpo`
             })
         } else if(parse) {
             parseInfo();
