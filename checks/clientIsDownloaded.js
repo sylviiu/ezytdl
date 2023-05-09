@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 module.exports = () => new Promise(async res => {
-    const { file } = require(`../util/ytdlpFileName`);
+    const { file } = require(`../util/filenames/ytdlp`);
 
     console.log(`Looking for file ${file}`)
     

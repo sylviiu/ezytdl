@@ -1,4 +1,4 @@
-const { file } = require(`../util/ytdlpFileName`);
+const { file } = require(`./filenames/ytdlp`);
 const fs = require('fs');
 const superagent = require('superagent');
 const Stream = require('stream');

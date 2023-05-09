@@ -1,4 +1,4 @@
-const { path } = require(`../util/ytdlpFileName`);
+const { path } = require(`./filenames/ytdlp`);
 
 const child_process = require('child_process');
 
