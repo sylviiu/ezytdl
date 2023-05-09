@@ -14,7 +14,7 @@ module.exports = async (app, server) => {
             clearTimeout(timeout);
 
             if(o == `client`) {
-                return require(`../util/downloadClientWS`)(ws)
+                return require(`../util/downloadClient/ytdlp`)(ws)
             } else {
                 console.log(`Downloading format`)
 

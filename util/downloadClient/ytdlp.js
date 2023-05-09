@@ -1,4 +1,4 @@
-const { file } = require(`./filenames/ytdlp`);
+const { file } = require(`../filenames/ytdlp`);
 const fs = require('fs');
 const superagent = require('superagent');
 const Stream = require('stream');
@@ -6,7 +6,7 @@ const Stream = require('stream');
 module.exports = async (ws) => {
     console.log(`downloadClient`)
 
-    const ghRequest = require(`../util/getLatestVersion`);
+    const ghRequest = require(`../getLatestVersion`);
 
     ghRequest().then(async r => {        
         const latest = r.response;
@@ -17,7 +17,7 @@ module.exports = async (ws) => {
         
         ws.send(JSON.stringify({ version, progress: 0 }))
         
-        const currentVersion = await require(`../util/currentDownloadedVersion`)(true);
+        const currentVersion = await require(`../currentDownloadedVersion`)(true);
 
         if(currentVersion == version) {
             ws.send(JSON.stringify({ message: `You're already on the latest version!`, version, progress: 1 }));
