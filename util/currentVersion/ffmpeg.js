@@ -1,4 +1,5 @@
-const { file, path } = require(`../filenames/ffmpeg`);
+const { file, getPath } = require(`../filenames/ffmpeg`);
+const path = getPath()
 
 const fs = require('fs');
 const child_process = require('child_process');
@@ -9,7 +10,7 @@ module.exports = (forceCheck) => new Promise(async res => {
     if(!forceCheck && currentVersion) {
         return res(currentVersion);
     } else {
-        const exists = fs.existsSync(path);
+        const exists = path;
         console.log(`Exists? ${exists}`)
 
         if(exists) {

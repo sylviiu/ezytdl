@@ -1,11 +1,11 @@
 const fs = require('fs');
 
 module.exports = () => new Promise(async res => {
-    const { file } = require(`../util/filenames/ytdlp`);
+    const { file, getPath } = require(`../util/filenames/ytdlp`);
 
     console.log(`Looking for file ${file}`)
     
-    if(fs.existsSync(`${global.configPath}/${file}`)) {
+    if(getPath()) {
         const latestVersion = require(`../util/fetchLatestVersion/ytdlp`);
     
         latestVersion().then(async o => {

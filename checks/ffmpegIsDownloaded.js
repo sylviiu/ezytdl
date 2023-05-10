@@ -1,11 +1,11 @@
 const fs = require('fs');
 
 module.exports = () => new Promise(async res => {
-    const { file } = require(`../util/filenames/ffmpeg`);
+    const { file, getPath } = require(`../util/filenames/ffmpeg`);
 
     console.log(`Looking for file ${file}`)
     
-    if(fs.existsSync(`${global.configPath}/${file}`)) {
+    if(getPath()) {
         const latestVersion = require(`../util/fetchLatestVersion/ffmpeg`);
     
         latestVersion().then(async o => {

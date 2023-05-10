@@ -1,4 +1,5 @@
-const { path } = require(`./filenames/ytdlp`);
+const { getPath } = require(`./filenames/ytdlp`);
+const path = getPath();
 const child_process = require('child_process');
 const fs = require('fs');
 const idGen = require(`../util/idGen`);
@@ -58,7 +59,7 @@ module.exports = {
 
         const { saveLocation, outputFilename } = require(`../getConfig`)();
 
-        const ffmpegPath = require(`./filenames/ffmpeg`).path;
+        const ffmpegPath = require(`./filenames/ffmpeg`).getPath();
 
         console.log(saveLocation, filePath, outputFilename)
 

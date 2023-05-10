@@ -1,4 +1,4 @@
-const { file, path } = require(`../filenames/ytdlp`);
+const { file, downloadPath } = require(`../filenames/ytdlp`);
 const fs = require('fs');
 const superagent = require('superagent');
 const Stream = require('stream');
@@ -39,7 +39,7 @@ module.exports = async (ws) => {
     
                 console.log(`Found target file! (${file} / ${download.size} size); downloading ${download.name} from "${download.browser_download_url}"`);
     
-                const writeStream = fs.createWriteStream(`${path}`, { flags: `w` });
+                const writeStream = fs.createWriteStream(`${downloadPath}`, { flags: `w` });
     
                 const req = superagent.get(download.browser_download_url).set(`User-Agent`, `node`);
     
