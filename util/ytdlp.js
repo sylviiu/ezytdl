@@ -10,7 +10,7 @@ module.exports = {
     listFormats: (url) => new Promise(async res => {
         console.log(`going to path ${path}; url "${url}"`)
 
-        const proc = child_process.spawn(path, [url, `--dump-single-json`]);
+        const proc = child_process.execFile(path, [url, `--dump-single-json`]);
 
         let data = ``;
 
@@ -37,7 +37,7 @@ module.exports = {
 
         const args = [`-f`, format, url, `-o`, outputFilename, `--get-filename`];
 
-        const proc = child_process.spawn(path, args);
+        const proc = child_process.execFile(path, args);
 
         let data = ``;
 
@@ -65,10 +65,12 @@ module.exports = {
 
         const saveTo = (filePath || saveLocation) + (require('os').platform() == `win32` ? `\\` : `/`)
         
-        const args = [`-f`, format, url, `-o`, saveTo + outputFilename + `.%(ext)s`, `--embed-metadata`, `--no-mtime`];
+        const args = [`-f`, format, url, `-o`, saveTo + outputFilename + `.%(ext)s`, `--embed-metadata`, `--no-mtime`, `--ffmpeg-location=`];
+
+        const treekill = require(`tree-kill`)
 
         if(fs.existsSync(ffmpegPath)) {
-            args.push(`--ffmpeg-location`, ffmpegPath);
+            //args.push(`--ffmpeg-location`, ffmpegPath);
         } else {
             ext = false;
         }
@@ -80,21 +82,29 @@ module.exports = {
         
         console.log(`saveTo: ` + saveTo, `\n- ` + args.join(`\n- `))
 
-        const proc = child_process.spawn(path, args);
+        const proc = child_process.execFile(path, args);
 
         let obj = {};
 
         let update = (o) => {
             obj = Object.assign({}, obj, o);
-            updateFunc(obj, proc);
+            updateFunc({
+                latest: o,
+                overall: obj
+            }, proc);
         };
+
+        killAttempt = 0;
 
         update({saveLocation: saveTo, url, format, kill: () => {
             if(require('os').platform() == `win32`) {
-                child_process.execSync(`taskkill /pid ${proc.pid} /T /F`);
-            } else {
-                proc.kill();
+                //let str = `taskkill /pid ${proc.pid} /T`;
+                //if(killAttempt++ > 1) str += ` /F`
+                //child_process.execSync(str);
+                treekill(proc.pid, `SIGINT`)
             }
+            
+            proc.kill(`SIGINT`);
         }, status: `Downloading...`})
 
         proc.stdout.on(`data`, data => {
@@ -139,7 +149,7 @@ module.exports = {
 
                 console.log(`- ` + args2.join(`\n- `))
 
-                const proc2 = child_process.spawn(ffmpegPath, args2);
+                const proc2 = child_process.execFile(ffmpegPath, args2);
 
                 let duration = null;
 

@@ -105,8 +105,9 @@ const createDownload = (opt, rawUpdateFunc) => new Promise(async res => {
         killed: false,
         updateFunc: (update) => {
             if(!obj.ignoreUpdates) {
-                obj.status = Object.assign({}, obj.status, update);
-                sendUpdate(obj);
+                if(update.overall && update.overall.kill) obj.killFunc = () => update.overall.kill();
+                obj.status = update.overall;
+                sendUpdate(Object.assign({}, obj, { status: update.latest }));
                 rawUpdateFunc(update);
             }
         },
@@ -127,13 +128,25 @@ const createDownload = (opt, rawUpdateFunc) => new Promise(async res => {
 
             const progress = require(`../util/ytdlp`).download(opt, (update, proc) => {
                 if(!obj.ytdlpProc && proc) obj.ytdlpProc = proc;
-                if(!obj.killFunc && update.kill) obj.killFunc = () => update.kill();
+                if(!obj.killFunc && obj.status && obj.status.overall && obj.status.overall.kill) obj.killFunc = () => obj.status.overall.kill();
 
                 if(obj.killed) {
-                    if(update.kill) try {
-                        update.kill();
-                        console.log(`Killed with internal kill func`)
-                    } catch(e) { console.log(`Failed internal kill func: ${e}`) }
+                    if(typeof obj.killed != `number`) obj.killed = 1;
+                    obj.killed++;
+
+                    console.log(`Kill attempt #${obj.killed}...}`)
+
+                    console.log(obj.status)
+
+                    if(obj.killFunc) try {
+                        obj.killFunc();
+                        console.log(`Killed with internal kill func 1`)
+                    } catch(e) { console.log(`Failed internal kill func 1: ${e}`) }
+
+                    if(obj.status && obj.status && obj.status.kill) try {
+                        obj.status.kill();
+                        console.log(`Killed with internal kill func 2`)
+                    } catch(e) { console.log(`Failed internal kill func 2: ${e}`) }
 
                     if(obj.ytdlpProc && obj.ytdlpProc.kill) try {
                         obj.ytdlpProc.kill();
@@ -190,9 +203,9 @@ const createDownload = (opt, rawUpdateFunc) => new Promise(async res => {
             
             obj.killed = true;
 
-            if(obj.killFunc) {
+            if(obj.status && obj.status.overall && obj.status.overall.kill) {
                 try {
-                    obj.killFunc();
+                    obj.status.overall.kill();
                     console.log(`Killed killFunc of ${id}`);
                 } catch(e) {
                     console.log(`Failed to kill killFunc: ${e}`)

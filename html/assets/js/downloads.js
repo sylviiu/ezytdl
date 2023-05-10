@@ -9,6 +9,8 @@ downloadsQueue.querySelector(`#formatCard`).parentNode.removeChild(downloadsQueu
 const downloadCard = formatListTemplate.querySelector(`#formatCard`).cloneNode(true);
 //downloadCard.querySelector(`#formatMetaList`).classList.add(`d-none`);
 
+const platform = navigator.platform.toLowerCase();
+
 const downloadCardStates = {
     reset: (card) => {
         card.style.opacity = 1;
@@ -48,6 +50,8 @@ const downloadCardStates = {
         card.querySelector(`#downloadicon`).classList.add(`d-none`);
         card.querySelector(`#stopicon`).classList.remove(`d-none`);
 
+        if(platform == `win32`) card.querySelector(`#formatDownload`).classList.add(`d-none`)
+
         card.querySelector(`#formatDownload`).onclick = () => {
             downloadsWs.send(JSON.stringify({
                 action: `cancel`,
@@ -69,6 +73,8 @@ const downloadCardStates = {
 
         card.querySelector(`#downloadicon`).classList.add(`d-none`);
         card.querySelector(`#stopicon`).classList.remove(`d-none`);
+        
+        if(platform == `win32`) card.querySelector(`#formatDownload`).classList.add(`d-none`)
 
         card.querySelector(`#formatDownload`).onclick = () => {
             downloadsWs.send(JSON.stringify({
@@ -188,9 +194,10 @@ downloadsWs.onmessage = (msg) => {
             }
 
             if(!document.querySelector(`#download-${o.id}`)) downloadsQueue.appendChild(card);
-            
 
             if(!card.classList.contains(`queue-${o.state}`)) {
+                if(`${card.classList}`.includes(`queue-`)) console.log(`new state: ${o.state}, previous state: ${`${card.classList}`.split(`queue-`)[1].split(` `)[0]}`)
+                
                 if(card.classList.contains(`queue-complete`)) card.classList.remove(`queue-complete`)
                 if(card.classList.contains(`queue-active`)) card.classList.remove(`queue-active`)
                 if(card.classList.contains(`queue-paused`)) card.classList.remove(`queue-paused`)
