@@ -102,6 +102,18 @@ const downloadCardStates = {
                 id: card.id.split(`-`)[1]
             }))
         }
+
+        card.querySelector(`#crossicon`).classList.remove(`d-none`);
+        card.querySelector(`#pauseicon`).classList.add(`d-none`);
+
+        card.querySelector(`#pausePlayButton`).classList.remove(`d-none`);
+
+        card.querySelector(`#pausePlayButton`).onclick = () => {
+            downloadsWs.send(JSON.stringify({
+                action: `remove`,
+                id: card.id.split(`-`)[1]
+            }))
+        }
     },
 }
 
