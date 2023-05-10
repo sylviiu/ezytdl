@@ -5,8 +5,10 @@ module.exports = {
         if(req.params.check == `true`) {
             const lastVersionChecked = require(`../getConfig`)().version;
             const currentVersion = require(`../package.json`).version;
-    
-            if(lastVersionChecked !== currentVersion) {
+
+            if(!app.isPackaged) {
+                console.log(`--\nVERSION CHECK DISABLED\nBuild: ${currentVersion}\nLast Checked: ${lastVersionChecked}\n--`)
+            } else if(lastVersionChecked !== currentVersion) {
                 res.send(true);
             } else {
                 res.send(false);
