@@ -12,9 +12,9 @@ module.exports = {
                 res.send(false);
             }
         } else {
-            const updated = require(`../getConfig`)({ version: require(`../package.json`).version });
-
             const { response } = await require(`../util/githubReleasesRequest`)(`sylviiu`, `ezytdl`);
+            
+            const updated = require(`../getConfig`)({ version: response.tag_name });
             
             const obj = {
                 url: response.html_url,
