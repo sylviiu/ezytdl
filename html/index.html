@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="assets/css/scroll.css">
     <link rel="stylesheet" href="assets/css/scrollbar.compiled.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
 </head>
 
 <body style="background: rgb(10,10,10);width: 100vw;font-family: Alata, sans-serif;overflow-x: hidden;overflow-y: hidden;">
@@ -102,7 +103,20 @@
 
     const configRequest = new XMLHttpRequest();
     configRequest.open("POST", "http://localhost:3000/config", true);
-    configRequest.onload = () => config = JSON.parse(configRequest.responseText);
+    configRequest.onload = () => {
+        config = JSON.parse(configRequest.responseText);
+        if(config.changelogsEnabled) {
+            const changelogCheck = new XMLHttpRequest();
+            changelogCheck.open("GET", "http://localhost:3000/changelog/true", true);
+            changelogCheck.onload = () => {
+                if(changelogCheck.responseText == `true`) {
+                    console.log(`changelog exists`);
+                    window.location.href = `changelog.html`;
+                } else console.log(`no changelog`)
+            }
+            changelogCheck.send();
+        }
+    }
     configRequest.send();
 
     const mainContainer = document.getElementById(`mainContainer`);
