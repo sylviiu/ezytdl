@@ -10,6 +10,7 @@
     "electron-updater": "^5.3.0",
     "express": "^4.18.2",
     "superagent": "^8.0.9",
+    "which": "^3.0.1",
     "ws": "^8.13.0"
   },
   "scripts": {
@@ -35,7 +36,6 @@
   "build": {
     "appId": "dev.sylviiu.ezytdl",
     "productName": "ezytdl",
-    "artifactName": "${productName}-Setup-${version}.${ext}",
     "publish": [
       {
         "provider": "github",
@@ -67,6 +67,7 @@
       "getConfig.js",
       "defaultConfig.json",
       "util/*.js",
+      "util/*/*.js",
       "endpoints/*.js",
       "core/*.js",
       "checks/*.js"
