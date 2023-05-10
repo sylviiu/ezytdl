@@ -91,6 +91,7 @@ const downloadCardStates = {
                 action: `resume`,
                 id: card.id.split(`-`)[1]
             }))
+            downloadCardStates.active(card);
         }
     },
     queue: (card) => {
@@ -100,7 +101,8 @@ const downloadCardStates = {
             downloadsWs.send(JSON.stringify({
                 action: `start`,
                 id: card.id.split(`-`)[1]
-            }))
+            }));
+            downloadCardStates.active(card);
         }
 
         card.querySelector(`#crossicon`).classList.remove(`d-none`);
@@ -210,10 +212,9 @@ downloadsWs.onmessage = (msg) => {
             if(!card.classList.contains(`queue-${o.state}`)) {
                 if(`${card.classList}`.includes(`queue-`)) console.log(`new state: ${o.state}, previous state: ${`${card.classList}`.split(`queue-`)[1].split(` `)[0]}`)
                 
-                if(card.classList.contains(`queue-complete`)) card.classList.remove(`queue-complete`)
-                if(card.classList.contains(`queue-active`)) card.classList.remove(`queue-active`)
-                if(card.classList.contains(`queue-paused`)) card.classList.remove(`queue-paused`)
-                if(card.classList.contains(`queue-queue`)) card.classList.remove(`queue-queue`)
+                for (state of order) {
+                    if(card.classList.contains(`queue-${state}`)) card.classList.remove(`queue-${state}`)
+                }
 
                 if(downloadCardStates[o.state]) {
                     downloadCardStates[o.state](card);
