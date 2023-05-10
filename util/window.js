@@ -4,8 +4,8 @@ module.exports = () => {
     const args = {
         width: 800,
         height: 500,
-        minHeight: 500,
-        minWidth: 700,
+        minHeight: 300,
+        minWidth: 550,
         autoHideMenuBar: true,
     };
 
@@ -39,10 +39,19 @@ module.exports = () => {
             setShortcuts(true);
         })
     } else {
-        console.log(`-------------\nSTARTING WITH DEVELOPMENT MODE\n-------------`)
+        console.log(`-------------\nSTARTING WITH DEVELOPMENT MODE\n-------------`);
+
+        args.width = 1100;
+        args.webPreferences = {
+            devTools: true,
+        }
     }
 
     const window = new BrowserWindow(args);
+
+    if(!app.isPackaged) {
+        window.webContents.openDevTools();
+    }
 
     return window;
 }

@@ -86,17 +86,21 @@ module.exports = {
 
         let update = (o) => {
             obj = Object.assign({}, obj, o);
-            updateFunc(obj);
+            updateFunc(obj, proc);
         };
 
         update({saveLocation: saveTo, url, format, kill: () => {
-            if(proc && proc.kill && typeof proc.kill == `function`) proc.kill()
+            if(require('os').platform() == `win32`) {
+                child_process.execSync(`taskkill /pid ${proc.pid} /T /F`);
+            } else {
+                proc.kill();
+            }
         }, status: `Downloading...`})
 
         proc.stdout.on(`data`, data => {
             const string = data.toString();
 
-            console.log(string.trim());
+            //console.log(string.trim());
 
             if(string.includes(`Destination:`)) update({destinationFile: string.split(`Destination:`)[1].trim()})
 
@@ -104,7 +108,7 @@ module.exports = {
             if(percent) {
                 const downloadSpeed = string.includes(`/s`) ? string.split(`/s`)[0].split(` `).slice(-1)[0] + `/s` : `-1B/s`;
                 const eta = string.includes(`ETA`) ? string.split(`ETA`)[1].split(` `).slice(1).join(` `) : `00:00`;
-                console.log(percent)
+                //console.log(percent)
                 update({percentNum: Number(percent), downloadSpeed, eta});
             }
         });
@@ -116,6 +120,8 @@ module.exports = {
         })
         
         proc.on(`close`, async code => {
+            update({kill: () => {}})
+
             const ytdlFilename = await module.exports.getFilename(url, format);
 
             const previousFilename = obj.destinationFile ? `ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0] : temporaryFilename;

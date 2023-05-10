@@ -14,7 +14,7 @@
     "ws": "^8.13.0"
   },
   "scripts": {
-    "start": "electron .",
+    "start": "electron . --inspect = 5858",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "release": "electron-builder"

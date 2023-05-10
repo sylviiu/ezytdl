@@ -1,17 +1,26 @@
 const errorHandler = require("./util/errorHandler.js");
 
 const fs = require('fs');
-const os = require('os')
+const os = require('os');
 
 module.exports = (configObject) => {
     try {
         const defaultConfig = require(`./defaultConfig.json`)
     
         fs.mkdirSync(global.configPath, { recursive: true, failIfExists: false });
+        
+        let checked = false;
 
         if(!fs.existsSync(`${global.configPath}/config.json`)) {
             fs.writeFileSync(`${global.configPath}/config.json`, JSON.stringify(defaultConfig, null, 4), { encoding: `utf-8` });
             checked = true;
+        } else {
+            try {
+                JSON.parse(fs.readFileSync(`${global.configPath}/config.json`));
+            } catch(e) {
+                fs.unlinkSync(`${global.configPath}/config.json`);
+                module.exports(configObject);
+            }
         };
         
         if(configObject) {
@@ -19,14 +28,12 @@ module.exports = (configObject) => {
             
             fs.writeFileSync(`${global.configPath}/config.json`, JSON.stringify(Object.assign({}, config, configObject), null, 4), { encoding: `utf-8` });
         };
-        
-        let checked = false;
 
         const checkKeys = (logPrefix, thisKey, config, defaults) => {
-            console.log(logPrefix + `Checking keys of ${thisKey}...`);
+            //console.log(logPrefix + `Checking keys of ${thisKey}...`);
 
             for(const key of Object.keys(defaults)) {
-                console.log(logPrefix + ` | ${key}...`, defaults[key])
+                //console.log(logPrefix + ` | ${key}...`, defaults[key])
 
                 if(!config[key]) {
                     config[key] = defaults[key];
@@ -44,7 +51,7 @@ module.exports = (configObject) => {
 
             const checkedConfig = checkKeys(`> `, `root config object`, config, defaultConfig);
 
-            console.log(config, checkedConfig)
+            //console.log(config, checkedConfig)
             
             if(checked) fs.writeFileSync(`${global.configPath}/config.json`, JSON.stringify(config, null, 4), { encoding: `utf-8` });
         };

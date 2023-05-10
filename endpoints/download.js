@@ -1,4 +1,8 @@
-const { WebSocketServer } = require("ws")
+const { WebSocketServer } = require("ws");
+
+const idGen = require(`../util/idGen`);
+
+const { createDownload, setWS, queueAction } = require(`../util/downloadManager`)
 
 module.exports = async (app, server) => {
     const wss = new WebSocketServer({ server, path: `/download` });
@@ -16,41 +20,37 @@ module.exports = async (app, server) => {
             clearTimeout(timeout);
 
             try {
-                const { url, format, ext, path } = JSON.parse(o);
+                const args = JSON.parse(o);
 
-                console.log(`Downloading format ${format} from ${url}`);
+                console.log(`Downloading format ${args.format} from ${args.url}`);
 
                 let killFunc = null;
-                let killed = false;
-
-                ws.once(`close`, () => {
-                    if(!killFunc) {
-                        killed = true
-                    } else {
-                        try {
-                            killFunc();
-                        } catch(e) {
-                            console.error(e)
-                        }
-                    }
-                })
     
-                const ytdlpProc = require(`../util/ytdlp`).download({url, format, ext, filePath: path}, (update) => {
-                    console.log(`${update.percentNum}% | ${update.destinationFile} | ${update.downloadSpeed} | ${update.eta}`);
+                const ytdlpProc = createDownload(args, (update) => {
                     if(update.killFunc) killFunc = update.killFunc;
                     ws.send(JSON.stringify(update));
                 });
     
                 ytdlpProc.then((update) => {
-                    console.log(update)
+                    //console.log(update)
                     ws.send(JSON.stringify(update));
                     killFunc = null;
                     ws.close();
                 })
             } catch(e) {
                 console.log(`Not JSON. falling back to client downloading`, o);
-                
-                if(o == `ytdlp`) {
+
+                if(o == `queue`) {
+                    setWS(ws);
+
+                    ws.on(`message`, (m) => {
+                        m = JSON.parse(m.toString());
+
+                        if(m.action) {
+                            queueAction(m.id, m.action);
+                        }
+                    })
+                } else if(o == `ytdlp`) {
                     return require(`../util/downloadClient/ytdlp`)(ws)
                 } else if(o == `ffmpeg`) {
                     return require(`../util/downloadClient/ffmpeg`)(ws)
