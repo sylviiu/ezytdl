@@ -8,7 +8,7 @@ const downloadsIcon = document.getElementById('downloadsIcon').cloneNode(true);
 const downloadsQueue = formatListTemplate.cloneNode(true);
 downloadsQueue.querySelector(`#formatCard`).parentNode.removeChild(downloadsQueue.querySelector(`#formatCard`));
 
-downloadsQueue.style.maxHeight = `calc(100vh - ${document.getElementById(`navigationBar`).offsetHeight}px - 20px)`;
+downloadsQueue.style.maxHeight = `max(calc(100vh - ${document.getElementById(`navigationBar`).offsetHeight}px - 20px), 500px)`;
 downloadsQueue.style.overflowY = `scroll`;
 
 const queueMaxHeight = downloadsQueue.style.maxHeight
@@ -48,13 +48,17 @@ const downloadCardStates = {
         
         card.querySelector(`#downloadicon`).classList.add(`d-none`);
         card.querySelector(`#checkmarkicon`).classList.remove(`d-none`);
-        
-        card.querySelector(`#formatDownload`).onclick = () => {
+
+        const clear = () => {
             downloadsWs.send(JSON.stringify({
                 action: `remove`,
                 id: card.id.split(`-`)[1]
             }))
-        }
+        };
+        
+        card.querySelector(`#formatDownload`).onclick = clear
+
+        if(!downloadsQueueToggled) createNotification(card, clear)
     },
     active: (card) => {
         downloadCardStates.reset(card);
@@ -139,7 +143,9 @@ downloadsQueue.id = `downloadsQueue`;
 if(downloadsQueue.classList.contains(`d-none`)) downloadsQueue.classList.remove(`d-none`);
 if(downloadsQueue.classList.contains(`d-flex`)) downloadsQueue.classList.remove(`d-flex`);
 
-downloadsQueue.classList.add(`d-none`)
+//downloadsQueue.classList.add(`d-none`)
+
+downloadsQueue.style.maxHeight = `0px`
 
 downloadsQueue.style.position = `fixed`;
 downloadsQueue.style[`backdrop-filter`] = `blur(15px)`;
@@ -148,7 +154,7 @@ downloadsQueue.style[`backdrop-filter`] = `blur(15px)`;
 
 //downloadsQueue.classList.add(`d-flex`);
 
-downloadsQueue.style.top = `80px`
+downloadsQueue.style.top = `-99999px`
 downloadsQueue.style.right = `10px`;
 
 const navigationBar = document.querySelector(`#navigationBar`);
@@ -162,6 +168,12 @@ const downloadManagers = {};
 downloadsWs.onopen = () => {
     downloadsWs.send(`queue`);
 };
+
+let observerEnabled = false;
+
+const observer = new ResizeObserver(() => {
+    if(observerEnabled) repositionNotifications(downloadsQueue.getBoundingClientRect().height, true)
+}).observe(downloadsQueue)
 
 downloadsWs.onmessage = (msg) => {
     const m = JSON.parse(msg.data.toString());
@@ -257,17 +269,23 @@ downloadsWs.onmessage = (msg) => {
     }
 };
 
-let downloadsQueueToggled = downloadsQueue.classList.contains(`d-none`);
+let downloadsQueueToggled = false;
 
 downloadsList.onclick = () => {
     anime.remove(downloadsQueue);
-    
-    if(downloadsQueue.classList.contains(`d-none`)) downloadsQueue.classList.remove(`d-none`);
 
-    const arr = [0 - downloadsQueue.getBoundingClientRect().height, document.getElementById(`navigationBar`).getBoundingClientRect().height]
+    downloadsQueue.style.maxHeight = queueMaxHeight;
 
-    if(downloadsQueueToggled) {
+    const currentHeight = downloadsQueue.getBoundingClientRect().height
+
+    const arr = [document.getElementById(`navigationBar`).getBoundingClientRect().height - 150, document.getElementById(`navigationBar`).getBoundingClientRect().height]
+
+    if(!downloadsQueueToggled) {
         console.log(`sliding in`)
+
+        observerEnabled = true;
+
+        repositionNotifications(currentHeight, true)
 
         downloadsList.style.background = `rgba(255,255,255,1)`;
         downloadsList.style.color = `rgba(0,0,0,1)`;
@@ -275,7 +293,6 @@ downloadsList.onclick = () => {
         anime({
             targets: downloadsQueue,
             top: arr,
-            maxHeight: queueMaxHeight,
             duration: 500,
             easing: `easeOutExpo`,
         });
@@ -285,15 +302,16 @@ downloadsList.onclick = () => {
         downloadsList.style.background = `rgba(25,25,25,0.3)`;
         downloadsList.style.color = `rgba(255,255,255,1)`;
 
+        observerEnabled = false;
+        
+        repositionNotifications(0, true)
+
         anime({
             targets: downloadsQueue,
             top: arr.slice(0).reverse(),
-            maxHeight: downloadsQueue.getBoundingClientRect().height,
+            maxHeight: [`${currentHeight}px`, `20px`],
             duration: 500,
             easing: `easeOutExpo`,
-            finished: () => {
-                downloadsQueue.classList.add(`d-none`);
-            }
         });
     }
 

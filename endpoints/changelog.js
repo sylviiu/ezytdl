@@ -1,5 +1,7 @@
 let response = null;
 
+const { sendNotification } = require(`../util/downloadManager`);
+
 module.exports = {
     type: `get`,
     path: `/changelog/:check`,
@@ -12,9 +14,7 @@ module.exports = {
                     console.log(`no response still`)
                 };
 
-                res();
-            }).catch(e => {
-                console.error(e + `at changelog request`)
+                res(false);
             })
         });
 
@@ -27,7 +27,12 @@ module.exports = {
             /*if(!app.isPackaged) {
                 console.log(`--\nVERSION CHECK DISABLED\nBuild: ${currentVersion}\nLast Checked: ${lastVersionChecked}\n--`)
             } else*/ if(lastVersionChecked !== currentVersion && currentVersion == response.tag_name) {
-                res.send(true);
+                res.send(false);
+                sendNotification({
+                    headingText: `ezytdl has been updated!`,
+                    bodyText: `Click here to view the changelog.`,
+                    redirect: `changelog.html`,
+                })
             } else {
                 res.send(false);
             }

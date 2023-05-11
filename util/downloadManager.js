@@ -295,6 +295,17 @@ const setStatusWS = (ws) => {
     }
 }
 
+const sendNotif = (msg) => {
+    if(msg.redirect) {
+        if(!require(`fs`).existsSync(`./html/${msg.redirect}`)) {
+            msg.redirect = null;
+            msg.bodyText += `\n\n-- redirect file redacted; file not found`
+        }
+    };
+
+    notificationWs.send(msg);
+}
+
 const setNotificationWS = (ws) => {
     if(notificationWs) {
         notificationWs.close();
@@ -309,7 +320,8 @@ const setNotificationWS = (ws) => {
     });
 
     if(notificationQueue) {
-        for (notif of notificationQueue) notificationWs.send(notif);
+        for (notif of notificationQueue) sendNotif(notif);
+        notificationQueue = [];
     }
 }
 
@@ -320,7 +332,7 @@ const sendNotification = (msg) => {
         notificationQueue.push(msg);
         return false;
     } else {
-        notificationWs.send(msg);
+        sendNotif(msg);
         return true;
     }
 }

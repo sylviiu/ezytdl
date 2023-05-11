@@ -7,6 +7,8 @@ const { sendNotification } = require("./util/downloadManager.js");
 
 let newSettingsNotifSent = false;
 
+let firstCheckDone = false;
+
 module.exports = (configObject) => {
     try {
         const defaultConfig = require(`./defaultConfig.json`)
@@ -34,14 +36,11 @@ module.exports = (configObject) => {
         };
 
         const checkKeys = (logPrefix, thisKey, config, defaults) => {
-            //console.log(logPrefix + `Checking keys of ${thisKey}...`);
-
             for(const key of Object.keys(defaults)) {
-                //console.log(logPrefix + ` | ${key}...`, defaults[key])
-
-                if(!config[key]) {
-                    if(!newSettingsNotifSent) {
+                if(typeof config[key] == `undefined`) {
+                    if(!newSettingsNotifSent && !firstCheckDone) {
                         newSettingsNotifSent = true;
+                        console
                         sendNotification({
                             headingText: `New settings!`,
                             bodyText: `New settings have been added to the config! Please check your settings!`
@@ -52,12 +51,13 @@ module.exports = (configObject) => {
                     checked = true;
                 };
 
-                if(typeof config[key] != typeof defaults[key]) {
+                if(defaults[key] && typeof config[key] != typeof defaults[key]) {
                     sendNotification({
                         type: `warn`,
                         headingText: `Config key mismatch!`,
                         bodyText: `The config key "${key}" is missing or is of the wrong type! (Expected: ${typeof defaults[key]}, got: ${config[key] ? typeof config[key] : ``})`
                     });
+                    console.log(config[key], defaults[key])
                     config[key] = defaults[key];
                     checked = true;
                 }
@@ -83,6 +83,8 @@ module.exports = (configObject) => {
         let slashUsed = require('os').platform() == `win32` ? `\\` : `/`
 
         if(!userConfig.saveLocation) userConfig.saveLocation = (fs.existsSync(os.homedir() + `${slashUsed}Downloads`) ? os.homedir() + `${slashUsed}Downloads` : os.homedir()) + `${slashUsed}ezytdl`;
+
+        firstCheckDone = true;
 
         return userConfig;
     } catch(e) {

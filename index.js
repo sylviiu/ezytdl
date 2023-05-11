@@ -11,6 +11,7 @@ global.configPath = require(`appdata-path`)(`ezytdl`);
 app.on('window-all-closed', () => app.quit())
 
 const errorHandler = require(`./util/errorHandler`);
+const { sendNotification } = require('./util/downloadManager');
 
 process.on(`uncaughtException`, (err) => {errorHandler(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)})
 process.on(`unhandledRejection`, (err) => {errorHandler(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)})
