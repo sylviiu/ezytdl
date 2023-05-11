@@ -15,19 +15,9 @@
 <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
 </head>
 
-<body style="background: rgb(10,10,10);width: 100vw;font-family: Alata, sans-serif;overflow-x: hidden;overflow-y: hidden;">
+<body style="background: rgb(10,10,10);width: 100vw;font-family: Alata, sans-serif;overflow-x: hidden;overflow-y: hidden;padding-top: 80px;">
     <div id="background" style="width: 100vw;position: fixed;bottom: 0;right: 0;height: 100vh;opacity: 0;filter: blur(15px);background-size: cover;background-position: center center;"></div>
     <div style="position: sticky;bottom: 0;right: 0;">
-        <div class="d-flex justify-content-between align-items-center" style="width: 100vw;height: 80px;padding: 24px;background: rgba(0,0,0,0.5);">
-            <div class="container-fluid d-flex justify-content-start align-items-end" style="padding: 0px;">
-                <h1 style="color: rgb(255,255,255);">ezytdl</h1>
-                <h6 id="version" style="color: rgb(71,71,71);margin-bottom: 13px;">v0.0.0</h6>
-            </div>
-            <div class="container-fluid d-flex justify-content-end align-items-center" style="padding: 0px;"><a class="btn btn-primary" role="button" style="background: rgb(25,25,25);border-style: none;border-radius: 100px;margin: 0px 6px;height: 36px;" href="settings.html"><i class="fas fa-cog" style="margin-right: 6px;"></i>Settings</a><button class="btn btn-primary d-flex justify-content-center align-items-center" id="downloadsList" type="button" style="background: rgb(25,25,25);border-style: none;border-radius: 100px;margin: 0px 6px;height: 36px;width: 36px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" id="downloadsIcon">
-                        <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
-                        <path d="M480 352h-133.5l-45.25 45.25C289.2 409.3 273.1 416 256 416s-33.16-6.656-45.25-18.75L165.5 352H32c-17.67 0-32 14.33-32 32v96c0 17.67 14.33 32 32 32h448c17.67 0 32-14.33 32-32v-96C512 366.3 497.7 352 480 352zM432 456c-13.2 0-24-10.8-24-24c0-13.2 10.8-24 24-24s24 10.8 24 24C456 445.2 445.2 456 432 456zM233.4 374.6C239.6 380.9 247.8 384 256 384s16.38-3.125 22.62-9.375l128-128c12.49-12.5 12.49-32.75 0-45.25c-12.5-12.5-32.76-12.5-45.25 0L288 274.8V32c0-17.67-14.33-32-32-32C238.3 0 224 14.33 224 32v242.8L150.6 201.4c-12.49-12.5-32.75-12.5-45.25 0c-12.49 12.5-12.49 32.75 0 45.25L233.4 374.6z"></path>
-                    </svg></button></div>
-        </div>
         <div class="d-inline-flex flex-column justify-content-start align-items-center" id="mainContainer" style="width: 100vw;/*overflow-y: scroll;*/">
             <div class="container-fluid d-flex justify-content-center align-items-center" id="urlBox" style="--bs-primary: #680dfd;--bs-primary-rgb: 104,13,253;--bs-success: #04a5ff;--bs-success-rgb: 4,165,255;--bs-info: #c29ad5;--bs-info-rgb: 194,154,213;--bs-dark: #1f1f1f;--bs-dark-rgb: 31,31,31;--bs-body-color: #ffffff;--bs-body-bg: #080808;width: min(500px, 80vw);height: calc(100vh - 80px);padding: 0px;"><input class="d-flex justify-content-center align-items-center" type="text" id="urlInput" style="background: rgba(88,88,88,0.11);border-width: 0px;border-radius: 100px;padding: 6px 16px;border-bottom-right-radius: 0px;border-top-right-radius: 0px;color: rgb(255,255,255);height: 36px;border-top-left-radius: 100px;width: 100%;" placeholder="Enter URL..."><button class="btn btn-primary" id="urlEnter" type="button" style="height: 36px;border-width: 0px;border-bottom-right-radius: 100px;border-top-right-radius: 100px;border-top-left-radius: 0px;border-bottom-left-radius: 0px;background: rgb(255,255,255, 0.85);color: rgb(0,0,0);padding-right: 15px;"><i class="fas fa-chevron-circle-right"></i></button></div>
             <h5 class="d-none" id="errorMsg" style="color: rgb(255,255,255);">Error Text</h5>
@@ -108,6 +98,16 @@
                 </div>
             </div>
         </div>
+    </div>
+    <div class="d-flex justify-content-between align-items-center" style="width: 100vw;height: 80px;padding: 24px;background: rgba(0,0,0,0.5);position: fixed;margin-top: -80px;backdrop-filter: blur(15px);-webkit-backdrop-filter: blur(15px);top: 80px;left: 0px;">
+        <div class="container-fluid d-flex justify-content-start align-items-end" style="padding: 0px;">
+            <h1 style="color: rgb(255,255,255);">ezytdl</h1>
+            <h6 id="version" style="color: rgb(71,71,71);margin-bottom: 13px;">v0.0.0</h6>
+        </div>
+        <div class="container-fluid d-flex justify-content-end align-items-center" style="padding: 0px;"><a class="btn btn-primary" role="button" style="background: rgba(25,25,25,0.3);border-style: none;border-radius: 100px;margin: 0px 6px;height: 36px;" href="settings.html"><i class="fas fa-cog" style="margin-right: 6px;"></i>Settings</a><button class="btn btn-primary d-flex justify-content-center align-items-center" id="downloadsList" type="button" style="background: rgba(25,25,25,0.3);border-style: none;border-radius: 100px;margin: 0px 6px;height: 36px;width: 36px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" id="downloadsIcon">
+                    <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
+                    <path d="M480 352h-133.5l-45.25 45.25C289.2 409.3 273.1 416 256 416s-33.16-6.656-45.25-18.75L165.5 352H32c-17.67 0-32 14.33-32 32v96c0 17.67 14.33 32 32 32h448c17.67 0 32-14.33 32-32v-96C512 366.3 497.7 352 480 352zM432 456c-13.2 0-24-10.8-24-24c0-13.2 10.8-24 24-24s24 10.8 24 24C456 445.2 445.2 456 432 456zM233.4 374.6C239.6 380.9 247.8 384 256 384s16.38-3.125 22.62-9.375l128-128c12.49-12.5 12.49-32.75 0-45.25c-12.5-12.5-32.76-12.5-45.25 0L288 274.8V32c0-17.67-14.33-32-32-32C238.3 0 224 14.33 224 32v242.8L150.6 201.4c-12.49-12.5-32.75-12.5-45.25 0c-12.49 12.5-12.49 32.75 0 45.25L233.4 374.6z"></path>
+                </svg></button></div>
     </div><script>
     let config;
 
@@ -268,8 +268,14 @@
                     btn.onclick = () => {
                         btn.disabled = true;
                         btn.opacity = 0.5;
+                        
+                        startDownload(btn, {
+                            url: url,
+                            format: qualities[i],
+                            info: Object.assign({}, info, { formats: null }),
+                        });
 
-                        const prefix = btn.innerHTML.split(`</i>`).slice(0, -1).join(`</i>`) + `</i>&nbsp;`;
+                        /*const prefix = btn.innerHTML.split(`</i>`).slice(0, -1).join(`</i>`) + `</i>&nbsp;`;
                         const originalText = btn.innerHTML.replace(prefix, ``);
                         btn.innerHTML = prefix + `Starting...`;
                         
@@ -308,7 +314,7 @@
 
                             btn.disabled = false;
                             btn.innerHTML = `Open`;
-                        }
+                        }*/
                     }
                 });
                 
@@ -460,12 +466,15 @@
 
                         card.style.opacity = 0.5;
 
-                        formatSubtext.innerHTML = `Starting...`;
-                        if(formatSubtext.classList.contains(`d-none`)) formatSubtext.classList.remove(`d-none`);
-                        
-                        card.querySelector(`#fileFormat`).innerHTML = `0%`;
+                        startDownload(card, {
+                            url: url,
+                            format: format.format_id,
+                            ext: card.querySelector(`#formatConversionTextbox`).value || null,
+                            filePath: card.querySelector(`#saveLocation`).value || null,
+                            info: Object.assign({}, info, { formats: null }),
+                        });
 
-                        const ws = new WebSocket(`ws://localhost:3000/download`);
+                        /*const ws = new WebSocket(`ws://localhost:3000/download`);
 
                         let location = `Somewhere on your computer :)`
 
@@ -487,7 +496,7 @@
                             card.style.opacity = 1;
                             card.querySelector(`#downloadicon`).classList.add(`d-none`);
                             card.querySelector(`#fileicon`).classList.remove(`d-none`);
-                        }
+                        }*/
                     }
 
                     card.querySelector(`#confirmDownload`).onclick = () => confirmDownload();
@@ -591,8 +600,8 @@
 </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/addFormatTags.js"></script>
-    <script src="assets/js/createDownloadManager.js"></script>
     <script src="assets/js/downloads.js"></script>
+    <script src="assets/js/downloadUtils.js"></script>
     <script src="assets/js/version.js"></script>
 </body>
 

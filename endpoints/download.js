@@ -46,9 +46,9 @@ module.exports = async (app, server) => {
                     ws.on(`message`, (m) => {
                         m = JSON.parse(m.toString());
 
-                        if(m.action) {
-                            queueAction(m.id, m.action);
-                        }
+                        if(m.action == `download`) {
+                            createDownload(m.data, () => {}).then(() => {}).catch(() => {})
+                        } else if(m.action) queueAction(m.id, m.action);
                     })
                 } else if(o == `ytdlp`) {
                     return require(`../util/downloadClient/ytdlp`)(ws)

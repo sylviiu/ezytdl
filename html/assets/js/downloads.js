@@ -7,6 +7,7 @@ const downloadsQueue = formatListTemplate.cloneNode(true);
 downloadsQueue.querySelector(`#formatCard`).parentNode.removeChild(downloadsQueue.querySelector(`#formatCard`));
 
 const downloadCard = formatListTemplate.querySelector(`#formatCard`).cloneNode(true);
+downloadCard.querySelector(`#formatSubtext`).classList.remove(`d-none`);
 //downloadCard.querySelector(`#formatMetaList`).classList.add(`d-none`);
 
 const platform = navigator.platform.toLowerCase();
@@ -24,7 +25,10 @@ const downloadCardStates = {
         card.querySelector(`#pauseicon`).classList.remove(`d-none`);
 
         card.querySelector(`#formatDownload`).onclick = () => {};
+        if(card.querySelector(`#formatDownload`).classList.contains(`d-none`)) card.querySelector(`#formatDownload`).classList.remove(`d-none`);
+
         card.querySelector(`#pausePlayButton`).onclick = () => {};
+        if(!card.querySelector(`#pausePlayButton`).classList.contains(`d-none`)) card.querySelector(`#pausePlayButton`).classList.add(`d-none`);
     },
     complete: (card) => {
         downloadCardStates.reset(card);
@@ -126,7 +130,7 @@ if(downloadsQueue.classList.contains(`d-flex`)) downloadsQueue.classList.remove(
 
 downloadsQueue.classList.add(`d-none`)
 
-downloadsQueue.style.position = `absolute`;
+downloadsQueue.style.position = `fixed`;
 downloadsQueue.style[`backdrop-filter`] = `blur(15px)`;
 
 //downloadsQueue.style.bottom = window.innerHeight;
@@ -224,7 +228,8 @@ downloadsWs.onmessage = (msg) => {
 
                 card.classList.add(`queue-${o.state}`)
 
-                const insertAfter = downloadsQueue.querySelectorAll(`.queue-${o.state}`).slice(-1)[0];
+                const selector = downloadsQueue.querySelectorAll(`.queue-${o.state}`)
+                const insertAfter = selector.item(selector.length - 1)
                 card.after(insertAfter)
             }
         }
