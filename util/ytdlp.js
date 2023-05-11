@@ -65,12 +65,12 @@ module.exports = {
 
         const saveTo = (filePath || saveLocation) + (require('os').platform() == `win32` ? `\\` : `/`)
         
-        const args = [`-f`, format, url, `-o`, saveTo + outputFilename + `.%(ext)s`, `--embed-metadata`, `--no-mtime`, `--ffmpeg-location=`];
+        const args = [`-f`, format, url, `-o`, saveTo + outputFilename + `.%(ext)s`, `--embed-metadata`, `--no-mtime`];
 
         const treekill = require(`tree-kill`)
 
         if(fs.existsSync(ffmpegPath)) {
-            //args.push(`--ffmpeg-location`, ffmpegPath);
+            args.push(`--ffmpeg-location`, ffmpegPath);
         } else {
             ext = false;
         }

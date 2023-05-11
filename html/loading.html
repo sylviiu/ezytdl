@@ -7,6 +7,7 @@
     <title>ezytdl</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Alata&amp;display=swap">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css">
     <link rel="stylesheet" href="assets/css/rotating.compiled.css">
     <link rel="stylesheet" href="assets/css/scroll.css">
     <link rel="stylesheet" href="assets/css/scrollbar.compiled.css">
@@ -15,22 +16,27 @@
 </head>
 
 <body style="background: rgb(10,10,10);width: 100vw;height: 100vh;font-family: Alata, sans-serif;">
-    <div class="d-flex justify-content-between align-items-center" style="width: 100vw;height: 80px;padding: 24px;background: rgba(0,0,0,0.5);">
-        <div class="container-fluid d-flex justify-content-start align-items-end" style="padding: 0px;">
-            <h1 style="color: rgb(255,255,255);">ezytdl</h1>
-            <h6 id="version" style="color: rgb(71,71,71);margin-bottom: 13px;">v0.0.0</h6>
-        </div>
-    </div>
-    <div class="d-flex flex-column justify-content-center align-items-center" style="height: calc(100% - 80px);width: 100vw;">
+    <div class="d-flex flex-column justify-content-center align-items-center" style="height: calc(100% - 80px);width: 100vw;padding-top: 80px;">
         <h1 style="color: rgb(255,255,255);margin-bottom: 30px;">Loading...</h1><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" style="font-size: 85px;color: rgb(255,255,255);-webkit-animation: rotating 2s linear infinite;">
             <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
             <path d="M496 48V192c0 17.69-14.31 32-32 32H320c-17.69 0-32-14.31-32-32s14.31-32 32-32h63.39c-29.97-39.7-77.25-63.78-127.6-63.78C167.7 96.22 96 167.9 96 256s71.69 159.8 159.8 159.8c34.88 0 68.03-11.03 95.88-31.94c14.22-10.53 34.22-7.75 44.81 6.375c10.59 14.16 7.75 34.22-6.375 44.81c-39.03 29.28-85.36 44.86-134.2 44.86C132.5 479.9 32 379.4 32 256s100.5-223.9 223.9-223.9c69.15 0 134 32.47 176.1 86.12V48c0-17.69 14.31-32 32-32S496 30.31 496 48z"></path>
         </svg>
     </div>
+    <div class="d-flex justify-content-between align-items-center" id="navigationBar" style="width: 100vw;height: 80px;padding: 24px;background: rgba(0,0,0,0.5);position: fixed;margin-top: -80px;backdrop-filter: blur(15px);-webkit-backdrop-filter: blur(15px);top: 80px;left: 0px;">
+        <div class="container-fluid d-flex justify-content-start align-items-end" style="padding: 0px;">
+            <h1 style="color: rgb(255,255,255);">ezytdl</h1>
+            <h6 id="version" style="color: rgb(71,71,71);margin-bottom: 13px;">v0.0.0</h6>
+        </div>
+        <div class="container-fluid d-flex justify-content-end align-items-center" style="padding: 0px;"><a class="btn btn-primary" role="button" style="background: rgba(25,25,25,0.3);border-style: none;border-radius: 100px;margin: 0px 6px;height: 36px;" href="settings.html"><i class="fas fa-cog" style="margin-right: 6px;"></i>Settings</a><button class="btn btn-primary d-flex justify-content-center align-items-center" id="downloadsList" type="button" style="background: rgba(25,25,25,0.3);border-style: none;border-radius: 100px;margin: 0px 6px;height: 36px;width: 36px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" id="downloadsIcon">
+                    <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
+                    <path d="M480 352h-133.5l-45.25 45.25C289.2 409.3 273.1 416 256 416s-33.16-6.656-45.25-18.75L165.5 352H32c-17.67 0-32 14.33-32 32v96c0 17.67 14.33 32 32 32h448c17.67 0 32-14.33 32-32v-96C512 366.3 497.7 352 480 352zM432 456c-13.2 0-24-10.8-24-24c0-13.2 10.8-24 24-24s24 10.8 24 24C456 445.2 445.2 456 432 456zM233.4 374.6C239.6 380.9 247.8 384 256 384s16.38-3.125 22.62-9.375l128-128c12.49-12.5 12.49-32.75 0-45.25c-12.5-12.5-32.76-12.5-45.25 0L288 274.8V32c0-17.67-14.33-32-32-32C238.3 0 224 14.33 224 32v242.8L150.6 201.4c-12.49-12.5-32.75-12.5-45.25 0c-12.49 12.5-12.49 32.75 0 45.25L233.4 374.6z"></path>
+                </svg></button></div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/addFormatTags.js"></script>
     <script src="assets/js/downloads.js"></script>
     <script src="assets/js/downloadUtils.js"></script>
+    <script src="assets/js/errorHandler.js"></script>
     <script src="assets/js/version.js"></script>
 </body>
 

@@ -99,7 +99,7 @@
             </div>
         </div>
     </div>
-    <div class="d-flex justify-content-between align-items-center" style="width: 100vw;height: 80px;padding: 24px;background: rgba(0,0,0,0.5);position: fixed;margin-top: -80px;backdrop-filter: blur(15px);-webkit-backdrop-filter: blur(15px);top: 80px;left: 0px;">
+    <div class="d-flex justify-content-between align-items-center" id="navigationBar" style="width: 100vw;height: 80px;padding: 24px;background: rgba(0,0,0,0.5);position: fixed;margin-top: -80px;backdrop-filter: blur(15px);-webkit-backdrop-filter: blur(15px);top: 80px;left: 0px;">
         <div class="container-fluid d-flex justify-content-start align-items-end" style="padding: 0px;">
             <h1 style="color: rgb(255,255,255);">ezytdl</h1>
             <h6 id="version" style="color: rgb(71,71,71);margin-bottom: 13px;">v0.0.0</h6>
@@ -550,6 +550,8 @@
                 easing: `easeOutExpo`,
                 complete: () => {
                     if(document.getElementById(`listbox`)) listboxParent.removeChild(document.getElementById(`listbox`));
+
+                    urlBox.style.height = `calc(100vh - 80px)`
                     
                     if(parse) {
                         parseInfo();
@@ -602,6 +604,7 @@
     <script src="assets/js/addFormatTags.js"></script>
     <script src="assets/js/downloads.js"></script>
     <script src="assets/js/downloadUtils.js"></script>
+    <script src="assets/js/errorHandler.js"></script>
     <script src="assets/js/version.js"></script>
 </body>
 

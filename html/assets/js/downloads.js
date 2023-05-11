@@ -1,13 +1,22 @@
 const downloadsWs = new WebSocket(`ws://localhost:3000/download`);
 
+let currentDownloads = 0
+
 const downloadsList = document.getElementById('downloadsList');
 const downloadsIcon = document.getElementById('downloadsIcon').cloneNode(true);
 
 const downloadsQueue = formatListTemplate.cloneNode(true);
 downloadsQueue.querySelector(`#formatCard`).parentNode.removeChild(downloadsQueue.querySelector(`#formatCard`));
 
+downloadsQueue.style.maxHeight = `calc(100vh - ${document.getElementById(`navigationBar`).offsetHeight}px - 20px)`;
+downloadsQueue.style.overflowY = `scroll`;
+
+downloadsQueue.style.paddingLeft = `20px`
+downloadsQueue.style.paddingRight = `20px`
+
 const downloadCard = formatListTemplate.querySelector(`#formatCard`).cloneNode(true);
 downloadCard.querySelector(`#formatSubtext`).classList.remove(`d-none`);
+
 //downloadCard.querySelector(`#formatMetaList`).classList.add(`d-none`);
 
 const platform = navigator.platform.toLowerCase();
@@ -135,12 +144,16 @@ downloadsQueue.style[`backdrop-filter`] = `blur(15px)`;
 
 //downloadsQueue.style.bottom = window.innerHeight;
 
-downloadsQueue.classList.add(`d-flex`);
+//downloadsQueue.classList.add(`d-flex`);
 
 downloadsQueue.style.top = `80px`
 downloadsQueue.style.right = `10px`;
 
+const navigationBar = document.querySelector(`#navigationBar`);
+
 document.body.appendChild(downloadsQueue);
+
+downloadsQueue.after(navigationBar);
 
 const downloadManagers = {};
 
@@ -152,7 +165,9 @@ downloadsWs.onmessage = (msg) => {
     const m = JSON.parse(msg.data.toString());
 
     if(m.type == `queue`) {
-        const queueLength = m.data.active.length + m.data.queue.length;
+        const queueLength = m.data.active.length + m.data.queue.length + m.data.paused.length;
+
+        currentDownloads = queueLength
     
         if(queueLength > 0) {
             if(downloadsList.querySelector(`#downloadsIcon`)) {
@@ -247,22 +262,30 @@ downloadsList.onclick = () => {
     
     if(downloadsQueue.classList.contains(`d-none`)) downloadsQueue.classList.remove(`d-none`);
 
-    const arr = [0 - Number(downloadsQueue.style.minWidth.replace(`px`, ``)), `10px`]
+    const arr = [0 - downloadsQueue.getBoundingClientRect().height, document.getElementById(`navigationBar`).getBoundingClientRect().height]
 
     if(downloadsQueueToggled) {
         console.log(`sliding in`)
+
+        downloadsList.style.background = `rgba(255,255,255,1)`;
+        downloadsList.style.color = `rgba(0,0,0,1)`;
+
         anime({
             targets: downloadsQueue,
-            right: arr,
-            duration: 1000,
+            top: arr,
+            duration: 500,
             easing: `easeOutExpo`,
         });
     } else {     
         console.log(`sliding out`)       
+
+        downloadsList.style.background = `rgba(25,25,25,0.3)`;
+        downloadsList.style.color = `rgba(255,255,255,1)`;
+
         anime({
             targets: downloadsQueue,
-            right: arr.slice(0).reverse(),
-            duration: 1000,
+            top: arr.slice(0).reverse(),
+            duration: 500,
             easing: `easeOutExpo`,
             finished: () => {
                 downloadsQueue.classList.add(`d-none`);

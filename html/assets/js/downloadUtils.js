@@ -250,7 +250,7 @@ const startDownload = (originalCard, opt) => {
             complete: () => {
                 if(downloadsWs) {
                     console.log(`found downloads websocket!`)
-
+        
                     downloadsWs.send(JSON.stringify({
                         action: `download`,
                         data: opt,
