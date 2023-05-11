@@ -3,6 +3,10 @@ const errorHandler = require("./util/errorHandler.js");
 const fs = require('fs');
 const os = require('os');
 
+const { sendNotification } = require("./util/downloadManager.js");
+
+let newSettingsNotifSent = false;
+
 module.exports = (configObject) => {
     try {
         const defaultConfig = require(`./defaultConfig.json`)
@@ -36,9 +40,27 @@ module.exports = (configObject) => {
                 //console.log(logPrefix + ` | ${key}...`, defaults[key])
 
                 if(!config[key]) {
+                    if(!newSettingsNotifSent) {
+                        newSettingsNotifSent = true;
+                        sendNotification({
+                            headingText: `New settings!`,
+                            bodyText: `New settings have been added to the config! Please check your settings!`
+                        });
+                    }
+
                     config[key] = defaults[key];
                     checked = true;
                 };
+
+                if(typeof config[key] != typeof defaults[key]) {
+                    sendNotification({
+                        type: `warn`,
+                        headingText: `Config key mismatch!`,
+                        bodyText: `The config key "${key}" is missing or is of the wrong type! (Expected: ${typeof defaults[key]}, got: ${config[key] ? typeof config[key] : ``})`
+                    });
+                    config[key] = defaults[key];
+                    checked = true;
+                }
                 
                 if(defaults[key] && typeof defaults[key] == `object`) checkKeys(logPrefix + ` > `, thisKey + ` / ` + key, config[key], defaults[key]);
             };

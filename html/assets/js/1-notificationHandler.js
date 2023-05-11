@@ -66,7 +66,7 @@ const addNotification = container => {
     }, 8000)
 }
 
-const createNotification = ({ headingText, bodyText, type }) => {
+const createNotification = ({ headingText, title, bodyText, content, type }) => {
     const container = document.createElement(`div`);
 
     container.onclick = () => {
@@ -109,13 +109,13 @@ const createNotification = ({ headingText, bodyText, type }) => {
     
     const heading = document.createElement(`h5`);
     heading.id = `errorHeading`;
-    heading.innerText = headingText || `An internal error has occurred!`;
+    heading.innerText = headingText || title || `An internal error has occurred!`;
     heading.style.marginBottom = `6px`;
     container.appendChild(heading);
 
     const body = document.createElement(`h6`);
     body.id = `errorBody`
-    body.innerText = bodyText || `-- unknown --`;
+    body.innerText = bodyText || content || `-- unknown --`;
     container.appendChild(body);
 
     addNotification(container);
