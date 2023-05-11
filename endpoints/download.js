@@ -2,7 +2,7 @@ const { WebSocketServer } = require("ws");
 
 const idGen = require(`../util/idGen`);
 
-const { createDownload, setWS, queueAction } = require(`../util/downloadManager`)
+const { createDownload, setWS, queueAction, setStatusWS, setNotificationWS } = require(`../util/downloadManager`)
 
 module.exports = async (app, server) => {
     const wss = new WebSocketServer({ server, path: `/download` });
@@ -54,6 +54,10 @@ module.exports = async (app, server) => {
                     return require(`../util/downloadClient/ytdlp`)(ws)
                 } else if(o == `ffmpeg`) {
                     return require(`../util/downloadClient/ffmpeg`)(ws)
+                } else if(o == `status`) {
+                    return setStatusWS(ws)
+                } else if(o == `notification`) {
+                    setNotificationWS(ws);
                 } else {
                     ws.send(JSON.stringify({ message: `Unknown client`, version: `--`, progress: 0 }));
                     ws.close();

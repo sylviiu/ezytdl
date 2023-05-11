@@ -11,6 +11,8 @@ downloadsQueue.querySelector(`#formatCard`).parentNode.removeChild(downloadsQueu
 downloadsQueue.style.maxHeight = `calc(100vh - ${document.getElementById(`navigationBar`).offsetHeight}px - 20px)`;
 downloadsQueue.style.overflowY = `scroll`;
 
+const queueMaxHeight = downloadsQueue.style.maxHeight
+
 downloadsQueue.style.paddingLeft = `20px`
 downloadsQueue.style.paddingRight = `20px`
 
@@ -273,6 +275,7 @@ downloadsList.onclick = () => {
         anime({
             targets: downloadsQueue,
             top: arr,
+            maxHeight: queueMaxHeight,
             duration: 500,
             easing: `easeOutExpo`,
         });
@@ -285,6 +288,7 @@ downloadsList.onclick = () => {
         anime({
             targets: downloadsQueue,
             top: arr.slice(0).reverse(),
+            maxHeight: downloadsQueue.getBoundingClientRect().height,
             duration: 500,
             easing: `easeOutExpo`,
             finished: () => {

@@ -2,15 +2,27 @@ const superagent = require('superagent')
 
 const errorAndExit = require('./errorAndExit');
 
+const { sendNotification } = require(`../util/downloadManager`)
+
 module.exports = (err) => {
     console.error(err)
 
-    return errorAndExit(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)
+    const str = `${err}\n\n${err.stack? err.stack : `(no stack)`}`
 
-    if(`${err}`.includes(`EADDRINUSE`) && `${err}`.includes(`::3000`)) {
-        superagent.get(`http://localhost:3000/focus`).then(() => {
-            console.log(`Focused existing window, exiting...`);
-            app.quit()
-        })
-    } else errorAndExit(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)
+    const notifSent = sendNotification({
+        headingText: `Internal error occurred!`,
+        bodyText: str,
+        type: `error`
+    });
+
+    if(!notifSent) {
+        return errorAndExit(str)
+    
+        if(`${err}`.includes(`EADDRINUSE`) && `${err}`.includes(`::3000`)) {
+            superagent.get(`http://localhost:3000/focus`).then(() => {
+                console.log(`Focused existing window, exiting...`);
+                app.quit()
+            })
+        } else errorAndExit(str)
+    }
 }

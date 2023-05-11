@@ -6,15 +6,29 @@ const idGen = require(`../util/idGen`);
 
 const time = require(`../util/time`);
 
+const { updateStatus } = require(`../util/downloadManager`);
+
 module.exports = {
     listFormats: (url) => new Promise(async res => {
         console.log(`going to path ${path}; url "${url}"`)
 
-        const proc = child_process.execFile(path, [url, `--dump-single-json`]);
+        const proc = child_process.execFile(path, [url, `--dump-single-json`, `--quiet`, `--progress`, `--verbose`]);
 
         let data = ``;
 
-        proc.stderr.on(`data`, d => console.log(d.toString().trim()))
+        let firstUpdate = false;
+
+        proc.stderr.on(`data`, d => {
+            if(!firstUpdate) {
+                firstUpdate = true;
+                updateStatus(`Getting video info...`)
+            };
+            
+            const str = d.toString().trim();
+            if(!str.startsWith(`[debug]`)) {
+                updateStatus(str.split(`]`).slice(1).join(`]`).trim())
+            }
+        })
 
         proc.stdout.on(`data`, d => {
             //console.log(`output`, d.toString())
@@ -35,7 +49,7 @@ module.exports = {
     getFilename: (url, format) => new Promise(async res => {
         const { outputFilename } = require(`../getConfig`)();
 
-        const args = [`-f`, format, url, `-o`, outputFilename, `--get-filename`];
+        const args = [`-f`, format, url, `-o`, outputFilename, `--get-filename`, `--quiet`];
 
         const proc = child_process.execFile(path, args);
 

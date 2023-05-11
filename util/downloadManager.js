@@ -9,6 +9,12 @@ const queue = {
 
 let ws = null;
 
+let downloadStatusWs = null;
+let lastDownloadStatus = null;
+
+let notificationWs = null;
+let notificationQueue = [];
+
 const queueStrings = [ `Up next!` ];
 
 const sendUpdate = (sendObj) => {
@@ -252,17 +258,71 @@ const setWS = (newWs) => {
     }
 
     ws = newWs;
-    
-    ws.sessionID = idGen(10);
 
     ws.send(JSON.stringify({
         type: `queue`,
         data: queue
     }))
+    
+    ws.sessionID = idGen(10);
 
     ws.once(`close`, () => {
         if(ws.sessionID == newWs.sessionID) ws = null;
     });
+}
+
+const updateStatus = (status) => {
+    if(downloadStatusWs) {
+        downloadStatusWs.send(status.toString().trim());
+    }
+}
+
+const setStatusWS = (ws) => {
+    if(downloadStatusWs) {
+        downloadStatusWs.close();
+    };
+
+    downloadStatusWs = ws;
+    
+    ws.sessionID = idGen(10);
+
+    ws.once(`close`, () => {
+        if(ws.sessionID == downloadStatusWs.sessionID) ws = null;
+    });
+
+    if(lastDownloadStatus) {
+        downloadStatusWs.send(lastDownloadStatus);
+    }
+}
+
+const setNotificationWS = (ws) => {
+    if(notificationWs) {
+        notificationWs.close();
+    };
+
+    notificationWs = ws;
+    
+    ws.sessionID = idGen(10);
+
+    ws.once(`close`, () => {
+        if(ws.sessionID == notificationWs.sessionID) ws = null;
+    });
+
+    if(notificationQueue) {
+        for (notif of notificationQueue) notificationWs.send(notif);
+    }
+}
+
+const sendNotification = (msg) => {
+    if(typeof msg == `object`) msg = JSON.stringify(msg)
+
+    if(!notificationWs) {
+        notificationQueue.push(msg);
+        return false;
+    } else {
+        notificationWs.send(msg);
+        return true;
+    }
 }
 
 module.exports = {
@@ -270,4 +330,8 @@ module.exports = {
     createDownload,
     setWS,
     queueAction,
+    updateStatus,
+    setStatusWS,
+    setNotificationWS,
+    sendNotification
 };
