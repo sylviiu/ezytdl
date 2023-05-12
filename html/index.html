@@ -391,7 +391,7 @@
                                 return {
                                     url: e.url,
                                     format: qualities[currentSelected] || qualities[0],
-                                    ext: listbox.querySelector(`#formatConversionTextbox`).value || null,
+                                    ext: currentSelected == 1 && listbox.querySelector(`#formatConversionTextbox`).value ? listbox.querySelector(`#formatConversionTextbox`).value : null,
                                     filePath: listbox.querySelector(`#saveLocation`).value || null,
                                     info: e
                                 }
