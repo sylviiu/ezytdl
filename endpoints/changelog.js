@@ -28,6 +28,7 @@ module.exports = {
                 console.log(`--\nVERSION CHECK DISABLED\nBuild: ${currentVersion}\nLast Checked: ${lastVersionChecked}\n--`)
             } else*/ if(lastVersionChecked !== currentVersion && currentVersion == response.tag_name) {
                 res.send(false);
+                const updated = require(`../getConfig`)({ version: response.tag_name });
                 sendNotification({
                     headingText: `ezytdl has been updated!`,
                     bodyText: `Click here to view the changelog.`,
@@ -42,8 +43,6 @@ module.exports = {
                 released: Date.now(),
                 body: `There was a problem fetching the changelog. Please try again later.`
             })
-
-            const updated = require(`../getConfig`)({ version: response.tag_name });
             
             const obj = {
                 url: response.html_url,
