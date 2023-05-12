@@ -1,4 +1,7 @@
-# ezytdl
+<h1 align="center">
+  <img src="https://raw.githubusercontent.com/sylviiu/ezytdl/0d3b465f74edb3c94887fe137ac66826fc1bfc4f/buildResources/packageIcons/icon-256x256.png" width="128px"/><br>
+  EzYTDL
+</h1>
 
 Open source electron-based application acting as a wrapper of the YT-DLP client.
 
