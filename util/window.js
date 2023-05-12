@@ -1,13 +1,30 @@
 const { BrowserWindow, app, globalShortcut } = require('electron');
 
+let currentWindow = null;
+
+const platform = process.platform;
+
+let s = `/`;
+if(platform == `win32`) s = `\\`;
+
 module.exports = () => {
+    if(!app.isReady()) return null;
+
+    if(currentWindow) return currentWindow;
+
+    console.log(platform)
+
+    const iconPath = `buildResources${s}packageIcons${s}icon-${platform == `win32` ? `64x64.ico` : `512x512.png`}`
+
+    console.log(`Icon path: ${iconPath}`)
+
     const args = {
         width: 800,
         height: 500,
         minHeight: 300,
         minWidth: 550,
         autoHideMenuBar: true,
-        icon: `./buildResources/icon.png`
+        icon: iconPath
     };
 
     if(app.isPackaged) {
@@ -52,7 +69,9 @@ module.exports = () => {
 
     if(!app.isPackaged) {
         window.webContents.openDevTools();
-    }
+    };
+
+    currentWindow = window;
 
     return window;
 }

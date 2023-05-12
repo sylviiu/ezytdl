@@ -1,11 +1,17 @@
 const idGen = require(`./idGen`);
 
+const platform = process.platform;
+
+const { app } = require(`electron`);
+
 const queue = {
     complete: [],
     active: [],
     paused: [],
     queue: []
 };
+
+let activeProgress = {};
 
 let ws = null;
 
@@ -15,9 +21,57 @@ let lastDownloadStatus = null;
 let notificationWs = null;
 let notificationQueue = [];
 
-const queueStrings = [ `Up next!` ];
-
 let queueSizeWarningSent = false;
+
+const updateAppBadge = () => {
+    const totalItems = Object.values(queue).slice(1).reduce((a,b) => a+b.length, 0);
+    
+    if(totalItems == 0 && queue.complete.length > 0) {
+        app.setBadgeCount();
+    } else app.setBadgeCount(totalItems);
+
+    if(!queueSizeWarningSent && totalItems > 50) {
+        queueSizeWarningSent = true;
+
+        sendNotification({
+            headingText: `Warning!`,
+            bodyText: `There are ${totalItems} items in the queue.\n\nDepending on your computer, having too many items in the download queue may cause the UI to slow down and/or freeze, especially if you navigate to different pages while the queue is active. To ensure stability, stay on this screen while you finish this queue.`,
+            type: `warn`,
+        });
+    }
+}
+
+const updateProgressBar = () => {
+    const window = require(`./window`)()
+
+    let value = 2;
+
+    if(queue.active.length == 0 && queue.paused.length == 0 && queue.queue.length == 0) {
+        value = -1
+    } else if(queue.active.length == 1 && queue.paused.length == 0 && queue.queue.length == 0) {
+        if(!queue.active[0].status || !queue.active[0].status.percentNum) {
+            if(process.platform == `win32`) {
+                value = 2
+            } else {
+                value = 0
+            }
+        } else {
+            value = queue.active[0].status.percentNum/100;
+        }
+    } else {
+        const progressMax = Object.values(queue).reduce((a,b) => a+b.length, 0);
+        
+        let progressCurrent = queue.complete.length;
+        
+        progressCurrent += [...queue.active, ...queue.paused].reduce((a,b) => a + b && b.status && b.status.percentNum ? b.status.percentNum/100 : 0, 0);
+
+        const progress = progressCurrent / progressMax;
+
+        value = progress;
+    };
+
+    window.setProgressBar(value);
+};
 
 const sendUpdate = (sendObj) => {
     //console.log(`Sending download update...`)
@@ -35,7 +89,7 @@ const refreshQueue = (opt) => {
 
         if(action == `add` && obj) {
             if(obj.length && obj.length > 0) {
-                console.log(`Adding ${obj.length} objects to queue...`)
+                console.log(`Adding ${obj.length} objects to queue...`);
                 queue.queue.push(...obj);
                 console.log(queue.queue[0])
                 queueModified = true;
@@ -45,33 +99,30 @@ const refreshQueue = (opt) => {
                 queueModified = true;
             }
         } else if(action == `remove` && id) {
-            console.log(`Removing ${id} from queue...`)
-    
-            for (state of Object.keys(queue)) {
-                let o = queue[state].findIndex(e => e.id == id);
-    
-                if(o != -1) {
-                    if(queue[state][0].ytdlpProc && !queue[state][0].ytdlpProc.killed && queue[state][0].ytdlpProc.kill) queue[state][0].ytdlpProc.kill(9)
-                    queue[state].splice(o, 1)
-                    console.log(`Removed ${id} from state ${state}...`)
-                    queueModified = true;
+            if(typeof id == `object`) {    
+                for (i of id) {
+                    for (state of Object.keys(queue)) {
+                        let o = queue[state].findIndex(e => e.id == i);
+            
+                        if(o != -1) {
+                            if(queue[state][0].ytdlpProc && !queue[state][0].ytdlpProc.killed && queue[state][0].ytdlpProc.kill) queue[state][0].ytdlpProc.kill(9)
+                            queue[state].splice(o, 1)
+                            queueModified = true;
+                        }
+                    }
+                }
+            } else {
+                for (state of Object.keys(queue)) {
+                    let o = queue[state].findIndex(e => e.id == id);
+        
+                    if(o != -1) {
+                        if(queue[state][0].ytdlpProc && !queue[state][0].ytdlpProc.killed && queue[state][0].ytdlpProc.kill) queue[state][0].ytdlpProc.kill(9)
+                        queue[state].splice(o, 1)
+                        queueModified = true;
+                    }
                 }
             }
         }
-    }
-
-    const totalItems = Object.values(queue).slice(1).reduce((a,b) => a+b.length, 0);
-
-    console.log(`total queue length : ${totalItems}`)
-
-    if(!queueSizeWarningSent && totalItems > 50) {
-        queueSizeWarningSent = true;
-
-        sendNotification({
-            headingText: `Warning!`,
-            bodyText: `There are ${totalItems} items in the queue.\n\nDepending on your computer, having too many items in the download queue may cause the UI to slow down and/or freeze, especially if you navigate to different pages while the queue is active. To ensure stability, stay on this screen while you finish this queue.`,
-            type: `warn`,
-        });
     }
 
     console.log(`Updating queue...`)
@@ -109,9 +160,8 @@ const refreshQueue = (opt) => {
         };
     };
 
-    for (i in queue.queue) {
-        queue.queue[i].updateFunc({status: `${queueStrings[i] || `In queue... [${i}/${queue.queue.length}]`}`})
-    };
+    updateAppBadge();
+    updateProgressBar();
     
     console.log(`Queue refresh (modified: ${queueModified}) \n- ${queue.complete.length} complete\n- ${queue.active.length} active \n- ${queue.queue.length} queued`);
     
@@ -132,14 +182,22 @@ const createDownloadObject = (opt, rawUpdateFunc) => {
         killed: false,
         updateFunc: (update) => {
             if(!obj.ignoreUpdates) {
+                if(typeof update == `object` && !update.latest) update = { latest: update };
+
                 if(update.overall && update.overall.kill) obj.killFunc = () => update.overall.kill();
-                obj.status = update.overall;
+                obj.status = Object.assign({}, obj.status, update.latest);
+                if(update.latest.percentNum) {
+                    activeProgress[obj.id] = update.latest.percentNum;
+                    updateProgressBar();
+                }
                 sendUpdate(Object.assign({}, obj, { status: update.latest }));
                 rawUpdateFunc(update);
             }
         },
         paused: false,
-        status: {},
+        status: {
+            status: `In queue...`
+        },
         ytdlpProc: null,
         killFunc: null,
         start: () => {
@@ -186,6 +244,8 @@ const createDownloadObject = (opt, rawUpdateFunc) => {
             });
     
             progress.then((update) => {
+                if(activeProgress[obj.id]) delete activeProgress[obj.id];
+                
                 obj.complete = true;
                 obj.ytdlpProc = null;
 

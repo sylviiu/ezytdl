@@ -1,6 +1,6 @@
 {
     "appId": "dev.sylviiu.ezytdl",
-    "productName": "ezytdl",
+    "productName": "ezytdl-store",
     "publish": [
         {
             "provider": "github",
@@ -29,6 +29,7 @@
         "html/*.html",
         "html/assets/**/*",
         "node_modules/**/*",
+        "buildResources/**/*",
         "package.json",
         "index.js",
         "server.js",

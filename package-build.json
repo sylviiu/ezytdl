@@ -29,6 +29,7 @@
         "html/*.html",
         "html/assets/**/*",
         "node_modules/**/*",
+        "buildResources/**/*",
         "package.json",
         "index.js",
         "server.js",

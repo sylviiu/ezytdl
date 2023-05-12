@@ -358,7 +358,7 @@
                     const saveLocation = listbox.querySelector(`#saveLocation`)
 
                     saveLocation.value = `${config && config.saveLocation ? config.saveLocation : ``}`;
-                    if(!saveLocation.value.endsWith(`/`) && !saveLocation.value.endsWith(`\\`)) saveLocation.value += platform.toLowerCase() == `win32` ? `\\` : `/`
+                    if(!saveLocation.value.endsWith(`/`) && !saveLocation.value.endsWith(`\\`)) saveLocation.value += navigator.platform.toLowerCase() == `win32` ? `\\` : `/`
                     saveLocation.value += info.title
 
                     listbox.querySelector(`#formatConversionTextbox`).placeholder = `ext`
@@ -497,7 +497,7 @@
                         saveOpt.querySelector(`#formatConversionTextbox`).value = config.lastMediaConversionOutputs[`audio`] || `mp3`;
                         
                         cardSaveLocation.value = `${config && config.saveLocation ? config.saveLocation : ``}`;
-                        if(!cardSaveLocation.value.endsWith(`/`) && !cardSaveLocation.value.endsWith(`\\`)) cardSaveLocation.value += platform.toLowerCase() == `win32` ? `\\` : `/`
+                        if(!cardSaveLocation.value.endsWith(`/`) && !cardSaveLocation.value.endsWith(`\\`)) cardSaveLocation.value += navigator.platform.toLowerCase() == `win32` ? `\\` : `/`
                         cardSaveLocation.value += info.title
 
                         if(!saveOpt.classList.contains(`d-none`)) saveOpt.classList.add(`d-none`);
