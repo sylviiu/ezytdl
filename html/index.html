@@ -96,7 +96,7 @@
                                         </svg></button></div>
                             </div>
                         </div>
-                        <div class="d-none justify-content-between" id="saveOptions" style="width: 100%;max-height: 36px;margin-top: 8px;"><input class="d-flex justify-content-center align-items-center" type="text" id="saveLocation" style="background: rgba(88,88,88,0.11);border-width: 0px;border-radius: 100px;padding: 6px 16px;border-bottom-right-radius: 100px;border-top-right-radius: 100px;color: rgb(255,255,255);height: 36px;border-top-left-radius: 100px;width: 100%;border-bottom-left-radius: 100px;text-align: left;margin: 0px 8px;" placeholder="location"><input class="d-flex justify-content-center align-items-center" type="text" id="formatConversionTextbox" style="background: rgba(88,88,88,0.11);border-width: 0px;border-radius: 100px;padding: 6px 16px;border-bottom-right-radius: 100px;border-top-right-radius: 100px;color: rgb(255,255,255);height: 36px;border-top-left-radius: 100px;width: 83px;border-bottom-left-radius: 100px;text-align: right;margin: 0px 8px;margin-left: 0px;" placeholder="mp3"><button class="btn btn-primary d-flex justify-content-center align-items-center" id="confirmDownload" type="button" style="height: 36px;border-width: 0px;background: rgb(255,255,255);color: rgb(0,0,0);border-radius: 100px;width: 36px;padding: 4px;min-width: 36px;max-width: 36px;min-height: 36px;max-height: 36px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor">
+                        <div class="d-none justify-content-between" id="saveOptions" style="width: 100%;margin-top: 8px;max-height: 36px;"><input class="d-flex justify-content-center align-items-center" type="text" id="saveLocation" style="background: rgba(88,88,88,0.11);border-width: 0px;border-radius: 100px;padding: 6px 16px;border-bottom-right-radius: 100px;border-top-right-radius: 100px;color: rgb(255,255,255);height: 36px;border-top-left-radius: 100px;width: 100%;border-bottom-left-radius: 100px;text-align: left;margin: 0px 8px;" placeholder="location"><input class="d-flex justify-content-center align-items-center" type="text" id="formatConversionTextbox" style="background: rgba(88,88,88,0.11);border-width: 0px;border-radius: 100px;padding: 6px 16px;border-bottom-right-radius: 100px;border-top-right-radius: 100px;color: rgb(255,255,255);height: 36px;border-top-left-radius: 100px;width: 83px;border-bottom-left-radius: 100px;text-align: right;margin: 0px 8px;margin-left: 0px;" placeholder="mp3"><button class="btn btn-primary d-flex justify-content-center align-items-center" id="confirmDownload" type="button" style="height: 36px;border-width: 0px;background: rgb(255,255,255);color: rgb(0,0,0);border-radius: 100px;width: 36px;padding: 4px;min-width: 36px;max-width: 36px;min-height: 36px;max-height: 36px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor">
                                     <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
                                     <path d="M480 352h-133.5l-45.25 45.25C289.2 409.3 273.1 416 256 416s-33.16-6.656-45.25-18.75L165.5 352H32c-17.67 0-32 14.33-32 32v96c0 17.67 14.33 32 32 32h448c17.67 0 32-14.33 32-32v-96C512 366.3 497.7 352 480 352zM432 456c-13.2 0-24-10.8-24-24c0-13.2 10.8-24 24-24s24 10.8 24 24C456 445.2 445.2 456 432 456zM233.4 374.6C239.6 380.9 247.8 384 256 384s16.38-3.125 22.62-9.375l128-128c12.49-12.5 12.49-32.75 0-45.25c-12.5-12.5-32.76-12.5-45.25 0L288 274.8V32c0-17.67-14.33-32-32-32C238.3 0 224 14.33 224 32v242.8L150.6 201.4c-12.49-12.5-32.75-12.5-45.25 0c-12.49 12.5-12.49 32.75 0 45.25L233.4 374.6z"></path>
                                 </svg></button></div>
@@ -271,19 +271,28 @@
 
                 const saveOptionsAnimations = {
                     fadeIn: (btn, saveOptions, btnClick) => new Promise(res => {
+                        const prevMaxHeight = saveOptions.style.maxHeight;
+                        saveOptions.style.maxHeight = null;
+                        let dNone = saveOptions.classList.contains(`d-none`);
+                        if(dNone) saveOptions.classList.remove(`d-none`);
+                        const { height } = saveOptions.getBoundingClientRect();
+                        saveOptions.style.maxHeight = prevMaxHeight;
+                        if(dNone) saveOptions.classList.add(`d-none`);
+
                         animating = true;
                         if(btn) btn.onclick = () => {}
                         saveOptions.classList.remove(`d-none`);
                         saveOptions.classList.add(`d-flex`);
                         anime({
                             targets: saveOptions,
-                            maxHeight: [`0px`, `36px`],
+                            maxHeight: [`0px`, height],
                             opacity: [`0%`, `100%`],
                             marginTop: [`0px`, `8px`],
                             duration: 500,
                             easing: `easeOutExpo`,
                             complete: () => {
                                 animating = false;
+                                saveOptions.style.maxHeight = null;
                                 if(btn) btn.onclick = () => btnClick();
                                 res();
                             }
@@ -296,6 +305,7 @@
                         })
                     }),
                     fadeOut: (btn, saveOptions, btnClick) => new Promise(res => {
+                        if(saveOptions.classList.contains(`d-none`)) return res()
                         animating = true;
                         if(btn) btn.onclick = () => {}
                         anime({
@@ -440,6 +450,8 @@
 
                         newDiv.style.minWidth = `100%`;
 
+                        newDiv.style.removeProperty(`background`);
+
                         const qualityButtons = newDiv.querySelector(`#innerQualityButtons`);
 
                         qualityButtons.style.minWidth = `100%`;
@@ -477,8 +489,10 @@
                         const saveOpt = formatCard.querySelector(`#saveOptions`).cloneNode(true);
 
                         const cardSaveLocation =  saveOpt.querySelector(`#saveLocation`)
+
+                        cardSaveLocation.style.removeProperty(`margin`)
                         
-                        saveOpt.querySelector(`#formatConversionTextbox`).placeholder = `{ext}`;
+                        saveOpt.querySelector(`#formatConversionTextbox`).placeholder = `ext`;
                         cardSaveLocation.placeholder = `${config && config.saveLocation ? config.saveLocation : `{default save location}`}`;
                         saveOpt.querySelector(`#formatConversionTextbox`).value = config.lastMediaConversionOutputs[`audio`] || `mp3`;
                         
@@ -490,6 +504,9 @@
 
                         saveOpt.style.margin = `0px`;
                         saveOpt.style.marginLeft = `0px`;
+
+                        //card.querySelectorAll(`#saveOptions`).style.removeProperty(`maxHeight`);
+                        newDiv.style.removeProperty(`maxHeight`);
 
                         newDiv.appendChild(saveOpt);
 
