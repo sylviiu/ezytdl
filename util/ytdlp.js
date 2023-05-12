@@ -67,7 +67,7 @@ module.exports = {
                 };
 
                 if(anyNoTitle && !disableFlatPlaylist) {
-                    return this.listFormats(url, true).then(res)
+                    return module.exports.listFormats(url, true).then(res)
                 } else {
                     let totalTime = 0;
 
@@ -86,8 +86,13 @@ module.exports = {
             } else if(!disableFlatPlaylist) {
                 updateStatus(`Restarting playlist search... (there were no formats returned!!)`)
                 console.log(`no formats found! starting over...`);
-                return this.listFormats(url, true).then(res)
+                return module.exports.listFormats(url, true).then(res)
             } else {
+                sendNotification({
+                    type: `error`,
+                    headingText: `Error getting media info`,
+                    bodyText: `Either the URL is invalid or the media is unavailable. Please try with a different link.`
+                })
                 return res(null);
             }
             //console.log(d)
