@@ -236,6 +236,9 @@ downloadsWs.onmessage = (msg) => {
 
                 card.querySelector(`#formatName`).innerHTML = title;
 
+                card.querySelector(`#formatMetaList`).classList.add(`d-none`)
+                card.querySelector(`#mediaIcons`).classList.add(`d-none`)
+
                 const downloadManager = createDownloadManager(card);
                 downloadManagers[o.id] = downloadManager;
                 
