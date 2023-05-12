@@ -6,7 +6,7 @@ const idGen = require(`../util/idGen`);
 
 const time = require(`../util/time`);
 
-const { updateStatus } = require(`../util/downloadManager`);
+const { updateStatus, sendNotification } = require(`../util/downloadManager`);
 
 module.exports = {
     listFormats: (url, disableFlatPlaylist) => new Promise(async res => {
@@ -57,23 +57,38 @@ module.exports = {
             } else if(d && d.entries) {
                 console.log(`entries found! adding time objects...`);
 
-                let totalTime = 0;
+                let anyNoTitle = false;
 
-                d.entries = d.entries.map(e => {
-                    if(e.duration) {
-                        e.duration = time(e.duration*1000);
-                        totalTime += e.duration.units.ms;
+                for (entry of d.entries) {
+                    if(!entry.title) {
+                        anyNoTitle = true;
+                        break;
                     }
-                    return e;
-                });
+                };
 
-                d.duration = time(totalTime)
+                if(anyNoTitle && !disableFlatPlaylist) {
+                    return this.listFormats(url, true).then(res)
+                } else {
+                    let totalTime = 0;
 
-                res(d)
-            } else {
+                    d.entries = d.entries.map(e => {
+                        if(e.duration) {
+                            e.duration = time(e.duration*1000);
+                            totalTime += e.duration.units.ms;
+                        }
+                        return e;
+                    });
+    
+                    d.duration = time(totalTime)
+    
+                    res(d)
+                }
+            } else if(!disableFlatPlaylist) {
                 updateStatus(`Restarting playlist search... (there were no formats returned!!)`)
                 console.log(`no formats found! starting over...`);
                 return this.listFormats(url, true).then(res)
+            } else {
+                return res(null);
             }
             //console.log(d)
         })

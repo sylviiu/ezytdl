@@ -212,13 +212,13 @@
             listboxParent.appendChild(listbox);
             
             const formatList = listbox.querySelector(`#formatList`);
+            
+            input.disabled = false;
+            button.disabled = false;
 
             const info = JSON.parse(infoRequest.responseText);
 
             currentInfo = info;
-            
-            input.disabled = false;
-            button.disabled = false;
             
             document.body.style.overflowY = `scroll`;
 
@@ -420,6 +420,9 @@
                         card.querySelector(`#audioIcon`).classList.add(`d-none`);
                         card.querySelector(`#videoIcon`).classList.add(`d-none`);
                         card.querySelector(`#fileIcon`).classList.remove(`d-none`);
+
+                        if(!entry.title) entry.title = entry.webpage_url;
+                        if(!entry.title) entry.title = entry.url;
 
                         card.querySelector(`#formatName`).innerHTML = entry.title;
 
