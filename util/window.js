@@ -7,6 +7,7 @@ module.exports = () => {
         minHeight: 300,
         minWidth: 550,
         autoHideMenuBar: true,
+        icon: `./buildResources/icon.png`
     };
 
     if(app.isPackaged) {
