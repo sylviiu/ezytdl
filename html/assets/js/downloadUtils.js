@@ -158,7 +158,10 @@ const startDownload = (originalCard, opt) => {
 
     const card = originalCard.cloneNode(true);
 
-    //card.id += `-clone`;
+    card.opacity = 1;
+    card.style.opacity = 1;
+
+    card.id += `-clone`;
 
     const currentPosition = originalCard.getBoundingClientRect();
     
@@ -208,7 +211,7 @@ const startDownload = (originalCard, opt) => {
 
     const widthHeightTransformObj = {
         targets: card,
-        opacity: [card.style.opacity, 1],
+        opacity: [1, 1],
         background: `rgb(255,255,255)`,
         borderRadius: targetPosition.width/2,
         //left: `${formatDownloadButtonPosition.x}px`,
