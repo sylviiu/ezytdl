@@ -185,7 +185,7 @@ const startDownload = (originalCard, opt) => {
         duration: 1400,
         easing: `easeInOutExpo`,
         complete: () => {
-            originalCard.parentNode.removeChild(originalCard);
+            if(originalCard.parentNode) originalCard.parentNode.removeChild(originalCard);
         }
     });
 
@@ -208,7 +208,7 @@ const startDownload = (originalCard, opt) => {
 
     const widthHeightTransformObj = {
         targets: card,
-        opacity: 1,
+        opacity: [card.style.opacity, 1],
         background: `rgb(255,255,255)`,
         borderRadius: targetPosition.width/2,
         //left: `${formatDownloadButtonPosition.x}px`,
@@ -258,7 +258,7 @@ const startDownload = (originalCard, opt) => {
                 } else console.log(`no downloads websocket found!`)
 
                 card.opacity = 0;
-                card.parentNode.removeChild(card);
+                if(card.parentNode) card.parentNode.removeChild(card);
 
                 const copy = downloadsListBtn.cloneNode(true);
                 

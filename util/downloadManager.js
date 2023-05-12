@@ -32,9 +32,16 @@ const refreshQueue = (opt) => {
         const { action, id, obj } = opt;
 
         if(action == `add` && obj) {
-            console.log(`Adding ${obj.id} to queue...`)
-            queue.queue.push(obj);
-            queueModified = true;
+            if(obj.length && obj.length > 0) {
+                console.log(`Adding ${obj.length} objects to queue...`)
+                queue.queue.push(...obj);
+                console.log(queue.queue[0])
+                queueModified = true;
+            } else {
+                console.log(`Adding ${obj.id} to queue...`)
+                queue.queue.push(obj);
+                queueModified = true;
+            }
         } else if(action == `remove` && id) {
             console.log(`Removing ${id} from queue...`)
     
@@ -81,6 +88,7 @@ const refreshQueue = (opt) => {
         while((queue.active.length + queue.paused.length) < conf.concurrentDownloads && queue.queue.length > 0) {
             const next = queue.queue.shift();
             queue.active.push(next);
+            console.log(next)
             next.start();
         };
     };
@@ -97,11 +105,8 @@ const refreshQueue = (opt) => {
     }));
 }
 
-const createDownload = (opt, rawUpdateFunc) => new Promise(async res => {
+const createDownloadObject = (opt, rawUpdateFunc) => {
     let id = idGen(16);
-
-    console.log(`Download session created for ${opt.url} with id ${id}`)
-    
     const obj = {
         id,
         opt,
@@ -172,7 +177,7 @@ const createDownload = (opt, rawUpdateFunc) => new Promise(async res => {
 
                 obj.updateFunc(update);
 
-                res(obj.status);
+                //res(obj.status);
 
                 refreshQueue();
             });
@@ -181,7 +186,7 @@ const createDownload = (opt, rawUpdateFunc) => new Promise(async res => {
                 obj.failed = true;
                 obj.ytdlpProc = null;
                 obj.updateFunc({status: `Failed: ${e}`});
-                res(obj.status);
+                //res(obj.status);
 
                 refreshQueue();
             })
@@ -237,7 +242,19 @@ const createDownload = (opt, rawUpdateFunc) => new Promise(async res => {
         }
     };
 
-    refreshQueue({ action: `add`, obj });
+    return obj;
+}
+
+const createDownload = (opt, rawUpdateFunc) => new Promise(async res => {
+    console.log(`Creating new download session: ${opt.entries ? opt.entries.length : 1} entries...`);
+
+    if(opt.entries) {
+        const objs = opt.entries.map(e => createDownloadObject(e, () => {}));
+        refreshQueue({ action: `add`, obj: objs })
+    } else {
+        const obj = createDownloadObject(opt, rawUpdateFunc);
+        refreshQueue({ action: `add`, obj });
+    }
 });
 
 const queueAction = (id, action) => {

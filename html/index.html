@@ -21,7 +21,7 @@
         <div class="d-inline-flex flex-column justify-content-start align-items-center" id="mainContainer" style="width: 100vw;/*overflow-y: scroll;*/">
             <div class="d-flex flex-column justify-content-center align-items-center" id="urlBox" style="width: min(500px, 80vw);height: calc(100vh - 80px);padding: 0px;">
                 <div class="container-fluid d-flex justify-content-center align-items-center" id="urlBox" style="--bs-primary: #680dfd;--bs-primary-rgb: 104,13,253;--bs-success: #04a5ff;--bs-success-rgb: 4,165,255;--bs-info: #c29ad5;--bs-info-rgb: 194,154,213;--bs-dark: #1f1f1f;--bs-dark-rgb: 31,31,31;--bs-body-color: #ffffff;--bs-body-bg: #080808;"><input class="d-flex justify-content-center align-items-center" type="text" id="urlInput" style="background: rgba(88,88,88,0.11);border-width: 0px;border-radius: 100px;padding: 6px 16px;border-bottom-right-radius: 0px;border-top-right-radius: 0px;color: rgb(255,255,255);height: 36px;border-top-left-radius: 100px;width: 100%;" placeholder="Enter URL..."><button class="btn btn-primary" id="urlEnter" type="button" style="height: 36px;border-width: 0px;border-bottom-right-radius: 100px;border-top-right-radius: 100px;border-top-left-radius: 0px;border-bottom-left-radius: 0px;background: rgb(255,255,255, 0.85);color: rgb(0,0,0);padding-right: 15px;"><i class="fas fa-chevron-circle-right"></i></button></div>
-                <h6 class="d-none" id="statusText" style="color: rgba(255,255,255,0.33);font-style: italic;margin-top: 8px;">status text</h6>
+                <h6 id="statusText" style="color: rgba(255,255,255,0.33);font-style: italic;margin-top: 8px;">&nbsp;</h6>
             </div>
             <h5 class="d-none" id="errorMsg" style="color: rgb(255,255,255);">Error Text</h5>
             <div id="listbox" style="width: min(500px, 80vw);margin-bottom: 30px;min-width: 500px;">
@@ -29,19 +29,22 @@
                     <h3 id="mediaTitle" style="color: rgb(255,255,255);font-weight: bold;">title</h3>
                 </div>
                 <div class="d-flex flex-column justify-content-start" id="qualityButtons" style="padding: 12px 20px;background: rgba(27,27,27,0.55);padding-bottom: 0px;">
-                    <div><button class="btn btn-primary" id="downloadBest" type="button" style="height: 36px;border-width: 0px;border-radius: 100px;background: rgba(255,255,255,0.85);color: rgb(0,0,0);padding-right: 15px;margin-right: 10px;"><i class="fas fa-magic" id="icon"></i>&nbsp;Best Download</button><button class="btn btn-primary" id="downloadBestAudio" type="button" style="height: 36px;border-width: 0px;border-radius: 100px;background: rgba(255,255,255,0.85);color: rgb(0,0,0);padding-right: 15px;margin-right: 10px;"><i class="fas fa-file-audio" id="icon"></i>&nbsp;Best Audio</button><button class="btn btn-primary" id="downloadBestVideo" type="button" style="height: 36px;border-width: 0px;border-radius: 100px;background: rgba(255,255,255,0.85);color: rgb(0,0,0);padding-right: 15px;margin-right: 10px;"><i class="fas fa-file-video" id="icon"></i>&nbsp;Best Video</button></div>
+                    <div class="d-flex justify-content-between align-items-center" id="innerQualityButtons"><button class="btn btn-primary" id="downloadBest" type="button" style="height: 36px;border-width: 0px;border-radius: 100px;background: rgba(255,255,255,0.85);color: rgb(0,0,0);padding-right: 15px;"><i class="fas fa-magic" id="icon"></i>&nbsp;Best Download</button><button class="btn btn-primary" id="downloadBestAudio" type="button" style="height: 36px;border-width: 0px;border-radius: 100px;background: rgba(255,255,255,0.85);color: rgb(0,0,0);padding-right: 15px;"><i class="fas fa-file-audio" id="icon"></i>&nbsp;Best Audio</button><button class="btn btn-primary" id="downloadBestVideo" type="button" style="height: 36px;border-width: 0px;border-radius: 100px;background: rgba(255,255,255,0.85);color: rgb(0,0,0);padding-right: 15px;"><i class="fas fa-file-video" id="icon"></i>&nbsp;Best Video</button></div>
                 </div>
                 <div class="d-flex flex-column justify-content-start align-items-center" id="formatList" style="background: rgba(27,27,27,0.55);border-bottom-right-radius: 26px;border-bottom-left-radius: 26px;padding: 12px 0px;padding-bottom: 26px;min-width: 500px;">
                     <div class="d-flex flex-column justify-content-center align-items-center card" id="formatCard" style="width: calc(100% - 40px);min-height: 50px;background: rgba(40,40,40,0.65);border-radius: 10px;padding: 12px 12px;margin-top: 12px;min-width: 460px;">
                         <div class="d-flex justify-content-between align-items-center">
                             <div style="min-width: 310px;width: 310px;max-width: 310px;">
                                 <div class="d-flex justify-content-start align-items-center" style="margin-bottom: 8px;min-width: 310px;max-width: 310px;">
-                                    <div class="container d-flex justify-content-between align-items-center" style="max-width: 44px;padding: 6px;background: #ffffff;border-radius: 100px;margin: 0px;margin-right: 6px;min-width: 44px;width: 44px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" id="audioIcon" style="color: rgb(0,0,0);font-size: 12px;">
+                                    <div class="container d-flex justify-content-between align-items-center" id="mediaIcons" style="max-width: 44px;padding: 6px;background: #ffffff;border-radius: 100px;margin: 0px;margin-right: 6px;min-width: 44px;width: 44px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" id="audioIcon" style="color: rgb(0,0,0);font-size: 12px;">
                                             <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
                                             <path d="M511.1 367.1c0 44.18-42.98 80-95.1 80s-95.1-35.82-95.1-79.1c0-44.18 42.98-79.1 95.1-79.1c11.28 0 21.95 1.92 32.01 4.898V148.1L192 224l-.0023 208.1C191.1 476.2 149 512 95.1 512S0 476.2 0 432c0-44.18 42.98-79.1 95.1-79.1c11.28 0 21.95 1.92 32 4.898V126.5c0-12.97 10.06-26.63 22.41-30.52l319.1-94.49C472.1 .6615 477.3 0 480 0c17.66 0 31.97 14.34 32 31.99L511.1 367.1z"></path>
                                         </svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -32 576 576" width="1em" height="1em" fill="currentColor" id="videoIcon" style="color: rgb(0,0,0);font-size: 12px;">
                                             <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
                                             <path d="M384 112v288c0 26.51-21.49 48-48 48h-288c-26.51 0-48-21.49-48-48v-288c0-26.51 21.49-48 48-48h288C362.5 64 384 85.49 384 112zM576 127.5v256.9c0 25.5-29.17 40.39-50.39 25.79L416 334.7V177.3l109.6-75.56C546.9 87.13 576 102.1 576 127.5z"></path>
+                                        </svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="-64 0 512 512" width="1em" height="1em" fill="currentColor" class="d-none" id="fileIcon" style="color: rgb(0,0,0);font-size: 12px;">
+                                            <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
+                                            <path d="M0 64C0 28.65 28.65 0 64 0H224V128C224 145.7 238.3 160 256 160H384V448C384 483.3 355.3 512 320 512H64C28.65 512 0 483.3 0 448V64zM256 128V0L384 128H256z"></path>
                                         </svg></div>
                                     <h5 id="formatName" style="color: rgb(255,255,255);margin: 0px;">format name</h5>
                                 </div>
@@ -69,7 +72,7 @@
                                     <h6 class="d-none" id="eta" style="color: rgb(255,255,255);font-size: 8px;margin: 0px;margin-top: 3px;margin-bottom: 3px;">ETA: 00:00</h6>
                                     <h6 class="d-none" id="speed" style="color: rgb(255,255,255);font-size: 8px;margin: 0px;margin-top: 3px;margin-bottom: 3px;">0B/s</h6>
                                 </div>
-                                <div class="d-flex flex-column justify-content-evenly align-items-end" style="min-height: 83px;margin-left: 10px;"><button class="btn btn-primary d-flex justify-content-center align-items-center" id="formatDownload" type="button" style="height: 36px;border-width: 0px;background: rgb(255,255,255);color: rgb(0,0,0);border-radius: 100px;width: 36px;padding: 4px;min-width: 36px;max-width: 36px;min-height: 36px;max-height: 36px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-96 0 512 512" width="1em" height="1em" fill="currentColor" id="downloadicon" class="icon">
+                                <div class="d-flex flex-column justify-content-evenly align-items-end" id="buttonsDiv" style="min-height: 83px;margin-left: 10px;"><button class="btn btn-primary d-flex justify-content-center align-items-center" id="formatDownload" type="button" style="height: 36px;border-width: 0px;background: rgb(255,255,255);color: rgb(0,0,0);border-radius: 100px;width: 36px;padding: 4px;min-width: 36px;max-width: 36px;min-height: 36px;max-height: 36px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-96 0 512 512" width="1em" height="1em" fill="currentColor" id="downloadicon" class="icon">
                                             <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
                                             <path d="M281.6 392.3l-104 112.1c-9.498 10.24-25.69 10.24-35.19 0l-104-112.1c-6.484-6.992-8.219-17.18-4.404-25.94c3.811-8.758 12.45-14.42 21.1-14.42H128V32c0-17.69 14.33-32 32-32S192 14.31 192 32v319.9h72c9.547 0 18.19 5.66 22 14.42C289.8 375.1 288.1 385.3 281.6 392.3z"></path>
                                         </svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="-32 0 512 512" width="1em" height="1em" fill="currentColor" class="d-none icon" id="checkmarkicon">
@@ -165,19 +168,43 @@
 
     let currentInfo = null;
 
-    const runSearch = (url) => {
-        window.scrollTo(0, 0);
-
+    const runSearch = async (url) => {
         const infoRequest = new XMLHttpRequest();
 
         document.getElementById(`statusText`).innerHTML = `Fetching info...`;
-        document.getElementById(`statusText`).classList.remove(`d-none`);
+        if(document.getElementById(`statusText`).classList.contains(`d-none`)) document.getElementById(`statusText`).classList.remove(`d-none`);
 
         console.log(`running search for ${url}`)
 
         infoRequest.open("GET", `http://localhost:3000/fetchInfo/${url}`, true);
 
-        const parseInfo = () => {
+        const centerURLBox = (removeListbox, checkParse) => {
+            document.body.style.overflowY = `hidden`;
+
+            window.scrollTo(0, 0);
+
+            anime({
+                targets: urlBox,
+                height: searchBoxHeights().reverse(),
+                duration: 600,
+                easing: `easeOutExpo`,
+                complete: () => {
+                    if(document.getElementById(`listbox`)) listboxParent.removeChild(document.getElementById(`listbox`));
+
+                    urlBox.style.height = `calc(100vh - 80px)`
+                    
+                    if(checkParse) {
+                        if(parse) {
+                            parseInfo();
+                        } else {
+                            parse = true;
+                        }
+                    }
+                }
+            });
+        }
+
+        const parseInfo = async () => {
             const listbox = listboxTemplate.cloneNode(true);
             
             if(listbox.classList.contains(`d-none`)) listbox.classList.remove(`d-none`);
@@ -203,7 +230,14 @@
                 };
 
                 return;
-            } else {                    
+            } else {
+                anime({
+                    targets: urlBox,
+                    height: searchBoxHeights(),
+                    duration: 1000,
+                    easing: `easeOutExpo`,
+                });
+
                 listbox.querySelector(`#mediaTitle`).innerHTML = `[${info.webpage_url_domain}] ${info.title}`;
 
                 if(info.thumbnails && info.thumbnails.length > 0) {
@@ -233,301 +267,411 @@
 
                 console.log(info)
 
-                const formats = info.formats.map(format => {
-                    if(format.audio_ext != `none` || format.acodec != `none` || format.asr || format.audio_channels) {
-                        format.audio = true;
-                    } else {
-                        format.audio = false;
-                    }
-
-                    if(format.aspect_ratio || format.fps || format.height || format.width || format.resolution != `audio only` || format.vcodec != `none` || format.video_ext != `none`) {
-                        format.video = true;
-                    } else {
-                        format.video = false;
-                    };
-
-                    return format;
-                }).sort((a, b) => {
-                    if(a.audio && a.video) {
-                        return -1;
-                    } else if(b.audio && b.video) {
-                        return 1;
-                    } else if(a.audio && !a.video) {
-                        return -1;
-                    } else if(b.audio && !b.video) {
-                        return 1;
-                    } else if(a.video && !a.audio) {
-                        return -1;
-                    } else if(b.video && !b.audio) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                });
-
-                if(formats.filter(f => f.audio).length == 0) document.getElementById(`downloadBestAudio`).classList.add(`d-none`);
-                if(formats.filter(f => f.video).length == 0) document.getElementById(`downloadBestVideo`).classList.add(`d-none`);
-
                 let qualities = [`bv*+ba/b`, `ba`, `bv`]
 
-                document.getElementById(`qualityButtons`).querySelectorAll(`.btn`).forEach((btn, i) => {
-                    btn.onclick = () => {
-                        btn.disabled = true;
-                        btn.opacity = 0.5;
-                        
-                        startDownload(btn, {
-                            url: url,
-                            format: qualities[i],
-                            info: Object.assign({}, info, { formats: null }),
+                const saveOptionsAnimations = {
+                    fadeIn: (btn, saveOptions, btnClick) => new Promise(res => {
+                        animating = true;
+                        if(btn) btn.onclick = () => {}
+                        saveOptions.classList.remove(`d-none`);
+                        saveOptions.classList.add(`d-flex`);
+                        anime({
+                            targets: saveOptions,
+                            maxHeight: [`0px`, `36px`],
+                            opacity: [`0%`, `100%`],
+                            marginTop: [`0px`, `8px`],
+                            duration: 500,
+                            easing: `easeOutExpo`,
+                            complete: () => {
+                                animating = false;
+                                if(btn) btn.onclick = () => btnClick();
+                                res();
+                            }
                         });
-
-                        /*const prefix = btn.innerHTML.split(`</i>`).slice(0, -1).join(`</i>`) + `</i>&nbsp;`;
-                        const originalText = btn.innerHTML.replace(prefix, ``);
-                        btn.innerHTML = prefix + `Starting...`;
-                        
-                        const ws = new WebSocket(`ws://localhost:3000/download`);
-
-                        let location = `Somewhere on your computer :)`
-
-                        ws.onopen = () => {
-                            ws.send(JSON.stringify({
-                                url: url,
-                                format: qualities[i],
-                            }));
-                        };
-
-                        ws.onmessage = (o) => {
-                            const m = JSON.parse(o.data);
-
-                            if(!btn.querySelector(`#icon`).classList.contains(`d-none`)) btn.querySelector(`#icon`).classList.add(`d-none`);
-
-                            let str = [`Starting...`, `0%`]
-
-                            if(m.status) str[0] = m.status;
-                            if(m.percentNum) str[1] = `${m.percentNum}%`;
-                            if(m.saveLocation) location = m.saveLocation;
-
-                            btn.innerHTML = prefix + str.join(` / `);
-                        }
-
-                        ws.onclose = () => {
-                            btn.onclick = () => {
-                                const req = new XMLHttpRequest();
-
-                                req.open("GET", `http://localhost:3000/openFolder/${encodeURI(btoa(location))}`, true);
-                                req.send();
+                        if(btn) anime({
+                            targets: btn.querySelector(`#downloadicon`),
+                            rotate: [`0deg`, `180deg`],
+                            duration: 500,
+                            easing: `easeOutExpo`
+                        })
+                    }),
+                    fadeOut: (btn, saveOptions, btnClick) => new Promise(res => {
+                        animating = true;
+                        if(btn) btn.onclick = () => {}
+                        anime({
+                            targets: saveOptions,
+                            maxHeight: [`36px`, `0px`],
+                            opacity: [`100%`, `0%`],
+                            marginTop: [`8px`, `0px`],
+                            duration: 500,
+                            easing: `easeOutExpo`,
+                            complete: () => {
+                                animating = false;
+                                saveOptions.classList.remove(`d-flex`);
+                                saveOptions.classList.add(`d-none`);
+                                if(btn) btn.onclick = () => btnClick();
+                                res();
                             }
+                        })
+                        if(btn) anime({
+                            targets: btn.querySelector(`#downloadicon`),
+                            rotate: [`180deg`, `0deg`],
+                            duration: 500,
+                            easing: `easeOutExpo`
+                        })
+                    })
+                };
 
-                            btn.disabled = false;
-                            btn.innerHTML = `Open`;
-                        }*/
-                    }
-                });
-                
-                formats.forEach((format) => {
-                    //console.log(format)
-                    const formatDownloadType = format.audio && format.video ? `both` : format.audio && !format.video ? `audio` : `video`;
+                if(info.entries) {
+                    let currentSelected = null;
 
-                    const card = formatCard.cloneNode(true);
-
-                    const formatName = card.querySelector(`#formatName`);
-                    const formatSubtext = card.querySelector(`#formatSubtext`);
-
-                    const list = card.querySelector(`#formatMetaList`);
-
-                    const listMetaItems = {
-                        video: list.querySelector(`#formatMetaVideoItem`).cloneNode(true),
-                        audio: list.querySelector(`#formatMetaAudioItem`).cloneNode(true)
+                    const defaultColors = {
+                        background: listbox.querySelector(`#qualityButtons`).querySelector(`.btn`).style.background,
+                        color: listbox.querySelector(`#qualityButtons`).querySelector(`.btn`).style.color,
                     }
 
-                    list.querySelector(`#formatMetaVideoItem`).remove();
-                    list.querySelector(`#formatMetaAudioItem`).remove();
-
-                    const tags = formatToTags(format)
-
-                    formatName.innerHTML = tags.format;
-                    if(tags.filesize) format.innerHTML += ` (${tags.filesize})`;
-                    if(tags.drm) format.innerHTML += ` (DRM)`;
-
-                    for (type of Object.keys(tags.meta)) {
-                        console.log(`appending ${type} meta for ${tags.format}`)
-
-                        if(listMetaItems[type]) {
-                            for (key of Object.keys(tags.meta[type])) {
-                                if(tags.meta[type][key] != `none`) {
-                                    console.log(`appending ${key} meta with value ${tags.meta[type][key]}`)
-
-                                    const item = listMetaItems[type].cloneNode(true);
-
-                                    item.querySelector(`#txt`).innerHTML = key + `: ` + tags.meta[type][key];
-
-                                    list.appendChild(item);
-                                }
+                    let refreshQualityButtonSelection = () => {
+                        listbox.querySelector(`#qualityButtons`).querySelectorAll(`.btn`).forEach((btn, i) => {
+                            if(currentSelected == i) {
+                                btn.style.backgroundColor = `#000000`;
+                                btn.style.color = `#ffffff`;
+                            } else {
+                                btn.style.backgroundColor = defaultColors.background;
+                                btn.style.color = defaultColors.color;
                             }
-                        } else {
-                            console.log(`no ${type} list item found`)
-                        }
+                        });
                     };
 
-                    if(tags.extra.length > 0) {
-                        card.querySelector(`#formatTags`).classList.remove(`d-none`);
-                        card.querySelector(`#formatTags`).innerHTML = tags.extra.join(` | `);
+                    const qualityButtonsDropdown = formatCard.querySelector(`#saveOptions`).cloneNode(true);
+                    listbox.querySelector(`#qualityButtons`).appendChild(qualityButtonsDropdown);
+
+                    const saveLocation = listbox.querySelector(`#saveLocation`)
+
+                    saveLocation.value = `${config && config.saveLocation ? config.saveLocation : ``}`;
+                    if(!saveLocation.value.endsWith(`/`) && !saveLocation.value.endsWith(`\\`)) saveLocation.value += platform.toLowerCase() == `win32` ? `\\` : `/`
+                    saveLocation.value += info.title
+
+                    listbox.querySelector(`#formatConversionTextbox`).placeholder = `ext`
+                    listbox.querySelector(`#formatConversionTextbox`).value = `mp3`
+
+                    const modifyQualityButtonsDropdown = () => {
+                        console.log(currentSelected)
+                        if(currentSelected == 1) {
+                            if(listbox.querySelector(`#formatConversionTextbox`).classList.contains(`d-none`)) listbox.querySelector(`#formatConversionTextbox`).classList.remove(`d-none`);
+                        } else {
+                            if(!listbox.querySelector(`#formatConversionTextbox`).classList.contains(`d-none`)) listbox.querySelector(`#formatConversionTextbox`).classList.add(`d-none`);
+                        }
                     }
 
-                    card.querySelector(`#fileFormat`).innerHTML = format.ext;
-
-                    if(format.audio) {
-                        card.querySelector(`#audioIcon`).style.opacity = `100%`;
-                    } else {
-                        card.querySelector(`#audioIcon`).style.opacity = `35%`;
-                    }
-
-                    if(format.video) {
-                        card.querySelector(`#videoIcon`).style.opacity = `100%`;
-                        card.querySelector(`#formatConversionTextbox`).classList.add(`d-none`);
-                    } else {
-                        card.querySelector(`#videoIcon`).style.opacity = `35%`;
-                    }
-
-                    card.querySelector(`#formatConversionTextbox`).placeholder = `${format.ext}`;
-                    card.querySelector(`#saveLocation`).placeholder = `${config && config.saveLocation ? config.saveLocation : `{default save location}`}`;
-
-                    if(config.lastMediaConversionOutputs[formatDownloadType]) card.querySelector(`#formatConversionTextbox`).value = config.lastMediaConversionOutputs[formatDownloadType];
-
-                    const saveOptions = card.querySelector(`#saveOptions`);
-                    const saveOptionsIcon = card.querySelector(`#downloadicon`)
-
-                    const btn = card.querySelector(`#formatDownload`);
-                    
                     let animating = false;
 
-                    const saveOptionsAnimations = {
-                        fadeIn: () => {
+                    const btnClick = (i) => {
+                        if(!animating) {
                             animating = true;
-                            btn.onclick = () => {}
-                            saveOptions.classList.remove(`d-none`);
-                            saveOptions.classList.add(`d-flex`);
-                            anime({
-                                targets: saveOptions,
-                                maxHeight: [`0px`, `36px`],
-                                opacity: [`0%`, `100%`],
-                                marginTop: [`0px`, `8px`],
-                                duration: 500,
-                                easing: `easeOutExpo`,
-                                complete: () => {
+                            currentSelected = i;
+                            refreshQualityButtonSelection();
+                            saveOptionsAnimations.fadeOut(null, qualityButtonsDropdown, btnClick).then(() => {
+                                modifyQualityButtonsDropdown();
+                                saveOptionsAnimations.fadeIn(null, qualityButtonsDropdown, btnClick).then(() => {
                                     animating = false;
-                                    btn.onclick = () => btnClick()
-                                }
-                            });
-                            anime({
-                                targets: saveOptionsIcon,
-                                rotate: [`0deg`, `180deg`],
-                                duration: 500,
-                                easing: `easeOutExpo`
-                            })
-                        },
-                        fadeOut: () => {
-                            animating = true;
-                            anime({
-                                targets: saveOptions,
-                                maxHeight: [`36px`, `0px`],
-                                opacity: [`100%`, `0%`],
-                                marginTop: [`8px`, `0px`],
-                                duration: 500,
-                                easing: `easeOutExpo`,
-                                complete: () => {
-                                    animating = false;
-                                    saveOptions.classList.remove(`d-flex`);
-                                    saveOptions.classList.add(`d-none`);
-                                    btn.onclick = () => btnClick()
-                                }
-                            })
-                            anime({
-                                targets: saveOptionsIcon,
-                                rotate: [`180deg`, `0deg`],
-                                duration: 500,
-                                easing: `easeOutExpo`
+                                })
                             })
                         }
                     }
-                    
-                    const confirmDownload = () => {
-                        saveOptionsAnimations.fadeOut();
 
-                        btn.disabled = true;
+                    listbox.querySelector(`#qualityButtons`).querySelectorAll(`.btn`).forEach((btn, i) => {
+                        btn.onclick = () => btnClick(i)
+                    });
 
-                        const bar = card.querySelector(`#progressBar`);
-                        const fill = card.querySelector(`#progressFill`);
-
-                        if(card.querySelector(`#formatConversionTextbox`).value != config.lastMediaConversionOutputs[formatDownloadType]) {
-                            let j = {};
-
-                            j[formatDownloadType] = card.querySelector(`#formatConversionTextbox`).value;
-
-                            updateConfig({ lastMediaConversionOutputs: j })
-                        }
-
-                        const dotSize = Number.parseInt(fill.style.width.replace(`px`, ``));
-                        const range = Number.parseInt(bar.style.width.replace(`px`, ``)) - dotSize;
-
-                        card.style.opacity = 0.5;
-
-                        startDownload(card, {
-                            url: url,
-                            format: format.format_id,
-                            ext: card.querySelector(`#formatConversionTextbox`).value || null,
-                            filePath: card.querySelector(`#saveLocation`).value || null,
-                            info: Object.assign({}, info, { formats: null }),
+                    const send = () => {
+                        listbox.querySelector(`#qualityButtons`).querySelectorAll(`.btn`).forEach(btn => btn.disabled = true);
+                        
+                        startDownload(listbox, {
+                            entries: info.entries.map(e => {
+                                return {
+                                    url: e.url,
+                                    format: qualities[currentSelected] || qualities[0],
+                                    ext: listbox.querySelector(`#formatConversionTextbox`).value || null,
+                                    filePath: listbox.querySelector(`#saveLocation`).value || null,
+                                    info: e
+                                }
+                            }),
+                            info: Object.assign({}, info, { formats: null, entries: null }),
                         });
 
-                        /*const ws = new WebSocket(`ws://localhost:3000/download`);
+                        centerURLBox(false);
+                    }
 
-                        let location = `Somewhere on your computer :)`
+                    listbox.querySelector(`#confirmDownload`).onclick = () => send();
 
-                        ws.onopen = () => {
-                            ws.send(JSON.stringify({
+                    const entries = info.entries;
+
+                    for (entry of entries) {
+                        const card = formatCard.cloneNode(true);
+
+                        card.querySelector(`#formatMetaList`).classList.add(`d-none`);
+
+                        card.querySelector(`#buttonsDiv`).style.minHeight = `36px`;
+
+                        card.querySelector(`#mediaIcons`).style.width = `24px`
+                        card.querySelector(`#mediaIcons`).style.minWidth = `24px`
+                        card.querySelector(`#mediaIcons`).style.maxWidth = `24px`
+
+                        card.querySelector(`#audioIcon`).classList.add(`d-none`);
+                        card.querySelector(`#videoIcon`).classList.add(`d-none`);
+                        card.querySelector(`#fileIcon`).classList.remove(`d-none`);
+
+                        card.querySelector(`#formatName`).innerHTML = entry.title;
+
+                        if(entry.duration) {
+                            card.querySelector(`#fileFormat`).innerHTML = `${entry.duration.timestamp}`;
+                        } else {
+                            card.querySelector(`#fileFormat`).classList.add(`d-none`)
+                        }
+
+                        card.querySelector(`#saveOptions`).innerHTML = ``;
+
+                        const qualityButtons = listbox.querySelector(`#innerQualityButtons`).cloneNode(true);
+
+                        qualityButtons.style.minWidth = `100%`;
+
+                        card.querySelector(`#saveOptions`).appendChild(qualityButtons);
+
+                        let animating = false;
+
+                        const btn = card.querySelector(`#formatDownload`);
+                        const saveOptions = card.querySelector(`#saveOptions`);
+                        
+                        const btnClick = () => {
+                            if(!animating && saveOptions.classList.contains(`d-none`)) {
+                                animating = true;
+                                saveOptionsAnimations.fadeIn(btn, saveOptions, btnClick).then(() => animating = false);
+                            } else if(!animating) {
+                                animating = true;
+                                saveOptionsAnimations.fadeOut(btn, saveOptions, btnClick).then(() => animating = false);
+                            }
+                        }
+
+                        btn.onclick = () => btnClick();
+
+                        formatList.appendChild(card);
+
+                        await new Promise((resolve) => setTimeout(resolve, 1));
+                    }
+                } else if(info.formats) {
+                    document.getElementById(`qualityButtons`).querySelectorAll(`.btn`).forEach((btn, i) => {
+                        btn.onclick = () => {
+                            btn.disabled = true;
+                            btn.opacity = 0.5;
+                            
+                            startDownload(btn, {
+                                url: url,
+                                format: qualities[i],
+                                info: Object.assign({}, info, { formats: null }),
+                            });
+                        }
+                    });
+
+                    const formats = info.formats.map(format => {
+                        if(format.audio_ext != `none` || format.acodec != `none` || format.asr || format.audio_channels) {
+                            format.audio = true;
+                        } else {
+                            format.audio = false;
+                        }
+
+                        if(format.aspect_ratio || format.fps || format.height || format.width || format.resolution != `audio only` || format.vcodec != `none` || format.video_ext != `none`) {
+                            format.video = true;
+                        } else {
+                            format.video = false;
+                        };
+
+                        return format;
+                    }).sort((a, b) => {
+                        if(a.audio && a.video) {
+                            return -1;
+                        } else if(b.audio && b.video) {
+                            return 1;
+                        } else if(a.audio && !a.video) {
+                            return -1;
+                        } else if(b.audio && !b.video) {
+                            return 1;
+                        } else if(a.video && !a.audio) {
+                            return -1;
+                        } else if(b.video && !b.audio) {
+                            return 1;
+                        } else {
+                            return 0;
+                        }
+                    });
+
+                    if(formats.filter(f => f.audio).length == 0) document.getElementById(`downloadBestAudio`).classList.add(`d-none`);
+                    if(formats.filter(f => f.video).length == 0) document.getElementById(`downloadBestVideo`).classList.add(`d-none`);
+
+                    let qualities = [`bv*+ba/b`, `ba`, `bv`]
+
+                    document.getElementById(`qualityButtons`).querySelectorAll(`.btn`).forEach((btn, i) => {
+                        btn.onclick = () => {
+                            btn.disabled = true;
+                            btn.opacity = 0.5;
+                            
+                            startDownload(btn, {
+                                url: url,
+                                format: qualities[i],
+                                info: Object.assign({}, info, { formats: null }),
+                            });
+                        }
+                    });
+                    
+                    for (format of formats) {
+                        //console.log(format)
+                        const formatDownloadType = format.audio && format.video ? `both` : format.audio && !format.video ? `audio` : `video`;
+
+                        const card = formatCard.cloneNode(true);
+
+                        const formatName = card.querySelector(`#formatName`);
+                        const formatSubtext = card.querySelector(`#formatSubtext`);
+
+                        const list = card.querySelector(`#formatMetaList`);
+
+                        const listMetaItems = {
+                            video: list.querySelector(`#formatMetaVideoItem`).cloneNode(true),
+                            audio: list.querySelector(`#formatMetaAudioItem`).cloneNode(true)
+                        }
+
+                        list.querySelector(`#formatMetaVideoItem`).remove();
+                        list.querySelector(`#formatMetaAudioItem`).remove();
+
+                        const tags = formatToTags(format)
+
+                        formatName.innerHTML = tags.format;
+                        if(tags.filesize) format.innerHTML += ` (${tags.filesize})`;
+                        if(tags.drm) format.innerHTML += ` (DRM)`;
+
+                        for (type of Object.keys(tags.meta)) {
+                            console.log(`appending ${type} meta for ${tags.format}`)
+
+                            if(listMetaItems[type]) {
+                                for (key of Object.keys(tags.meta[type])) {
+                                    if(tags.meta[type][key] != `none`) {
+                                        console.log(`appending ${key} meta with value ${tags.meta[type][key]}`)
+
+                                        const item = listMetaItems[type].cloneNode(true);
+
+                                        item.querySelector(`#txt`).innerHTML = key + `: ` + tags.meta[type][key];
+
+                                        list.appendChild(item);
+                                    }
+                                }
+                            } else {
+                                console.log(`no ${type} list item found`)
+                            }
+                        };
+
+                        if(tags.extra.length > 0) {
+                            card.querySelector(`#formatTags`).classList.remove(`d-none`);
+                            card.querySelector(`#formatTags`).innerHTML = tags.extra.join(` | `);
+                        }
+
+                        card.querySelector(`#fileFormat`).innerHTML = format.ext;
+
+                        if(format.audio) {
+                            card.querySelector(`#audioIcon`).style.opacity = `100%`;
+                        } else {
+                            card.querySelector(`#audioIcon`).style.opacity = `35%`;
+                        }
+
+                        if(format.video) {
+                            card.querySelector(`#videoIcon`).style.opacity = `100%`;
+                            card.querySelector(`#formatConversionTextbox`).classList.add(`d-none`);
+                        } else {
+                            card.querySelector(`#videoIcon`).style.opacity = `35%`;
+                        }
+
+                        card.querySelector(`#formatConversionTextbox`).placeholder = `${format.ext}`;
+                        card.querySelector(`#saveLocation`).placeholder = `${config && config.saveLocation ? config.saveLocation : `{default save location}`}`;
+
+                        if(config.lastMediaConversionOutputs[formatDownloadType]) card.querySelector(`#formatConversionTextbox`).value = config.lastMediaConversionOutputs[formatDownloadType];
+
+                        const saveOptions = card.querySelector(`#saveOptions`);
+                        const saveOptionsIcon = card.querySelector(`#downloadicon`)
+
+                        const btn = card.querySelector(`#formatDownload`);
+                        
+                        let animating = false;
+                        
+                        const confirmDownload = () => {
+                            saveOptionsAnimations.fadeOut(btn, saveOptions, btnClick);
+
+                            btn.disabled = true;
+
+                            const bar = card.querySelector(`#progressBar`);
+                            const fill = card.querySelector(`#progressFill`);
+
+                            if(card.querySelector(`#formatConversionTextbox`).value != config.lastMediaConversionOutputs[formatDownloadType]) {
+                                let j = {};
+
+                                j[formatDownloadType] = card.querySelector(`#formatConversionTextbox`).value;
+
+                                updateConfig({ lastMediaConversionOutputs: j })
+                            }
+
+                            const dotSize = Number.parseInt(fill.style.width.replace(`px`, ``));
+                            const range = Number.parseInt(bar.style.width.replace(`px`, ``)) - dotSize;
+
+                            card.style.opacity = 0.5;
+
+                            startDownload(card, {
                                 url: url,
                                 format: format.format_id,
                                 ext: card.querySelector(`#formatConversionTextbox`).value || null,
                                 filePath: card.querySelector(`#saveLocation`).value || null,
                                 info: Object.assign({}, info, { formats: null }),
-                            }));
-                        };
-                        
-                        const { update, complete } = createDownloadManager(card)
+                            });
 
-                        ws.onmessage = (o) => update(JSON.parse(o.data));
-                        ws.onclose = () => {
-                            complete();
-                            card.style.opacity = 1;
-                            card.querySelector(`#downloadicon`).classList.add(`d-none`);
-                            card.querySelector(`#fileicon`).classList.remove(`d-none`);
-                        }*/
-                    }
+                            /*const ws = new WebSocket(`ws://localhost:3000/download`);
 
-                    card.querySelector(`#confirmDownload`).onclick = () => confirmDownload();
+                            let location = `Somewhere on your computer :)`
 
-                    const btnClick = () => {
-                        if(!animating && saveOptions.classList.contains(`d-none`)) {
-                            saveOptionsAnimations.fadeIn();
-                        } else if(!animating) {
-                            saveOptionsAnimations.fadeOut();
+                            ws.onopen = () => {
+                                ws.send(JSON.stringify({
+                                    url: url,
+                                    format: format.format_id,
+                                    ext: card.querySelector(`#formatConversionTextbox`).value || null,
+                                    filePath: card.querySelector(`#saveLocation`).value || null,
+                                    info: Object.assign({}, info, { formats: null }),
+                                }));
+                            };
+                            
+                            const { update, complete } = createDownloadManager(card)
+
+                            ws.onmessage = (o) => update(JSON.parse(o.data));
+                            ws.onclose = () => {
+                                complete();
+                                card.style.opacity = 1;
+                                card.querySelector(`#downloadicon`).classList.add(`d-none`);
+                                card.querySelector(`#fileicon`).classList.remove(`d-none`);
+                            }*/
                         }
+
+                        card.querySelector(`#confirmDownload`).onclick = () => confirmDownload();
+
+                        const btnClick = () => {
+                            if(!animating && saveOptions.classList.contains(`d-none`)) {
+                                animating = true;
+                                saveOptionsAnimations.fadeIn(btn, saveOptions, btnClick).then(() => animating = false);
+                            } else if(!animating) {
+                                animating = true;
+                                saveOptionsAnimations.fadeOut(btn, saveOptions, btnClick).then(() => animating = false);
+                            }
+                        }
+
+                        btn.onclick = () => btnClick()
+
+                        formatList.appendChild(card);
+
+                        await new Promise((resolve) => setTimeout(resolve, 1));
                     }
-
-                    btn.onclick = () => btnClick()
-
-                    formatList.appendChild(card);
-                })
-                
-                document.getElementById(`statusText`).classList.add(`d-none`);
-
-                anime({
-                    targets: urlBox,
-                    height: searchBoxHeights(),
-                    duration: 1000,
-                    easing: `easeOutExpo`,
-                })
+                }
             }
         }
 
@@ -544,30 +688,12 @@
         input.disabled = true;
         button.disabled = true;
 
-        document.body.style.overflowY = `hidden`
-
         if(!document.getElementById(`errorMsg`).classList.contains(`d-none`)) {
             document.getElementById(`errorMsg`).classList.add(`d-none`);
         }
 
         if(document.getElementById(`listbox`)) {
-            anime({
-                targets: urlBox,
-                height: searchBoxHeights().reverse(),
-                duration: 600,
-                easing: `easeOutExpo`,
-                complete: () => {
-                    if(document.getElementById(`listbox`)) listboxParent.removeChild(document.getElementById(`listbox`));
-
-                    urlBox.style.height = `calc(100vh - 80px)`
-                    
-                    if(parse) {
-                        parseInfo();
-                    } else {
-                        parse = true;
-                    }
-                }
-            });
+            centerURLBox(true, true);
 
             anime.remove(background)
 

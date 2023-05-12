@@ -9,10 +9,14 @@ const time = require(`../util/time`);
 const { updateStatus } = require(`../util/downloadManager`);
 
 module.exports = {
-    listFormats: (url) => new Promise(async res => {
+    listFormats: (url, disableFlatPlaylist) => new Promise(async res => {
         console.log(`going to path ${path}; url "${url}"`)
 
-        const proc = child_process.execFile(path, [url, `--dump-single-json`, `--quiet`, `--progress`, `--verbose`]);
+        let args = [url, `--dump-single-json`, `--quiet`, `--progress`, `--verbose`];
+
+        if(!disableFlatPlaylist) args.push(`--flat-playlist`);
+
+        const proc = child_process.execFile(path, args);
 
         let data = ``;
 
@@ -23,7 +27,7 @@ module.exports = {
                 firstUpdate = true;
                 updateStatus(`Getting video info...`)
             };
-            
+
             const str = d.toString().trim();
             if(!str.startsWith(`[debug]`)) {
                 updateStatus(str.split(`]`).slice(1).join(`]`).trim())
@@ -42,8 +46,36 @@ module.exports = {
         proc.on(`close`, code => {
             console.log(`listFormats closed with code ${code}`)
             const d = JSON.parse(data);
+            if(d && d.formats) {
+                console.log(`formats found! resolving...`);
+                
+                if(d.duration) {
+                    d.duration = time(d.duration*1000)
+                }
+
+                res(d)
+            } else if(d && d.entries) {
+                console.log(`entries found! adding time objects...`);
+
+                let totalTime = 0;
+
+                d.entries = d.entries.map(e => {
+                    if(e.duration) {
+                        e.duration = time(e.duration*1000);
+                        totalTime += e.duration.units.ms;
+                    }
+                    return e;
+                });
+
+                d.duration = time(totalTime)
+
+                res(d)
+            } else {
+                updateStatus(`Restarting playlist search... (there were no formats returned!!)`)
+                console.log(`no formats found! starting over...`);
+                return this.listFormats(url, true).then(res)
+            }
             //console.log(d)
-            res(d)
         })
     }),
     getFilename: (url, format) => new Promise(async res => {
@@ -78,6 +110,8 @@ module.exports = {
         console.log(saveLocation, filePath, outputFilename)
 
         const saveTo = (filePath || saveLocation) + (require('os').platform() == `win32` ? `\\` : `/`)
+
+        fs.mkdirSync(saveTo, { recursive: true, failIfExists: false });
         
         const args = [`-f`, format, url, `-o`, saveTo + outputFilename + `.%(ext)s`, `--embed-metadata`, `--no-mtime`];
 

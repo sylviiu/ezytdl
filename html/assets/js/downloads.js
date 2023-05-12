@@ -201,6 +201,8 @@ downloadsWs.onmessage = (msg) => {
 
         const order = Object.keys(m.data)
 
+        order.push(order.shift()); // put complete at the bottom of the list
+
         for (state of order) {
             queue.push(...m.data[state].map(o => Object.assign({}, o, {state})))
         };
