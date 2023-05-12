@@ -1,6 +1,6 @@
 {
     "appId": "dev.sylviiu.ezytdl",
-    "productName": "ezytdl",
+    "productName": "ezytdl-test",
     "publish": [
         {
             "provider": "github",
