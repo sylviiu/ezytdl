@@ -17,6 +17,8 @@ let notificationQueue = [];
 
 const queueStrings = [ `Up next!` ];
 
+let queueSizeWarningSent = false;
+
 const sendUpdate = (sendObj) => {
     //console.log(`Sending download update...`)
     if(ws) ws.send(JSON.stringify({
@@ -56,6 +58,20 @@ const refreshQueue = (opt) => {
                 }
             }
         }
+    }
+
+    const totalItems = Object.values(queue).slice(1).reduce((a,b) => a+b.length, 0);
+
+    console.log(`total queue length : ${totalItems}`)
+
+    if(!queueSizeWarningSent && totalItems > 50) {
+        queueSizeWarningSent = true;
+
+        sendNotification({
+            headingText: `Warning!`,
+            bodyText: `There are ${totalItems} items in the queue.\n\nDepending on your computer, having too many items in the download queue may cause the UI to slow down and/or freeze, especially if you navigate to different pages while the queue is active. To ensure stability, stay on this screen while you finish this queue.`,
+            type: `warn`,
+        });
     }
 
     console.log(`Updating queue...`)
