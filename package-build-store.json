@@ -1,6 +1,6 @@
 {
     "appId": "dev.sylviiu.ezytdl",
-    "productName": "ezytdl-test",
+    "productName": "ezytdl",
     "publish": [
         {
             "provider": "github",
@@ -9,15 +9,18 @@
         }
     ],
     "win": {
+        "icon": "buildResources/packageIcons/icon-512x512.ico",
         "target": [
             "portable",
             "nsis"
         ]
     },
     "linux": {
+        "icon": "buildResources/packageIcons/icon-512x512.png",
         "target": "AppImage"
     },
     "mac": {
+        "icon": "buildResources/packageIcons/icon-512x512.icns",
         "target": "dmg"
     },
     "compression": "store",
