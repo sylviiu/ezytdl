@@ -29,16 +29,18 @@
         "pre": ["-hwaccel", "auto"],
         "post": ["-c:v", "h264_cuvid"]
     },
+    "vaapi": {
+        "string": "vaapi",
+        "pre": ["-hwaccel", "auto"],
+        "post": ["-c:v", "h264_vaapi"]
+    },
     "amf": {
         "string": "amf",
         "pre": ["-hwaccel", "dxva2"],
         "post": ["-c:v", "h264_amf"]
     },
-    "dxva2Generic": {
-        "pre": ["-hwaccel", "auto"],
-        "post": ["-c:v", "h264"]
-    },
     "videotoolbox": {
+        "string": "videotoolbox",
         "pre": ["-hwaccel", "auto"],
         "post": ["-c:v", "h264_videotoolbox"]
     }
