@@ -1,5 +1,4 @@
 const { file, getPath } = require(`../filenames/ytdlp`);
-const path = getPath()
 
 const fs = require('fs');
 const child_process = require('child_process');
@@ -7,6 +6,8 @@ const child_process = require('child_process');
 let currentVersion = null;
 
 module.exports = (forceCheck) => new Promise(async res => {
+    let path = getPath()
+
     if(!forceCheck && currentVersion) {
         return res(currentVersion);
     } else {

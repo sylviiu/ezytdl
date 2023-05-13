@@ -1,1 +1,1 @@
-module.exports = () => require(`../githubReleasesRequest`)(`eugeneware`, `ffmpeg-static`)
+module.exports = () => require(`../githubReleasesRequest`)(`BtbN`, `FFmpeg-Builds`)

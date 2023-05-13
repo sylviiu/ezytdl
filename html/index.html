@@ -366,7 +366,7 @@
 
                     const modifyQualityButtonsDropdown = () => {
                         console.log(currentSelected)
-                        if(currentSelected == 1) {
+                        if(/*currentSelected == 1*/ true) {
                             if(listbox.querySelector(`#formatConversionTextbox`).classList.contains(`d-none`)) listbox.querySelector(`#formatConversionTextbox`).classList.remove(`d-none`);
                         } else {
                             if(!listbox.querySelector(`#formatConversionTextbox`).classList.contains(`d-none`)) listbox.querySelector(`#formatConversionTextbox`).classList.add(`d-none`);
@@ -401,7 +401,7 @@
                                 return {
                                     url: e.url,
                                     format: qualities[currentSelected] || qualities[0],
-                                    ext: currentSelected == 1 && listbox.querySelector(`#formatConversionTextbox`).value ? listbox.querySelector(`#formatConversionTextbox`).value : null,
+                                    ext: /*currentSelected == 1 && */listbox.querySelector(`#formatConversionTextbox`).value ? listbox.querySelector(`#formatConversionTextbox`).value : null,
                                     filePath: listbox.querySelector(`#saveLocation`).value || null,
                                     info: e
                                 }
@@ -514,7 +514,7 @@
 
                         const modifyQualityButtonsDropdown2 = () => {
                             console.log(currentSelected2)
-                            if(currentSelected2 == 1) {
+                            if(/*currentSelected2 == 1*/ true) {
                                 if(saveOpt.querySelector(`#formatConversionTextbox`).classList.contains(`d-none`)) saveOpt.querySelector(`#formatConversionTextbox`).classList.remove(`d-none`);
                             } else {
                                 if(!saveOpt.querySelector(`#formatConversionTextbox`).classList.contains(`d-none`)) saveOpt.querySelector(`#formatConversionTextbox`).classList.add(`d-none`);
@@ -563,7 +563,7 @@
                             startDownload(card, {
                                 url: entry.webpage_url || entry.url,
                                 format: qualities[currentSelected2] || qualities[0],
-                                ext: currentSelected2 == 1 && saveOpt.querySelector(`#formatConversionTextbox`).value ? saveOpt.querySelector(`#formatConversionTextbox`).value : null,
+                                ext: /*currentSelected2 == 1 && */saveOpt.querySelector(`#formatConversionTextbox`).value ? saveOpt.querySelector(`#formatConversionTextbox`).value : null,
                                 filePath: cardSaveLocation.value || null,
                                 info: entry,
                             });
@@ -706,7 +706,7 @@
 
                         if(format.video) {
                             card.querySelector(`#videoIcon`).style.opacity = `100%`;
-                            card.querySelector(`#formatConversionTextbox`).classList.add(`d-none`);
+                            //card.querySelector(`#formatConversionTextbox`).classList.add(`d-none`);
                         } else {
                             card.querySelector(`#videoIcon`).style.opacity = `35%`;
                         }

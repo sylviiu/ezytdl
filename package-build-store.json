@@ -25,17 +25,22 @@
     },
     "compression": "store",
     "asar": true,
+    "asarUnpack": [
+        "res/*.mp4"
+    ],
     "files": [
         "html/*.html",
         "html/assets/**/*",
         "node_modules/**/*",
         "buildResources/**/*",
+        "res/*.mp4",
         "package.json",
         "index.js",
         "server.js",
         "getConfig.js",
         "defaultConfig.json",
         "util/*.js",
+        "util/*.json",
         "util/*/*.js",
         "endpoints/*.js",
         "core/*.js",

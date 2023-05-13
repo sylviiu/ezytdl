@@ -1,4 +1,4 @@
-const { file, downloadPath } = require(`../filenames/ffmpeg`);
+const { file, downloadPath, platform } = require(`../filenames/ffmpeg`);
 const fs = require('fs');
 const superagent = require('superagent');
 const Stream = require('stream');
@@ -32,14 +32,20 @@ module.exports = async (ws) => {
             console.log(`Latest version: ${version}`);
             console.log(`Downloads: ${downloads.map(d => d.name).join(`, `)}`);
     
-            if(!downloads.find(d => d.name === file)) {
+            if(!downloads.find(d => d.name.startsWith(`ffmpeg-master-latest-${file}`))) {
                 return errorHandler(`Failed to find download for ${file} in latest release; please make sure that you are using a supported a platform!\n\nIf you are, please open an issue on GitHub.`)
             } else {
-                const download = downloads.find(d => d.name === file);
+                const download = downloads.find(d => d.name.startsWith(`ffmpeg-master-latest-${file}`));
     
                 console.log(`Found target file! (${file} / ${download.size} size); downloading ${download.name} from "${download.browser_download_url}"`);
+
+                let ext = `.zip`;
+
+                if(platform == `linux`) ext = `.tar.xz`;
+
+                if(fs.existsSync(downloadPath)) fs.unlinkSync(downloadPath, { recursive: true });
     
-                const writeStream = fs.createWriteStream(`${downloadPath}`, { flags: `w` });
+                const writeStream = fs.createWriteStream(downloadPath + ext, { flags: `w` });
     
                 const req = superagent.get(download.browser_download_url).set(`User-Agent`, `node`);
     
@@ -60,8 +66,35 @@ module.exports = async (ws) => {
     
                 writeStream.on(`finish`, () => {
                     console.log(`done!`);
+
+                    let toPipe = null;
+
+                    if(platform == `linux`) {
+                        toPipe = require(`node-tar`).x({
+                            strip: 1,
+                            C: downloadPath
+                        })
+                    } else if(platform == `win`) {
+                        toPipe = require(`unzipper`).Extract({
+                            path: downloadPath
+                        })
+                    };
+
+                    const stream = fs.createReadStream(downloadPath + ext);
+
+                    stream.pipe(toPipe);
+
+                    toPipe.on(`close`, () => {
+                        console.log(`Extracted!`);
+
+                        fs.unlinkSync(downloadPath + ext);
+
+                        console.log(require(`../filenames/ffmpeg`).getPath());
+
+                        ws.close();
+                    })
     
-                    ws.close();
+                    //ws.close();
                 })
             }
         }

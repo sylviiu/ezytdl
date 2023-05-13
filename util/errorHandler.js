@@ -7,7 +7,7 @@ const { sendNotification } = require(`../util/downloadManager`)
 module.exports = (err) => {
     console.error(err)
 
-    const str = `${err}\n\n${err.stack? err.stack : `(no stack)`}`
+    const str = `${err}\n\n${typeof err == `object` && err.stack? err.stack : `(no stack)`}`
 
     const notifSent = sendNotification({
         headingText: `Internal error occurred!`,

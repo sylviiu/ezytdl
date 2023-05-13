@@ -1,0 +1,45 @@
+{
+    "nvidia": {
+        "string": "nvenc",
+        "pre": ["-hwaccel", "nvdec", "-hwaccel_output_format", "cuda", "-extra_hw_frames", "10"],
+        "post": ["-c:v", "h264_nvenc"]
+    },
+    "nvidiaNoCuda": {
+        "string": "nvenc",
+        "pre": ["-hwaccel", "nvdec", "-extra_hw_frames", "10"],
+        "post": ["-c:v", "h264_nvenc"]
+    },
+    "nvidiaAuto": {
+        "string": "nvenc",
+        "pre": ["-hwaccel", "auto"],
+        "post": ["-c:v", "h264_nvenc"]
+    },
+    "intel": {
+        "string": "qsv",
+        "pre": ["-hwaccel", "auto"],
+        "post": ["-c:v", "h264_qsv"]
+    },
+    "cuda": {
+        "string": "nvenc",
+        "pre": ["-hwaccel", "cuda", "-hwaccel_output_format", "cuda", "-extra_hw_frames", "10"],
+        "post": ["-c:v", "h264_nvenc"]
+    },
+    "cuvid": {
+        "string": "cuvid",
+        "pre": ["-hwaccel", "auto"],
+        "post": ["-c:v", "h264_cuvid"]
+    },
+    "amf": {
+        "string": "amf",
+        "pre": ["-hwaccel", "dxva2"],
+        "post": ["-c:v", "h264_amf"]
+    },
+    "dxva2Generic": {
+        "pre": ["-hwaccel", "auto"],
+        "post": ["-c:v", "h264"]
+    },
+    "videotoolbox": {
+        "pre": ["-hwaccel", "auto"],
+        "post": ["-c:v", "h264_videotoolbox"]
+    }
+}
