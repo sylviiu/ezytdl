@@ -67,7 +67,7 @@ module.exports = async (ws) => {
                 writeStream.on(`finish`, () => {
                     console.log(`done!`);
 
-                    let toPipe = null;
+                    fs.mkdirSync(downloadPath, { recursive: true, failOnError: false });
 
                     if(platform == `linux`) {
                         require(`child_process`).execFileSync(`tar`, [`-xf`, downloadPath + ext, `-C`, downloadPath]);
