@@ -70,7 +70,7 @@ module.exports = async (ws) => {
                     let toPipe = null;
 
                     if(platform == `linux`) {
-                        toPipe = require(`node-tar`).x({
+                        toPipe = require(`tar`).x({
                             strip: 1,
                             C: downloadPath
                         })
