@@ -31,7 +31,7 @@
     },
     "vaapi": {
         "string": "vaapi",
-        "pre": ["-hwaccel", "auto"],
+        "pre": ["-hwaccel", "vaapi", "-hwaccel_output_format", "vaapi"],
         "post": ["-c:v", "h264_vaapi"]
     },
     "amf": {
