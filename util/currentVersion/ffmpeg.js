@@ -17,6 +17,7 @@ module.exports = (forceCheck) => new Promise(async res => {
         if(exists) {
             const proc = child_process.spawnSync(path, [`-version`]);
             //const versionString = child_process.execSync(`${path} -version`).toString().trim();
+            if(!proc.stdout) return res(null);
             const versionString = proc.stdout.toString().trim();
     
             currentVersion = versionString.split(`version `)[1].split(` `)[0].split(`-`)[0];
