@@ -65,15 +65,23 @@ module.exports = async (ws) => {
                 })
     
                 writeStream.on(`finish`, () => {
+                    const finalize = () => {
+                        console.log(`Extracted!`);
+
+                        fs.unlinkSync(downloadPath + ext);
+
+                        console.log(require(`../filenames/ffmpeg`).getPath());
+
+                        ws.close();
+                    };
+
                     console.log(`done!`);
 
                     fs.mkdirSync(downloadPath, { recursive: true, failOnError: false });
 
                     if(platform == `linux`) {
                         require(`child_process`).execFileSync(`tar`, [`-xf`, downloadPath + ext, `-C`, downloadPath]);
-                        console.log(`Extracted!`);
-                        fs.unlinkSync(downloadPath + ext);
-                        ws.close();
+                        finalize();
                     } else if(platform == `win`) {
                         const extractor = require(`unzipper`).Extract({
                             path: downloadPath
@@ -81,15 +89,7 @@ module.exports = async (ws) => {
 
                         fs.createReadStream(downloadPath + ext).pipe(extractor);
 
-                        extractor.on(`close`, () => {
-                            console.log(`Extracted!`);
-    
-                            fs.unlinkSync(downloadPath + ext);
-    
-                            console.log(require(`../filenames/ffmpeg`).getPath());
-    
-                            ws.close();
-                        })
+                        extractor.on(`close`, () => finalize())
                     };
     
                     //ws.close();
