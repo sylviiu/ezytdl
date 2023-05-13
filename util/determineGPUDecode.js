@@ -28,10 +28,10 @@ const constructPromise = (name, accelArgs) => new Promise((res) => {
     proc.on(`close`, (code) => {
         console.log(`${name} exited with code ${code}`);
 
-        sendNotification({
+        /*sendNotification({
             headingText: `Testing ${name}...`,
             bodyText: file + `\n\n${str}`
-        })
+        })*/
 
         res({ name, works: code == 0 ? true : false, log: str, pre: accelArgs.pre || [], post: accelArgs.post || [], string: accelArgs.string })
     })
