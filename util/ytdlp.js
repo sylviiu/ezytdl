@@ -31,11 +31,21 @@ const getCodec = (file) => {
     let ffprobePath = require(`./filenames/ffmpeg`).getFFprobe();
     
     if(ffprobePath && fs.existsSync(ffprobePath)) {
-        let a = child_process.execFileSync(ffprobePath, [`-v`, `error`, `-select_streams`, `v:0`, `-show_entries`, `stream=codec_name`, `-of`, `default=noprint_wrappers=1:nokey=1`, file]).toString().trim()
-        //if(!a) a = child_process.execFileSync(ffprobePath, [`-v`, `error`, `-show_entries`, `stream=codec_name`, `-of`, `default=noprint_wrappers=1:nokey=1`, file]).toString().trim();
-        if(a) {
-            return a.trim().split(`\n`)[0]
-        } else return null;
+        try {
+            let a = child_process.execFileSync(ffprobePath, [`-v`, `error`, `-select_streams`, `v:0`, `-show_entries`, `stream=codec_name`, `-of`, `default=noprint_wrappers=1:nokey=1`, file]).toString().trim()
+            //if(!a) a = child_process.execFileSync(ffprobePath, [`-v`, `error`, `-show_entries`, `stream=codec_name`, `-of`, `default=noprint_wrappers=1:nokey=1`, file]).toString().trim();
+            if(a) {
+                return a.trim().split(`\n`)[0]
+            } else return null;
+        } catch(e) {
+            console.log(e);
+            sendNotification({
+                headingText: `Error!`,
+                bodyText: `An error occured while trying to get the codec of a file! The download may be affected\n\nPath: ${file}\n\nError: ${e.toString()}`,
+                type: `error`
+            });
+            return null;
+        }
     } else return null
 }
 
