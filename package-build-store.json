@@ -39,6 +39,7 @@
         "server.js",
         "getConfig.js",
         "defaultConfig.json",
+        "configStrings.json",
         "util/*.js",
         "util/*.json",
         "util/*/*.js",
