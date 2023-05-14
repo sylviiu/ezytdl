@@ -292,7 +292,10 @@ module.exports = {
             if(!fs.existsSync(previousFilename)) previousFilename = await module.exports.getFilename(url, format, temporaryFilename + `.%(ext)s`);
 
             if(ext) {
-                const mainArgs = [`-y`, `-i`, saveTo + previousFilename, saveTo + ytdlFilename + `.${ext}`];
+                const mainArgs = [`-i`, saveTo + previousFilename, saveTo + ytdlFilename + `.${ext}`];
+
+                const inputArgs = [`-i`, saveTo + previousFilename];
+                const outputArgs = [saveTo + ytdlFilename + `.${ext}`];
 
                 const spawnFFmpeg = (args2, name) => new Promise((resolveFFmpeg, rej) => {
                     if(killAttempt > 0) return rej(`Download canceled.`, true);
@@ -301,19 +304,19 @@ module.exports = {
 
                     update({status: `Converting to ${ext.toUpperCase()} using ${name}...`, percentNum: -1, eta: `--`});
 
-                    const proc2 = child_process.execFile(ffmpegPath, args2);
+                    const proc2 = child_process.execFile(ffmpegPath, [`-y`, ...args2]);
                     
-                    update({saveLocation: saveTo, url, format, kill: () => {
+                    update({kill: () => {
                         killAttempt++
                         proc2.kill(`SIGKILL`);
-                    }, status: `Downloading...`})
+                    }})
     
                     let duration = null;
     
                     proc2.stderr.on(`data`, d => {
                         const data = `${d}`
     
-                        //console.log(`STDERR | ${data.trim()}`);
+                        console.log(`STDERR | ${data.trim()}`);
                         if(data.includes(`Duration:`)) {
                             duration = time(data.trim().split(`Duration:`)[1].trim().split(`,`)[0]).units.ms;
                             console.log(`duration: `, duration)
@@ -323,11 +326,14 @@ module.exports = {
                             const timestamp = time(data.trim().split(`time=`)[1].trim().split(` `)[0]).units.ms;
                             update({percentNum: (Math.round((timestamp / duration) * 1000))/10})
                         }
+
+                        let speed = [];
+
+                        if(data.includes(`fps=`)) speed.push(data.trim().split(`fps=`)[1].trim().split(` `)[0] + `fps`);
     
-                        if(data.includes(`speed=`)) {
-                            const speed = data.trim().split(`speed=`)[1].trim().split(` `)[0];
-                            update({downloadSpeed: speed})
-                        }
+                        if(data.includes(`speed=`)) speed.push(data.trim().split(`speed=`)[1].trim().split(` `)[0]);
+                        
+                        if(speed) update({downloadSpeed: speed.join(` | `)})
                     });
     
                     proc2.stdout.on(`data`, data => {
@@ -380,16 +386,18 @@ module.exports = {
                     });
 
                     const fallbackToDecoderOnly = () => {
-                        if(onlyGPUConversion) {
-                            return fallback(`The video codec (${thisCodec}) provided by the downloaded format is not compatible with FFmpeg's GPU transcoding.`);
-                        } else if(decoder && decoder.name) {
-                            spawnFFmpeg([...decoder.pre, `-c:v`, decoder.codecName, ...mainArgs, ...decoder.post], decoder.codecName + `/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`).then(res).catch(e => {
+                        console.log(`fallback to decoder only`);
+
+                        if(decoder && decoder.name) {
+                            spawnFFmpeg([...decoder.pre, ...inputArgs, ...decoder.post, ...outputArgs], `${thisCodec}_software/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`).then(res).catch(e => {
                                 console.log(`FFmpeg failed converting -- ${e}; trying again...`)
-                                spawnFFmpeg([...mainArgs, ...decoder.post], `${thisCodec}_software/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`).then(res).catch(e => {
+                                spawnFFmpeg([...inputArgs, ...decoder.post, `-c:v`, `h264`, ...outputArgs], `${thisCodec}_software/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`).then(res).catch(e => {
                                     console.log(`FFmpeg failed converting -- ${e}; trying again...`)
-                                    spawnFFmpeg([...decoder.pre, ...mainArgs, `-c:v`, `h264`], decoder.codecName + `/Dec + ` + `h264_software/Enc`).then(res).catch(e => {
-                                        console.log(`FFmpeg failed converting -- ${e}; trying again...`)
-                                        spawnFFmpeg(mainArgs, `${thisCodec}_software`).then(res).catch(fallback)
+                                    spawnFFmpeg([...decoder.pre, ...inputArgs, `-c:v`, `h264`, ...outputArgs], `${thisCodec}_software/Dec + ` + `h264_software/Enc`).then(res).catch(e => {
+                                        console.log(`FFmpeg failed converting -- ${e}; trying again...`);
+                                        if(onlyGPUConversion) {
+                                            return fallback(`The video codec (${thisCodec}) provided by the downloaded format is not compatible with FFmpeg's GPU transcoding.`);
+                                        } else spawnFFmpeg([...inputArgs, `-c:v`, `h264`, ...outputArgs], `${thisCodec}_software`).then(res).catch(fallback)
                                     })
                                 })
                             })
@@ -405,16 +413,22 @@ module.exports = {
                             console.log(`trying ${transcoder.name}...`);
                             
                             try {
-                                const proc = await spawnFFmpeg([`-c:v`, transcoder.codecName, ...mainArgs, ...decoder.post], transcoder.codecName + `/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`);
+                                const proc = await spawnFFmpeg([`-c:v`, transcoder.codecName, ...inputArgs, ...decoder.post, ...outputArgs], transcoder.codecName + `/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`);
                                 done = true;
                                 break;
                             } catch(e) {
                                 try {
-                                    const proc = await spawnFFmpeg([`-c:v`, transcoder.codecName, ...mainArgs, ...transcoder.post], transcoder.codecName + `/Dec + ` + `${transcoder.post[transcoder.post.indexOf(`-c:v`)+1]}` + `/Enc`);
+                                    const proc = await spawnFFmpeg([`-c:v`, transcoder.codecName, ...inputArgs, ...transcoder.post, ...outputArgs], transcoder.codecName + `/Dec + ` + `${transcoder.post[transcoder.post.indexOf(`-c:v`)+1]}` + `/Enc`);
                                     done = true;
                                     break;
                                 } catch(e) {
-                                    console.log(`FFmpeg failed converting -- ${e}; trying again...`)
+                                    try {
+                                        const proc = await spawnFFmpeg([...inputArgs, ...transcoder.post, ...outputArgs], `${thisCodec}_software` + `/Dec + ` + `${transcoder.post[transcoder.post.indexOf(`-c:v`)+1]}` + `/Enc`);
+                                        done = true;
+                                        break;
+                                    } catch(e) {
+                                        console.log(`FFmpeg failed converting -- ${e}; trying again...`)
+                                    }
                                 }
                             }
                         };

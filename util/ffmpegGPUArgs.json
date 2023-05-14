@@ -36,7 +36,7 @@
     },
     "AMD AMF": {
         "string": "amf",
-        "pre": ["-hwaccel", "dxva2"],
+        "pre": ["-hwaccel", "auto"],
         "post": ["-c:v", "h264_amf"]
     },
     "Apple / VideoToolbox": {
