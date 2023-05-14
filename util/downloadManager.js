@@ -181,22 +181,16 @@ const createDownloadObject = (opt, rawUpdateFunc) => {
         failed: false,
         killed: false,
         updateFunc: (update) => {
-            if(!obj.ignoreUpdates) {
-                if(typeof update == `object` && !update.latest) update = { latest: update };
+            if(typeof update == `object` && !update.latest) update = { latest: update };
 
-                if(update.overall && update.overall.kill) obj.killFunc = () => update.overall.kill();
-                obj.status = Object.assign({}, obj.status, update.latest);
-                if(update.latest.percentNum) {
-                    activeProgress[obj.id] = update.latest.percentNum;
-                    updateProgressBar();
-                }
-                sendUpdate(Object.assign({}, obj, { status: update.latest }));
-                rawUpdateFunc(update);
-            } else if(typeof update == `object` && (update.status || update.latest.status || ``).includes(`cancel`)) {
-                obj.status = Object.assign({}, obj.status, { status: (update.status || update.latest.status) })
-                sendUpdate(Object.assign({}, obj, { status: update.latest }));
-                rawUpdateFunc(update);
+            if(update.overall && update.overall.kill) obj.killFunc = () => update.overall.kill();
+            obj.status = Object.assign({}, obj.status, update.latest);
+            if(update.latest.percentNum) {
+                activeProgress[obj.id] = update.latest.percentNum;
+                updateProgressBar();
             }
+            sendUpdate(Object.assign({}, obj, { status: update.latest }));
+            rawUpdateFunc(update);
         },
         paused: false,
         status: {
@@ -318,7 +312,6 @@ const createDownloadObject = (opt, rawUpdateFunc) => {
             }
             
             obj.updateFunc({status: `Canceling...`});
-            obj.ignoreUpdates = true;
         }
     };
 
