@@ -33,7 +33,7 @@ const getCodec = (file) => {
     
     if(ffprobePath && fs.existsSync(ffprobePath)) {
         let a = child_process.execFileSync(ffprobePath, [`-v`, `error`, `-select_streams`, `v:0`, `-show_entries`, `stream=codec_name`, `-of`, `default=noprint_wrappers=1:nokey=1`, file]).toString().trim()
-        if(!a) a = child_process.execFileSync(ffprobePath, [`-v`, `error`, `-show_entries`, `stream=codec_name`, `-of`, `default=noprint_wrappers=1:nokey=1`, file]).toString().trim();
+        //if(!a) a = child_process.execFileSync(ffprobePath, [`-v`, `error`, `-show_entries`, `stream=codec_name`, `-of`, `default=noprint_wrappers=1:nokey=1`, file]).toString().trim();
         if(a) {
             return a.trim().split(`\n`)[0]
         } else return null;
@@ -152,10 +152,10 @@ module.exports = {
             res(data)
         })
     }),
-    download: ({url, format, ext, filePath}, updateFunc) => new Promise(async res => {
+    download: ({url, format, ext, filePath, info}, updateFunc) => new Promise(async res => {
         const temporaryFilename = `ezytdl-` + idGen(8);
 
-        const { saveLocation, outputFilename } = require(`../getConfig`)();
+        const { saveLocation, outputFilename, onlyGPUConversion, allowVideoConversion, allowAudioConversion } = require(`../getConfig`)();
 
         if(!ffmpegPath || !ffmpegVideoCodecs) refreshFFmpeg();
 
@@ -168,6 +168,40 @@ module.exports = {
         const args = [`-f`, format, url, `-o`, saveTo + outputFilename + `.%(ext)s`, `--no-mtime`];
 
         const treekill = require(`tree-kill`)
+
+        let downloadInExt = `{any}`;
+
+        let reasonConversionNotDone = null;
+
+        if((format == `bv*+ba/b` || format == `bv`) && (!ffmpegPath || !allowVideoConversion) && ext) {
+            if(format == `bv`) {
+                args.splice(2, 0, `-S`, `ext:${ext}`)
+                downloadInExt = ext
+            } else {
+                args.splice(2, 0, `-S`, `ext:${ext}:m4a`)
+                downloadInExt = ext + `:m4a`
+            };
+
+            if(!allowVideoConversion) {
+                reasonConversionNotDone = `video conversion disabled in settings`
+            } else if(!ffmpegPath) {
+                reasonConversionNotDone = `ffmpeg not installed`
+            }
+
+            ext = false;
+        } else if(format == `ba` && (!ffmpegPath || !allowAudioConversion) && ext) {
+            args.splice(2, 0, `-S`, `ext:${ext}`);
+
+            downloadInExt = ext
+
+            if(!allowAudioConversion) {
+                reasonConversionNotDone = `audio conversion disabled in settings`
+            } else if(!ffmpegPath) {
+                reasonConversionNotDone = `ffmpeg not installed`
+            }
+
+            ext = false;
+        }
 
         if(fs.existsSync(ffmpegPath)) {
             args.push(`--ffmpeg-location`, ffmpegPath);
@@ -241,6 +275,8 @@ module.exports = {
             if(!fs.existsSync(previousFilename)) previousFilename = await module.exports.getFilename(url, format, temporaryFilename + `.%(ext)s`);
 
             if(ext) {
+                const mainArgs = [`-y`, `-i`, saveTo + previousFilename, saveTo + ytdlFilename + `.${ext}`];
+
                 const spawnFFmpeg = (args2, name) => new Promise((resolveFFmpeg, rej) => {
                     console.log(`- ` + args2.join(`\n- `))
 
@@ -286,10 +322,12 @@ module.exports = {
                     })
                 });
 
-                const fallback = () => {
-                    console.log(`ffmpeg did not save file, renaming temporary file`);
-                    fs.renameSync(saveTo + previousFilename, saveTo + ytdlFilename + `.` + previousFilename.split(`.`).slice(-1)[0]);
-                    update({percentNum: 100, status: `Could not convert to ${ext.toUpperCase()}.`, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.` + previousFilename.split(`.`).slice(-1)[0], url, format});
+                const fallback = (msg) => {
+                    try {
+                        console.log(`ffmpeg did not save file, renaming temporary file`);
+                        fs.renameSync(saveTo + previousFilename, saveTo + ytdlFilename + `.` + previousFilename.split(`.`).slice(-1)[0]);
+                    } catch(e) { console.log(e) }
+                    update({percentNum: 100, status: `Could not convert to ${ext.toUpperCase()}.` + msg && typeof msg == `string` ? `\n\n${msg}` : ``, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.` + previousFilename.split(`.`).slice(-1)[0], url, format});
                     res(obj)
                 }
 
@@ -305,83 +343,78 @@ module.exports = {
 
                 console.log(`using decoder: `, decoder);
 
-                const mainArgs = [`-y`, `-i`, saveTo + previousFilename, saveTo + ytdlFilename + `.${ext}`];
-
                 const thisCodec = getCodec(saveTo + previousFilename);
-                
-                decoder.codecName = thisCodec + `_` + decoder.string;
 
-                console.log(transcoders)
+                if(thisCodec) {
+                    console.log(`doing video conversion! onlyGPU: ${onlyGPUConversion}`);
+                    
+                    decoder.codecName = thisCodec + `_` + decoder.string;
 
-                let compatibleTranscoders = Object.values(transcoders).filter(o => {
-                    if(typeof o == `object`) {
-                        const str = thisCodec + `_` + o.string;
-                        console.log(str + ` - compatible? ${ffmpegRawVideoCodecsOutput.includes(str)}`)
-                        return ffmpegRawVideoCodecsOutput.includes(str)
-                    } else return false;
-                }).map(o => {
-                    return Object.assign({}, o, {
-                        codecName: thisCodec + `_` + o.string
-                    })
-                });
+                    console.log(transcoders)
 
-                const fallbackToDecoderOnly = () => {
-                    if(decoder && decoder.name) {
-                        spawnFFmpeg([...decoder.pre, `-c:v`, decoder.codecName, ...mainArgs, ...decoder.post], decoder.codecName + `/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`).then(res).catch(e => {
-                            console.log(`FFmpeg failed converting -- ${e}; trying again...`)
-                            spawnFFmpeg([...mainArgs, ...decoder.post], `${thisCodec}_software/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`).then(res).catch(e => {
+                    let compatibleTranscoders = Object.values(transcoders).filter(o => {
+                        if(typeof o == `object`) {
+                            const str = thisCodec + `_` + o.string;
+                            console.log(str + ` - compatible? ${ffmpegRawVideoCodecsOutput.includes(str)}`)
+                            return ffmpegRawVideoCodecsOutput.includes(str)
+                        } else return false;
+                    }).map(o => {
+                        return Object.assign({}, o, {
+                            codecName: thisCodec + `_` + o.string
+                        })
+                    });
+
+                    const fallbackToDecoderOnly = () => {
+                        if(onlyGPUConversion) {
+                            return fallback(`The video codec (${thisCodec}) provided by the downloaded format is not compatible with FFmpeg's GPU transcoding.`);
+                        } else if(decoder && decoder.name) {
+                            spawnFFmpeg([...decoder.pre, `-c:v`, decoder.codecName, ...mainArgs, ...decoder.post], decoder.codecName + `/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`).then(res).catch(e => {
                                 console.log(`FFmpeg failed converting -- ${e}; trying again...`)
-                                spawnFFmpeg([...decoder.pre, ...mainArgs, `-c:v`, `h264`], decoder.codecName + `/Dec + ` + `h264_software/Enc`).then(res).catch(e => {
+                                spawnFFmpeg([...mainArgs, ...decoder.post], `${thisCodec}_software/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`).then(res).catch(e => {
                                     console.log(`FFmpeg failed converting -- ${e}; trying again...`)
-                                    spawnFFmpeg(mainArgs, `${thisCodec}_software`).then(res).catch(fallback)
+                                    spawnFFmpeg([...decoder.pre, ...mainArgs, `-c:v`, `h264`], decoder.codecName + `/Dec + ` + `h264_software/Enc`).then(res).catch(e => {
+                                        console.log(`FFmpeg failed converting -- ${e}; trying again...`)
+                                        spawnFFmpeg(mainArgs, `${thisCodec}_software`).then(res).catch(fallback)
+                                    })
                                 })
                             })
-                        })
-                    } else spawnFFmpeg(mainArgs, `${thisCodec}_software`).then(res).catch(fallback)
-                };
+                        } else spawnFFmpeg(mainArgs, `${thisCodec}_software`).then(res).catch(fallback)
+                    };
 
-                console.log(compatibleTranscoders)
+                    console.log(compatibleTranscoders)
 
-                if(compatibleTranscoders.length > 0) {
-                    let done = false;
+                    if(compatibleTranscoders.length > 0) {
+                        let done = false;
 
-                    for(let transcoder of compatibleTranscoders) {
-                        console.log(`trying ${transcoder.name}...`);
-                        
-                        try {
-                            const proc = await spawnFFmpeg([`-c:v`, transcoder.codecName, ...mainArgs, ...decoder.post], transcoder.codecName + `/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`);
-                            done = true;
-                            break;
-                        } catch(e) {
+                        for(let transcoder of compatibleTranscoders) {
+                            console.log(`trying ${transcoder.name}...`);
+                            
                             try {
-                                const proc = await spawnFFmpeg([`-c:v`, transcoder.codecName, ...mainArgs, ...transcoder.post], transcoder.codecName + `/Dec + ` + `${transcoder.post[transcoder.post.indexOf(`-c:v`)+1]}` + `/Enc`);
+                                const proc = await spawnFFmpeg([`-c:v`, transcoder.codecName, ...mainArgs, ...decoder.post], transcoder.codecName + `/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`);
                                 done = true;
                                 break;
                             } catch(e) {
-                                console.log(`FFmpeg failed converting -- ${e}; trying again...`)
+                                try {
+                                    const proc = await spawnFFmpeg([`-c:v`, transcoder.codecName, ...mainArgs, ...transcoder.post], transcoder.codecName + `/Dec + ` + `${transcoder.post[transcoder.post.indexOf(`-c:v`)+1]}` + `/Enc`);
+                                    done = true;
+                                    break;
+                                } catch(e) {
+                                    console.log(`FFmpeg failed converting -- ${e}; trying again...`)
+                                }
                             }
-                        }
-                    };
+                        };
 
-                    if(!done) fallbackToDecoderOnly();
-                } else fallbackToDecoderOnly();
-
-                //return console.log(thisCodec)
-
-                /*if(decoder && decoder.name) {
-                    spawnFFmpeg([...decoder.pre, ...mainArgs, ...decoder.post], decoder.name.toUpperCase()).then(res).catch(e => {
-                        console.log(`FFmpeg failed converting -- ${e}; trying again...`)
-                        spawnFFmpeg([...mainArgs, ...decoder.post], decoder.name.toUpperCase() + ` / 2`).then(res).catch(e => {
-                            console.log(`FFmpeg failed converting -- ${e}; trying again...`)
-                            spawnFFmpeg([...decoder.pre, ...mainArgs], decoder.name.toUpperCase() + ` / 3`).then(res).catch(e => {
-                                console.log(`FFmpeg failed converting -- ${e}; trying again...`)
-                                spawnFFmpeg(mainArgs, `software`).then(res).catch(fallback)
-                            })
-                        })
-                    })
-                } else spawnFFmpeg(mainArgs, `software`).catch(fallback)*/
+                        if(!done) fallbackToDecoderOnly();
+                    } else fallbackToDecoderOnly();
+                } else {
+                    spawnFFmpeg(mainArgs, `software`).then(res).catch(fallback)
+                }
             } else if(ext === false) {
-                update({code, saveLocation, url, format, status: `Could not convert: FFmpeg is not installed! (Install through Settings)`});
+                if(args.includes(`-S`)) {
+                    update({code, saveLocation, url, format, status: `Downloaded best quality ${info.webpage_url_domain} provided for ${downloadInExt} format (no conversion done${reasonConversionNotDone ? ` -- ${reasonConversionNotDone}` : ``})`});
+                } else {
+                    update({code, saveLocation, url, format, status: `Could not convert: FFmpeg is not installed! (Install through Settings)`});
+                }
                 res(obj)
             } else {
                 update({code, saveLocation, url, format, status: `Done!`})

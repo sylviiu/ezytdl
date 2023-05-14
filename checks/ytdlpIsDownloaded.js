@@ -1,11 +1,13 @@
 const fs = require('fs');
 
-module.exports = () => new Promise(async res => {
+module.exports = (doNotCheckForUpdates) => new Promise(async res => {
     const { file, getPath } = require(`../util/filenames/ytdlp`);
 
-    console.log(`Looking for file ${file}`)
-    
+    console.log(`Looking for file ${file}`);
+
     if(getPath()) {
+        if(doNotCheckForUpdates) return res(true);
+
         const latestVersion = require(`../util/fetchLatestVersion/ytdlp`);
     
         latestVersion().then(async o => {

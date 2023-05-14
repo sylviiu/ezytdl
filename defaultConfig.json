@@ -2,11 +2,13 @@
     "saveLocation": null,
     "outputFilename": "%(title)s",
     "lastMediaConversionOutputs": {
-        "audio": null,
-        "video": null,
-        "both": null
+        "audio": "mp3",
+        "video": "mp4",
+        "both": "mp4"
     },
     "concurrentDownloads": 2,
-    "changelogsEnabled": true,
+    "allowVideoConversion": false,
+    "onlyGPUConversion": false,
+    "allowAudioConversion": false,
     "version": "v0.0.0"
 }

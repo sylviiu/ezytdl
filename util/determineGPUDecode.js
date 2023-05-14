@@ -20,6 +20,15 @@ const constructPromise = (name, accelArgs) => new Promise((res) => {
 
     const proc = spawn(getPath(), [`-hide_banner`, `-loglevel`, `error`, ...pre, `-i`, file, `-threads`, `1`, ...post, `-`, `-benchmark`]);
 
+    let complete = false;
+
+    setTimeout(() => {
+        if(!complete) {
+            complete = true;
+            res({ name, works: false, log: str + `\n[ DID NOT COMPLETE IN TIME ]`, pre: accelArgs.pre || [], post: accelArgs.post || [], string: accelArgs.string })
+        }
+    }, 2500)
+
     let str = ``;
 
     proc.stderr.on(`data`, (data) => {str += name + " !> " + data.toString().trim()})
@@ -28,12 +37,11 @@ const constructPromise = (name, accelArgs) => new Promise((res) => {
     proc.on(`close`, (code) => {
         console.log(`${name} exited with code ${code}`);
 
-        /*sendNotification({
-            headingText: `Testing ${name}...`,
-            bodyText: file + `\n\n${str}`
-        })*/
+        if(!complete) {
+            complete = true;
 
-        res({ name, works: code == 0 ? true : false, log: str, pre: accelArgs.pre || [], post: accelArgs.post || [], string: accelArgs.string })
+            res({ name, works: code == 0 ? true : false, log: str, pre: accelArgs.pre || [], post: accelArgs.post || [], string: accelArgs.string })
+        }
     })
 
     proc.on(`error`, (e) => {

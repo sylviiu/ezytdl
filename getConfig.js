@@ -28,16 +28,10 @@ module.exports = (configObject) => {
                 module.exports(configObject);
             }
         };
-        
-        if(configObject) {
-            const config = JSON.parse(fs.readFileSync(`${global.configPath}/config.json`));
-            
-            fs.writeFileSync(`${global.configPath}/config.json`, JSON.stringify(Object.assign({}, config, configObject), null, 4), { encoding: `utf-8` });
-        };
 
-        const checkKeys = (logPrefix, thisKey, config, defaults) => {
+        const checkKeys = (logPrefix, thisKey, config, defaults, addDefaults) => {
             for(const key of Object.keys(defaults)) {
-                if(typeof config[key] == `undefined`) {
+                if(addDefaults && typeof config[key] == `undefined`) {
                     if(!newSettingsNotifSent && !firstCheckDone) {
                         newSettingsNotifSent = true;
                         console
@@ -51,18 +45,35 @@ module.exports = (configObject) => {
                     checked = true;
                 };
 
-                if(defaults[key] && typeof config[key] != typeof defaults[key]) {
-                    sendNotification({
-                        type: `warn`,
-                        headingText: `Config key mismatch!`,
-                        bodyText: `The config key "${key}" is missing or is of the wrong type! (Expected: ${typeof defaults[key]}, got: ${config[key] ? typeof config[key] : ``})`
-                    });
-                    console.log(config[key], defaults[key])
-                    config[key] = defaults[key];
-                    checked = true;
+                if(!addDefaults && !config[key]) {
+
+                } else {
+                    //console.log(`key`, key, `type`, typeof config[key], `value`, config[key], `default type`, typeof defaults[key], `default value`, defaults[key])
+                    
+                    if(defaults[key] && typeof defaults[key] == `object`) {
+                        //console.log(`checking keys for ${key}`)
+                        config[key] = checkKeys(logPrefix + ` > `, thisKey + ` / ` + key, config[key], defaults[key], addDefaults);
+                    } else {
+                        if(config[key] && typeof config[key] != typeof defaults[key]) {
+                            if(typeof defaults[key] == `number` && !isNaN(config[key])) config[key] = Number(config[key]);
+                            if(typeof defaults[key] == `boolean` && (config[key] == `true` || config[key] == `false`)) config[key] = config[key] == `true` ? true : false;
+                            //console.log(`type`, typeof config[key], `value`, config[key])
+                        }
+        
+                        if((!typeof config[key] || typeof config[key] == `undefined`) && !addDefaults) {
+        
+                        } else if(typeof config[key] != typeof defaults[key]) {
+                            sendNotification({
+                                type: `warn`,
+                                headingText: `Config key mismatch!`,
+                                bodyText: `The config key "${key}" is missing or is of the wrong type! (Expected: ${typeof defaults[key]}, got: ${config[key] ? typeof config[key] : ``})`
+                            });
+                            //console.log(config[key], defaults[key])
+                            config[key] = defaults[key];
+                            if(addDefaults) checked = true;
+                        }
+                    }
                 }
-                
-                if(defaults[key] && typeof defaults[key] == `object`) checkKeys(logPrefix + ` > `, thisKey + ` / ` + key, config[key], defaults[key]);
             };
 
             return config;
@@ -71,11 +82,22 @@ module.exports = (configObject) => {
         if(!checked) {
             const config = JSON.parse(fs.readFileSync(`${global.configPath}/config.json`));
 
-            const checkedConfig = checkKeys(`> `, `root config object`, config, defaultConfig);
+            const checkedConfig = checkKeys(`> `, `root config object`, config, defaultConfig, true);
 
             //console.log(config, checkedConfig)
             
-            if(checked) fs.writeFileSync(`${global.configPath}/config.json`, JSON.stringify(config, null, 4), { encoding: `utf-8` });
+            if(checked) {
+                console.log(`Updated config!`)
+                fs.writeFileSync(`${global.configPath}/config.json`, JSON.stringify(checkedConfig, null, 4), { encoding: `utf-8` });
+            }
+        };
+        
+        if(configObject) {
+            const config = JSON.parse(fs.readFileSync(`${global.configPath}/config.json`));
+
+            const checkedConfig = checkKeys(`> `, `updated config object`, configObject, defaultConfig);
+            
+            fs.writeFileSync(`${global.configPath}/config.json`, JSON.stringify(Object.assign({}, config, checkedConfig), null, 4), { encoding: `utf-8` });
         };
 
         const userConfig = JSON.parse(fs.readFileSync(`${global.configPath}/config.json`))
@@ -85,6 +107,10 @@ module.exports = (configObject) => {
         if(!userConfig.saveLocation) userConfig.saveLocation = (fs.existsSync(os.homedir() + `${slashUsed}Downloads`) ? os.homedir() + `${slashUsed}Downloads` : os.homedir()) + `${slashUsed}ezytdl`;
 
         firstCheckDone = true;
+
+        userConfig.strings = require(`./configStrings.json`);
+
+        if(userConfig.allowVideoConversion) require(`./util/determineGPUDecode.js`)();
 
         return userConfig;
     } catch(e) {

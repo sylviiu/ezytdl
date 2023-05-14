@@ -1,0 +1,9 @@
+{
+    "saveLocation": "Save Location",
+    "outputFilename": "File Name Format",
+    "lastMediaConversionOutputs": "Default Media Conversion",
+    "concurrentDownloads": "Maximum Concurrent Downloads",
+    "allowVideoConversion": "Allow Video Conversion",
+    "onlyGPUConversion": "Only Allow Hardware-Accelerated Video Conversion",
+    "allowAudioConversion": "Allow Audio Conversion"
+}

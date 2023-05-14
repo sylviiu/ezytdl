@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="assets/css/rotating.compiled.css">
     <link rel="stylesheet" href="assets/css/scroll.css">
     <link rel="stylesheet" href="assets/css/scrollbar.compiled.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
 </head>
@@ -30,6 +31,10 @@
                 </div>
                 <div class="d-flex flex-column justify-content-start" id="qualityButtons" style="padding: 12px 20px;background: rgba(27,27,27,0.55);padding-bottom: 0px;">
                     <div class="d-flex justify-content-between align-items-center" id="innerQualityButtons"><button class="btn btn-primary downloadBestFormat" id="downloadBest" type="button" style="height: 36px;border-width: 0px;border-radius: 100px;background: rgba(255,255,255,0.85);color: rgb(0,0,0);padding-right: 15px;"><i class="fas fa-magic" id="icon"></i>&nbsp;Best Download</button><button class="btn btn-primary downloadBestFormat" id="downloadBestAudio" type="button" style="height: 36px;border-width: 0px;border-radius: 100px;background: rgba(255,255,255,0.85);color: rgb(0,0,0);padding-right: 15px;"><i class="fas fa-file-audio" id="icon"></i>&nbsp;Best Audio</button><button class="btn btn-primary downloadBestFormat" id="downloadBestVideo" type="button" style="height: 36px;border-width: 0px;border-radius: 100px;background: rgba(255,255,255,0.85);color: rgb(0,0,0);padding-right: 15px;"><i class="fas fa-file-video" id="icon"></i>&nbsp;Best Video</button></div>
+                    <div class="d-none justify-content-between" id="saveOptions" style="width: 100%;max-height: 36px;"><input class="d-flex justify-content-center align-items-center" type="text" id="saveLocation" style="background: rgba(88,88,88,0.11);border-width: 0px;border-radius: 100px;padding: 6px 16px;border-bottom-right-radius: 100px;border-top-right-radius: 100px;color: rgb(255,255,255);height: 36px;border-top-left-radius: 100px;width: 100%;border-bottom-left-radius: 100px;text-align: left;" placeholder="location"><input class="d-flex justify-content-center align-items-center" type="text" id="formatConversionTextbox" style="background: rgba(88,88,88,0.11);border-width: 0px;border-radius: 100px;padding: 6px 16px;border-bottom-right-radius: 100px;border-top-right-radius: 100px;color: rgb(255,255,255);height: 36px;border-top-left-radius: 100px;width: 83px;border-bottom-left-radius: 100px;text-align: right;margin-left: 8px;" placeholder="mp3"><button class="btn btn-primary d-flex justify-content-center align-items-center" id="confirmDownload" type="button" style="height: 36px;border-width: 0px;background: rgb(255,255,255);color: rgb(0,0,0);border-radius: 100px;width: 36px;padding: 4px;min-width: 36px;max-width: 36px;min-height: 36px;max-height: 36px;margin-left: 8px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor">
+                                <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
+                                <path d="M480 352h-133.5l-45.25 45.25C289.2 409.3 273.1 416 256 416s-33.16-6.656-45.25-18.75L165.5 352H32c-17.67 0-32 14.33-32 32v96c0 17.67 14.33 32 32 32h448c17.67 0 32-14.33 32-32v-96C512 366.3 497.7 352 480 352zM432 456c-13.2 0-24-10.8-24-24c0-13.2 10.8-24 24-24s24 10.8 24 24C456 445.2 445.2 456 432 456zM233.4 374.6C239.6 380.9 247.8 384 256 384s16.38-3.125 22.62-9.375l128-128c12.49-12.5 12.49-32.75 0-45.25c-12.5-12.5-32.76-12.5-45.25 0L288 274.8V32c0-17.67-14.33-32-32-32C238.3 0 224 14.33 224 32v242.8L150.6 201.4c-12.49-12.5-32.75-12.5-45.25 0c-12.49 12.5-12.49 32.75 0 45.25L233.4 374.6z"></path>
+                            </svg></button></div>
                 </div>
                 <div class="d-flex flex-column justify-content-start align-items-center" id="formatList" style="background: rgba(27,27,27,0.55);border-bottom-right-radius: 26px;border-bottom-left-radius: 26px;padding: 12px 0px;padding-bottom: 26px;min-width: 500px;">
                     <div class="d-flex flex-column justify-content-center align-items-center card" id="formatCard" style="width: calc(100% - 40px);min-height: 50px;background: rgba(40,40,40,0.65);border-radius: 10px;padding: 12px 12px;margin-top: 12px;min-width: 460px;">
@@ -96,10 +101,6 @@
                                         </svg></button></div>
                             </div>
                         </div>
-                        <div class="d-none justify-content-between" id="saveOptions" style="width: 100%;margin-top: 8px;max-height: 36px;"><input class="d-flex justify-content-center align-items-center" type="text" id="saveLocation" style="background: rgba(88,88,88,0.11);border-width: 0px;border-radius: 100px;padding: 6px 16px;border-bottom-right-radius: 100px;border-top-right-radius: 100px;color: rgb(255,255,255);height: 36px;border-top-left-radius: 100px;width: 100%;border-bottom-left-radius: 100px;text-align: left;margin: 0px 8px;" placeholder="location"><input class="d-flex justify-content-center align-items-center" type="text" id="formatConversionTextbox" style="background: rgba(88,88,88,0.11);border-width: 0px;border-radius: 100px;padding: 6px 16px;border-bottom-right-radius: 100px;border-top-right-radius: 100px;color: rgb(255,255,255);height: 36px;border-top-left-radius: 100px;width: 83px;border-bottom-left-radius: 100px;text-align: right;margin: 0px 8px;margin-left: 0px;" placeholder="mp3"><button class="btn btn-primary d-flex justify-content-center align-items-center" id="confirmDownload" type="button" style="height: 36px;border-width: 0px;background: rgb(255,255,255);color: rgb(0,0,0);border-radius: 100px;width: 36px;padding: 4px;min-width: 36px;max-width: 36px;min-height: 36px;max-height: 36px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor">
-                                    <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
-                                    <path d="M480 352h-133.5l-45.25 45.25C289.2 409.3 273.1 416 256 416s-33.16-6.656-45.25-18.75L165.5 352H32c-17.67 0-32 14.33-32 32v96c0 17.67 14.33 32 32 32h448c17.67 0 32-14.33 32-32v-96C512 366.3 497.7 352 480 352zM432 456c-13.2 0-24-10.8-24-24c0-13.2 10.8-24 24-24s24 10.8 24 24C456 445.2 445.2 456 432 456zM233.4 374.6C239.6 380.9 247.8 384 256 384s16.38-3.125 22.62-9.375l128-128c12.49-12.5 12.49-32.75 0-45.25c-12.5-12.5-32.76-12.5-45.25 0L288 274.8V32c0-17.67-14.33-32-32-32C238.3 0 224 14.33 224 32v242.8L150.6 201.4c-12.49-12.5-32.75-12.5-45.25 0c-12.49 12.5-12.49 32.75 0 45.25L233.4 374.6z"></path>
-                                </svg></button></div>
                     </div>
                 </div>
             </div>
@@ -267,156 +268,12 @@
 
                 console.log(info)
 
-                let qualities = [`bv*+ba/b`, `ba`, `bv`]
-
-                const saveOptionsAnimations = {
-                    fadeIn: (btn, saveOptions, btnClick) => new Promise(res => {
-                        const prevMaxHeight = saveOptions.style.maxHeight;
-                        saveOptions.style.maxHeight = null;
-                        let dNone = saveOptions.classList.contains(`d-none`);
-                        if(dNone) saveOptions.classList.remove(`d-none`);
-                        const { height } = saveOptions.getBoundingClientRect();
-                        saveOptions.style.maxHeight = prevMaxHeight;
-                        if(dNone) saveOptions.classList.add(`d-none`);
-
-                        animating = true;
-                        if(btn) btn.onclick = () => {}
-                        saveOptions.classList.remove(`d-none`);
-                        saveOptions.classList.add(`d-flex`);
-                        anime({
-                            targets: saveOptions,
-                            maxHeight: [`0px`, height],
-                            opacity: [`0%`, `100%`],
-                            marginTop: [`0px`, `8px`],
-                            duration: 500,
-                            easing: `easeOutExpo`,
-                            complete: () => {
-                                animating = false;
-                                saveOptions.style.maxHeight = null;
-                                if(btn) btn.onclick = () => btnClick();
-                                res();
-                            }
-                        });
-                        if(btn) anime({
-                            targets: btn.querySelector(`#downloadicon`),
-                            rotate: [`0deg`, `180deg`],
-                            duration: 500,
-                            easing: `easeOutExpo`
-                        })
-                    }),
-                    fadeOut: (btn, saveOptions, btnClick) => new Promise(res => {
-                        if(saveOptions.classList.contains(`d-none`)) return res()
-                        animating = true;
-                        if(btn) btn.onclick = () => {}
-                        anime({
-                            targets: saveOptions,
-                            maxHeight: [`36px`, `0px`],
-                            opacity: [`100%`, `0%`],
-                            marginTop: [`8px`, `0px`],
-                            duration: 500,
-                            easing: `easeOutExpo`,
-                            complete: () => {
-                                animating = false;
-                                saveOptions.classList.remove(`d-flex`);
-                                saveOptions.classList.add(`d-none`);
-                                if(btn) btn.onclick = () => btnClick();
-                                res();
-                            }
-                        })
-                        if(btn) anime({
-                            targets: btn.querySelector(`#downloadicon`),
-                            rotate: [`180deg`, `0deg`],
-                            duration: 500,
-                            easing: `easeOutExpo`
-                        })
-                    })
-                };
+                let currentSelected = null;
+                
+                qualityButtons({ card: listbox, node: listbox.querySelector(`#qualityButtons`), info, centerURLBox: info.entries ? centerURLBox : () => {} });
 
                 if(info.entries) {
-                    let currentSelected = null;
-
-                    const defaultColors = {
-                        background: listbox.querySelector(`#qualityButtons`).querySelector(`.btn`).style.background,
-                        color: listbox.querySelector(`#qualityButtons`).querySelector(`.btn`).style.color,
-                    }
-
-                    let refreshQualityButtonSelection = () => {
-                        listbox.querySelector(`#qualityButtons`).querySelectorAll(`.btn`).forEach((btn, i) => {
-                            if(currentSelected == i) {
-                                btn.style.backgroundColor = `#000000`;
-                                btn.style.color = `#ffffff`;
-                            } else {
-                                btn.style.backgroundColor = defaultColors.background;
-                                btn.style.color = defaultColors.color;
-                            }
-                        });
-                    };
-
-                    const qualityButtonsDropdown = formatCard.querySelector(`#saveOptions`).cloneNode(true);
-                    listbox.querySelector(`#qualityButtons`).appendChild(qualityButtonsDropdown);
-
-                    const saveLocation = listbox.querySelector(`#saveLocation`)
-
-                    saveLocation.value = `${config && config.saveLocation ? config.saveLocation : ``}`;
-                    if(!saveLocation.value.endsWith(`/`) && !saveLocation.value.endsWith(`\\`)) saveLocation.value += navigator.platform.toLowerCase() == `win32` ? `\\` : `/`
-                    saveLocation.value += info.title
-
-                    listbox.querySelector(`#formatConversionTextbox`).placeholder = `ext`
-                    listbox.querySelector(`#formatConversionTextbox`).value = config.lastMediaConversionOutputs[`audio`] || `mp3`;
-
-                    const modifyQualityButtonsDropdown = () => {
-                        console.log(currentSelected)
-                        if(/*currentSelected == 1*/ true) {
-                            if(listbox.querySelector(`#formatConversionTextbox`).classList.contains(`d-none`)) listbox.querySelector(`#formatConversionTextbox`).classList.remove(`d-none`);
-                        } else {
-                            if(!listbox.querySelector(`#formatConversionTextbox`).classList.contains(`d-none`)) listbox.querySelector(`#formatConversionTextbox`).classList.add(`d-none`);
-                        }
-                    }
-
-                    let animating = false;
-
-                    const btnClick = (i) => {
-                        if(!animating) {
-                            animating = true;
-                            currentSelected = i;
-                            refreshQualityButtonSelection();
-                            saveOptionsAnimations.fadeOut(null, qualityButtonsDropdown, btnClick).then(() => {
-                                modifyQualityButtonsDropdown();
-                                saveOptionsAnimations.fadeIn(null, qualityButtonsDropdown, btnClick).then(() => {
-                                    animating = false;
-                                })
-                            })
-                        }
-                    }
-
-                    listbox.querySelector(`#qualityButtons`).querySelectorAll(`.btn`).forEach((btn, i) => {
-                        btn.onclick = () => btnClick(i)
-                    });
-
-                    const send = () => {
-                        listbox.querySelector(`#qualityButtons`).querySelectorAll(`.btn`).forEach(btn => btn.disabled = true);
-                        
-                        startDownload(listbox, {
-                            entries: entries.map(e => {
-                                return {
-                                    url: e.url,
-                                    format: qualities[currentSelected] || qualities[0],
-                                    ext: /*currentSelected == 1 && */listbox.querySelector(`#formatConversionTextbox`).value ? listbox.querySelector(`#formatConversionTextbox`).value : null,
-                                    filePath: listbox.querySelector(`#saveLocation`).value || null,
-                                    info: e
-                                }
-                            }),
-                            info: Object.assign({}, info, { formats: null, entries: null }),
-                        });
-
-                        centerURLBox(false);
-                    }
-
-                    listbox.querySelector(`#confirmDownload`).onclick = () => send();
-
-                    const entries = info.entries;
-
-                    for (const entry of entries) {
+                    for (const entry of info.entries) {
                         const card = formatCard.cloneNode(true);
 
                         card.querySelector(`#formatMetaList`).classList.add(`d-none`);
@@ -442,148 +299,30 @@
                             card.querySelector(`#fileFormat`).classList.add(`d-none`)
                         }
 
-                        card.querySelector(`#saveOptions`).innerHTML = ``;
+                        //card.querySelector(`#saveOptions`).innerHTML = ``;
 
                         const newDiv = listbox.querySelector(`#qualityButtons`).cloneNode(true);
 
                         newDiv.style.padding = `0px`;
-
                         newDiv.style.minWidth = `100%`;
-
                         newDiv.style.removeProperty(`background`);
 
-                        const qualityButtons = newDiv.querySelector(`#innerQualityButtons`);
+                        card.querySelector(`#formatDownload`).classList.add(`d-none`)
 
-                        qualityButtons.style.minWidth = `100%`;
+                        const innerQualityButtons = newDiv.querySelector(`#innerQualityButtons`);
 
-                        card.querySelector(`#saveOptions`).appendChild(newDiv);
+                        innerQualityButtons.style.minWidth = `100%`;
 
-                        let animating2 = false;
+                        card.appendChild(newDiv)
 
-                        const saveOptions = card.querySelector(`#saveOptions`);
-                        
-                        const btnClick = () => {
-                            if(!animating2 && saveOptions.classList.contains(`d-none`)) {
-                                animating2 = true;
-                                saveOptionsAnimations.fadeIn(btn, saveOptions, btnClick).then(() => animating2 = false);
-                            } else if(!animating2) {
-                                animating2 = true;
-                                saveOptionsAnimations.fadeOut(btn, saveOptions, btnClick).then(() => animating2 = false);
-                            }
-                        }
-
-                        let currentSelected2 = null;
-
-                        const refreshQuality2 = () => {
-                            card.querySelectorAll(`.downloadBestFormat`).forEach((btn, i) => {
-                                if(currentSelected2 == i) {
-                                    btn.style.backgroundColor = `#000000`;
-                                    btn.style.color = `#ffffff`;
-                                } else {
-                                    btn.style.backgroundColor = defaultColors.background;
-                                    btn.style.color = defaultColors.color;
-                                }
-                            });
-                        };
-
-                        const saveOpt = formatCard.querySelector(`#saveOptions`).cloneNode(true);
-
-                        const cardSaveLocation =  saveOpt.querySelector(`#saveLocation`)
-
-                        cardSaveLocation.style.removeProperty(`margin`)
-                        
-                        saveOpt.querySelector(`#formatConversionTextbox`).placeholder = `ext`;
-                        cardSaveLocation.placeholder = `${config && config.saveLocation ? config.saveLocation : `{default save location}`}`;
-                        saveOpt.querySelector(`#formatConversionTextbox`).value = config.lastMediaConversionOutputs[`audio`] || `mp3`;
-                        
-                        cardSaveLocation.value = `${config && config.saveLocation ? config.saveLocation : ``}`;
-                        if(!cardSaveLocation.value.endsWith(`/`) && !cardSaveLocation.value.endsWith(`\\`)) cardSaveLocation.value += navigator.platform.toLowerCase() == `win32` ? `\\` : `/`
-                        cardSaveLocation.value += info.title
-
-                        if(!saveOpt.classList.contains(`d-none`)) saveOpt.classList.add(`d-none`);
-
-                        saveOpt.style.margin = `0px`;
-                        saveOpt.style.marginLeft = `0px`;
-
-                        //card.querySelectorAll(`#saveOptions`).style.removeProperty(`maxHeight`);
-                        newDiv.style.removeProperty(`maxHeight`);
-
-                        newDiv.appendChild(saveOpt);
-
-                        const btn = card.querySelector(`#formatDownload`)
-
-                        const modifyQualityButtonsDropdown2 = () => {
-                            console.log(currentSelected2)
-                            if(/*currentSelected2 == 1*/ true) {
-                                if(saveOpt.querySelector(`#formatConversionTextbox`).classList.contains(`d-none`)) saveOpt.querySelector(`#formatConversionTextbox`).classList.remove(`d-none`);
-                            } else {
-                                if(!saveOpt.querySelector(`#formatConversionTextbox`).classList.contains(`d-none`)) saveOpt.querySelector(`#formatConversionTextbox`).classList.add(`d-none`);
-                            }
-                        }
-
-                        const formatButtonClick = (i) => {
-                            if(!animating2) {
-                                animating2 = true;
-                                currentSelected2 = i;
-                                refreshQuality2();
-                                saveOptionsAnimations.fadeOut(null, saveOpt, formatButtonClick).then(() => {
-                                    modifyQualityButtonsDropdown2();
-                                    saveOptionsAnimations.fadeIn(null, saveOpt, formatButtonClick).then(() => {
-                                        animating2 = false;
-                                    })
-                                })
-                            }
-                        }
-
-                        card.querySelectorAll(`.downloadBestFormat`).forEach((btn, i) => {
-                            btn.onclick = () => formatButtonClick(i);
-                        });
-
-                        const send2 = () => {
-                            let index = entries.findIndex((e) => {
-                                let use = true;
-
-                                for(key of Object.keys(e)) {
-                                    if(e[key] != entry[key]) {
-                                        use = false;
-                                        break;
-                                    }
-                                };
-
-                                return use;
-                            });
-
-                            if(index != -1) {
-                                entries.splice(index, 1);
-                                console.log(`removed ${index} from entries`);
-                            } else {
-                                console.log(`could not find entry in entries`);
-                            }
-
-                            startDownload(card, {
-                                url: entry.webpage_url || entry.url,
-                                format: qualities[currentSelected2] || qualities[0],
-                                ext: /*currentSelected2 == 1 && */saveOpt.querySelector(`#formatConversionTextbox`).value ? saveOpt.querySelector(`#formatConversionTextbox`).value : null,
-                                filePath: cardSaveLocation.value || null,
-                                info: entry,
-                            });
-                        }
-
-                        newDiv.querySelectorAll(`#confirmDownload`).forEach((btn, i) => {
-                            btn.onclick = () => {
-                                console.log(`confirmDownload #${i} clicked`);
-                                send2();
-                            }
-                        })
-
-                        btn.onclick = () => btnClick();
+                        qualityButtons({ node: card, info: entry, card })
 
                         formatList.appendChild(card);
 
                         await new Promise((resolve) => setTimeout(resolve, 1));
                     }
                 } else if(info.formats) {
-                    document.getElementById(`qualityButtons`).querySelectorAll(`.btn`).forEach((btn, i) => {
+                    /*document.getElementById(`qualityButtons`).querySelectorAll(`.btn`).forEach((btn, i) => {
                         btn.onclick = () => {
                             btn.disabled = true;
                             btn.opacity = 0.5;
@@ -594,9 +333,11 @@
                                 info: Object.assign({}, info, { formats: null }),
                             });
                         }
-                    });
+                    });*/
+                    
+                    qualityButtons({ node: listbox, info });
 
-                    const formats = info.formats.map(format => {
+                    info.formats = info.formats.map(format => {
                         if(format.audio_ext != `none` || format.acodec != `none` || format.asr || format.audio_channels) {
                             format.audio = true;
                         } else {
@@ -628,12 +369,12 @@
                         }
                     });
 
-                    if(formats.filter(f => f.audio).length == 0) document.getElementById(`downloadBestAudio`).classList.add(`d-none`);
-                    if(formats.filter(f => f.video).length == 0) document.getElementById(`downloadBestVideo`).classList.add(`d-none`);
+                    if(info.formats.filter(f => f.audio).length == 0) document.getElementById(`downloadBestAudio`).classList.add(`d-none`);
+                    if(info.formats.filter(f => f.video).length == 0) document.getElementById(`downloadBestVideo`).classList.add(`d-none`);
 
-                    let qualities = [`bv*+ba/b`, `ba`, `bv`]
+                    /*let qualities = [`bv*+ba/b`, `ba`, `bv`]
 
-                    document.getElementById(`qualityButtons`).querySelectorAll(`.btn`).forEach((btn, i) => {
+                    listbox.querySelector(`#qualityButtons`).querySelectorAll(`.btn`).forEach((btn, i) => {
                         btn.onclick = () => {
                             btn.disabled = true;
                             btn.opacity = 0.5;
@@ -644,13 +385,17 @@
                                 info: Object.assign({}, info, { formats: null }),
                             });
                         }
-                    });
+                    });*/
                     
-                    for (format of formats) {
+                    for (const format of info.formats) {
                         //console.log(format)
                         const formatDownloadType = format.audio && format.video ? `both` : format.audio && !format.video ? `audio` : `video`;
 
                         const card = formatCard.cloneNode(true);
+
+                        const saveOptions = listboxTemplate.querySelector(`#saveOptions`).cloneNode(true)
+
+                        card.appendChild(saveOptions)
 
                         const formatName = card.querySelector(`#formatName`);
                         const formatSubtext = card.querySelector(`#formatSubtext`);
@@ -712,16 +457,13 @@
                         }
 
                         card.querySelector(`#formatConversionTextbox`).placeholder = `${format.ext}`;
-                        card.querySelector(`#saveLocation`).placeholder = `${config && config.saveLocation ? config.saveLocation : `{default save location}`}`;
+                        card.querySelector(`#saveLocation`).value = `${config && config.saveLocation ? config.saveLocation : `{default save location}`}`;
 
                         if(config.lastMediaConversionOutputs[formatDownloadType]) card.querySelector(`#formatConversionTextbox`).value = config.lastMediaConversionOutputs[formatDownloadType];
 
-                        const saveOptions = card.querySelector(`#saveOptions`);
                         const saveOptionsIcon = card.querySelector(`#downloadicon`)
 
                         const btn = card.querySelector(`#formatDownload`);
-                        
-                        let animating = false;
                         
                         const confirmDownload = () => {
                             saveOptionsAnimations.fadeOut(btn, saveOptions, btnClick);
@@ -736,13 +478,15 @@
 
                                 j[formatDownloadType] = card.querySelector(`#formatConversionTextbox`).value;
 
-                                updateConfig({ lastMediaConversionOutputs: j })
+                                //updateConfig({ lastMediaConversionOutputs: j })
                             }
 
                             const dotSize = Number.parseInt(fill.style.width.replace(`px`, ``));
                             const range = Number.parseInt(bar.style.width.replace(`px`, ``)) - dotSize;
 
                             card.style.opacity = 0.5;
+
+                            console.log(format.format_id)
 
                             startDownload(card, {
                                 url: url,
@@ -780,12 +524,10 @@
                         card.querySelector(`#confirmDownload`).onclick = () => confirmDownload();
 
                         const btnClick = () => {
-                            if(!animating && saveOptions.classList.contains(`d-none`)) {
-                                animating = true;
-                                saveOptionsAnimations.fadeIn(btn, saveOptions, btnClick).then(() => animating = false);
-                            } else if(!animating) {
-                                animating = true;
-                                saveOptionsAnimations.fadeOut(btn, saveOptions, btnClick).then(() => animating = false);
+                            if(saveOptions.classList.contains(`d-none`)) {
+                                saveOptionsAnimations.fadeIn(btn, saveOptions, btnClick);
+                            } else {
+                                saveOptionsAnimations.fadeOut(btn, saveOptions, btnClick);
                             }
                         }
 
@@ -865,6 +607,7 @@
     <script src="assets/js/downloads.js"></script>
     <script src="assets/js/downloadUtils.js"></script>
     <script src="assets/js/notificationWS.js"></script>
+    <script src="assets/js/qualityButtons.js"></script>
     <script src="assets/js/statusText.js"></script>
     <script src="assets/js/version.js"></script>
 </body>

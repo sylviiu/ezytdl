@@ -1,45 +1,45 @@
 {
-    "nvidia": {
+    "Nvidia / NVENC (cuda accelerated)": {
         "string": "nvenc",
         "pre": ["-hwaccel", "nvdec", "-hwaccel_output_format", "cuda", "-extra_hw_frames", "10"],
         "post": ["-c:v", "h264_nvenc"]
     },
-    "nvidiaNoCuda": {
+    "Nvidia / NVENC": {
         "string": "nvenc",
         "pre": ["-hwaccel", "nvdec", "-extra_hw_frames", "10"],
         "post": ["-c:v", "h264_nvenc"]
     },
-    "nvidiaAuto": {
+    "Nvidia / NVENC [auto]": {
         "string": "nvenc",
         "pre": ["-hwaccel", "auto"],
         "post": ["-c:v", "h264_nvenc"]
     },
-    "intel": {
+    "Intel / QSV": {
         "string": "qsv",
         "pre": ["-hwaccel", "auto"],
         "post": ["-c:v", "h264_qsv"]
     },
-    "cuda": {
+    "Nvidia / CUDA": {
         "string": "nvenc",
         "pre": ["-hwaccel", "cuda", "-hwaccel_output_format", "cuda", "-extra_hw_frames", "10"],
         "post": ["-c:v", "h264_nvenc"]
     },
-    "cuvid": {
+    "Nvidia / CUVID": {
         "string": "cuvid",
         "pre": ["-hwaccel", "auto"],
         "post": ["-c:v", "h264_cuvid"]
     },
-    "vaapi": {
+    "VAAPI": {
         "string": "vaapi",
         "pre": ["-hwaccel", "vaapi", "-hwaccel_output_format", "vaapi"],
         "post": ["-c:v", "h264_vaapi"]
     },
-    "amf": {
+    "AMD AMF": {
         "string": "amf",
         "pre": ["-hwaccel", "dxva2"],
         "post": ["-c:v", "h264_amf"]
     },
-    "videotoolbox": {
+    "Apple / VideoToolbox": {
         "string": "videotoolbox",
         "pre": ["-hwaccel", "auto"],
         "post": ["-c:v", "h264_videotoolbox"]

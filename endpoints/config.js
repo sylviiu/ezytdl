@@ -1,3 +1,5 @@
+const { sendNotification } = require("../util/downloadManager");
+
 module.exports = {
     type: `post`,
     path: `/config`,
@@ -6,26 +8,22 @@ module.exports = {
         
         const config = require(`../getConfig`)();
         
-        let modified = 0;
+        const { strings } = config;
 
         console.log(typeof req.body)
 
         if(req.body && typeof req.body == `object`) {
-            for (key of Object.keys(req.body)) {
-                console.log(`modifying ${key}...`)
-                if(config[key] !== undefined) {
-                    config[key] = req.body[key];
-                    modified++;
-                }
-            };
-
-            console.log(`Modified ${modified}/${Object.keys(req.body).length} keys`);
+            const latestConfig = require(`../getConfig`)(req.body);
+    
+            console.log(`Sending UPDATED config`, latestConfig)
+    
+            res.send(latestConfig);
+        } else {
+            const latestConfig = require(`../getConfig`)();
+    
+            console.log(`Sending config`, latestConfig)
+    
+            res.send(latestConfig);
         }
-        
-        const latestConfig = modified == 0 ? config : require(`../getConfig`)(config);
-
-        console.log(`Sending config`, latestConfig)
-
-        res.send(latestConfig);
     }
 }
