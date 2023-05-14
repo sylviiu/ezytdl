@@ -2,6 +2,8 @@ const { BrowserWindow, app, globalShortcut, session, contextBridge, ipcRenderer 
 
 let currentWindow = null;
 
+global.window = null;
+
 const path = require('path')
 
 const platform = process.platform;
@@ -73,6 +75,7 @@ module.exports = () => {
     require(`./ipcHandler`)();
     
     const window = new BrowserWindow(args);
+    global.window = window;
 
     if(!app.isPackaged) {
         //window.webContents.openDevTools();

@@ -1,12 +1,10 @@
 module.exports = (content) => {
-    const window = require(`./window`)();
+    console.log(`sending notification ${global.window ? true : false}`, content);
 
-    console.log(`sending notification ${window ? true : false}`, content);
-
-    if(!window) {
+    if(!global.window) {
         return false;
     } else {
-        window.webContents.send(`notification`, content);
+        global.window.webContents.send(`notification`, content);
         return true;
     }
 }

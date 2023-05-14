@@ -4,8 +4,6 @@ const platform = process.platform;
 
 const { app } = require(`electron`);
 
-let window = require(`../core/window`)();
-
 const queue = {
     complete: [],
     active: [],
@@ -17,25 +15,22 @@ let activeProgress = {};
 
 let ws = {
     send: (content) => {
-        if(!window) window = require(`../core/window`)();
-        if(!window) return;
+        if(!global.window) return;
 
         let c2 = content;
         if(typeof c2 == `object`) c2 = JSON.stringify(content);
         
-        window.webContents.send(`queueUpdate`, JSON.parse(c2));
+        global.window.webContents.send(`queueUpdate`, JSON.parse(c2));
     }
 };
 
 let downloadStatusWs = {
     send: (content) => {
-        if(!window) window = require(`../core/window`)();
-
-        if(!window) return;
+        if(!global.window) return;
 
         if(typeof content == `object`) content = JSON.stringify(content);
 
-        window.webContents.send(`formatStatusUpdate`, JSON.parse(content));
+        global.window.webContents.send(`formatStatusUpdate`, JSON.parse(content));
     },
 };
 let lastDownloadStatus = null;
@@ -64,8 +59,6 @@ const updateAppBadge = () => {
 }
 
 const updateProgressBar = () => {
-    const window = require(`../core/window`)()
-
     let value = 2;
 
     if(queue.active.length == 0 && queue.paused.length == 0 && queue.queue.length == 0) {
@@ -92,7 +85,7 @@ const updateProgressBar = () => {
         value = progress;
     };
 
-    window.setProgressBar(value);
+    global.window.setProgressBar(value);
 };
 
 const sendUpdate = (sendObj) => {
@@ -390,10 +383,8 @@ const setWS = (newWs) => {
 }
 
 const updateStatus = (status) => {
-    const window = require(`../core/window`)();
-
-    if(window) {
-        window.webContents.send(`formatStatusUpdate`, status);
+    if(global.window) {
+        global.window.webContents.send(`formatStatusUpdate`, status);
     };
 }
 

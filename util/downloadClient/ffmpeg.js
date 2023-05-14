@@ -13,10 +13,10 @@ module.exports = async () => {
     activeDownload = true;
 
     const ws = {
-        send: (args) => require(`../../core/window`)().webContents.send(`updateClientEvent`, args),
+        send: (args) => global.window.webContents.send(`updateClientEvent`, args),
         close: () => {
             activeDownload = null;
-            require(`../../core/window`)().webContents.send(`updateClientEvent`, {complete: true})
+            global.window.webContents.send(`updateClientEvent`, {complete: true})
         }
     }
 

@@ -19,8 +19,6 @@ app.whenReady().then(async () => {
 
     const window = createWindow()
 
-    global.window = window;
-
     window.loadFile(`./html/loading.html`);
     
     const config = require(`./getConfig`)();
