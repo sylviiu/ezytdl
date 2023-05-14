@@ -36,8 +36,6 @@ module.exports = () => {
         icon: iconPath
     };
 
-    require(`./ipcHandler`)();
-
     if(app.isPackaged) {
         console.log(`-------------\nSTARTING WITH PRODUCTION MODE\n-------------`)
 
@@ -71,6 +69,8 @@ module.exports = () => {
     }
 
     if(currentWindow) return currentWindow;
+
+    require(`./ipcHandler`)();
     
     const window = new BrowserWindow(args);
 
