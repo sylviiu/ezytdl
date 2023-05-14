@@ -170,7 +170,7 @@ module.exports = {
         
         const temporaryFilename = `ezytdl-` + idGen(8);
 
-        const { saveLocation, outputFilename, onlyGPUConversion, allowVideoConversion, allowAudioConversion } = require(`../getConfig`)();
+        const { saveLocation, outputFilename, onlyGPUConversion, allowVideoConversion, allowAudioConversion, disableHWAcceleratedConversion } = require(`../getConfig`)();
 
         if(!ffmpegPath || !ffmpegVideoCodecs) refreshFFmpeg();
 
@@ -375,7 +375,7 @@ module.exports = {
 
                 const thisCodec = getCodec(saveTo + previousFilename);
 
-                if(thisCodec) {
+                if(thisCodec && !disableHWAcceleratedConversion) {
                     console.log(`doing video conversion! onlyGPU: ${onlyGPUConversion}`);
                     
                     decoder.codecName = thisCodec + `_` + decoder.string;
