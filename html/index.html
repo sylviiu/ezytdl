@@ -475,30 +475,6 @@
                                 filePath: card.querySelector(`#saveLocation`).value || null,
                                 info: Object.assign({}, info, { formats: null }),
                             });
-
-                            /*const ws = new WebSocket(`ws://localhost:3000/download`);
-
-                            let location = `Somewhere on your computer :)`
-
-                            ws.onopen = () => {
-                                ws.send(JSON.stringify({
-                                    url: url,
-                                    format: format.format_id,
-                                    ext: card.querySelector(`#formatConversionTextbox`).value || null,
-                                    filePath: card.querySelector(`#saveLocation`).value || null,
-                                    info: Object.assign({}, info, { formats: null }),
-                                }));
-                            };
-                            
-                            const { update, complete } = createDownloadManager(card)
-
-                            ws.onmessage = (o) => update(JSON.parse(o.data));
-                            ws.onclose = () => {
-                                complete();
-                                card.style.opacity = 1;
-                                card.querySelector(`#downloadicon`).classList.add(`d-none`);
-                                card.querySelector(`#fileicon`).classList.remove(`d-none`);
-                            }*/
                         }
 
                         card.querySelector(`#confirmDownload`).onclick = () => confirmDownload();

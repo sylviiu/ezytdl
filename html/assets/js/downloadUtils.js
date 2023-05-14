@@ -69,10 +69,7 @@ function createDownloadManager(card) {
         card.querySelector(`#fileFormat`).innerHTML = `Done!`;
 
         btn.onclick = () => {
-            const req = new XMLHttpRequest();
-
-            req.open("GET", `http://localhost:3000/openFolder/${encodeURI(btoa(location))}`, true);
-            req.send();
+            // to be implemented
         }
 
         btn.disabled = false;
@@ -84,10 +81,7 @@ function createDownloadManager(card) {
             card.querySelector(`#pauseicon`).classList.add(`d-none`);
 
             btn2.onclick = () => {
-                const req = new XMLHttpRequest();
-    
-                req.open("GET", `http://localhost:3000/openFolder/${encodeURI(btoa(destinationFile))}`, true);
-                req.send();
+                // to be implemented
             }
 
             btn2.classList.remove(`d-none`);
