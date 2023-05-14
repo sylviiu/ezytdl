@@ -42,7 +42,7 @@ module.exports = () => {
 
         sendNotification({
             headingText: `Update available! (${info.version})`,
-            bodyText: `${date} -- ${info.releaseName} will be installed when you close the app!`
+            bodyText: `${date} -- "${info.releaseName}" will be installed when you close the app!`
         })
     })
 }
