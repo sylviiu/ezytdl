@@ -2,7 +2,7 @@ const superagent = require('superagent')
 
 const errorAndExit = require('./errorAndExit');
 
-const { sendNotification } = require(`../util/downloadManager`)
+const sendNotification = require(`../core/sendNotification`)
 
 module.exports = (err) => {
     console.error(err)

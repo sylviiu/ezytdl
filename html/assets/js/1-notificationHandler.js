@@ -207,3 +207,8 @@ const createNotification = (opt, providedClickFunc) => {
 
     return container;
 };
+
+if(!document.getElementById(`loading`)) {
+    notifications.handler((content) => createNotification(content));
+    notifications.setReady();
+}

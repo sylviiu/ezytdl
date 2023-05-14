@@ -258,27 +258,18 @@
     const updateConfig = (json) => {
         let req = new XMLHttpRequest();
         toggleButtons(false)
-        req.open("POST", "http://localhost:3000/config", true);
-        req.setRequestHeader("Content-Type", "application/json");
-        req.onload = () => {
-            const config = JSON.parse(req.responseText);
-            parse(config);
+        configuration.set(json).then(newConf => {
+            parse(newConf)
             createNotification({
                 headingText: `Settings updated.`,
                 bodyText: `Your settings were saved successfully.`,
             });
-        }
-        req.send(JSON.stringify(json));
+        })
     }
-
-    configRequest.open("POST", "http://localhost:3000/config", true);
-
-    configRequest.onload = () => {
-        const config = JSON.parse(configRequest.responseText);
-        parse(config);
-    }
-
-    configRequest.send();
+    
+    configuration.get().then(newConf => {
+        parse(newConf)
+    });
 </script>
     <div class="d-flex justify-content-between align-items-center" id="navigationBar" style="width: 100vw;height: 80px;padding: 24px;background: rgba(0,0,0,0.5);position: fixed;margin-top: -80px;backdrop-filter: blur(15px);-webkit-backdrop-filter: blur(15px);top: 80px;left: 0px;">
         <div class="container-fluid d-flex justify-content-start align-items-end" style="padding: 0px;">
@@ -303,9 +294,7 @@
     <script src="assets/js/addFormatTags.js"></script>
     <script src="assets/js/downloads.js"></script>
     <script src="assets/js/downloadUtils.js"></script>
-    <script src="assets/js/notificationWS.js"></script>
     <script src="assets/js/qualityButtons.js"></script>
-    <script src="assets/js/statusText.js"></script>
     <script src="assets/js/version.js"></script>
 </body>
 

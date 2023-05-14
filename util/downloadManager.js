@@ -4,6 +4,8 @@ const platform = process.platform;
 
 const { app } = require(`electron`);
 
+let window = require(`../core/window`)();
+
 const queue = {
     complete: [],
     active: [],
@@ -13,9 +15,29 @@ const queue = {
 
 let activeProgress = {};
 
-let ws = null;
+let ws = {
+    send: (content) => {
+        if(!window) window = require(`../core/window`)();
+        if(!window) return;
 
-let downloadStatusWs = null;
+        let c2 = content;
+        if(typeof c2 == `object`) c2 = JSON.stringify(content);
+        
+        window.webContents.send(`queueUpdate`, JSON.parse(c2));
+    }
+};
+
+let downloadStatusWs = {
+    send: (content) => {
+        if(!window) window = require(`../core/window`)();
+
+        if(!window) return;
+
+        if(typeof content == `object`) content = JSON.stringify(content);
+
+        window.webContents.send(`formatStatusUpdate`, JSON.parse(content));
+    },
+};
 let lastDownloadStatus = null;
 
 let notificationWs = null;
@@ -42,7 +64,7 @@ const updateAppBadge = () => {
 }
 
 const updateProgressBar = () => {
-    const window = require(`./window`)()
+    const window = require(`../core/window`)()
 
     let value = 2;
 
@@ -75,10 +97,10 @@ const updateProgressBar = () => {
 
 const sendUpdate = (sendObj) => {
     //console.log(`Sending download update...`)
-    if(ws) ws.send(JSON.stringify({
+    if(ws) ws.send({
         type: `update`,
         data: sendObj
-    }))
+    })
 }
 
 const refreshQueue = (opt) => {    
@@ -165,10 +187,10 @@ const refreshQueue = (opt) => {
     
     console.log(`Queue refresh (modified: ${queueModified}) \n- ${queue.complete.length} complete\n- ${queue.active.length} active \n- ${queue.queue.length} queued`);
     
-    if(queueModified && ws) ws.send(JSON.stringify({
+    if(queueModified && ws) ws.send({
         type: `queue`,
         data: queue
-    }));
+    });
 }
 
 const createDownloadObject = (opt, rawUpdateFunc) => {
@@ -330,11 +352,17 @@ const createDownload = (opt, rawUpdateFunc) => new Promise(async res => {
     }
 });
 
-const queueAction = (id, action) => {
+const getFromQueue = (id) => {
     let o = queue.queue.find(e => e.id == id);
     if(!o) o = queue.active.find(e => e.id == id);
     if(!o) o = queue.paused.find(e => e.id == id);
     if(!o) o = queue.complete.find(e => e.id == id);
+
+    return o
+}
+
+const queueAction = (id, action) => {
+    let o = getFromQueue(id)
 
     if(o && o[action] && typeof o[action] == `function`) {
         o[action]();
@@ -349,10 +377,10 @@ const setWS = (newWs) => {
 
     ws = newWs;
 
-    ws.send(JSON.stringify({
+    ws.send({
         type: `queue`,
         data: queue
-    }))
+    })
     
     ws.sessionID = idGen(10);
 
@@ -362,9 +390,11 @@ const setWS = (newWs) => {
 }
 
 const updateStatus = (status) => {
-    if(downloadStatusWs) {
-        downloadStatusWs.send(status.toString().trim());
-    }
+    const window = require(`../core/window`)();
+
+    if(window) {
+        window.webContents.send(`formatStatusUpdate`, status);
+    };
 }
 
 const setStatusWS = (ws) => {
@@ -413,27 +443,24 @@ const setNotificationWS = (ws) => {
         for (notif of notificationQueue) sendNotif(notif);
         notificationQueue = [];
     }
-}
+};
 
-const sendNotification = (msg) => {
-    if(typeof msg == `object`) msg = JSON.stringify(msg)
+const refreshAll = () => {
+    ws.send({ type: `queue`, data: queue });
 
-    if(!notificationWs) {
-        notificationQueue.push(msg);
-        return false;
-    } else {
-        sendNotif(msg);
-        return true;
-    }
+    downloadStatusWs.send(lastDownloadStatus);
+
+    notificationWs.send(notificationQueue);
 }
 
 module.exports = {
     queue,
     createDownload,
+    refreshAll,
+    getFromQueue,
     setWS,
     queueAction,
     updateStatus,
     setStatusWS,
     setNotificationWS,
-    sendNotification
 };

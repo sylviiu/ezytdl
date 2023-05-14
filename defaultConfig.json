@@ -1,5 +1,5 @@
 {
-    "saveLocation": null,
+    "saveLocation": "",
     "outputFilename": "%(title)s",
     "lastMediaConversionOutputs": {
         "audio": "mp3",

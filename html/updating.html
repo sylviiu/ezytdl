@@ -46,38 +46,32 @@
 
     const percentageText = document.getElementById(`percentageText`);
 
-    const ws = new WebSocket(`ws://localhost:3000/download`);
+    update.event((m) => {
+        if(m.complete) {
+            console.log(`WS CLOSED`);
 
-    ws.onopen = () => {
-        ws.send(`${window.location.search ? window.location.search.slice(1).slice(0, -1) : `ytdlp`}`);
-    }
+            homeButton.disabled = false
+            homeButton.style.opacity = 1;
+            homeButton.classList.replace(`d-none`, `d-flex`);
+            bar.classList.add(`d-none`)
+        } else {
+            if(m.message) {
+                heading.innerHTML = m.message
+            }
+            
+            const percent = `${Math.round(m.progress * 100)}%`
 
-    ws.onmessage = (o) => {
-        const m = JSON.parse(o.data);
+            percentageText.innerHTML = m.version + ` / ` + percent;
 
-        if(m.message) {
-            heading.innerHTML = m.message
+            const setWidth = `${dotSize + (range * m.progress)}px`;
+
+            console.log(`Downloaded ${percent} -- bar width: ${setWidth}`)
+
+            fill.style.width = setWidth
         }
-        
-        const percent = `${Math.round(m.progress * 100)}%`
+    });
 
-        percentageText.innerHTML = m.version + ` / ` + percent;
-
-        const setWidth = `${dotSize + (range * m.progress)}px`;
-
-        console.log(`Downloaded ${percent} -- bar width: ${setWidth}`)
-
-        fill.style.width = setWidth
-    };
-
-    ws.onclose = () => {
-        console.log(`WS CLOSED`);
-
-        homeButton.disabled = false
-        homeButton.style.opacity = 1;
-        homeButton.classList.replace(`d-none`, `d-flex`);
-        bar.classList.add(`d-none`)
-    }
+    update.download(`${window.location.search ? window.location.search.slice(1).slice(0, -1) : `ytdlp`}`)
 </script>
     <div class="d-flex justify-content-between align-items-center" id="navigationBar" style="width: 100vw;height: 80px;padding: 24px;background: rgba(0,0,0,0.5);position: fixed;margin-top: -80px;backdrop-filter: blur(15px);-webkit-backdrop-filter: blur(15px);top: 80px;left: 0px;">
         <div class="container-fluid d-flex justify-content-start align-items-end" style="padding: 0px;">
@@ -95,9 +89,7 @@
     <script src="assets/js/addFormatTags.js"></script>
     <script src="assets/js/downloads.js"></script>
     <script src="assets/js/downloadUtils.js"></script>
-    <script src="assets/js/notificationWS.js"></script>
     <script src="assets/js/qualityButtons.js"></script>
-    <script src="assets/js/statusText.js"></script>
     <script src="assets/js/version.js"></script>
 </body>
 

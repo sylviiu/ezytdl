@@ -3,7 +3,7 @@ const { spawn } = require('child_process');
 
 const electronPath = require('electron').app.getAppPath();
 
-const { sendNotification } = require(`./downloadManager`)
+const sendNotification = require("../core/sendNotification.js");
 
 let working = { "checked": false };
 

@@ -6,14 +6,10 @@
   "dependencies": {
     "appdata-path": "^1.0.0",
     "electron-updater": "^5.3.0",
-    "express": "^4.18.2",
     "superagent": "^8.0.9",
-    "tar": "^6.1.14",
     "tree-kill": "^1.2.2",
-    "unzip": "^0.1.11",
     "unzipper": "^0.10.14",
-    "which": "^3.0.1",
-    "ws": "^8.13.0"
+    "which": "^3.0.1"
   },
   "scripts": {
     "start": "electron . --inspect = 5858",

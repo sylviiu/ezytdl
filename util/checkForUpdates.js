@@ -1,4 +1,4 @@
-const { sendNotification } = require(`./downloadManager`);
+const sendNotification = require("../core/sendNotification.js");
 
 module.exports = () => {
     const { autoUpdater } = require(`electron-updater`);

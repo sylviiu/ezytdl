@@ -1,18 +1,16 @@
-const downloadsWs = new WebSocket(`ws://localhost:3000/download`);
-
-const onMessageFuncs = [];
-
-downloadsWs.onmessage = (m) => onMessageFuncs.forEach(func => func(JSON.parse(m.data)))
-
 let currentDownloads = 0
 
 const downloadsList = document.getElementById('downloadsList');
 const downloadsIcon = document.getElementById('downloadsIcon').cloneNode(true);
 
-onMessageFuncs.push((m) => {
-    if(m.type == `queue`) {
-        const queueLength = m.data.active.length + m.data.queue.length + m.data.paused.length;
+let queueUpdates = [];
 
+mainQueue.queueUpdate((m) => {
+    if(m.type == `queue`) {
+        console.log(m.data)
+    
+        const queueLength = m.data.active.length + m.data.queue.length + m.data.paused.length;
+    
         currentDownloads = queueLength
     
         if(queueLength > 0) {
@@ -29,7 +27,7 @@ onMessageFuncs.push((m) => {
             };
         };
     }
-});
+})
 
 if(document.body.querySelector(`#urlBox`)) {
     const downloadsQueue = formatListTemplate.cloneNode(true);
@@ -77,10 +75,10 @@ if(document.body.querySelector(`#urlBox`)) {
             card.querySelector(`#checkmarkicon`).classList.remove(`d-none`);
     
             const clear = () => {
-                downloadsWs.send(JSON.stringify({
+                mainQueue.action({
                     action: `remove`,
                     id: card.id.split(`-`)[1]
-                }))
+                })
             };
             
             card.querySelector(`#formatDownload`).onclick = clear
@@ -97,17 +95,17 @@ if(document.body.querySelector(`#urlBox`)) {
             if(platform == `win32`) card.querySelector(`#formatDownload`).classList.add(`d-none`)
     
             card.querySelector(`#formatDownload`).onclick = () => {
-                downloadsWs.send(JSON.stringify({
+                mainQueue.action({
                     action: `cancel`,
                     id: card.id.split(`-`)[1]
-                }))
+                })
             }
             
             card.querySelector(`#pausePlayButton`).onclick = () => {
-                downloadsWs.send(JSON.stringify({
+                mainQueue.action({
                     action: `pause`,
                     id: card.id.split(`-`)[1]
-                }))
+                })
             }
         },
         paused: (card) => {
@@ -121,20 +119,20 @@ if(document.body.querySelector(`#urlBox`)) {
             if(platform == `win32`) card.querySelector(`#formatDownload`).classList.add(`d-none`)
     
             card.querySelector(`#formatDownload`).onclick = () => {
-                downloadsWs.send(JSON.stringify({
+                mainQueue.action({
                     action: `cancel`,
                     id: card.id.split(`-`)[1]
-                }))
+                })
             }
             
             card.querySelector(`#pauseicon`).classList.add(`d-none`);
             card.querySelector(`#playicon`).classList.remove(`d-none`);
             
             card.querySelector(`#pausePlayButton`).onclick = () => {
-                downloadsWs.send(JSON.stringify({
+                mainQueue.action({
                     action: `resume`,
                     id: card.id.split(`-`)[1]
-                }))
+                })
                 downloadCardStates.active(card);
             }
         },
@@ -142,10 +140,10 @@ if(document.body.querySelector(`#urlBox`)) {
             downloadCardStates.reset(card);
     
             card.querySelector(`#formatDownload`).onclick = () => {
-                downloadsWs.send(JSON.stringify({
+                mainQueue.action({
                     action: `start`,
                     id: card.id.split(`-`)[1]
-                }));
+                });
                 downloadCardStates.active(card);
             }
     
@@ -155,10 +153,10 @@ if(document.body.querySelector(`#urlBox`)) {
             card.querySelector(`#pausePlayButton`).classList.remove(`d-none`);
     
             card.querySelector(`#pausePlayButton`).onclick = () => {
-                downloadsWs.send(JSON.stringify({
+                mainQueue.action({
                     action: `remove`,
                     id: card.id.split(`-`)[1]
-                }))
+                })
             }
         },
     }
@@ -237,6 +235,8 @@ if(document.body.querySelector(`#urlBox`)) {
     let firstRefresh = true;
 
     const refreshListView = () => {
+        console.log(`refreshing list view`)
+
         let queue = totalQueue.slice(pageNum * cardsPerPage, (pageNum + 1) * cardsPerPage);
 
         downloadsQueue.querySelectorAll(`.card`).forEach(card => {
@@ -306,6 +306,8 @@ if(document.body.querySelector(`#urlBox`)) {
     };
 
     const updateButtonStates = (disableAnyways) => {
+        console.log(`updating button states`)
+
         pageNumText.innerHTML = `Page ${pageNum + 1}/${totalPages + 1}`;
 
         if(pageNum == 0 || disableAnyways) {
@@ -356,13 +358,15 @@ if(document.body.querySelector(`#urlBox`)) {
     previousPage.onclick = () => pageSwitchButtonClick(-1);
     nextPage.onclick = () => pageSwitchButtonClick(1);
 
-    const clearFromQueue = async (queue) => downloadsWs.send(JSON.stringify({ action: `remove`, id: queue.map(o => o.id) }));
+    const clearFromQueue = async (queue) => mainQueue.action({ action: `remove`, id: queue.map(o => o.id) });
 
     clearCompletedButton.onclick = () => clearFromQueue(totalQueue.filter(o => o.state == `complete`))
     clearQueueButton.onclick = () => clearFromQueue(totalQueue.filter(o => o.state != `active` && o.state != `paused` && o.state != `complete`));
-    
-    onMessageFuncs.push((m) => {
+
+    mainQueue.queueUpdate((m) => {
         if(m.type == `queue`) {
+            console.log(m)
+
             totalQueue = [];
     
             order = Object.keys(m.data)
@@ -374,10 +378,10 @@ if(document.body.querySelector(`#urlBox`)) {
 
             updateButtonStates();
             refreshListView();
-        } else if(m.type == `update`) {
+        } else {
             if(downloadManagers[m.data.id]) downloadManagers[m.data.id].update(m.data.status);
         }
-    })
+    });
     
     let downloadsQueueToggled = false;
     
@@ -430,6 +434,6 @@ if(document.body.querySelector(`#urlBox`)) {
 } else {
     downloadsList.disabled = true;
     downloadsList.opacity = 0.75;
-}
+};
 
-downloadsWs.onopen = () => downloadsWs.send(`queue`);
+mainQueue.refreshUpdates()

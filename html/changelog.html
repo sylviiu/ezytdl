@@ -43,13 +43,7 @@
 
     const converter = new showdown.Converter({ parseImgDimensions: true });
 
-    const req = new XMLHttpRequest();
-
-    req.open("GET", "http://localhost:3000/changelog/view", true);
-
-    req.onload = () => {
-        const content = JSON.parse(req.responseText);
-
+    changelog.get().then(content => {
         console.log(content)
 
         const updateReleasedTime = () => {
@@ -95,9 +89,7 @@
         heading.classList.remove(`d-none`);
         released.classList.remove(`d-none`);
         contentBody.classList.remove(`d-none`);
-    };
-
-    req.send();
+    })
 </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/0-idGen.js"></script>
@@ -105,9 +97,7 @@
     <script src="assets/js/addFormatTags.js"></script>
     <script src="assets/js/downloads.js"></script>
     <script src="assets/js/downloadUtils.js"></script>
-    <script src="assets/js/notificationWS.js"></script>
     <script src="assets/js/qualityButtons.js"></script>
-    <script src="assets/js/statusText.js"></script>
     <script src="assets/js/version.js"></script>
 </body>
 

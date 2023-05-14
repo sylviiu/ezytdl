@@ -1,6 +1,6 @@
 const { app } = require('electron');
 
-const createWindow = require(`./util/window`)
+const createWindow = require(`./core/window`)
 
 global.app = app;
 
@@ -15,8 +15,6 @@ process.on(`uncaughtException`, (err) => {errorHandler(`${err}\n\n${err.stack? e
 process.on(`unhandledRejection`, (err) => {errorHandler(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)})
 
 app.whenReady().then(async () => {
-    const app = await require(`./server`)();
-
     require(`./util/checkForUpdates`)();
 
     const window = createWindow()

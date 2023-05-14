@@ -5,7 +5,12 @@ const Stream = require('stream');
 
 const errorHandler = require(`../errorHandler`);
 
-module.exports = async (ws) => {
+module.exports = async () => {
+    const ws = {
+        send: (args) => require(`../../core/window`)().webContents.send(`updateClientEvent`, args),
+        close: () => require(`../../core/window`)().webContents.send(`updateClientEvent`, {complete: true})
+    }
+
     console.log(`downloadClient`)
 
     const ghRequest = require(`../fetchLatestVersion/ffmpeg`);
@@ -17,17 +22,17 @@ module.exports = async (ws) => {
 
         const downloads = latest.assets;
         
-        ws.send(JSON.stringify({ version, progress: 0 }))
+        ws.send({ version, progress: 0 })
         
         const currentVersion = await require(`../currentVersion/ffmpeg`)(true);
 
         console.log(`Current version: ${currentVersion}`)
 
         if(currentVersion == version) {
-            ws.send(JSON.stringify({ message: `You're already on the latest version!`, version, progress: 1 }));
+            ws.send({ message: `You're already on the latest version!`, version, progress: 1 });
             ws.close()
         } else {
-            ws.send(JSON.stringify({ progress: 0, version }))
+            ws.send({ progress: 0, version })
     
             console.log(`Latest version: ${version}`);
             console.log(`Downloads: ${downloads.map(d => d.name).join(`, `)}`);
@@ -59,7 +64,7 @@ module.exports = async (ws) => {
                 pt.on(`data`, d => {
                     const progress = totalData += Buffer.byteLength(d) / download.size;
     
-                    ws.send(JSON.stringify({ progress, version }));
+                    ws.send({ progress, version });
     
                     //console.log(`Downloaded ` + Math.round(progress * 100) + `% ...`)
                 })

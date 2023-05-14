@@ -1,6 +1,8 @@
-const { BrowserWindow, app, globalShortcut } = require('electron');
+const { BrowserWindow, app, globalShortcut, session, contextBridge, ipcRenderer } = require('electron');
 
 let currentWindow = null;
+
+const path = require('path')
 
 const platform = process.platform;
 
@@ -24,16 +26,22 @@ module.exports = () => {
         minHeight: 300,
         minWidth: 550,
         autoHideMenuBar: true,
+        webPreferences: {
+            nodeIntegration: false,
+            nodeIntegrationInWorker: false,
+            contextIsolation: true,
+            devTools: true,
+            preload: path.join(__dirname, `preload.js`)
+        },
         icon: iconPath
     };
+
+    require(`./ipcHandler`)();
 
     if(app.isPackaged) {
         console.log(`-------------\nSTARTING WITH PRODUCTION MODE\n-------------`)
 
-        args.webPreferences = {
-            nodeIntegration: false,
-            devTools: false,
-        };
+        args.webPreferences.devTools = false;
 
         const setShortcuts = (enable) => {
             const accelerators = [`CommandOrControl+Shift+I`, `F12`];
@@ -60,16 +68,17 @@ module.exports = () => {
         console.log(`-------------\nSTARTING WITH DEVELOPMENT MODE\n-------------`);
 
         args.width = 1100;
-        args.webPreferences = {
-            devTools: true,
-        }
     }
 
+    if(currentWindow) return currentWindow;
+    
     const window = new BrowserWindow(args);
 
     if(!app.isPackaged) {
-        window.webContents.openDevTools();
+        //window.webContents.openDevTools();
     };
+
+    require(`./lockdown`)();
 
     currentWindow = window;
 

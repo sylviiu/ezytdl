@@ -119,32 +119,14 @@
     let config;
 
     const updateConfig = (json) => {
-        let req = new XMLHttpRequest();
-        req.open("POST", "http://localhost:3000/config", true);
-        req.setRequestHeader("Content-Type", "application/json");
-        req.onload = () => {
-            config = JSON.parse(req.responseText);
-        }
-        req.send(JSON.stringify(json));
+        configuration.set(json).then(newConf => {
+            config = newConf
+        })
     }
 
-    const configRequest = new XMLHttpRequest();
-    configRequest.open("POST", "http://localhost:3000/config", true);
-    configRequest.onload = () => {
-        config = JSON.parse(configRequest.responseText);
-        if(config.changelogsEnabled) {
-            const changelogCheck = new XMLHttpRequest();
-            changelogCheck.open("GET", "http://localhost:3000/changelog/true", true);
-            changelogCheck.onload = () => {
-                if(changelogCheck.responseText == `true`) {
-                    console.log(`changelog exists`);
-                    window.location.href = `changelog.html`;
-                } else console.log(`no changelog`)
-            }
-            changelogCheck.send();
-        }
-    }
-    configRequest.send();
+    configuration.get().then(newConf => {
+        config = newConf
+    })
 
     const mainContainer = document.getElementById(`mainContainer`);
 
@@ -169,15 +151,13 @@
 
     let currentInfo = null;
 
-    const runSearch = async (url) => {
-        const infoRequest = new XMLHttpRequest();
+    mainQueue.formatStatusUpdate((content) => document.getElementById(`statusText`).innerHTML = content)
 
+    const runSearch = async (url) => {
         document.getElementById(`statusText`).innerHTML = `Fetching info...`;
         if(document.getElementById(`statusText`).classList.contains(`d-none`)) document.getElementById(`statusText`).classList.remove(`d-none`);
 
         console.log(`running search for ${url}`)
-
-        infoRequest.open("GET", `http://localhost:3000/fetchInfo/${url}`, true);
 
         const centerURLBox = (removeListbox, checkParse) => {
             document.body.style.overflowY = `hidden`;
@@ -205,6 +185,8 @@
             });
         }
 
+        let info = null;
+
         const parseInfo = async () => {
             const listbox = listboxTemplate.cloneNode(true);
             
@@ -216,8 +198,6 @@
             
             input.disabled = false;
             button.disabled = false;
-
-            const info = JSON.parse(infoRequest.responseText);
 
             currentInfo = info;
             
@@ -543,13 +523,15 @@
 
         let parse = false;
 
-        infoRequest.onload = () => {
+        mainQueue.getInfo(url).then(data => {
+            info = data;
+
             if(parse) {
                 parseInfo();
             } else {
                 parse = true;
             }
-        }
+        })
         
         input.disabled = true;
         button.disabled = true;
@@ -574,8 +556,6 @@
         } else {
             parse = true;
         }
-
-        infoRequest.send();
     }
 
     const processURL = () => {
@@ -597,8 +577,6 @@
     input.addEventListener(`keyup`, (e) => {
         if(e.key == `Enter` || e.keyCode == 13) processURL();
     })
-</script><script>
-    const ws = new WebSocket('ws://localhost:3000/download');
 </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/0-idGen.js"></script>
@@ -606,9 +584,7 @@
     <script src="assets/js/addFormatTags.js"></script>
     <script src="assets/js/downloads.js"></script>
     <script src="assets/js/downloadUtils.js"></script>
-    <script src="assets/js/notificationWS.js"></script>
     <script src="assets/js/qualityButtons.js"></script>
-    <script src="assets/js/statusText.js"></script>
     <script src="assets/js/version.js"></script>
 </body>
 

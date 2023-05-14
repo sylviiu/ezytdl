@@ -16,7 +16,7 @@ function createDownloadManager(card) {
     card.querySelector(`#fileFormat`).innerHTML = `0%`;
 
     let location;
-    let destinationFile
+    let destinationFile;
 
     const update = (m) => {
         if(m) {
@@ -251,14 +251,15 @@ const startDownload = (originalCard, opt) => {
             duration: 500,
             easing: `easeInExpo`,
             complete: () => {
-                if(downloadsWs) {
+                mainQueue.download(opt)
+                /*if(downloadsWs) {
                     console.log(`found downloads websocket!`)
         
                     downloadsWs.send(JSON.stringify({
                         action: `download`,
                         data: opt,
                     }));
-                } else console.log(`no downloads websocket found!`)
+                } else console.log(`no downloads websocket found!`)*/
 
                 card.opacity = 0;
                 if(card.parentNode) card.parentNode.removeChild(card);

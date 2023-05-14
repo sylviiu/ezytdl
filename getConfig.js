@@ -3,7 +3,7 @@ const errorHandler = require("./util/errorHandler.js");
 const fs = require('fs');
 const os = require('os');
 
-const { sendNotification } = require("./util/downloadManager.js");
+const sendNotification = require("./core/sendNotification.js");
 
 let newSettingsNotifSent = false;
 
