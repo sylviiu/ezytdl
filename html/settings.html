@@ -102,6 +102,14 @@
 
     const configRequest = new XMLHttpRequest();
 
+    const addFilenameFunctionality = () => {
+        const fileNameInput = document.getElementById(`outputFilename`).querySelector(`#string`);
+        document.getElementById(`fileNameOptions`).querySelectorAll(`.btn`).forEach((button) => button.onclick = () => {
+            fileNameInput.value += `%(${button.id})s`;
+            fileNameInput.focus();
+        })
+    }
+
     const createCard = (key, string, config, parentNode, showSaveButton, depth) => {
         console.log(key, string);
 
@@ -139,8 +147,6 @@
 
         if(typeof config[key] == `object`) {
             const opt = card.querySelector(`#options`);
-
-            opt.border
 
             opt.classList.add(`flex-column`);
 
@@ -260,6 +266,7 @@
         toggleButtons(false)
         configuration.set(json).then(newConf => {
             parse(newConf)
+            addFilenameFunctionality(newConf)
             createNotification({
                 headingText: `Settings updated.`,
                 bodyText: `Your settings were saved successfully.`,
@@ -269,6 +276,7 @@
     
     configuration.get().then(newConf => {
         parse(newConf)
+        addFilenameFunctionality(newConf)
     });
 </script>
     <div class="d-flex justify-content-between align-items-center" id="navigationBar" style="width: 100vw;height: 80px;padding: 24px;background: rgba(0,0,0,0.5);position: fixed;margin-top: -80px;backdrop-filter: blur(15px);-webkit-backdrop-filter: blur(15px);top: 80px;left: 0px;">

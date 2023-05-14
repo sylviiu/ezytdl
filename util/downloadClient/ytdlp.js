@@ -6,10 +6,19 @@ const Stream = require('stream');
 const errorHandler = require(`../errorHandler`);
 const { platform } = require('os');
 
+let activeDownload = null;
+
 module.exports = async () => {
+    if(activeDownload) return activeDownload;
+
+    activeDownload = true;
+
     const ws = {
         send: (args) => require(`../../core/window`)().webContents.send(`updateClientEvent`, args),
-        close: () => require(`../../core/window`)().webContents.send(`updateClientEvent`, {complete: true})
+        close: () => {
+            activeDownload = null;
+            require(`../../core/window`)().webContents.send(`updateClientEvent`, {complete: true})
+        }
     }
 
     console.log(`downloadClient`)
