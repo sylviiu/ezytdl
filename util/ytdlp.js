@@ -88,7 +88,6 @@ module.exports = {
 
         proc.on(`close`, code => {
             console.log(`listFormats closed with code ${code}`)
-            console.log(data)
             const d = JSON.parse(data);
             if(d && d.formats) {
                 console.log(`formats found! resolving...`);
