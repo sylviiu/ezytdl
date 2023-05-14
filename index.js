@@ -2,8 +2,6 @@ const { app } = require('electron');
 
 const createWindow = require(`./util/window`)
 
-const { autoUpdater } = require(`electron-updater`);
-
 global.app = app;
 
 global.configPath = require(`appdata-path`)(`ezytdl`);
@@ -16,10 +14,10 @@ const determineGPUDecode = require('./util/determineGPUDecode');
 process.on(`uncaughtException`, (err) => {errorHandler(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)})
 process.on(`unhandledRejection`, (err) => {errorHandler(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)})
 
-autoUpdater.checkForUpdatesAndNotify();
-
 app.whenReady().then(async () => {
     const app = await require(`./server`)();
+
+    require(`./util/checkForUpdates`)();
 
     const window = createWindow()
 
