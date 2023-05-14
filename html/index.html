@@ -552,7 +552,9 @@
     
     input.addEventListener(`keyup`, (e) => {
         if(e.key == `Enter` || e.keyCode == 13) processURL();
-    })
+    });
+
+    changelog.check();;
 </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/0-idGen.js"></script>

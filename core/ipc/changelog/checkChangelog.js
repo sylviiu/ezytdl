@@ -25,16 +25,12 @@ module.exports = {
 
         if(lastVersionChecked !== currentVersion && currentVersion == global.changelogResponse.tag_name) {
             res(true)
-            const updated = require(`../getConfig`)({ version: global.changelogResponse.tag_name });
+            const updated = require(`../../../getConfig`)({ version: global.changelogResponse.tag_name });
             sendNotification({
                 headingText: `ezytdl has been updated!`,
                 bodyText: `Click here to view the changelog.`,
                 redirect: `changelog.html`,
             })
         } else res(false);
-
-        sendNotification({
-            headingText: `test`,
-        })
     })
 }
