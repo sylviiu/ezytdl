@@ -35,8 +35,7 @@ let downloadStatusWs = {
 };
 let lastDownloadStatus = null;
 
-let notificationWs = null;
-let notificationQueue = [];
+const sendNotification = require(`../core/sendNotification`)
 
 let queueSizeWarningSent = false;
 
@@ -406,42 +405,10 @@ const setStatusWS = (ws) => {
     }
 }
 
-const sendNotif = (msg) => {
-    if(msg.redirect) {
-        if(!require(`fs`).existsSync(`./html/${msg.redirect}`)) {
-            msg.redirect = null;
-            msg.bodyText += `\n\n-- redirect file redacted; file not found`
-        }
-    };
-
-    notificationWs.send(msg);
-}
-
-const setNotificationWS = (ws) => {
-    if(notificationWs) {
-        notificationWs.close();
-    };
-
-    notificationWs = ws;
-    
-    ws.sessionID = idGen(10);
-
-    ws.once(`close`, () => {
-        if(ws.sessionID == notificationWs.sessionID) ws = null;
-    });
-
-    if(notificationQueue) {
-        for (notif of notificationQueue) sendNotif(notif);
-        notificationQueue = [];
-    }
-};
-
 const refreshAll = () => {
     ws.send({ type: `queue`, data: queue });
 
     downloadStatusWs.send(lastDownloadStatus);
-
-    notificationWs.send(notificationQueue);
 }
 
 module.exports = {
@@ -453,5 +420,4 @@ module.exports = {
     queueAction,
     updateStatus,
     setStatusWS,
-    setNotificationWS,
 };

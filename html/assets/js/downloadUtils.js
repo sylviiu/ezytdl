@@ -1,4 +1,4 @@
-function createDownloadManager(card) {
+function createDownloadManager(card, id) {
     const btn = card.querySelector(`#formatDownload`);
 
     const bar = card.querySelector(`#progressBar`);
@@ -68,21 +68,17 @@ function createDownloadManager(card) {
     const complete = () => {
         card.querySelector(`#fileFormat`).innerHTML = `Done!`;
 
-        btn.onclick = () => {
-            // to be implemented
-        }
+        //btn.onclick = () => 
 
         btn.disabled = false;
 
-        if(destinationFile && card.querySelector(`#playicon`) && card.querySelector(`#pausePlayButton`)) {
+        if(destinationFile && card.querySelector(`#fileicon`) && card.querySelector(`#pausePlayButton`)) {
             const btn2 = card.querySelector(`#pausePlayButton`);
 
-            card.querySelector(`#playicon`).classList.remove(`d-none`);
+            card.querySelector(`#fileicon`).classList.remove(`d-none`);
             card.querySelector(`#pauseicon`).classList.add(`d-none`);
 
-            btn2.onclick = () => {
-                // to be implemented
-            }
+            btn2.onclick = () => mainQueue.openDir(id || ``);
 
             btn2.classList.remove(`d-none`);
         }
@@ -232,6 +228,8 @@ const startDownload = (originalCard, opt) => {
         duration: 850,
         easing: `easeInQuad`,
     });
+
+    setTimeout(() => mainQueue.download(opt), 780);
     
     setTimeout(() => {
         const targetPosition = downloadsListBtn.getBoundingClientRect();
@@ -245,7 +243,6 @@ const startDownload = (originalCard, opt) => {
             duration: 500,
             easing: `easeInExpo`,
             complete: () => {
-                mainQueue.download(opt)
                 /*if(downloadsWs) {
                     console.log(`found downloads websocket!`)
         

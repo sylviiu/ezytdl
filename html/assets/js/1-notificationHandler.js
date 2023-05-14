@@ -1,5 +1,7 @@
 let constantAddedHeight = 0;
 
+const notificationMarkdownConverter = new showdown.Converter({ parseImgDimensions: true });
+
 const repositionNotifications = (addHeight, constant) => {
     if(!addHeight || typeof addHeight != `number`) addHeight = 0;
 
@@ -197,10 +199,12 @@ const createNotification = (opt, providedClickFunc) => {
         heading.style.marginBottom = `6px`;
         container.appendChild(heading);
     
-        const body = document.createElement(`h6`);
+        const body = document.createElement(`p`);
         body.id = `errorBody`
-        body.innerText = bodyText || content || `-- unknown --`;
+        body.innerHTML = notificationMarkdownConverter.makeHtml((bodyText || content || `-- unknown --`).trim());
         container.appendChild(body);
+
+        container.style.paddingBottom = `0px`;
     }
 
     addNotification(container);

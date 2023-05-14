@@ -1,9 +1,9 @@
 module.exports = {
     type: `handle`,
     func: (_e, id) => {
-        const { queue } = require(`../../../util/downloadManager`);
+        const { getFromQueue } = require(`../../../util/downloadManager`);
 
-        let a = queue[id];
+        const a = getFromQueue(id);
 
         if(a && a.status && a.status.saveLocation) {
             shell.openPath(a.status.saveLocation);

@@ -271,7 +271,7 @@ if(document.body.querySelector(`#urlBox`)) {
                 card.querySelector(`#formatMetaList`).classList.add(`d-none`)
                 card.querySelector(`#mediaIcons`).classList.add(`d-none`)
 
-                const downloadManager = createDownloadManager(card);
+                const downloadManager = createDownloadManager(card, o.id);
                 downloadManagers[o.id] = downloadManager;
                 
                 downloadManagers[o.id].update(o.status);
