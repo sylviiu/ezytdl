@@ -56,7 +56,7 @@
         "util/*/*.js",
         "core/*.js",
         "core/*.json",
-        "core/*/*.js",
+        "core/ipc/*/*.js",
         "endpoints/*.js",
         "core/*.js",
         "checks/*.js"
