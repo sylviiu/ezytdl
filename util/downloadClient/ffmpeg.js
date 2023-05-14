@@ -43,7 +43,7 @@ module.exports = async (ws) => {
 
                 if(platform == `linux`) ext = `.tar.xz`;
 
-                if(fs.existsSync(downloadPath)) fs.unlinkSync(downloadPath, { recursive: true });
+                if(fs.existsSync(downloadPath)) fs.rmdirSync(downloadPath, { recursive: true });
     
                 const writeStream = fs.createWriteStream(downloadPath + ext, { flags: `w` });
     
@@ -70,7 +70,11 @@ module.exports = async (ws) => {
 
                         fs.unlinkSync(downloadPath + ext);
 
-                        console.log(require(`../filenames/ffmpeg`).getPath());
+                        const newPath = require(`../filenames/ffmpeg`).getPath()
+
+                        if(!platform.toLowerCase().startsWith(`win`)) fs.chmodSync(newPath, 0o777)
+
+                        console.log(newPath);
 
                         ws.close();
                     };

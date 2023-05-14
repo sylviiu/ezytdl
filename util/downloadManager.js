@@ -192,6 +192,10 @@ const createDownloadObject = (opt, rawUpdateFunc) => {
                 }
                 sendUpdate(Object.assign({}, obj, { status: update.latest }));
                 rawUpdateFunc(update);
+            } else if(typeof update == `object` && (update.status || update.latest.status || ``).includes(`cancel`)) {
+                obj.status = Object.assign({}, obj.status, { status: (update.status || update.latest.status) })
+                sendUpdate(Object.assign({}, obj, { status: update.latest }));
+                rawUpdateFunc(update);
             }
         },
         paused: false,

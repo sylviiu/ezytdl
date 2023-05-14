@@ -1,5 +1,4 @@
 const { getPath } = require(`./filenames/ytdlp`);
-const path = getPath();
 const child_process = require('child_process');
 const fs = require('fs');
 const idGen = require(`../util/idGen`);
@@ -42,6 +41,8 @@ const getCodec = (file) => {
 
 module.exports = {
     listFormats: (url, disableFlatPlaylist) => new Promise(async res => {
+        const path = getPath();
+
         console.log(`going to path ${path}; url "${url}"`)
 
         let args = [url, `--dump-single-json`, `--quiet`, `--progress`, `--verbose`];
@@ -77,6 +78,7 @@ module.exports = {
 
         proc.on(`close`, code => {
             console.log(`listFormats closed with code ${code}`)
+            console.log(data)
             const d = JSON.parse(data);
             if(d && d.formats) {
                 console.log(`formats found! resolving...`);
@@ -131,6 +133,8 @@ module.exports = {
         })
     }),
     getFilename: (url, format, template) => new Promise(async res => {
+        const path = getPath();
+        
         const { outputFilename } = require(`../getConfig`)();
 
         const args = [`-f`, format, url, `-o`, template || outputFilename, `--get-filename`, `--quiet`];
@@ -153,6 +157,8 @@ module.exports = {
         })
     }),
     download: ({url, format, ext, filePath, info}, updateFunc) => new Promise(async res => {
+        const path = getPath();
+        
         const temporaryFilename = `ezytdl-` + idGen(8);
 
         const { saveLocation, outputFilename, onlyGPUConversion, allowVideoConversion, allowAudioConversion } = require(`../getConfig`)();
@@ -231,14 +237,8 @@ module.exports = {
         killAttempt = 0;
 
         update({saveLocation: saveTo, url, format, kill: () => {
-            if(require('os').platform() == `win32`) {
-                //let str = `taskkill /pid ${proc.pid} /T`;
-                //if(killAttempt++ > 1) str += ` /F`
-                //child_process.execSync(str);
-                treekill(proc.pid, `SIGINT`)
-            }
-            
-            proc.kill(`SIGINT`);
+            killAttempt++
+            proc.kill(`SIGKILL`);
         }, status: `Downloading...`})
 
         proc.stdout.on(`data`, data => {
@@ -264,13 +264,30 @@ module.exports = {
         })
         
         proc.on(`close`, async code => {
-            update({kill: () => {}});
+            update({kill: () => {killAttempt++}});
+
+            let ytdlFilename = `--`
+
+            let previousFilename = obj.destinationFile ? `ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0] : temporaryFilename;
+
+            const fallback = (msg, deleteFile) => {
+                try {
+                    console.log(`ffmpeg did not save file, renaming temporary file`);
+                    if(deleteFile) {
+                        fs.unlinkSync(saveTo + previousFilename)
+                    } else {
+                        fs.renameSync(saveTo + previousFilename, saveTo + ytdlFilename + `.` + previousFilename.split(`.`).slice(-1)[0]);
+                    }
+                } catch(e) { console.log(e) }
+                update({percentNum: 100, status: `Could not convert to ${ext.toUpperCase()}.` + msg && typeof msg == `string` ? `\n\n${msg}` : ``, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.` + previousFilename.split(`.`).slice(-1)[0], url, format});
+                res(obj)
+            };
+
+            if(killAttempt > 0) return fallback(`Download canceled.`, true)
 
             const files = fs.readdirSync(saveTo);
 
-            let ytdlFilename = await module.exports.getFilename(url, format);
-
-            let previousFilename = obj.destinationFile ? `ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0] : temporaryFilename;
+            ytdlFilename = await module.exports.getFilename(url, format);
 
             if(!fs.existsSync(previousFilename)) previousFilename = await module.exports.getFilename(url, format, temporaryFilename + `.%(ext)s`);
 
@@ -278,11 +295,18 @@ module.exports = {
                 const mainArgs = [`-y`, `-i`, saveTo + previousFilename, saveTo + ytdlFilename + `.${ext}`];
 
                 const spawnFFmpeg = (args2, name) => new Promise((resolveFFmpeg, rej) => {
+                    if(killAttempt > 0) return rej(`Download canceled.`, true);
+
                     console.log(`- ` + args2.join(`\n- `))
 
                     update({status: `Converting to ${ext.toUpperCase()} using ${name}...`, percentNum: -1, eta: `--`});
 
                     const proc2 = child_process.execFile(ffmpegPath, args2);
+                    
+                    update({saveLocation: saveTo, url, format, kill: () => {
+                        killAttempt++
+                        proc2.kill(`SIGKILL`);
+                    }, status: `Downloading...`})
     
                     let duration = null;
     
@@ -321,15 +345,6 @@ module.exports = {
                         }
                     })
                 });
-
-                const fallback = (msg) => {
-                    try {
-                        console.log(`ffmpeg did not save file, renaming temporary file`);
-                        fs.renameSync(saveTo + previousFilename, saveTo + ytdlFilename + `.` + previousFilename.split(`.`).slice(-1)[0]);
-                    } catch(e) { console.log(e) }
-                    update({percentNum: 100, status: `Could not convert to ${ext.toUpperCase()}.` + msg && typeof msg == `string` ? `\n\n${msg}` : ``, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.` + previousFilename.split(`.`).slice(-1)[0], url, format});
-                    res(obj)
-                }
 
                 const transcoders = await (require(`./determineGPUDecode`))()
 

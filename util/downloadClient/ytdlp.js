@@ -4,6 +4,7 @@ const superagent = require('superagent');
 const Stream = require('stream');
 
 const errorHandler = require(`../errorHandler`);
+const { platform } = require('os');
 
 module.exports = async (ws) => {
     console.log(`downloadClient`)
@@ -60,6 +61,8 @@ module.exports = async (ws) => {
     
                 writeStream.on(`finish`, () => {
                     console.log(`done!`);
+
+                    if(!platform().toLowerCase().includes(`win32`)) fs.chmodSync(downloadPath, 0o777)
     
                     ws.close();
                 })
