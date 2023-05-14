@@ -1,6 +1,6 @@
 {
     "saveLocation": "",
-    "outputFilename": "%(title)s",
+    "outputFilename": "[ %(webpage_url_domain)s ] %(format_id)s - %(fulltitle)s",
     "lastMediaConversionOutputs": {
         "audio": "mp3",
         "video": "mp4",
