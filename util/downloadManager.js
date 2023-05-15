@@ -100,6 +100,8 @@ const sendUpdate = (sendObj) => {
 const refreshQueue = (opt) => {    
     let queueModified = false;
 
+    let removedItems = false;
+
     if(opt) {
         const { action, id, obj } = opt;
 
@@ -124,6 +126,7 @@ const refreshQueue = (opt) => {
                             if(queue[state][0].ytdlpProc && !queue[state][0].ytdlpProc.killed && queue[state][0].ytdlpProc.kill) queue[state][0].ytdlpProc.kill(9)
                             queue[state].splice(o, 1)
                             queueModified = true;
+                            removedItems = true;
                         }
                     }
                 }
@@ -135,6 +138,7 @@ const refreshQueue = (opt) => {
                         if(queue[state][0].ytdlpProc && !queue[state][0].ytdlpProc.killed && queue[state][0].ytdlpProc.kill) queue[state][0].ytdlpProc.kill(9)
                         queue[state].splice(o, 1)
                         queueModified = true;
+                        removedItems = true;
                     }
                 }
             }
@@ -175,7 +179,7 @@ const refreshQueue = (opt) => {
             next.start();
         };
 
-        if(queue.complete.length > 0 && queue.active.length == 0 && queue.paused.length == 0 && queue.queue.length == 0) sendNotification({
+        if(queue.complete.length > 0 && queue.active.length == 0 && queue.paused.length == 0 && queue.queue.length == 0 && !removedItems) sendNotification({
             headingText: `Queue complete`,
             bodyText: `All ${queue.complete.length} downloads have been completed.`,
             systemAllowed: true,
