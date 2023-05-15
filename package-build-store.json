@@ -9,31 +9,31 @@
         }
     ],
     "win": {
-        "icon": "buildResources/packageIcons/icon-512x512.ico",
+        "icon": "res/packageIcons/icon-512x512.ico",
         "target": [
             "portable",
             "nsis"
         ]
     },
     "linux": {
-        "icon": "buildResources/packageIcons/icon-512x512.png",
+        "icon": "res/packageIcons/icon-512x512.png",
         "target": "AppImage"
     },
     "mac": {
-        "icon": "buildResources/packageIcons/icon-512x512.icns",
+        "icon": "res/packageIcons/icon-512x512.icns",
         "target": "dmg"
     },
     "compression": "store",
     "asar": true,
     "asarUnpack": [
         "res/*.mp4",
-        "buildResources/**/*"
+        "res/**/*"
     ],
     "files": [
         "html/*.html",
         "html/assets/**/*",
         "node_modules/**/*",
-        "buildResources/**/*",
+        "res/**/*",
         "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
         "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
         "!**/node_modules/*.d.ts",

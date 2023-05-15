@@ -9,25 +9,25 @@
         }
     ],
     "win": {
-        "icon": "buildResources/packageIcons/icon-512x512.ico",
+        "icon": "res/packageIcons/icon-512x512.ico",
         "target": [
             "portable",
             "nsis"
         ]
     },
     "linux": {
-        "icon": "buildResources/packageIcons/icon-512x512.png",
+        "icon": "res/packageIcons/icon-512x512.png",
         "target": "AppImage"
     },
     "mac": {
-        "icon": "buildResources/packageIcons/icon-512x512.icns",
+        "icon": "res/packageIcons/icon-512x512.icns",
         "target": "dmg"
     },
     "compression": "maximum",
     "asar": true,
     "asarUnpack": [
         "res/*.mp4",
-        "buildResources/**/*"
+        "res/**/*"
     ],
     "files": [
         "html/*.html",
@@ -44,7 +44,7 @@
         "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
         "!**/{appveyor.yml,.travis.yml,circle.yml}",
         "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}",
-        "buildResources/**/*",
+        "res/**/*",
         "res/*.mp4",
         "package.json",
         "index.js",

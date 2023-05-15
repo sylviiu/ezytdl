@@ -25,7 +25,7 @@ module.exports = (notDefault, overrideArgs) => {
 
     console.log(platform)
 
-    const iconPath = (electronPath.includes(`app.asar`) ? `${electronPath.replace(`app.asar`, `app.asar.unpacked`)}/` : `./`) + `buildResources/packageIcons/icon-` + (platform == `win32` ? `64x64.ico` : `512x512.png`);
+    const iconPath = (electronPath.includes(`app.asar`) ? `${electronPath.replace(`app.asar`, `app.asar.unpacked`)}/` : `./`) + `res/packageIcons/icon-` + (platform == `win32` ? `64x64.ico` : `512x512.png`);
 
     console.log(`Icon path: ${iconPath}`)
 
