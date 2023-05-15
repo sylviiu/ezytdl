@@ -1,10 +1,10 @@
-const { app, Menu, Tray, nativeImage, nativeTheme } = require('electron');
+const { app, Menu, Tray, nativeImage, nativeTheme, ipcMain } = require('electron');
 
 const { queue, queueEventEmitter, queueAction } = require(`../util/downloadManager`);
 
 const fs = require('fs');
 
-const buildTrayIcons = require(`../scripts/beforePack`);
+const buildTrayIcons = fs.existsSync(`./scripts/beforePack.js`) ? require(`../scripts/beforePack`) : () => {};
 
 global.tray = null;
 
@@ -36,30 +36,30 @@ global.updateTray = (type) => {
     console.log(`Updating tray -- type: ${type} / use dark colors? ${nativeTheme.shouldUseDarkColors} / force light? ${alwaysUseLightIcon}`);
 
     if(type == `regular`) {
-        if(nativeTheme.shouldUseDarkColors && !alwaysUseLightIcon) {
-            console.log(`setting regular dark`)
-            global.tray.setImage(icons.regularIcon);
-        } else {
+        if(nativeTheme.shouldUseDarkColors || alwaysUseLightIcon) {
             console.log(`setting regular light`)
             global.tray.setImage(icons.regularIconInv);
+        } else {
+            console.log(`setting regular dark`)
+            global.tray.setImage(icons.regularIcon);
         }
         current = `regular`;
     } else if(type == `solid`) {
-        if(nativeTheme.shouldUseDarkColors && !alwaysUseLightIcon) {
-            console.log(`setting solid dark`)
-            global.tray.setImage(icons.solidIcon);
-        } else {
+        if(nativeTheme.shouldUseDarkColors || alwaysUseLightIcon) {
             console.log(`setting solid light`)
             global.tray.setImage(icons.solidIconInv);
+        } else {
+            console.log(`setting solid dark`)
+            global.tray.setImage(icons.solidIcon);
         }
         current = `solid`;
     } else if(type == `check`) {
-        if(nativeTheme.shouldUseDarkColors && !alwaysUseLightIcon) {
-            console.log(`setting check dark`)
-            global.tray.setImage(icons.checkIcon);
-        } else {
+        if(nativeTheme.shouldUseDarkColors || alwaysUseLightIcon) {
             console.log(`setting check light`)
             global.tray.setImage(icons.checkIconInv);
+        } else {
+            console.log(`setting check dark`)
+            global.tray.setImage(icons.checkIcon);
         }
         current = `solid`;
     }
@@ -77,9 +77,18 @@ module.exports = async () => {
 
     if(buildIcons) await buildTrayIcons();
 
+    for(let icon of Object.keys(icons)) {
+        console.log(`Converting ${icon} to native image / template`);
+        const nativeIcon = nativeImage.createFromPath(icons[icon]);
+        nativeIcon.setTemplateImage(true);
+        icons[icon] = nativeIcon
+        console.log(`Finished converting ${icon} to native image / template`);
+    }
+
     global.tray = new Tray(icons.regularIcon);
 
-    nativeTheme.on(`updated`, () => global.updateTray(current));
+    nativeTheme.on(`updated`, () => global.updateTray());
+    ipcMain.on(`dark-mode:system`, () => global.updateTray());
     global.updateTray(`regular`);
 
     const createArrayAndApply = (queue) => {

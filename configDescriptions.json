@@ -8,6 +8,5 @@
     "disableHWAcceleratedConversion": "Prevent ezytdl from using your system's hardware to convert videos. This is useful if you want to prevent ezytdl from using your GPU to convert videos.",
     "allowAudioConversion": "Allows ezytdl to convert audios. If this is disabled and an output format is supplied at download, ezytdl will instead attempt to download the best quality audio in the given format (if applicable).",
     "closeToTray": "Allow ezytdl to close to the system tray instead of exiting when the window is closed.",
-    "alwaysUseLightIcon": "Always show the light-themed tray icon. If this option is disabled, ezytdl will auto-detect the theme.",
     "logsEnabled": "Allows ezytdl to log information to the console. This is useful for debugging and/or bug reporting."
 }

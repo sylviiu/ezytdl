@@ -37,11 +37,15 @@ module.exports = (notDefault, overrideArgs) => {
         autoHideMenuBar: true,
         fullscreenable: false,
         backgroundColor: `rgb(10,10,10)`,
+        darkTheme: true,
         webPreferences: {
             nodeIntegration: false,
             nodeIntegrationInWorker: false,
             contextIsolation: true,
             devTools: true,
+            sandbox: true,
+            scrollBounce: true,
+            backgroundThrottling: false,
             preload: path.join(__dirname, `preload.js`)
         },
         icon: iconPath
