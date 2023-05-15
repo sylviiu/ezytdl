@@ -27,16 +27,19 @@
     "asar": true,
     "asarUnpack": [
         "res/*.mp4",
-        "res/**/*"
+        "res/**/*",
+        "dist/trayIcons/*"
     ],
     "files": [
         "html/*.html",
         "html/assets/**/*",
         "node_modules/**/*",
+        "res/**/*",
         "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
         "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
         "!**/node_modules/*.d.ts",
-        "!**/node_modules/.bin",
+        "!**/node_modules/*.bin",
+        "!**/node_modules/*.exe",
         "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
         "!.editorconfig",
         "!**/._*",
@@ -44,8 +47,8 @@
         "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
         "!**/{appveyor.yml,.travis.yml,circle.yml}",
         "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}",
-        "res/**/*",
         "res/*.mp4",
+        "dist/trayIcons/*",
         "package.json",
         "index.js",
         "server.js",

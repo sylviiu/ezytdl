@@ -1,6 +1,7 @@
 {
     "appId": "dev.sylviiu.ezytdl",
     "productName": "ezytdl-store",
+    "beforePack": "scripts/beforePack.js",
     "publish": [
         {
             "provider": "github",
@@ -27,7 +28,8 @@
     "asar": true,
     "asarUnpack": [
         "res/*.mp4",
-        "res/**/*"
+        "res/**/*",
+        "dist/trayIcons/*"
     ],
     "files": [
         "html/*.html",
@@ -47,6 +49,7 @@
         "!**/{appveyor.yml,.travis.yml,circle.yml}",
         "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}",
         "res/*.mp4",
+        "dist/trayIcons/*",
         "package.json",
         "index.js",
         "server.js",
