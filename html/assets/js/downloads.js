@@ -80,6 +80,15 @@ if(document.body.querySelector(`#urlBox`)) {
                     id: card.id.split(`-`)[1]
                 })
             };
+            const btn2 = card.querySelector(`#pausePlayButton`);
+    
+            card.querySelector(`#fileicon`).classList.remove(`d-none`);
+            card.querySelector(`#pauseicon`).classList.add(`d-none`);
+    
+            btn2.onclick = () => mainQueue.openDir(card.id.split(`-`)[1]);
+    
+            btn2.classList.remove(`d-none`);
+            btn2.classList.add(`d-flex`);
             
             card.querySelector(`#formatDownload`).onclick = clear
         },

@@ -72,16 +72,14 @@ function createDownloadManager(card, id) {
 
         btn.disabled = false;
 
-        if(destinationFile && card.querySelector(`#fileicon`) && card.querySelector(`#pausePlayButton`)) {
-            const btn2 = card.querySelector(`#pausePlayButton`);
+        const btn2 = card.querySelector(`#pausePlayButton`);
 
-            card.querySelector(`#fileicon`).classList.remove(`d-none`);
-            card.querySelector(`#pauseicon`).classList.add(`d-none`);
+        card.querySelector(`#fileicon`).classList.remove(`d-none`);
+        card.querySelector(`#pauseicon`).classList.add(`d-none`);
 
-            btn2.onclick = () => mainQueue.openDir(id || ``);
+        btn2.onclick = () => mainQueue.openDir(id || ``);
 
-            btn2.classList.remove(`d-none`);
-        }
+        btn2.classList.remove(`d-none`);
 
         //formatName.innerHTML = `Saved to: ${location}`
         if(!card.querySelector(`#eta`).classList.contains(`d-none`)) card.querySelector(`#eta`).classList.add(`d-none`);
