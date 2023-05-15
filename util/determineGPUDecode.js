@@ -1,7 +1,7 @@
 const { getPath } = require(`./filenames/ffmpeg`)
 const { spawn } = require('child_process');
 
-const electronPath = require('electron').app.getAppPath();
+const findPath = require(`./getPath`)
 
 const sendNotification = require("../core/sendNotification.js");
 
@@ -16,7 +16,7 @@ const constructPromise = (name, accelArgs) => new Promise((res) => {
     if(post.indexOf(`-c:v`) == -1) post.push(`-c:v`, `h264`);
     if(post.indexOf(`-f`) == -1) post.push(`-f`, `null`);
 
-    let file = electronPath.includes(`app.asar`) ? `${electronPath.replace(`app.asar`, `app.asar.unpacked`)}/res/sample.mp4` : `./res/sample.mp4`;
+    let file = findPath(`./res/sample.mp4`);
 
     const proc = spawn(getPath(), [`-hide_banner`, `-loglevel`, `error`, ...pre, `-i`, file, `-threads`, `1`, ...post, `-`, `-benchmark`]);
 

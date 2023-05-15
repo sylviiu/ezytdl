@@ -27,8 +27,7 @@
     "asar": true,
     "asarUnpack": [
         "res/*.mp4",
-        "res/**/*",
-        "dist/trayIcons/*"
+        "res/**/*"
     ],
     "files": [
         "html/*.html",

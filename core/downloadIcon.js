@@ -4,20 +4,13 @@ const fs = require('fs');
 
 let current = `regular`;
 
-const electronPath = require('electron').app.getAppPath();
-
-const getPath = (path) => (electronPath.includes(`app.asar`) ? `${electronPath.replace(`app.asar`, `app.asar.unpacked`)}/` : __dirname.split(`core`).slice(0, -1).join(`core`) + `/`) + path
+const getPath = require(`../util/getPath`)
 
 const icons = {
-    regularIcon: getPath(`dist/trayIcons/circle-down-regular.png`),
-    regularIconInv:getPath(`dist/trayIcons/circle-down-regular-inv.png`),
-    solidIcon: getPath(`dist/trayIcons/circle-down-solid.png`),
-    solidIconInv: getPath(`dist/trayIcons/circle-down-solid-inv.png`),
-    checkIcon: getPath(`dist/trayIcons/circle-check-solid.png`),
-    checkIconInv: getPath(`dist/trayIcons/circle-check-solid-inv.png`),
+    regularIcon: getPath(`res/trayIcons/circle-down-regular.svg`),
+    solidIcon: getPath(`res/trayIcons/circle-down-solid.svg`),
+    checkIcon: getPath(`res/trayIcons/circle-check-solid.svg`),
 };
-
-const buildTrayIcons = fs.existsSync(`./scripts/beforePack.js`) ? require(`../scripts/beforePack`) : () => {};
 
 const events = new (require(`events`).EventEmitter)();
 
@@ -57,7 +50,11 @@ const iconGetter = (type, alwaysUseLightIcon) => {
     }
 };
 
-const iconToPNG = (icon, size) => sharp(icon).resize(Math.round(size), Math.round(size)).png().toBuffer();
+const iconToPNG = (icon, size, negate) => {
+    const sharpIcon = sharp(icon).resize(Math.round(size), Math.round(size));
+    if(negate) sharpIcon.negate({ alpha: false });
+    return sharpIcon.png().toBuffer();
+}
 
 module.exports = {
     on: (...c) => events.on(...c),
@@ -70,12 +67,16 @@ module.exports = {
         let sizes = supportedMultipliers.map(m => 16 * m);
         // https://www.electronjs.org/docs/latest/api/native-image#high-resolution-image
 
-        for(iconFile of Object.keys(icons)) {
+        console.log(`Getting icons...`)
+
+        const createIcon = (iconFile, negate) => new Promise(async res => {
             let nativeIcon;
+
+            console.log(`Creating ${iconFile} / negate: ${negate}`)
 
             for(let i in sizes.reverse()) {
                 const size = sizes[i];
-                const icon = await iconToPNG(icons[iconFile], size);
+                const icon = await iconToPNG(iconFile, size, negate);
 
                 if(nativeIcon) {
                     nativeIcon.addRepresentation({
@@ -89,8 +90,19 @@ module.exports = {
                 }
             };
 
-            console.log(`nativeIcon ${iconFile} scalefactors`, nativeIcon.getScaleFactors());
-            icons[iconFile] = nativeIcon;
+            res(nativeIcon);
+        });
+
+        for(iconFile of Object.keys(icons)) {
+            if(typeof icons[iconFile] == `string`) {
+                const str = icons[iconFile];
+
+                icons[iconFile] = await createIcon(str);
+                console.log(`nativeIcon ${iconFile} scalefactors`, icons[iconFile].getScaleFactors());
+
+                icons[iconFile + `Inv`] = await createIcon(str, true);
+                console.log(`nativeIconInv ${iconFile} scalefactors`, icons[iconFile + `Inv`].getScaleFactors());
+            } else continue;
         }
 
         res(icons);
@@ -112,5 +124,5 @@ module.exports = {
     }
 };
 
-nativeTheme.on(`updated`, () => global.updateTray());
-ipcMain.on(`dark-mode:system`, () => global.updateTray());
+nativeTheme.on(`updated`, () => module.exports.set());
+ipcMain.on(`dark-mode:system`, () => module.exports.set());

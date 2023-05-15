@@ -26,9 +26,7 @@
   },
   "homepage": "https://github.com/sylviiu/ezytdl#readme",
   "devDependencies": {
-    "convert-svg-to-png": "^0.6.4",
     "electron": "^24.2.0",
-    "electron-builder": "^24.4.0",
-    "jimp": "^0.22.8"
+    "electron-builder": "^24.4.0"
   }
 }
