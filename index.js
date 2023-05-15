@@ -1,5 +1,16 @@
 const { app } = require('electron');
 
+const locked = app.requestSingleInstanceLock();
+
+if(!locked) {
+    return app.quit();
+} else {
+    app.on(`second-instance`, () => {
+        console.log(`second instance!`)
+        require(`./core/bringToFront`)()
+    })
+}
+
 const sendNotification = require(`./core/sendNotification`)
 
 global.configPath = app.getPath('userData')
