@@ -98,6 +98,8 @@ module.exports = (configObject) => {
             const checkedConfig = checkKeys(`> `, `updated config object`, configObject, defaultConfig);
             
             fs.writeFileSync(`${global.configPath}/config.json`, JSON.stringify(Object.assign({}, config, checkedConfig), null, 4), { encoding: `utf-8` });
+
+            if(configObject.alwaysUseLightIcon != undefined) global.updateTray();
         };
 
         const userConfig = JSON.parse(fs.readFileSync(`${global.configPath}/config.json`))

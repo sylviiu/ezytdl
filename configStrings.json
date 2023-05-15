@@ -8,5 +8,6 @@
     "disableHWAcceleratedConversion": "Disable Hardware-Accelerated Video Conversion",
     "allowAudioConversion": "Allow Audio Conversion",
     "closeToTray": "Close to System Tray",
+    "alwaysUseLightIcon": "Always Use Light Tray Icon",
     "logsEnabled": "Enable Runtime Logs"
 }

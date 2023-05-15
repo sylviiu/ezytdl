@@ -12,6 +12,7 @@
     "disableHWAcceleratedConversion": false,
     "allowAudioConversion": false,
     "closeToTray": true,
+    "alwaysUseLightIcon": false,
     "logsEnabled": false,
     "version": "v0.0.0",
     "systemTrayNotifSent": false
