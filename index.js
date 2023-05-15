@@ -40,6 +40,8 @@ process.on(`uncaughtException`, (err) => {errorHandler(`${err}\n\n${err.stack? e
 process.on(`unhandledRejection`, (err) => {errorHandler(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)})
 
 app.whenReady().then(async () => {
+    await require(`./core/downloadIcon`).getIcons();
+
     require(`./core/tray`)();
 
     require(`./core/checkForUpdates`)();

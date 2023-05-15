@@ -18,6 +18,8 @@ if(platform == `win32`) s = `\\`;
 
 const electronPath = require('electron').app.getAppPath();
 
+const downloadIcons = require(`./downloadIcon`);
+
 module.exports = (notDefault, overrideArgs) => {
     if(!app.isReady()) return null;
 
@@ -90,6 +92,9 @@ module.exports = (notDefault, overrideArgs) => {
     if(!notDefault) {
         global.window = window;
         currentWindow = window;
+        
+        //downloadIcons.on(`lightIcon`, i => window.setIcon(i));
+        //window.setIcon(downloadIcons.getCurrentIcon(true));
 
         window.on('close', (e) => {
             const config = require(`../getConfig`)();

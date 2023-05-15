@@ -99,7 +99,7 @@ module.exports = (configObject) => {
             
             fs.writeFileSync(`${global.configPath}/config.json`, JSON.stringify(Object.assign({}, config, checkedConfig), null, 4), { encoding: `utf-8` });
 
-            if(configObject.alwaysUseLightIcon != undefined) global.updateTray();
+            if(configObject.alwaysUseLightIcon != undefined) require(`./core/downloadIcon.js`).set();
         };
 
         const userConfig = JSON.parse(fs.readFileSync(`${global.configPath}/config.json`))
