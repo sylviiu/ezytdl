@@ -33,6 +33,8 @@ module.exports = (notDefault, overrideArgs) => {
         minHeight: 300,
         minWidth: 550,
         autoHideMenuBar: true,
+        fullscreenable: false,
+        backgroundColor: `rgb(10,10,10)`,
         webPreferences: {
             nodeIntegration: false,
             nodeIntegrationInWorker: false,
