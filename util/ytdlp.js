@@ -286,7 +286,7 @@ module.exports = {
                         fs.renameSync(saveTo + previousFilename, saveTo + ytdlFilename + `.` + previousFilename.split(`.`).slice(-1)[0]);
                     }
                 } catch(e) { console.log(e) }
-                update({percentNum: 100, status: `Could not convert to ${ext.toUpperCase()}.` + msg && typeof msg == `string` ? `\n\n${msg}` : ``, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.` + previousFilename.split(`.`).slice(-1)[0], url, format});
+                update({failed: true, percentNum: 100, status: `Could not convert to ${ext.toUpperCase()}.` + msg && typeof msg == `string` ? `\n\n${msg}` : ``, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.` + previousFilename.split(`.`).slice(-1)[0], url, format});
                 res(obj)
             };
 
@@ -452,7 +452,7 @@ module.exports = {
                 if(args.includes(`-S`)) {
                     update({code, saveLocation, url, format, status: `Downloaded best quality ${info.webpage_url_domain} provided for ${downloadInExt} format (no conversion done${reasonConversionNotDone ? ` -- ${reasonConversionNotDone}` : ``})`});
                 } else {
-                    update({code, saveLocation, url, format, status: `Could not convert: FFmpeg is not installed! (Install through Settings)`});
+                    update({failed: true, code, saveLocation, url, format, status: `Could not convert: FFmpeg is not installed! (Install through Settings)`});
                 }
                 res(obj)
             } else {

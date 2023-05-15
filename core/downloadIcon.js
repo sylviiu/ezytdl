@@ -1,5 +1,5 @@
 const { app, Menu, Tray, nativeImage, nativeTheme, ipcMain } = require('electron');
-
+const sharp = require('sharp');
 const fs = require('fs');
 
 let current = `regular`;
@@ -55,17 +55,40 @@ const iconGetter = (type, alwaysUseLightIcon) => {
             return icons.regularIcon
         }
     }
-}
+};
+
+const iconToPNG = (icon, size) => sharp(icon).resize(Math.round(size), Math.round(size)).png().toBuffer();
 
 module.exports = {
     on: (...c) => events.on(...c),
     getCurrentType: () => current,
     getCurrentIcon: (useWhite) => iconGetter(current, useWhite),
     getIcons: () => new Promise(async res => {
-        await buildTrayIcons();
+        //await buildTrayIcons();
+
+        let supportedMultipliers = [ 1, 1.25, 1.33, 1.4, 1.5, 1.8, 2, 2.5, 3, 4, 5, 32 ]
+        let sizes = supportedMultipliers.map(m => 16 * m);
+        // https://www.electronjs.org/docs/latest/api/native-image#high-resolution-image
 
         for(iconFile of Object.keys(icons)) {
-            const nativeIcon = nativeImage.createFromPath(icons[iconFile]);
+            let nativeIcon;
+
+            for(let i in sizes.reverse()) {
+                const size = sizes[i];
+                const icon = await iconToPNG(icons[iconFile], size);
+
+                if(nativeIcon) {
+                    nativeIcon.addRepresentation({
+                        scaleFactor: supportedMultipliers[i],
+                        width: size,
+                        height: size,
+                        buffer: icon
+                    });
+                } else {
+                    nativeIcon = nativeImage.createFromBuffer(icon);
+                }
+            };
+
             console.log(`nativeIcon ${iconFile} scalefactors`, nativeIcon.getScaleFactors());
             icons[iconFile] = nativeIcon;
         }
