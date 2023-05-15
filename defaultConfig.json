@@ -11,5 +11,8 @@
     "onlyGPUConversion": true,
     "disableHWAcceleratedConversion": false,
     "allowAudioConversion": false,
-    "version": "v0.0.0"
+    "closeToTray": true,
+    "logsEnabled": false,
+    "version": "v0.0.0",
+    "systemTrayNotifSent": false
 }
