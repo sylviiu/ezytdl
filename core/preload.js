@@ -2,6 +2,10 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 console.log(`preload :D`);
 
+window.addEventListener("mouseup", (e) => {
+    if(e.button === 3 || e.button === 4) e.preventDefault();
+});
+
 // electron does not allow you to require modules in the preload script, and it is not a planned change -- you can do this by disabling the sandbox, which is a shit idea.
 // i wish you can make the preload an array of scripts but NoOoO
 
@@ -19,6 +23,16 @@ const on = (...args) => {
     console.log(`on`, ...args);
     return ipcRenderer.on(...args);
 }
+
+contextBridge.exposeInMainWorld(`windowControls`, {
+    close: () => send(`windowClose`),
+    maximize: () => send(`windowMaximize`),
+    minimize: () => send(`windowMinimize`),
+})
+
+contextBridge.exposeInMainWorld(`system`, {
+    loading: () => invoke(`loading`)
+})
 
 contextBridge.exposeInMainWorld(`dialog`, {
     get: (id) => invoke(`getDialog`, id),

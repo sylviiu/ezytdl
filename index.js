@@ -1,4 +1,4 @@
-const { app } = require('electron');
+const { app, ipcMain } = require('electron');
 
 const locked = app.requestSingleInstanceLock();
 
@@ -39,22 +39,38 @@ const determineGPUDecode = require('./util/determineGPUDecode');
 process.on(`uncaughtException`, (err) => {errorHandler(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)})
 process.on(`unhandledRejection`, (err) => {errorHandler(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)})
 
+let doneLoading = false;
+let loadingPromise = null;
+
 app.whenReady().then(async () => {
-    await require(`./core/downloadIcon`).getIcons();
+    const window = createWindow();
 
-    require(`./core/tray`)();
+    loadingPromise = new Promise(async res => {
+        await require(`./core/downloadIcon`).getIcons();
+    
+        require(`./core/tray`)();
+        require(`./core/checkForUpdates`)();
+    
+        const latestClientDownloaded = await require(`./checks/ytdlpIsDownloaded`)(true);
 
-    require(`./core/checkForUpdates`)();
+        let redirect = `index.html`
+        if(!latestClientDownloaded) redirect = `updating.html`;
 
-    const window = createWindow()
+        doneLoading = redirect;
+        res(redirect);
+        loadingPromise = null;
+    });
+
+    ipcMain.handle(`loading`, () => new Promise(async res => {
+        console.log(`Loading requested!`)
+        if(doneLoading) {
+            console.log(`already done loading; resolving`)
+            return res(doneLoading);
+        } else if(loadingPromise) {
+            console.log(`promise exists; waiting`)
+            return loadingPromise.then(res)
+        }
+    }));
 
     window.loadFile(`./html/loading.html`);
-
-    console.log(`Successfully retrieved config!`, config);
-
-    const latestClientDownloaded = await require(`./checks/ytdlpIsDownloaded`)(true);
-
-    if(!latestClientDownloaded) {
-        window.loadFile(`./html/updating.html`);
-    } else window.loadFile(`./html/index.html`);
 })

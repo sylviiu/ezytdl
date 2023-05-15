@@ -1,7 +1,3 @@
-const superagent = require('superagent')
-
-const errorAndExit = require('./errorAndExit');
-
 const sendNotification = require(`../core/sendNotification`)
 
 module.exports = (err) => {
@@ -15,5 +11,5 @@ module.exports = (err) => {
         type: `error`
     });
 
-    if(!notifSent) return errorAndExit(str)
+    if(!notifSent) return require('./errorAndExit')(str)
 }

@@ -1,6 +1,5 @@
 const { file, downloadPath, platform } = require(`../filenames/ffmpeg`);
 const fs = require('fs');
-const superagent = require('superagent');
 const Stream = require('stream');
 
 const errorHandler = require(`../errorHandler`);
@@ -61,7 +60,7 @@ module.exports = async () => {
     
                 const writeStream = fs.createWriteStream(downloadPath + ext, { flags: `w` });
     
-                const req = superagent.get(download.browser_download_url).set(`User-Agent`, `node`);
+                const req = require('superagent').get(download.browser_download_url).set(`User-Agent`, `node`);
     
                 const pt = new Stream.PassThrough();
     
