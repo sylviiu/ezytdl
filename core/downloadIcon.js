@@ -4,12 +4,17 @@ const fs = require('fs');
 
 let current = `regular`;
 
+const { autoUpdater } = require(`electron-updater`);
+
 const getPath = require(`../util/getPath`)
 
 const icons = {
-    regularIcon: getPath(`res/trayIcons/circle-down-regular.svg`),
-    solidIcon: getPath(`res/trayIcons/circle-down-solid.svg`),
-    checkIcon: getPath(`res/trayIcons/circle-check-solid.svg`),
+    noQueue: getPath(`res/trayIcons/circle-down-regular.svg`),
+    active: getPath(`res/trayIcons/circle-down-solid.svg`),
+    complete: getPath(`res/trayIcons/circle-check-solid.svg`),
+    mixed: getPath(`res/trayIcons/circle-dot-solid.svg`),
+    errored: getPath(`res/trayIcons/circle-xmark-solid.svg`),
+    update: getPath(`res/trayIcons/circle-up-solid.svg`),
 };
 
 const events = new (require(`events`).EventEmitter)();
@@ -23,30 +28,14 @@ const iconGetter = (type, alwaysUseLightIcon) => {
     if(alwaysUseLightIcon === true) useDark = true;
     if(alwaysUseLightIcon === false) useDark = false;
 
-    if(type == `solid`) {
-        if(useDark) {
-            console.log(`getting solid light`)
-            return icons.solidIconInv
-        } else {
-            console.log(`getting solid dark`)
-            return icons.solidIcon
-        }
-    } else if(type == `check`) {
-        if(useDark) {
-            console.log(`getting check light`)
-            return icons.checkIconInv
-        } else {
-            console.log(`getting check dark`)
-            return icons.checkIcon
-        }
+    if(!icons[type]) type = global.updateAvailable ? `update` : `noQueue`
+
+    if(useDark) {
+        console.log(`getting ${type} light`);
+        return icons[type + `Inv`]
     } else {
-        if(useDark) {
-            console.log(`getting regular light`)
-            return icons.regularIconInv
-        } else {
-            console.log(`getting regular dark`)
-            return icons.regularIcon
-        }
+        console.log(`getting ${type} dark`);
+        return icons[type]
     }
 };
 
@@ -112,6 +101,8 @@ module.exports = {
         const { alwaysUseLightIcon } = require(`../getConfig`)();
     
         if(!type) type = current;
+
+        if(type == `noQueue` && global.updateAvailable) type == `update`
         
         console.log(`Updating tray -- type: ${type} / use dark colors? ${nativeTheme.shouldUseDarkColors} / force light? ${alwaysUseLightIcon}`);
         

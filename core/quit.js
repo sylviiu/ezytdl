@@ -7,7 +7,7 @@ const quit = () => {
     app.quit();
 }
 
-module.exports = () => new Promise(async res => {
+module.exports = (noExit) => new Promise(async res => {
     const queue = require(`../util/downloadManager`).queue;
 
     const length = Object.values(queue).slice(1).reduce((a,b) => a+b.length, 0)
@@ -40,12 +40,12 @@ module.exports = () => new Promise(async res => {
 
         if(response == `yes`) {
             res(true);
-            quit()
+            if(!noExit) quit()
         } else {
             res(false);
         }
     } else {
         res(true);
-        quit()
+        if(!noExit) quit()
     }
 });

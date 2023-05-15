@@ -17,6 +17,10 @@ module.exports = (manual) => {
     });
 
     autoUpdater.on(`update-downloaded`, (info) => {
+        global.updateAvailable = info.releaseName || info.version;
+        
+        require(`./tray.js`).refresh();
+
         const d = new Date(info.releaseDate);
 
         const timeSinceReleased = new Date(Date.now() - d.getTime());

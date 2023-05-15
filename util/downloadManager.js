@@ -192,12 +192,11 @@ const refreshQueue = (opt) => {
     console.log(`Queue refresh (modified: ${queueModified}) \n- ${queue.complete.length} complete\n- ${queue.active.length} active \n- ${queue.queue.length} queued`);
     
     if(queueModified && ws) {
-        queueEventEmitter.emit(`queueUpdate`, queue);
+        const sendObj = queue;
 
-        ws.send({
-            type: `queue`,
-            data: queue
-        });
+        queueEventEmitter.emit(`queueUpdate`, sendObj);
+
+        ws.send({ type: `queue`, data: sendObj });
     }
 }
 
