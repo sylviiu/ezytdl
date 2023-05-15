@@ -182,8 +182,6 @@ module.exports = {
         
         const args = [`-f`, format, url, `-o`, saveTo + outputFilename + `.%(ext)s`, `--no-mtime`];
 
-        const treekill = require(`tree-kill`)
-
         let downloadInExt = `{any}`;
 
         let reasonConversionNotDone = null;

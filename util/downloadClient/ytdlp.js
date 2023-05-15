@@ -14,10 +14,10 @@ module.exports = async () => {
     activeDownload = true;
 
     const ws = {
-        send: (args) => global.window.webContents.send(`updateClientEvent`, args),
+        send: (args) => global.window ? global.window.webContents.send(`updateClientEvent`, args) : null,
         close: () => {
             activeDownload = null;
-            global.window.webContents.send(`updateClientEvent`, {complete: true})
+            global.window ? global.window.webContents.send(`updateClientEvent`, {complete: true}) : null
         }
     }
 

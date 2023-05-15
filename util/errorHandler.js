@@ -15,14 +15,5 @@ module.exports = (err) => {
         type: `error`
     });
 
-    if(!notifSent) {
-        return errorAndExit(str)
-    
-        if(`${err}`.includes(`EADDRINUSE`) && `${err}`.includes(`::3000`)) {
-            superagent.get(`http://localhost:3000/focus`).then(() => {
-                console.log(`Focused existing window, exiting...`);
-                app.quit()
-            })
-        } else errorAndExit(str)
-    }
+    if(!notifSent) return errorAndExit(str)
 }
