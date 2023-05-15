@@ -109,6 +109,7 @@ module.exports = (configObject) => {
         firstCheckDone = true;
 
         userConfig.strings = require(`./configStrings.json`);
+        userConfig.descriptions = require(`./configDescriptions.json`);
 
         if(userConfig.allowVideoConversion) require(`./util/determineGPUDecode.js`)();
 
