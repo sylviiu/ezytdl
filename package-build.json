@@ -26,7 +26,8 @@
     "compression": "maximum",
     "asar": true,
     "asarUnpack": [
-        "res/*.mp4"
+        "res/*.mp4",
+        "buildResources/**/*"
     ],
     "files": [
         "html/*.html",
@@ -51,13 +52,13 @@
         "getConfig.js",
         "defaultConfig.json",
         "configStrings.json",
+        "configDescriptions.json",
         "util/*.js",
         "util/*.json",
         "util/*/*.js",
         "core/*.js",
         "core/*.json",
         "core/ipc/*/*.js",
-        "endpoints/*.js",
         "core/*.js",
         "checks/*.js"
     ]

@@ -1,6 +1,6 @@
 {
   "name": "ezytdl",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "description": "Open source electron-based application acting as a wrapper of the YT-DLP client. ",
   "main": "index.js",
   "dependencies": {

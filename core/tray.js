@@ -6,8 +6,13 @@ global.tray = null;
 
 const path = require('path')
 
+let s = `/`;
+if(process.platform == `win32`) s = `\\`;
+
+const electronPath = require('electron').app.getAppPath();
+
 module.exports = () => {
-    const icon = path.join(`buildResources`, `packageIcons`, `icon-64x64.png`);
+    const icon = (electronPath.includes(`app.asar`) ? `${electronPath.replace(`app.asar`, `app.asar.unpacked`)}/` : `./`) + (`buildResources/packageIcons/icon-64x64.png`);
 
     global.tray = new Tray(icon);
 

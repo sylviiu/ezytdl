@@ -16,6 +16,8 @@ let firstRun = true;
 let s = `/`;
 if(platform == `win32`) s = `\\`;
 
+const electronPath = require('electron').app.getAppPath();
+
 module.exports = (notDefault, overrideArgs) => {
     if(!app.isReady()) return null;
 
@@ -23,7 +25,7 @@ module.exports = (notDefault, overrideArgs) => {
 
     console.log(platform)
 
-    const iconPath = `buildResources${s}packageIcons${s}icon-${platform == `win32` ? `64x64.ico` : `512x512.png`}`
+    const iconPath = (electronPath.includes(`app.asar`) ? `${electronPath.replace(`app.asar`, `app.asar.unpacked`)}/` : `./`) + `buildResources/packageIcons/icon-` + (platform == `win32` ? `64x64.ico` : `512x512.png`);
 
     console.log(`Icon path: ${iconPath}`)
 
