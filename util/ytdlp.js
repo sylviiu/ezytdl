@@ -422,16 +422,19 @@ module.exports = {
                             try {
                                 const proc = await spawnFFmpeg([`-c:v`, transcoder.codecName, ...inputArgs, ...decoder.post, ...outputArgs], transcoder.codecName + `/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`);
                                 done = true;
+                                res(proc)
                                 break;
                             } catch(e) {
                                 try {
                                     const proc = await spawnFFmpeg([`-c:v`, transcoder.codecName, ...inputArgs, ...transcoder.post, ...outputArgs], transcoder.codecName + `/Dec + ` + `${transcoder.post[transcoder.post.indexOf(`-c:v`)+1]}` + `/Enc`);
                                     done = true;
+                                    res(proc)
                                     break;
                                 } catch(e) {
                                     try {
                                         const proc = await spawnFFmpeg([...inputArgs, ...transcoder.post, ...outputArgs], `${thisCodec}_software` + `/Dec + ` + `${transcoder.post[transcoder.post.indexOf(`-c:v`)+1]}` + `/Enc`);
                                         done = true;
+                                        res(proc)
                                         break;
                                     } catch(e) {
                                         console.log(`FFmpeg failed converting -- ${e}; trying again...`)
