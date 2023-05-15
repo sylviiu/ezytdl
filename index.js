@@ -1,12 +1,26 @@
 const { app } = require('electron');
 
+const sendNotification = require(`./core/sendNotification`)
+
+global.configPath = app.getPath('userData')
+
+const config = require(`./getConfig`)();
+
+if(config.logsEnabled) {
+    console.log(`Keeping logs enabled`)
+    sendNotification({
+        type: `warn`,
+        headingText: `Debug logs enabled!`,
+        bodyText: `Debug logs are enabled in the config. This most likely will slow down the app.`
+    });
+} else if(app.isPackaged) {
+    console.log(`Packaged build -- disabling logs for higher speed. (You can still enable them in the config)`);
+    console.log = () => {};
+} else console.log(`Running from source -- keeping logs enabled.`);
+
 const createWindow = require(`./core/window`)
 
 global.app = app;
-
-global.configPath = require(`appdata-path`)(`ezytdl`);
-
-app.on('window-all-closed', () => app.quit())
 
 const errorHandler = require(`./util/errorHandler`);
 const determineGPUDecode = require('./util/determineGPUDecode');
@@ -15,13 +29,13 @@ process.on(`uncaughtException`, (err) => {errorHandler(`${err}\n\n${err.stack? e
 process.on(`unhandledRejection`, (err) => {errorHandler(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)})
 
 app.whenReady().then(async () => {
-    require(`./util/checkForUpdates`)();
+    require(`./core/tray`)();
+
+    require(`./core/checkForUpdates`)();
 
     const window = createWindow()
 
     window.loadFile(`./html/loading.html`);
-    
-    const config = require(`./getConfig`)();
 
     console.log(`Successfully retrieved config!`, config);
 
