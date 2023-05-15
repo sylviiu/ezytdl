@@ -37,13 +37,13 @@ module.exports = () => {
 
         a.push({
             label: `Clear Queue (${queue.queue.length})`,
-            click: () => queueAction([...queue.queue.map(o => o.id)], `queue`),
+            click: () => queueAction(queue.queue.map(o => o.id), `remove`),
             enabled: queue.queue.length > 0
         });
 
         a.push({
             label: `Clear Completed (${queue.complete.length})`,
-            click: () => queueAction([...queue.complete.map(o => o.id)], `queue`),
+            click: () => queueAction(queue.complete.map(o => o.id), `remove`),
             enabled: queue.complete.length > 0
         });
 
