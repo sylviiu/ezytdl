@@ -373,7 +373,7 @@ module.exports = {
 
                 const thisCodec = getCodec(saveTo + previousFilename);
 
-                if(thisCodec && !disableHWAcceleratedConversion) {
+                if(thisCodec && !disableHWAcceleratedConversion && decoder) {
                     console.log(`doing video conversion! onlyGPU: ${onlyGPUConversion}`);
                     
                     decoder.codecName = thisCodec + `_` + decoder.string;
