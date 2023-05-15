@@ -80,7 +80,6 @@ module.exports = async () => {
     for(let icon of Object.keys(icons)) {
         console.log(`Converting ${icon} to native image / template`);
         const nativeIcon = nativeImage.createFromPath(icons[icon]);
-        nativeIcon.setTemplateImage(true);
         icons[icon] = nativeIcon
         console.log(`Finished converting ${icon} to native image / template`);
     }
