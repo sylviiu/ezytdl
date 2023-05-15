@@ -20,6 +20,12 @@ const on = (...args) => {
     return ipcRenderer.on(...args);
 }
 
+contextBridge.exposeInMainWorld(`dialog`, {
+    get: (id) => invoke(`getDialog`, id),
+    send: (id, btnID) => invoke(`dialogButton`, {id, btnID}),
+    setHeight: (id, height) => invoke(`setDialogHeight`, {id, height})
+})
+
 contextBridge.exposeInMainWorld(`version`, {
     get: () => invoke(`version`)
 });
