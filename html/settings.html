@@ -18,9 +18,12 @@
 
 <body style="background: rgb(10,10,10);width: 100vw;height: 100vh;font-family: Alata, sans-serif;">
     <div class="flex-column justify-content-start align-items-center" id="settingsList" style="height: calc(100% - 80px);width: 100vw;padding-top: 80px;padding-right: 20px;padding-left: 20px;margin-bottom: 20px;">
-        <div class="d-flex justify-content-between align-items-center" id="outputFilename" style="width: 100%;min-height: 181px;background: #282828;border-radius: 24px;padding: 8px 9px 8px 12px;margin-top: 12px;">
-            <h6 id="fileName" style="color: rgb(255,255,255);margin-top: 5px;width: 250px;">File Name Format</h6>
-            <div style="width: 100%;">
+        <div class="d-flex justify-content-between align-items-center" id="outputFilename" style="width: 100%;min-height: 181px;background: #282828;border-radius: 24px;padding: 8px 9px 8px 16px;margin-top: 12px;">
+            <div class="d-flex flex-column justify-content-center align-items-start" style="max-width: min(35vw, 250px);">
+                <h6 id="name" style="color: rgb(255,255,255);margin-top: 5px;min-width: min(35vw, 250px);margin-bottom: 0px;text-align: left;">name</h6>
+                <h6 id="description" style="color: rgba(255,255,255,0.44);margin-top: 0px;min-width: min(35vw, 250px);text-align: left;">description</h6>
+            </div>
+            <div>
                 <div class="d-flex"><input class="d-flex justify-content-center align-items-center" type="text" id="string" style="background: rgb(35,35,35);border-width: 0px;border-radius: 100px;padding: 6px 16px;border-bottom-right-radius: 0px;border-top-right-radius: 0px;color: rgb(255,255,255);height: 36px;border-top-left-radius: 100px;width: 100%;text-align: left;"><button class="btn btn-primary" id="save" type="button" style="height: 36px;border-width: 0px;border-bottom-right-radius: 100px;border-top-right-radius: 100px;border-top-left-radius: 0px;border-bottom-left-radius: 0px;background: rgb(255,255,255);color: rgb(0,0,0);padding-right: 15px;"><i class="fas fa-save"></i></button></div>
                 <h6 id="fileName-1" style="color: rgb(255,255,255);margin-top: 10px;padding-left: 3px;margin-bottom: 10px;font-style: italic;font-size: 12px;"><strong>NOTE:</strong> Not all fields will be available for all media!</h6>
                 <div id="fileNameOptions" style="margin-top: 7px;overflow-y: scroll;max-height: 94px;"><button class="btn btn-primary" id="webpage_url_domain" type="button" style="background: rgb(255,255,255);border-style: none;border-radius: 100px;margin: 3px 6px;color: rgb(0,0,0);margin-left: 0px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" style="margin-right: 6px;margin-top: -4px;margin-left: 0px;">
@@ -77,18 +80,21 @@
                         </svg>Format ID</button></div>
             </div>
         </div>
-        <div class="d-flex justify-content-between align-items-center" id="settingsBox" style="width: 100%;min-height: 50px;background: #282828;border-radius: 24px;padding: 8px 9px 8px 12px;margin-top: 12px;">
-            <h6 id="name" style="color: rgb(255,255,255);margin-top: 5px;min-width: 30vw;">name</h6>
+        <div class="d-flex justify-content-between align-items-center" id="settingsBox" style="width: 100%;min-height: 50px;background: #282828;border-radius: 24px;padding: 8px 9px 8px 16px;margin-top: 12px;">
+            <div class="d-flex flex-column justify-content-center align-items-start">
+                <h6 id="name" style="color: rgb(255,255,255);margin-top: 5px;min-width: 30vw;margin-bottom: 0px;text-align: left;">name</h6>
+                <h6 id="description" style="color: rgba(255,255,255,0.44);margin-top: 0px;min-width: 30vw;text-align: left;">description</h6>
+            </div>
             <div class="d-flex justify-content-end" id="options" style="width: 100%;border-top-left-radius: 18px;border-bottom-left-radius: 18px;"><input class="d-flex justify-content-center align-items-center" type="text" id="string" style="background: rgb(35,35,35);border-width: 0px;border-radius: 18px;padding: 6px 16px;border-bottom-right-radius: 0px;border-top-right-radius: 0px;color: rgb(255,255,255);height: 36px;border-top-left-radius: 18px;width: 100%;text-align: right;border-bottom-left-radius: 18px;"><button class="btn btn-primary" id="boolean" type="button" style="height: 36px;padding: 6px 16px;color: rgb(0,0,0);text-align: right;background: rgb(255,145,145);border-width: 0px;border-radius: 18px;border-top-left-radius: 18px;border-top-right-radius: 0px;border-bottom-right-radius: 0px;border-bottom-left-radius: 18px;" value="false">Disabled</button><input class="d-flex justify-content-center align-items-center" type="number" id="number" style="background: rgb(35,35,35);border-width: 0px;border-radius: 18px;padding: 6px 16px;border-bottom-right-radius: 0px;border-top-right-radius: 0px;color: rgb(255,255,255);height: 36px;border-top-left-radius: 18px;width: 100%;text-align: right;border-bottom-left-radius: 18px;" min="1"></div><button class="btn btn-primary" id="save" type="button" style="height: 36px;border-width: 0px;border-bottom-right-radius: 18px;border-top-right-radius: 18px;border-top-left-radius: 0px;border-bottom-left-radius: 0px;background: rgb(255,255,255);color: rgb(0,0,0);padding-right: 15px;"><i class="fas fa-save"></i></button>
         </div>
         <div class="d-flex justify-content-between align-items-center" style="width: 100%;">
-            <div class="d-flex justify-content-between align-items-center" id="ytdlp" style="min-height: 50px;background: #282828;border-radius: 24px;padding: 8px 9px 8px 12px;margin-top: 12px;margin-right: 6px;width: calc(50% - 6px);">
+            <div class="d-flex justify-content-between align-items-center" id="ytdlp" style="min-height: 50px;background: #282828;border-radius: 24px;padding: 8px 9px 8px 16px;margin-top: 12px;margin-right: 6px;width: calc(50% - 6px);">
                 <h6 id="ytDlpDownloadTxt" style="color: rgb(255,255,255);margin-top: 5px;width: 424px;" target="_blank">Download latest version of YT-DLP</h6><a class="btn btn-primary d-flex justify-content-center align-items-center" role="button" id="ytdlpUpdate" style="height: 36px;border-width: 0px;border-bottom-right-radius: 100px;border-top-right-radius: 100px;border-top-left-radius: 100px;border-bottom-left-radius: 100px;background: rgb(255,255,255);color: rgb(0,0,0);width: 36px;" href="updating.html?ytdlp="><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor">
                         <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
                         <path d="M480 352h-133.5l-45.25 45.25C289.2 409.3 273.1 416 256 416s-33.16-6.656-45.25-18.75L165.5 352H32c-17.67 0-32 14.33-32 32v96c0 17.67 14.33 32 32 32h448c17.67 0 32-14.33 32-32v-96C512 366.3 497.7 352 480 352zM432 456c-13.2 0-24-10.8-24-24c0-13.2 10.8-24 24-24s24 10.8 24 24C456 445.2 445.2 456 432 456zM233.4 374.6C239.6 380.9 247.8 384 256 384s16.38-3.125 22.62-9.375l128-128c12.49-12.5 12.49-32.75 0-45.25c-12.5-12.5-32.76-12.5-45.25 0L288 274.8V32c0-17.67-14.33-32-32-32C238.3 0 224 14.33 224 32v242.8L150.6 201.4c-12.49-12.5-32.75-12.5-45.25 0c-12.49 12.5-12.49 32.75 0 45.25L233.4 374.6z"></path>
                     </svg></a>
             </div>
-            <div class="d-flex justify-content-between align-items-center" id="ffmpeg" style="min-height: 50px;background: #282828;border-radius: 24px;padding: 8px 9px 8px 12px;margin-top: 12px;margin-left: 6px;width: calc(50% - 6px);">
+            <div class="d-flex justify-content-between align-items-center" id="ffmpeg" style="min-height: 50px;background: #282828;border-radius: 24px;padding: 8px 9px 8px 16px;margin-top: 12px;margin-left: 6px;width: calc(50% - 6px);">
                 <h6 id="ffmpegDownloadTxt" style="color: rgb(255,255,255);margin-top: 5px;width: 424px;" target="_blank">Download latest version of FFmpeg</h6><a class="btn btn-primary d-flex justify-content-center align-items-center" role="button" id="ffmpegUpdate" style="height: 36px;border-width: 0px;border-bottom-right-radius: 100px;border-top-right-radius: 100px;border-top-left-radius: 100px;border-bottom-left-radius: 100px;background: rgb(255,255,255);color: rgb(0,0,0);width: 36px;" href="updating.html?ffmpeg="><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor">
                         <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
                         <path d="M480 352h-133.5l-45.25 45.25C289.2 409.3 273.1 416 256 416s-33.16-6.656-45.25-18.75L165.5 352H32c-17.67 0-32 14.33-32 32v96c0 17.67 14.33 32 32 32h448c17.67 0 32-14.33 32-32v-96C512 366.3 497.7 352 480 352zM432 456c-13.2 0-24-10.8-24-24c0-13.2 10.8-24 24-24s24 10.8 24 24C456 445.2 445.2 456 432 456zM233.4 374.6C239.6 380.9 247.8 384 256 384s16.38-3.125 22.62-9.375l128-128c12.49-12.5 12.49-32.75 0-45.25c-12.5-12.5-32.76-12.5-45.25 0L288 274.8V32c0-17.67-14.33-32-32-32C238.3 0 224 14.33 224 32v242.8L150.6 201.4c-12.49-12.5-32.75-12.5-45.25 0c-12.49 12.5-12.49 32.75 0 45.25L233.4 374.6z"></path>
@@ -96,6 +102,8 @@
             </div>
         </div>
     </div><script>
+    const settingsCardMDConverter = new showdown.Converter({ parseImgDimensions: true });
+
     document.getElementById(`settingsBox`).querySelector(`#options`).childNodes.forEach(node => node.classList.add(`d-none`));
     const settingsBox = document.getElementById(`settingsBox`).cloneNode(true);
     document.getElementById(`settingsBox`).parentNode.removeChild(document.getElementById(`settingsBox`));
@@ -110,13 +118,12 @@
         })
     }
 
-    const createCard = (key, string, config, parentNode, showSaveButton, depth) => {
+    const createCard = (key, string, description, config, parentNode, showSaveButton, depth) => {
         console.log(key, string);
 
         if(!parentNode.querySelector(`#` + key)) {
             const newCard = settingsBox.cloneNode(true);
             newCard.id = key;
-            newCard.querySelector(`#name`).innerHTML = string;
 
             if(!showSaveButton) {
                 parentNode.style.background = `rgb(` + `${28 - ( depth+1 * 7 )}, `.repeat(3) + `)`
@@ -143,6 +150,16 @@
 
         const card = document.getElementById(key)
 
+        card.querySelector(`#name`).innerHTML = settingsCardMDConverter.makeHtml(string);
+
+        if(description) {
+            card.querySelector(`#description`).innerHTML = settingsCardMDConverter.makeHtml(description);
+            if(card.querySelector(`#description`).classList.contains(`d-none`)) card.querySelector(`#description`).classList.remove(`d-none`);
+            card.querySelector(`#description`).style.marginBottom = `-10px`;
+        } else {
+            if(!card.querySelector(`#description`).classList.contains(`d-none`)) card.querySelector(`#description`).classList.add(`d-none`);
+        }
+
         console.log(`type: ${typeof config[key]}`)
 
         if(typeof config[key] == `object`) {
@@ -151,7 +168,7 @@
             opt.classList.add(`flex-column`);
 
             for(e of Object.entries(config[key])) {
-                createCard(e[0], e[0][0].toUpperCase() + e[0].slice(1), { strings: config.strings[key], [e[0]]: e[1] }, card.querySelector(`#options`), false, depth+1)
+                createCard(e[0], e[0][0].toUpperCase() + e[0].slice(1), null, { strings: config.strings[key], [e[0]]: e[1] }, card.querySelector(`#options`), false, depth+1)
             };
 
             const height = opt.getBoundingClientRect().height;
@@ -240,8 +257,9 @@
 
     const createCards = (config) => {
         const strings = config.strings;
+        const descriptions = config.descriptions;
 
-        for (entry of Object.entries(strings)) createCard(entry[0], entry[1], config, document.getElementById(`settingsList`), true, 0)
+        for (entry of Object.entries(strings)) createCard(entry[0], entry[1], descriptions[entry[0]], config, document.getElementById(`settingsList`), true, 0)
     }
 
     const toggleButtons = (enable) => {
@@ -293,7 +311,12 @@
     if(paltform.toLowerCase() != `win32` && !paltform.toLowerCase().includes(`linux`)) {
         const ffmpegCard = document.getElementById(`ffmpeg`);
         
-        document.getElementById(`ffmpeg`).style.background = ffmpegCard.style.background.replace(`rgb(`, `rgba(`).replace(`)`, `, 0.5)`);
+        ffmpegCard.style.background = ffmpegCard.style.background.replace(`rgb(`, `rgba(`).replace(`)`, `, 0.5)`);
+        ffmpegCard.querySelectorAll(`.btn`).forEach(btn => {
+            btn.disabled = true;
+            btn.style.background = btn.style.background.replace(`rgb(`, `rgba(`).replace(`)`, `, 0.5)`);
+        });
+        ffmpegCard.querySelector(`#ffmpegDownloadTxt`).innerHTML = `FFmpeg downloading is not available on your platform.<br>If FFmpeg is installed system-wide, ezytdl will use that.`
     }
 </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
