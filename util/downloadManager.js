@@ -11,6 +11,8 @@ const queue = {
     queue: []
 };
 
+const queueEventEmitter = new (require(`events`))();
+
 let activeProgress = {};
 
 let ws = {
@@ -84,7 +86,7 @@ const updateProgressBar = () => {
         value = progress;
     };
 
-    global.window.setProgressBar(value);
+    if(global.window) global.window.setProgressBar(value);
 };
 
 const sendUpdate = (sendObj) => {
@@ -105,7 +107,7 @@ const refreshQueue = (opt) => {
             if(obj.length && obj.length > 0) {
                 console.log(`Adding ${obj.length} objects to queue...`);
                 queue.queue.push(...obj);
-                console.log(queue.queue[0])
+                //console.log(queue.queue[0])
                 queueModified = true;
             } else {
                 console.log(`Adding ${obj.id} to queue...`)
@@ -169,9 +171,15 @@ const refreshQueue = (opt) => {
         while((queue.active.length + queue.paused.length) < conf.concurrentDownloads && queue.queue.length > 0) {
             const next = queue.queue.shift();
             queue.active.push(next);
-            console.log(next)
+            //console.log(next)
             next.start();
         };
+
+        if(queue.complete.length > 0 && queue.active.length == 0 && queue.paused.length == 0 && queue.queue.length == 0) sendNotification({
+            headingText: `Queue complete`,
+            bodyText: `All ${queue.complete.length} downloads have been completed.`,
+            systemAllowed: true,
+        })
     };
 
     updateAppBadge();
@@ -179,10 +187,14 @@ const refreshQueue = (opt) => {
     
     console.log(`Queue refresh (modified: ${queueModified}) \n- ${queue.complete.length} complete\n- ${queue.active.length} active \n- ${queue.queue.length} queued`);
     
-    if(queueModified && ws) ws.send({
-        type: `queue`,
-        data: queue
-    });
+    if(queueModified && ws) {
+        queueEventEmitter.emit(`queueUpdate`, queue);
+
+        ws.send({
+            type: `queue`,
+            data: queue
+        });
+    }
 }
 
 const createDownloadObject = (opt, rawUpdateFunc) => {
@@ -233,7 +245,7 @@ const createDownloadObject = (opt, rawUpdateFunc) => {
 
                     console.log(`Kill attempt #${obj.killed}...}`)
 
-                    console.log(obj.status)
+                    //console.log(obj.status)
 
                     if(obj.killFunc) try {
                         obj.killFunc();
@@ -382,9 +394,7 @@ const setWS = (newWs) => {
 }
 
 const updateStatus = (status) => {
-    if(global.window) {
-        global.window.webContents.send(`formatStatusUpdate`, status);
-    };
+    if(global.window) global.window.webContents.send(`formatStatusUpdate`, status);
 }
 
 const setStatusWS = (ws) => {
@@ -420,4 +430,5 @@ module.exports = {
     queueAction,
     updateStatus,
     setStatusWS,
+    queueEventEmitter,
 };
