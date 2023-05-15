@@ -4,17 +4,22 @@ let currentWindow = null;
 
 global.window = null;
 
-const path = require('path')
+global.windowHidden = false;
+
+const path = require('path');
+const sendNotification = require('./sendNotification');
 
 const platform = process.platform;
+
+let firstRun = true;
 
 let s = `/`;
 if(platform == `win32`) s = `\\`;
 
-module.exports = () => {
+module.exports = (notDefault, overrideArgs) => {
     if(!app.isReady()) return null;
 
-    if(currentWindow) return currentWindow;
+    if(currentWindow && !notDefault) return currentWindow;
 
     console.log(platform)
 
@@ -70,20 +75,50 @@ module.exports = () => {
         args.width = 1100;
     }
 
-    if(currentWindow) return currentWindow;
-
-    require(`./ipcHandler`)();
+    if(currentWindow && !notDefault) return currentWindow;
     
-    const window = new BrowserWindow(args);
-    global.window = window;
+    const window = new BrowserWindow(Object.assign({}, args, (overrideArgs || {})));
 
-    if(!app.isPackaged) {
-        //window.webContents.openDevTools();
-    };
+    if(!notDefault) {
+        global.window = window;
+        currentWindow = window;
 
-    require(`./lockdown`)();
+        window.on('close', (e) => {
+            const config = require(`../getConfig`)();
 
-    currentWindow = window;
+            console.log(`closing to tray: ${config.closeToTray}`)
+
+            if(global.quitting) {
+                console.log(`quitting -- not doing anything here`)
+            } else {
+                e.preventDefault();
+
+                if(!config.closeToTray && !global.quitting) {
+                    console.log(`prompting`)
+                    require(`./quit`)();
+                } else {
+                    console.log(`not prompting`)
+                    global.windowHidden = true;
+                    window.hide();
+                    if(!config.systemTrayNotifSent && platform != `darwin`) {
+                        sendNotification({
+                            headingText: `App minimized to tray`,
+                            bodyText: `The app has been minimized to the system tray. You can right click the icon to quit the app.`,
+                            systemAllowed: true,
+                        });
+                        const updated = require(`../getConfig`)({ systemTrayNotifSent: true });
+                    }
+                };
+            }
+        });
+    }
+
+    if(firstRun) {
+        require(`./ipcHandler`)();
+        require(`./lockdown`)();
+    }
+
+    firstRun = false;
 
     return window;
 }
