@@ -212,7 +212,7 @@ const createNotification = (opt, providedClickFunc) => {
     return container;
 };
 
-if(!document.getElementById(`loading`)) {
+if(!document.getElementById(`disableNotifications`)) {
     notifications.handler((content) => createNotification(content));
     notifications.setReady();
 }
