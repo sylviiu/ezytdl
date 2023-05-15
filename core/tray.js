@@ -29,6 +29,11 @@ module.exports = () => {
         });
 
         a.push({
+            label: `${queue.active.length} downloading`,
+            enabled: false
+        });
+
+        a.push({
             label: `Check for updates`,
             click: () => require(`./checkForUpdates`)(true)
         })
