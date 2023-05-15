@@ -17,10 +17,16 @@ const electronPath = require('electron').app.getAppPath();
 
 let current = `regular`;
 
-const regularIcon = (electronPath.includes(`app.asar`) ? `${electronPath.replace(`app.asar`, `app.asar.unpacked`)}/` : __dirname.split(`core`).slice(0, -1).join(`core`)) + (`dist/trayIcons/circle-down-regular.png`);
-const regularIconInv = (electronPath.includes(`app.asar`) ? `${electronPath.replace(`app.asar`, `app.asar.unpacked`)}/` : __dirname.split(`core`).slice(0, -1).join(`core`)) + (`dist/trayIcons/circle-down-regular-inv.png`);
-const solidIcon = (electronPath.includes(`app.asar`) ? `${electronPath.replace(`app.asar`, `app.asar.unpacked`)}/` : __dirname.split(`core`).slice(0, -1).join(`core`)) + (`dist/trayIcons/circle-down-solid.png`);
-const solidIconInv = (electronPath.includes(`app.asar`) ? `${electronPath.replace(`app.asar`, `app.asar.unpacked`)}/` : __dirname.split(`core`).slice(0, -1).join(`core`)) + (`dist/trayIcons/circle-down-solid-inv.png`);
+const getPath = (path) => (electronPath.includes(`app.asar`) ? `${electronPath.replace(`app.asar`, `app.asar.unpacked`)}/` : __dirname.split(`core`).slice(0, -1).join(`core`) + `/`) + path
+
+const icons = {
+    regularIcon: getPath(`dist/trayIcons/circle-down-regular.png`),
+    regularIconInv:getPath(`dist/trayIcons/circle-down-regular-inv.png`),
+    solidIcon: getPath(`dist/trayIcons/circle-down-solid.png`),
+    solidIconInv: getPath(`dist/trayIcons/circle-down-solid-inv.png`),
+    checkIcon: getPath(`dist/trayIcons/circle-check-solid.png`),
+    checkIconInv: getPath(`dist/trayIcons/circle-check-solid-inv.png`),
+}
 
 global.updateTray = (type) => {
     const { alwaysUseLightIcon } = require(`../getConfig`)();
@@ -32,28 +38,46 @@ global.updateTray = (type) => {
     if(type == `regular`) {
         if(nativeTheme.shouldUseDarkColors && !alwaysUseLightIcon) {
             console.log(`setting regular dark`)
-            global.tray.setImage(regularIcon);
+            global.tray.setImage(icons.regularIcon);
         } else {
             console.log(`setting regular light`)
-            global.tray.setImage(regularIconInv);
+            global.tray.setImage(icons.regularIconInv);
         }
         current = `regular`;
     } else if(type == `solid`) {
         if(nativeTheme.shouldUseDarkColors && !alwaysUseLightIcon) {
             console.log(`setting solid dark`)
-            global.tray.setImage(solidIcon);
+            global.tray.setImage(icons.solidIcon);
         } else {
             console.log(`setting solid light`)
-            global.tray.setImage(solidIconInv);
+            global.tray.setImage(icons.solidIconInv);
+        }
+        current = `solid`;
+    } else if(type == `check`) {
+        if(nativeTheme.shouldUseDarkColors && !alwaysUseLightIcon) {
+            console.log(`setting check dark`)
+            global.tray.setImage(icons.checkIcon);
+        } else {
+            console.log(`setting check light`)
+            global.tray.setImage(icons.checkIconInv);
         }
         current = `solid`;
     }
 };
 
 module.exports = async () => {
-    if(!fs.existsSync(regularIcon) || !fs.existsSync(solidIcon)) await buildTrayIcons();
+    let buildIcons = false;
 
-    global.tray = new Tray(regularIcon);
+    for(iconPath of Object.values(icons)) {
+        if(!fs.existsSync(iconPath)) {
+            buildIcons = true;
+            break;
+        }
+    };
+
+    if(buildIcons) await buildTrayIcons();
+
+    global.tray = new Tray(icons.regularIcon);
 
     nativeTheme.on(`updated`, () => global.updateTray(current));
     global.updateTray(`regular`);
@@ -61,9 +85,11 @@ module.exports = async () => {
     const createArrayAndApply = (queue) => {
         const length = Object.values(queue).slice(1).reduce((a,b) => a+b.length, 0);
 
-        if((length + queue.complete.length) == 0 && current == `solid`) {
+        if(length == 0 && queue.complete.length > 0 && current != `check`) {
+            global.updateTray(`check`)
+        } else if(length == 0 && current != `regular`) {
             global.updateTray(`regular`)
-        } else if((length + queue.complete.length) > 0 && current == `regular`) {
+        } else if(length > 0 && current != `solid`) {
             global.updateTray(`solid`)
         }
 

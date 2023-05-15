@@ -3,7 +3,7 @@ const jimp = require(`jimp`)
 
 const fs = require('fs');
 
-const outputFilePath = (type, mult) => `dist/trayIcons/circle-down-${type}${mult == 1 ? `` : `@` + mult + `x`}.png`;
+const outputFilePath = (type, mult) => `dist/trayIcons/${type}${mult == 1 ? `` : `@` + mult + `x`}.png`;
 
 const createTrayImage = (name, opt, mult) => new Promise(async res => {
     const regularPath = outputFilePath(`${name}`, mult);
@@ -11,7 +11,7 @@ const createTrayImage = (name, opt, mult) => new Promise(async res => {
 
     console.log(`getting buffer of ${name} @ ${opt.width}`)
 
-    const buf = fs.readFileSync('res/trayIcons/' + `circle-down-` + name + '.svg');
+    const buf = fs.readFileSync('res/trayIcons/' + name + '.svg');
     const png = await convert(buf, opt);
     
     fs.writeFileSync(regularPath, png);
@@ -40,22 +40,24 @@ module.exports = (context) => new Promise(async res => {
 
     fs.mkdirSync(`dist/trayIcons`, { recursive: true });
 
-    for(let i in sizes) {
-        const size = sizes[i];
+    const icons = fs.readdirSync(`./res/trayIcons`);
 
-        const opt = {
-            width: size,
-            height: size,
-        }
+    for(const iconFile of icons) {
+        const str = iconFile.split(`.`).slice(0, -1).join(`.`);
 
-        if(!fs.existsSync(outputFilePath(`regular`))) {
-            await createTrayImage(`regular`, opt, supportedMultipliers[i]);
-        } else console.log(`Skipping ${outputFilePath(`regular`)} (already exists)`)
-
-        if(!fs.existsSync(outputFilePath(`solid`))) {
-            await createTrayImage(`solid`, opt, supportedMultipliers[i]);
-        } else console.log(`Skipping ${outputFilePath(`solid`)} (already exists)`)
-    };
+        if(!fs.existsSync(outputFilePath(str))) {
+            for(let i in sizes) {
+                const size = sizes[i];
+        
+                const opt = {
+                    width: size,
+                    height: size,
+                }
+                
+                await createTrayImage(str, opt, supportedMultipliers[i]);
+            };
+        } else console.log(`Skipping ${outputFilePath(str)} (already exists)`)
+    }
 
     res(true);
 });
