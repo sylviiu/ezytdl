@@ -62,16 +62,13 @@ module.exports = {
     getCurrentType: () => current,
     getCurrentIcon: (useWhite) => iconGetter(current, useWhite),
     getIcons: () => new Promise(async res => {
-        let buildIcons = false;
-    
-        for(iconPath of Object.values(icons)) {
-            if(!fs.existsSync(iconPath)) {
-                buildIcons = true;
-                break;
-            }
-        };
-    
-        if(buildIcons) await buildTrayIcons();
+        await buildTrayIcons();
+
+        for(iconFile of Object.keys(icons)) {
+            const nativeIcon = nativeImage.createFromPath(icons[iconFile]);
+            console.log(`nativeIcon ${iconFile} scalefactors`, nativeIcon.getScaleFactors());
+            icons[iconFile] = nativeIcon;
+        }
 
         res(icons);
     }),
