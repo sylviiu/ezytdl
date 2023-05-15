@@ -22,7 +22,7 @@ const registerIpc = (group, method) => {
     ipcMain.removeHandler(name);
 
     ipcMain[ipcEvent.type](name, (event, args) => {
-        console.log(`${ipcEvent.type.toUpperCase()} / ${name}`);
+        console.log(`${ipcEvent.type.toUpperCase()} / ${name}`, args);
         return ipcEvent.func(event, args);
     })
 }
@@ -37,6 +37,8 @@ module.exports = () => {
             registerIpc(group, method)
         } catch(e) {
             console.error(`Error in ipc method ${method}: ${e}`)
-        }
+        };
+
+        global.ipcRegistered = true;
     }
 }
