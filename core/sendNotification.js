@@ -12,12 +12,15 @@ module.exports = (content) => {
     } else if(!global.window || global.windowHidden) {
         notifQueue.push(content);
         return false;
-    } else {
+    } else if(global.window) {
         while(notifQueue.length > 0) {
             const c = notifQueue.shift();
             global.window.webContents.send(`notification`, c)
         };
         global.window.webContents.send(`notification`, content);
         return true;
+    } else {
+        notifQueue.push(content);
+        return false;
     }
 }

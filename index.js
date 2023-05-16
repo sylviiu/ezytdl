@@ -1,3 +1,7 @@
+const start = Date.now();
+
+console.log(`Starting ezytdl v${require(`./package.json`).version}`)
+
 const { app, ipcMain } = require('electron');
 global.configPath = app.getPath('userData')
     
@@ -16,57 +20,63 @@ if(!locked) {
         require(`./core/bringToFront`)()
     })
 };
+
+require(`./core/depcheck`)().then(() => {
+    console.log(`Took ${Date.now() - start}ms to finish depcheck`);
+
+    let doneLoading = false;
+    let loadingPromise = null;
     
-let doneLoading = false;
-let loadingPromise = null;
+    app.whenReady().then(async () => {
+        console.log(`Took ${Date.now() - start}ms to finish app.whenReady`);
 
-app.whenReady().then(async () => {
-    const createWindow = require(`./core/window`)
-
-    const window = createWindow();
-
-    loadingPromise = new Promise(async res => {
-        await require(`./core/downloadIcon`).getIcons();
+        const createWindow = require(`./core/window`)
     
-        require(`./core/tray`)();
-        require(`./core/checkForUpdates`)();
+        const window = createWindow();
     
-        const latestClientDownloaded = await require(`./checks/ytdlpIsDownloaded`)(true);
-
-        let redirect = `index.html`
-        if(!latestClientDownloaded) redirect = `updating.html`;
-
-        doneLoading = redirect;
-        res(redirect);
-        loadingPromise = null;
-    });
-
-    ipcMain.handle(`loading`, () => new Promise(async res => {
-        console.log(`Loading requested!`)
-        if(doneLoading) {
-            console.log(`already done loading; resolving`)
-            return res(doneLoading);
-        } else if(loadingPromise) {
-            console.log(`promise exists; waiting`)
-            return loadingPromise.then(res)
-        }
-    }));
-
-    window.loadFile(`./html/loading.html`);
-
-    const sendNotification = require(`./core/sendNotification`)
+        loadingPromise = new Promise(async res => {
+            await require(`./core/downloadIcon`).getIcons();
+        
+            require(`./core/tray`)();
+            require(`./core/checkForUpdates`)();
+        
+            const latestClientDownloaded = await require(`./checks/ytdlpIsDownloaded`)(true);
     
-    const config = require(`./getConfig`)();
+            let redirect = `index.html`
+            if(!latestClientDownloaded) redirect = `updating.html`;
     
-    if(config.logsEnabled) {
-        console.log(`Keeping logs enabled`)
-        sendNotification({
-            type: `warn`,
-            headingText: `Debug logs enabled!`,
-            bodyText: `Debug logs are enabled in the config. This most likely will slow down the app.`
+            doneLoading = redirect;
+            res(redirect);
+            loadingPromise = null;
         });
-    } else if(app.isPackaged) {
-        console.log(`Packaged build -- disabling logs for higher speed. (You can still enable them in the config)`);
-        console.log = () => {};
-    } else console.log(`Running from source -- keeping logs enabled.`);
-})
+    
+        ipcMain.handle(`loading`, () => new Promise(async res => {
+            console.log(`Loading requested!`)
+            if(doneLoading) {
+                console.log(`already done loading; resolving`)
+                return res(doneLoading);
+            } else if(loadingPromise) {
+                console.log(`promise exists; waiting`)
+                return loadingPromise.then(res)
+            }
+        }));
+    
+        window.loadFile(`./html/loading.html`);
+    
+        const sendNotification = require(`./core/sendNotification`)
+        
+        const config = require(`./getConfig`)();
+        
+        if(config.logsEnabled) {
+            console.log(`Keeping logs enabled`)
+            sendNotification({
+                type: `warn`,
+                headingText: `Debug logs enabled!`,
+                bodyText: `Debug logs are enabled in the config. This most likely will slow down the app.`
+            });
+        } else if(app.isPackaged) {
+            console.log(`Packaged build -- disabling logs for higher speed. (You can still enable them in the config)`);
+            console.log = () => {};
+        } else console.log(`Running from source -- keeping logs enabled.`);
+    })
+});
