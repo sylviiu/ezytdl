@@ -58,7 +58,7 @@ module.exports = (notDefault, overrideArgs) => {
     if(!conf.defaultWindowControls) {
         console.log(`Hiding window controls and using custom ones`)
         args.frame = false
-        args.titleBarStyle = `hidden`
+        args.titleBarStyle = `hidden-inset`
     } else console.log(`Using default window controls`);
 
     if(app.isPackaged) {
