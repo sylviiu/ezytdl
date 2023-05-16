@@ -53,21 +53,17 @@ module.exports = {
         if(getIconsComplete) return Promise.resolve(icons);
 
         if(!getIconsPromise) getIconsPromise = new Promise(async res => {
-            let supportedMultipliers = [ 1, 1.25, 1.33, 1.4, 1.5, 1.8, 2, 2.5, 3, 4, 5, 32 ];
+            let supportedMultipliers = [ 1, 1.25, 1.33, 1.4, 1.5, 1.8, 2/*, 2.5, 3, 4, 5, 32*/ ];
 
-            if(process.platform == `darwin`) supportedMultipliers = [ 1, 2 ]
-
-            let sizes = supportedMultipliers.map(m => (process.platform == `darwin` ? 22 : 16) * m);
+            let sizes = supportedMultipliers.map(m => 16 * m);
             // https://www.electronjs.org/docs/latest/api/native-image#high-resolution-image
     
             console.log(`Getting icons...`)
     
             const createIcon = (iconFile, negate) => new Promise(async res => {
-                let nativeIcon;
+                let nativeIcon = nativeImage.createEmpty();
     
-                console.log(`Creating ${iconFile} / negate: ${negate}`)
-
-                let reversedSizes = sizes.reverse();
+                console.log(`Creating ${iconFile} / negate: ${negate}`);
     
                 for(let i in sizes) {
                     const size = sizes[i];
@@ -85,7 +81,10 @@ module.exports = {
                     }
                 };
 
-                if(process.platform == `darwin`) nativeIcon.setTemplateImage(true);
+                if(process.platform == `darwin`) {
+                    console.log(`Setting template image`)
+                    nativeIcon.setTemplateImage(true);
+                }
     
                 res(nativeIcon);
             });
