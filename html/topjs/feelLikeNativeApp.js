@@ -1,6 +1,6 @@
 // just disable text selecting and disable link mouse changing and stuff
 
-addEventListener(`DOMContentLoaded`, () => {
+const process = (windowControlsEnabled) => {
     document.body.style.userSelect = `none`;
     
     const makeButton = (btn) => {
@@ -33,7 +33,7 @@ addEventListener(`DOMContentLoaded`, () => {
         
         if(document.getElementById(`windowControls`)) {
             console.log(`windowControls present`);
-            if(navigator.platform == `Win32` || navigator.platform.indexOf(`Mac`) === 0) {        
+            if(windowControlsEnabled) {        
                 document.getElementById(`minimizeWindows`).onclick = () => windowControls.minimize();
                 document.getElementById(`maximizeWindows`).onclick = () => windowControls.maximize();
                 document.getElementById(`closeWindows`).onclick = () => windowControls.close();
@@ -51,7 +51,24 @@ addEventListener(`DOMContentLoaded`, () => {
             }
         }
     } else {
-        //if(navigator.platform == `Win32` || navigator.platform.indexOf(`Mac`) === 0) document.body.style[`-webkit-app-region`] = `drag`;
+        //if(windowControlsEnabled) document.body.style[`-webkit-app-region`] = `drag`;
         //document.body.querySelectorAll(`.btn`).forEach(makeButton);
     }
+};
+
+let doneLoading = false;
+let value = undefined;
+
+addEventListener(`DOMContentLoaded`, () => {
+    if(!doneLoading) {
+        doneLoading = true;
+    } else process(value);
 });
+
+windowControls.enabled().then(enabled => {
+    value = enabled;
+
+    if(!doneLoading) {
+        doneLoading = true;
+    } else process(value);
+})

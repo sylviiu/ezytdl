@@ -8,5 +8,6 @@
     "disableHWAcceleratedConversion": "Disable Hardware-Accelerated Video Conversion",
     "allowAudioConversion": "Allow Audio Conversion",
     "closeToTray": "Close to System Tray",
-    "logsEnabled": "Enable Runtime Logs"
+    "logsEnabled": "Enable Runtime Logs",
+    "defaultWindowControls": "Use System Window Controls"
 }

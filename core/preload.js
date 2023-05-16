@@ -28,6 +28,7 @@ contextBridge.exposeInMainWorld(`windowControls`, {
     close: () => send(`windowClose`),
     maximize: () => send(`windowMaximize`),
     minimize: () => send(`windowMinimize`),
+    enabled: () => invoke(`windowControlsEnabled`)
 })
 
 contextBridge.exposeInMainWorld(`system`, {

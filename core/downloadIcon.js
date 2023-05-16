@@ -1,10 +1,7 @@
 const { app, Menu, Tray, nativeImage, nativeTheme, ipcMain } = require('electron');
 const sharp = require('sharp');
-const fs = require('fs');
 
 let current = `regular`;
-
-const { autoUpdater } = require(`electron-updater`);
 
 const getPath = require(`../util/getPath`)
 
@@ -87,10 +84,10 @@ module.exports = {
                 const str = icons[iconFile];
 
                 icons[iconFile] = await createIcon(str);
-                console.log(`nativeIcon ${iconFile} scalefactors`, icons[iconFile].getScaleFactors());
+                console.log(`nativeIcon ${iconFile} complete`);
 
                 icons[iconFile + `Inv`] = await createIcon(str, true);
-                console.log(`nativeIconInv ${iconFile} scalefactors`, icons[iconFile + `Inv`].getScaleFactors());
+                console.log(`nativeIconInv ${iconFile} complete`);
             } else continue;
         }
 

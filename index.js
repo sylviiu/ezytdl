@@ -1,4 +1,5 @@
 const { app, ipcMain } = require('electron');
+global.configPath = app.getPath('userData')
 
 const locked = app.requestSingleInstanceLock();
 
@@ -9,40 +10,14 @@ if(!locked) {
         console.log(`second instance!`)
         require(`./core/bringToFront`)()
     })
-}
-
-const sendNotification = require(`./core/sendNotification`)
-
-global.configPath = app.getPath('userData')
-
-const config = require(`./getConfig`)();
-
-if(config.logsEnabled) {
-    console.log(`Keeping logs enabled`)
-    sendNotification({
-        type: `warn`,
-        headingText: `Debug logs enabled!`,
-        bodyText: `Debug logs are enabled in the config. This most likely will slow down the app.`
-    });
-} else if(app.isPackaged) {
-    console.log(`Packaged build -- disabling logs for higher speed. (You can still enable them in the config)`);
-    console.log = () => {};
-} else console.log(`Running from source -- keeping logs enabled.`);
-
-const createWindow = require(`./core/window`)
-
-global.app = app;
-
-const errorHandler = require(`./util/errorHandler`);
-const determineGPUDecode = require('./util/determineGPUDecode');
-
-process.on(`uncaughtException`, (err) => {errorHandler(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)})
-process.on(`unhandledRejection`, (err) => {errorHandler(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)})
-
+};
+    
 let doneLoading = false;
 let loadingPromise = null;
 
 app.whenReady().then(async () => {
+    const createWindow = require(`./core/window`)
+
     const window = createWindow();
 
     loadingPromise = new Promise(async res => {
@@ -73,4 +48,25 @@ app.whenReady().then(async () => {
     }));
 
     window.loadFile(`./html/loading.html`);
+
+    const sendNotification = require(`./core/sendNotification`)
+    
+    const config = require(`./getConfig`)();
+    
+    if(config.logsEnabled) {
+        console.log(`Keeping logs enabled`)
+        sendNotification({
+            type: `warn`,
+            headingText: `Debug logs enabled!`,
+            bodyText: `Debug logs are enabled in the config. This most likely will slow down the app.`
+        });
+    } else if(app.isPackaged) {
+        console.log(`Packaged build -- disabling logs for higher speed. (You can still enable them in the config)`);
+        console.log = () => {};
+    } else console.log(`Running from source -- keeping logs enabled.`);
+    
+    const errorHandler = require(`./util/errorHandler`);
+    
+    process.on(`uncaughtException`, (err) => {errorHandler(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)})
+    process.on(`unhandledRejection`, (err) => {errorHandler(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)})
 })

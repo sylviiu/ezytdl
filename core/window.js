@@ -25,6 +25,10 @@ module.exports = (notDefault, overrideArgs) => {
 
     if(currentWindow && !notDefault) return currentWindow;
 
+    const conf = require('../getConfig')();
+
+    global.defaultWindowControls = conf.defaultWindowControls;
+
     console.log(platform)
 
     const iconPath = getPath(`res/packageIcons/icon-` + (platform == `win32` ? `64x64.ico` : `512x512.png`))
@@ -40,8 +44,6 @@ module.exports = (notDefault, overrideArgs) => {
         fullscreenable: false,
         backgroundColor: `rgb(10,10,10)`,
         darkTheme: true,
-        frame: false,
-        titleBarStyle: `hidden`,
         webPreferences: {
             nodeIntegration: false,
             nodeIntegrationInWorker: false,
@@ -55,10 +57,11 @@ module.exports = (notDefault, overrideArgs) => {
         icon: iconPath
     };
 
-    if(process.platform == `win32` || process.platform == `darwin`) {
-        args.titleBarStyle = `hidden`;
-        args.frame = false;
-    }
+    if(!conf.defaultWindowControls) {
+        console.log(`Hiding window controls and using custom ones`)
+        args.frame = false
+        args.titleBarStyle = `hidden`
+    } else console.log(`Using default window controls`);
 
     if(app.isPackaged) {
         console.log(`-------------\nSTARTING WITH PRODUCTION MODE\n-------------`)
