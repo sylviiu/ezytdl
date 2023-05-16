@@ -55,9 +55,9 @@ module.exports = {
         if(!getIconsPromise) getIconsPromise = new Promise(async res => {
             let supportedMultipliers = [ 1, 1.25, 1.33, 1.4, 1.5, 1.8, 2, 2.5, 3, 4, 5, 32 ];
 
-            if(process.platform == `darwin`) supportedMultipliers = [ 1 ]
+            if(process.platform == `darwin`) supportedMultipliers = [ 1, 2 ]
 
-            let sizes = supportedMultipliers.map(m => 16 * m);
+            let sizes = supportedMultipliers.map(m => (process.platform == `darwin` ? 32 : 16) * m);
             // https://www.electronjs.org/docs/latest/api/native-image#high-resolution-image
     
             console.log(`Getting icons...`)
