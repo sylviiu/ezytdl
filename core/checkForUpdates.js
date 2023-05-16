@@ -1,6 +1,6 @@
 const sendNotification = require("./sendNotification.js");
 
-const { shell } = require(`electron`);
+const { shell, app } = require(`electron`);
 
 const notifyWithInfo = (info) => {
     global.updateAvailable = info.response.name || info.version;
@@ -69,6 +69,8 @@ module.exports = async (manual) => {
             })
         }
     }
+
+    if(!app.isPackaged) return null;
 
     if(!global.updateCheckResult || manual) {
         global.updateCheckResult = require(`../util/fetchLatestVersion/ezytdl`)();

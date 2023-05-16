@@ -12,7 +12,7 @@
     "which": "^3.0.1"
   },
   "scripts": {
-    "start": "electron . --inspect = 5858",
+    "start": "electron .",
     "store": "electron-builder -c ./package-build-store.json",
     "dist": "electron-builder -c ./package-build.json"
   },
