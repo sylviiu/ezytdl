@@ -67,7 +67,9 @@ module.exports = {
     
                 console.log(`Creating ${iconFile} / negate: ${negate}`)
 
-                let reversedSizes = sizes.reverse()
+                let reversedSizes = sizes.reverse();
+
+                const originalWidth = sizes[0]
     
                 for(let i in reversedSizes) {
                     const size = reversedSizes[i];
@@ -76,8 +78,8 @@ module.exports = {
                     if(nativeIcon) {
                         nativeIcon.addRepresentation({
                             scaleFactor: supportedMultipliers[i],
-                            width: size,
-                            height: size,
+                            //width: originalWidth,
+                            //height: originalWidth,
                             buffer: icon
                         });
                     } else {
