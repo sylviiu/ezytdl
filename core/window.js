@@ -40,6 +40,8 @@ module.exports = (notDefault, overrideArgs) => {
         fullscreenable: false,
         backgroundColor: `rgb(10,10,10)`,
         darkTheme: true,
+        frame: false,
+        titleBarStyle: `hidden`,
         webPreferences: {
             nodeIntegration: false,
             nodeIntegrationInWorker: false,
