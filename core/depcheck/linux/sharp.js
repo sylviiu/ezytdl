@@ -2,7 +2,8 @@ module.exports = {
     name: `libvips`,
     func: () => new Promise(res => {
         try {
-            require(`sharp`)
+            require(`sharp`);
+            return res({ status: true })
         } catch(e) {
             if(e.toString().includes(`libvips`)) {
                 return res({
