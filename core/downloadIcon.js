@@ -78,8 +78,8 @@ module.exports = {
                     if(nativeIcon) {
                         nativeIcon.addRepresentation({
                             scaleFactor: supportedMultipliers[i],
-                            //width: originalWidth,
-                            //height: originalWidth,
+                            width: originalWidth,
+                            height: originalWidth,
                             buffer: icon
                         });
                     } else {
