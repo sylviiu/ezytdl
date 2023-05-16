@@ -1,6 +1,7 @@
 {
     "appId": "dev.sylviiu.ezytdl",
     "productName": "ezytdl",
+    "artifactName": "${productName}-${platform}-${version}.${ext}",
     "beforePack": "scripts/beforePack.js",
     "publish": [
         {
@@ -9,11 +10,8 @@
             "repo": "ezytdl"
         }
     ],
-    "nsis": {
-        "artifactName": "${productName}-Setup-${version}.${ext}"
-    },
     "portable": {
-        "artifactName": "${productName}-Portable-${version}.${ext}"
+        "artifactName": "${productName}-${platform}-portable-${version}.${ext}"
     },
     "win": {
         "icon": "res/packageIcons/icon-512x512.ico",
@@ -24,7 +22,12 @@
     },
     "linux": {
         "icon": "res/packageIcons/icon-512x512.png",
-        "target": "AppImage"
+        "target": [
+            "AppImage",
+            "deb",
+            "rpm",
+            "tar.gz"
+        ]
     },
     "mac": {
         "icon": "res/packageIcons/icon-512x512.icns",
