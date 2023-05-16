@@ -1,1 +1,1 @@
-module.exports = require(`../core/checkForUpdates`)
+module.exports = () => require(`../core/checkForUpdates`)()

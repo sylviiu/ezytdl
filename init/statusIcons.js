@@ -1,1 +1,1 @@
-module.exports = require(`../core/downloadIcon`).getIcons
+module.exports = () => require(`../core/downloadIcon`).getIcons()

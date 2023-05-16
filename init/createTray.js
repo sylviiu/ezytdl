@@ -1,1 +1,1 @@
-module.exports = require(`../core/tray`)
+module.exports = () => require(`../core/tray`)()

@@ -12,10 +12,11 @@
     <link rel="stylesheet" href="assets/css/scroll.css">
     <link rel="stylesheet" href="assets/css/scrollbar.compiled.css">
     <link rel="stylesheet" href="assets/css/styles.css">
-<script src="./topjs/feelLikeNativeApp.js"></script>
-<script src="../node_modules/animejs/lib/anime.min.js"></script>
-<script src="../node_modules/showdown/dist/showdown.min.js"></script>
-<script src="./topjs/introAnimation.js"></script>
+<!-- include "preload" scripts from app dir -->
+    <script src="./topjs/feelLikeNativeApp.js"></script>
+    <script src="../node_modules/animejs/lib/anime.min.js"></script>
+    <script src="../node_modules/showdown/dist/showdown.min.js"></script>
+    <script src="./topjs/introAnimation.js"></script>
 </head>
 
 <body class="d-flex flex-column justify-content-center align-items-center" id="disableNotifications" style="background: rgb(10,10,10);width: 100vw;height: 100vh;font-family: Alata, sans-serif;">
@@ -55,13 +56,13 @@
             targets: document.querySelector(`#loadingDiv`),
             scale: 1.35,
             easing: `easeInExpo`,
-            duration: 1200,
+            duration: 300,
         })
 
         anime({
             targets: newDiv,
             opacity: 1,
-            duration: 1000,
+            duration: 250,
             easing: `easeInExpo`,
             complete: () => window.location.href = (link || `index.html`) + `?introAnimation`
         })
