@@ -85,7 +85,7 @@ module.exports = {
                     }
                 };
 
-                if(platform == `darwin`) nativeIcon.setTemplateImage(true);
+                if(process.platform == `darwin`) nativeIcon.setTemplateImage(true);
     
                 res(nativeIcon);
             });
