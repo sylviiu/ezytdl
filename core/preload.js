@@ -75,3 +75,5 @@ contextBridge.exposeInMainWorld(`changelog`, {
     check: () => send(`checkChangelog`),
     get: () => invoke(`getChangelog`),
 });
+
+window.onerror = (msg, url, line, col, error) => send(`uiError`, { msg, url, line, col, error })
