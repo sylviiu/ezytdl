@@ -84,6 +84,8 @@ module.exports = {
                         nativeIcon = nativeImage.createFromBuffer(icon);
                     }
                 };
+
+                if(platform == `darwin`) nativeIcon.setTemplateImage(true);
     
                 res(nativeIcon);
             });
