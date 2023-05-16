@@ -32,6 +32,7 @@
     "files": [
         "html/*.html",
         "html/assets/**/*",
+        "html/topjs/*",
         "node_modules/**/*",
         "res/**/*",
         "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
