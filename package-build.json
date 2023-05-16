@@ -9,6 +9,12 @@
             "repo": "ezytdl"
         }
     ],
+    "nsis": {
+        "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "portable": {
+        "artifactName": "${productName}-Portable-${version}.${ext}"
+    },
     "win": {
         "icon": "res/packageIcons/icon-512x512.ico",
         "target": [
