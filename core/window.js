@@ -40,8 +40,6 @@ module.exports = (notDefault, overrideArgs) => {
         fullscreenable: false,
         backgroundColor: `rgb(10,10,10)`,
         darkTheme: true,
-        titleBarStyle: `hidden`,
-        frame: false,
         webPreferences: {
             nodeIntegration: false,
             nodeIntegrationInWorker: false,
@@ -54,6 +52,11 @@ module.exports = (notDefault, overrideArgs) => {
         },
         icon: iconPath
     };
+
+    if(process.platform == `win32` || process.platform == `darwin`) {
+        args.titleBarStyle = `hidden`;
+        args.frame = false;
+    }
 
     if(app.isPackaged) {
         console.log(`-------------\nSTARTING WITH PRODUCTION MODE\n-------------`)
