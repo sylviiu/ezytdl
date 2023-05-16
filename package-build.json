@@ -1,6 +1,7 @@
 {
     "appId": "dev.sylviiu.ezytdl",
     "productName": "ezytdl",
+    "beforePack": "scripts/beforePack.js",
     "publish": [
         {
             "provider": "github",

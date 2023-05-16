@@ -6,6 +6,6 @@ module.exports = {
         } else return res({
             status: false,
             missing: module.exports.name
-        })
+        });
     })
 }

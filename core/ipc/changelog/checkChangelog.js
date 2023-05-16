@@ -5,7 +5,9 @@ global.changelogResponse = null;
 module.exports = {
     type: `on`,
     func: () => new Promise(async res => {
-        console.log(`checking changelog`)
+        console.log(`checking changelog`);
+        global.sendNotifs = true;
+        require(`../../sendNotification`)()
         if(!global.changelogResponse) await new Promise(async res => {
             require(`../../../util/githubReleasesRequest`)(`sylviiu`, `ezytdl`).then(r => {
                 if(r && r.response) {

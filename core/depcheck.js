@@ -38,11 +38,16 @@ module.exports = () => new Promise(async res => {
             }
         };
 
+        console.log(missingDependencies, missingUnrequiredDependencies)
+
         if(missingDependencies.length === 0 && missingUnrequiredDependencies.length > 0) {
+            console.log(`sending warning notif about missing libs`)
             sendNotification({
                 headingText: `Missing system dependencies`,
-                bodyText: `You're missing some dependencies that ezytdl utilizes!\n\nMissing: ${missingUnrequiredDependencies.join(`, `)}\n\nezytdl will still work for the most part, but some features may be limited!`
-            })
+                bodyText: `You're missing some dependencies that ezytdl utilizes!\n\nMissing: ${missingUnrequiredDependencies.join(`, `)}\n\nezytdl will still work for the most part, but some features may be limited!`,
+                type: `warn`,
+            });
+            res(true);
         } else if(missingDependencies.length > 0) {
             return errorAndExit(`Failed to start ezytdl v${require(`../package.json`).version} -- your system is missing dependencies!\n\n- Missing: ${[...missingDependencies, ...missingUnrequiredDependencies.map(s => s + ` (not required)`)].join(`, `)}`)
         } else return res(true);
