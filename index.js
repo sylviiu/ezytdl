@@ -26,8 +26,8 @@ require(`./core/depcheck`)().then(() => {
 
     let doneLoading = false;
     let loadingPromise = null;
-    
-    app.whenReady().then(async () => {
+
+    const start = async () => {
         console.log(`Took ${Date.now() - start}ms to finish app.whenReady`);
 
         const createWindow = require(`./core/window`)
@@ -78,5 +78,9 @@ require(`./core/depcheck`)().then(() => {
             console.log(`Packaged build -- disabling logs for higher speed. (You can still enable them in the config)`);
             console.log = () => {};
         } else console.log(`Running from source -- keeping logs enabled.`);
-    })
+    } 
+
+    if(!app.isReady()) {
+        app.whenReady().then(start)
+    } else start();
 });
