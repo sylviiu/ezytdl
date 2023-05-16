@@ -1,6 +1,7 @@
 {
     "appId": "dev.sylviiu.ezytdl",
     "productName": "ezytdl-store",
+    "beforePack": "scripts/beforePack.js",
     "publish": [
         {
             "provider": "github",
@@ -62,6 +63,8 @@
         "core/*.js",
         "core/*.json",
         "core/ipc/*/*.js",
+        "core/depcheck/*/*.js",
+        "core/depcheck/*.js",
         "core/*.js",
         "checks/*.js"
     ]
