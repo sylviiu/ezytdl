@@ -57,7 +57,7 @@ module.exports = {
 
             if(process.platform == `darwin`) supportedMultipliers = [ 1, 2 ]
 
-            let sizes = supportedMultipliers.map(m => 16 * m);
+            let sizes = supportedMultipliers.map(m => (process.platform == `darwin` ? 22 : 16) * m);
             // https://www.electronjs.org/docs/latest/api/native-image#high-resolution-image
     
             console.log(`Getting icons...`)
