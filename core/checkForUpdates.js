@@ -13,7 +13,8 @@ const notifyWithInfo = (info) => {
 
     if(file && process.platform != `linux`) {
         console.log(`internal updater enabled`)
-        global.updateFunc = async () => global.window.loadURL(require('path').join(__dirname.split(`core`).slice(0, -1).join(`core`) + `/html/updating.html?ezytdll`))
+        //global.updateFunc = async () => global.window.loadURL(require('path').join(__dirname.split(`core`).slice(0, -1).join(`core`) + `/html/updating.html?ezytdll`))
+        global.updateFunc = () => require(`./downloadClientPopout.js`)();
     } else {
         console.log(`internal updater disabled`)
         global.updateFunc = async () => shell.openExternal(info.url);
