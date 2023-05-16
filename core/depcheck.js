@@ -51,5 +51,5 @@ module.exports = () => new Promise(async res => {
         } else if(missingDependencies.length > 0) {
             return errorAndExit(`Failed to start ezytdl v${require(`../package.json`).version} -- your system is missing dependencies!\n\n- Missing: ${[...missingDependencies, ...missingUnrequiredDependencies.map(s => s + ` (not required)`)].join(`, `)}`)
         } else return res(true);
-    }
+    } else res(null);
 })

@@ -1,4 +1,4 @@
-const start = Date.now();
+const startTime = Date.now();
 
 console.log(`Starting ezytdl v${require(`./package.json`).version}`)
 
@@ -22,13 +22,13 @@ if(!locked) {
 };
 
 require(`./core/depcheck`)().then(() => {
-    console.log(`Took ${Date.now() - start}ms to finish depcheck`);
+    console.log(`Took ${Date.now() - startTime}ms to finish depcheck`);
 
     let doneLoading = false;
     let loadingPromise = null;
 
     const start = async () => {
-        console.log(`Took ${Date.now() - start}ms to finish app.whenReady`);
+        console.log(`Took ${Date.now() - startTime}ms to finish app.whenReady`);
 
         const createWindow = require(`./core/window`)
     
@@ -48,6 +48,7 @@ require(`./core/depcheck`)().then(() => {
             doneLoading = redirect;
             res(redirect);
             loadingPromise = null;
+            console.log(`Took ${Date.now() - startTime}ms to finish loading app!`);
         });
     
         ipcMain.handle(`loading`, () => new Promise(async res => {
