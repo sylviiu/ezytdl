@@ -83,10 +83,10 @@ module.exports = () => {
                         let obj = Object.assign({}, working);
                         delete obj.use;
 
-                        sendNotification({
+                        /*sendNotification({
                             headingText: `GPU Acceleration Enabled!`,
                             bodyText: `GPU acceleration has been enabled for your system. This will improve performance when converting videos.\n\nEnabled: ${Object.values(obj).filter(o => typeof o == `object` && o.name).map(o => o.name).join(`, `)}`,
-                        });
+                        });*/
                     }
 
                     working.checked = true;
