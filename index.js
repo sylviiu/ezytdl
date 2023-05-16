@@ -1,5 +1,10 @@
 const { app, ipcMain } = require('electron');
 global.configPath = app.getPath('userData')
+    
+const errorHandler = require(`./util/errorHandler`);
+
+process.on(`uncaughtException`, (err) => {errorHandler(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)})
+process.on(`unhandledRejection`, (err) => {errorHandler(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)})
 
 const locked = app.requestSingleInstanceLock();
 
@@ -64,9 +69,4 @@ app.whenReady().then(async () => {
         console.log(`Packaged build -- disabling logs for higher speed. (You can still enable them in the config)`);
         console.log = () => {};
     } else console.log(`Running from source -- keeping logs enabled.`);
-    
-    const errorHandler = require(`./util/errorHandler`);
-    
-    process.on(`uncaughtException`, (err) => {errorHandler(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)})
-    process.on(`unhandledRejection`, (err) => {errorHandler(`${err}\n\n${err.stack? err.stack : `(no stack)`}`)})
 })
