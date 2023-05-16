@@ -59,5 +59,5 @@ module.exports = (manual) => {
                 systemAllowed: true,
             })
         }
-    })
+    });
 }

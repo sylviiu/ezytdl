@@ -58,6 +58,8 @@
         "dist/trayIcons/*",
         "package.json",
         "index.js",
+        "init.js",
+        "init/*.js",
         "server.js",
         "getConfig.js",
         "defaultConfig.json",

@@ -16,9 +16,7 @@ let firstRun = true;
 let s = `/`;
 if(platform == `win32`) s = `\\`;
 
-const getPath = require(`../util/getPath`)
-
-const downloadIcons = require(`./downloadIcon`);
+const getPath = require(`../util/getPath`);
 
 module.exports = (notDefault, overrideArgs) => {
     if(!app.isReady()) return null;

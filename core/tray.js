@@ -14,6 +14,8 @@ let current = `regular`;
 const downloadIcons = require(`./downloadIcon`);
 
 module.exports = async () => {
+    const icons = await downloadIcons.getIcons();
+
     global.tray = new Tray(downloadIcons.get(`noQueue`));
 
     downloadIcons.on(`icon`, i => global.tray.setImage(i));

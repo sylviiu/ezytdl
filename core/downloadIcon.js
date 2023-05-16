@@ -42,57 +42,89 @@ const iconToPNG = (icon, size, negate) => {
     return sharpIcon.png().toBuffer();
 }
 
+let getIconsPromise = null;
+let getIconsComplete = false;
+
 module.exports = {
     on: (...c) => events.on(...c),
     getCurrentType: () => current,
     getCurrentIcon: (useWhite) => iconGetter(current, useWhite),
-    getIcons: () => new Promise(async res => {
-        //await buildTrayIcons();
+    getIcons: () => {
+        if(getIconsComplete) return Promise.resolve(icons);
 
-        let supportedMultipliers = [ 1, 1.25, 1.33, 1.4, 1.5, 1.8, 2, 2.5, 3, 4, 5, 32 ]
-        let sizes = supportedMultipliers.map(m => 16 * m);
-        // https://www.electronjs.org/docs/latest/api/native-image#high-resolution-image
+        if(!getIconsPromise) getIconsPromise = new Promise(async res => {
+            let supportedMultipliers = [ 1, 1.25, 1.33, 1.4, 1.5, 1.8, 2, 2.5, 3, 4, 5, 32 ]
+            let sizes = supportedMultipliers.map(m => 16 * m);
+            // https://www.electronjs.org/docs/latest/api/native-image#high-resolution-image
+    
+            console.log(`Getting icons...`)
+    
+            const createIcon = (iconFile, negate) => new Promise(async res => {
+                let nativeIcon;
+    
+                console.log(`Creating ${iconFile} / negate: ${negate}`)
+    
+                for(let i in sizes.reverse()) {
+                    const size = sizes[i];
+                    const icon = await iconToPNG(iconFile, size, negate);
+    
+                    if(nativeIcon) {
+                        nativeIcon.addRepresentation({
+                            scaleFactor: supportedMultipliers[i],
+                            width: size,
+                            height: size,
+                            buffer: icon
+                        });
+                    } else {
+                        nativeIcon = nativeImage.createFromBuffer(icon);
+                    }
+                };
+    
+                res(nativeIcon);
+            });
 
-        console.log(`Getting icons...`)
+            const threads = require('os').cpus().length;
 
-        const createIcon = (iconFile, negate) => new Promise(async res => {
-            let nativeIcon;
+            const iconPromises = [];
 
-            console.log(`Creating ${iconFile} / negate: ${negate}`)
+            const originalIcons = Object.assign({}, icons);
 
-            for(let i in sizes.reverse()) {
-                const size = sizes[i];
-                const icon = await iconToPNG(iconFile, size, negate);
+            const iconKeys = [...Object.keys(icons).map(k => k + `Inv`), ...Object.keys(icons)]
 
-                if(nativeIcon) {
-                    nativeIcon.addRepresentation({
-                        scaleFactor: supportedMultipliers[i],
-                        width: size,
-                        height: size,
-                        buffer: icon
+            for(let i = 0; i < threads; i++) {
+                const iconsToMake = iconKeys.slice(i, (i+1)*Math.ceil(iconKeys.length/threads));
+                console.log(iconsToMake)
+                iconPromises.push(new Promise(async res => {    
+                    const starttime = Date.now();
+
+                    for(let iconFile of iconsToMake) await new Promise(async r => {
+                        let inv = iconFile.endsWith(`Inv`);
+
+                        if(inv) iconFile = iconFile.slice(0, -3);
+
+                        if(typeof originalIcons[iconFile] == `string`) {
+                            const str = originalIcons[iconFile];
+
+                            icons[iconFile + (inv ? `Inv` : ``)] = await createIcon(str, inv);
+                            console.log(`(${Date.now() - starttime}ms) nativeIcon ${iconFile}${inv ? ` (inv)` : ``} complete`);
+                        };
+
+                        r();
                     });
-                } else {
-                    nativeIcon = nativeImage.createFromBuffer(icon);
-                }
+
+                    res();
+                }));
             };
 
-            res(nativeIcon);
+            await Promise.all(iconPromises);
+
+            console.log(`icons done`)
+    
+            res(icons);
         });
 
-        for(iconFile of Object.keys(icons)) {
-            if(typeof icons[iconFile] == `string`) {
-                const str = icons[iconFile];
-
-                icons[iconFile] = await createIcon(str);
-                console.log(`nativeIcon ${iconFile} complete`);
-
-                icons[iconFile + `Inv`] = await createIcon(str, true);
-                console.log(`nativeIconInv ${iconFile} complete`);
-            } else continue;
-        }
-
-        res(icons);
-    }),
+        return getIconsPromise;
+    },
     get: (type) => iconGetter(type),
     set: (type) => {
         const { alwaysUseLightIcon } = require(`../getConfig`)();
