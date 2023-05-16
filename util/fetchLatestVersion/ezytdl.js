@@ -4,7 +4,7 @@ module.exports = () => {
     if(latest) {
         return Promise.resolve(latest)
     } else {
-        latest = require(`../githubReleasesRequest`)(`BtbN`, `FFmpeg-Builds`);
+        latest = require(`../githubReleasesRequest`)(`sylviiu`, `ezytdl`);
         return latest;
     }
 }

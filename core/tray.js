@@ -1,10 +1,7 @@
 const { app, Menu, Tray, nativeImage, nativeTheme, ipcMain } = require('electron');
-const { autoUpdater } = require(`electron-updater`);
 const { queueEventEmitter, queueAction } = require(`../util/downloadManager`);
 
 global.tray = null;
-
-const path = require('path')
 
 let s = `/`;
 if(process.platform == `win32`) s = `\\`;
@@ -14,7 +11,7 @@ let current = `regular`;
 const downloadIcons = require(`./downloadIcon`);
 
 module.exports = async () => {
-    const icons = await downloadIcons.getIcons();
+    await downloadIcons.getIcons();
 
     global.tray = new Tray(downloadIcons.get(`noQueue`));
 
@@ -65,14 +62,7 @@ module.exports = async () => {
         if(global.updateAvailable) {
             a.push({
                 label: `Update available! (${global.updateAvailable})`,
-                click: () => {
-                    require(`./quit`)(true).then(r => {
-                        if(r) {
-                            global.quitting = true;
-                            autoUpdater.quitAndInstall(false, true)
-                        }
-                    });
-                },
+                click: () => global.updateFunc ? global.updateFunc() : null,
             })
         } else {
             a.push({

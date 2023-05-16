@@ -1,63 +1,82 @@
 const sendNotification = require("./sendNotification.js");
 
-module.exports = (manual) => {
-    const { autoUpdater } = require(`electron-updater`);
+const { shell } = require(`electron`);
+
+const notifyWithInfo = (info) => {
+    global.updateAvailable = info.response.name || info.version;
+
+    //console.log(info)
+
+    const file = info.assets.find(d => d.name.startsWith(`ezytdl-${require('os').platform()}-${info.response.tag_name || info.version}`));
+
+    console.log(`update file`, file)
+
+    if(file && process.platform != `linux`) {
+        console.log(`internal updater enabled`)
+        global.updateFunc = async () => global.window.loadURL(require('path').join(__dirname.split(`core`).slice(0, -1).join(`core`) + `/html/updating.html?ezytdll`))
+    } else {
+        console.log(`internal updater disabled`)
+        global.updateFunc = async () => shell.openExternal(info.url);
+    }
     
-    //autoUpdater.autoDownload = true;
+    require(`./tray.js`).refresh();
 
-    autoUpdater.checkForUpdates();
+    const d = new Date(info.response.published_at);
 
-    autoUpdater.on(`error`, (e) => {
-        sendNotification({
-            type: `error`, 
-            headingText: `Error checking for updates!`,
-            bodyText: `${e}`,
-            systemAllowed: true,
-        })
-    });
+    const timeSinceReleased = new Date(Date.now() - d.getTime());
 
-    autoUpdater.on(`update-downloaded`, (info) => {
-        global.updateAvailable = info.releaseName || info.version;
-        
-        require(`./tray.js`).refresh();
+    const months = timeSinceReleased.getUTCMonth();
+    const days = timeSinceReleased.getUTCDate() - 1;
+    const hours = timeSinceReleased.getUTCHours();
+    const minutes = timeSinceReleased.getUTCMinutes();
 
-        const d = new Date(info.releaseDate);
+    const arr = []
 
-        const timeSinceReleased = new Date(Date.now() - d.getTime());
+    if(months > 0) arr.push(`${months} month${months > 1 ? `s` : ``}`)
+    if(days > 0) arr.push(`${days} day${days > 1 ? `s` : ``}`)
+    if(hours > 0) arr.push(`${hours} hour${hours > 1 ? `s` : ``}`)
+    if(minutes > 0 || arr.length == 0) arr.push(`${minutes} minute${minutes > 1 ? `s` : ``}`)
 
-        const months = timeSinceReleased.getUTCMonth();
-        const days = timeSinceReleased.getUTCDate() - 1;
-        const hours = timeSinceReleased.getUTCHours();
-        const minutes = timeSinceReleased.getUTCMinutes();
+    let date = ``
 
-        const arr = []
+    if(arr.length > 1) {
+        date = `Released ${arr.slice(0, -1).join(`, `)} and ${arr.slice(-1)} ago`;
+    } else {
+        date = `Released ${arr[0]} ago`;
+    }
 
-        if(months > 0) arr.push(`${months} month${months > 1 ? `s` : ``}`)
-        if(days > 0) arr.push(`${days} day${days > 1 ? `s` : ``}`)
-        if(hours > 0) arr.push(`${hours} hour${hours > 1 ? `s` : ``}`)
-        if(minutes > 0 || arr.length == 0) arr.push(`${minutes} minute${minutes > 1 ? `s` : ``}`)
+    sendNotification({
+        headingText: `Update available! (${info.version})`,
+        bodyText: `${date} -- "${global.updateAvailable}" will be installed when you close the app!`
+    })
+};
 
-        let date = ``
+global.updateCheckResult = null;
 
-        if(arr.length > 1) {
-            date = `Released ${arr.slice(0, -1).join(`, `)} and ${arr.slice(-1)} ago`;
-        } else {
-            date = `Released ${arr[0]} ago`;
-        }
+module.exports = async (manual) => {
+    const process = (info) => {
+        const currentVersion = require(`../package.json`).version;
+        const newVersion = info.response.tag_name || info.version;
 
-        sendNotification({
-            headingText: `Update available! (${info.version})`,
-            bodyText: `${date} -- "${info.releaseName}" will be installed when you close the app!`
-        })
-    });
-
-    autoUpdater.on(`update-not-available`, () => {
-        if(manual) {
+        if(newVersion !== currentVersion) {
+            notifyWithInfo(info)
+        } else if(manual) {
             sendNotification({
                 headingText: `Up to date!`,
                 bodyText: `You're already on the latest version!`,
                 systemAllowed: true,
             })
         }
-    });
-}
+    }
+
+    if(!global.updateCheckResult || manual) {
+        global.updateCheckResult = require(`../util/fetchLatestVersion/ezytdl`)();
+        global.updateCheckResult.catch((e) => sendNotification({
+            type: `error`, 
+            headingText: `Error checking for updates!`,
+            bodyText: `${e}`,
+            systemAllowed: true,
+        }));
+        global.updateCheckResult.then(process);
+    };
+};

@@ -10,6 +10,7 @@ module.exports = (creator, repo) => new Promise(async (res, rej) => {
                     url: d.browser_download_url
                 }
             }),
+            url: r[0].html_url,
             response: r[0]
         })
     }).catch(e => {

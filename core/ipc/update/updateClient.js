@@ -7,6 +7,8 @@ module.exports = {
             return require(`../../../util/downloadClient/ytdlp`)()
         } else if(arg == `ffmpeg`) {
             return require(`../../../util/downloadClient/ffmpeg`)()
+        } else if(arg == `ezytdl`) {
+            return require(`../../../util/downloadClient/ezytdl`)()
         }
     }
 }
