@@ -84,20 +84,23 @@ module.exports = {
             });
 
             const threads = require('os').cpus().length;
+            //const threads = 4;
 
             const iconPromises = [];
 
             const originalIcons = Object.assign({}, icons);
 
-            const iconKeys = [...Object.keys(icons).map(k => k + `Inv`), ...Object.keys(icons)]
+            const iconKeys = [...Object.keys(icons).map(k => k + `Inv`), ...Object.keys(icons)];
 
-            for(let i = 0; i < threads; i++) {
-                const iconsToMake = iconKeys.slice(i, (i+1)*Math.ceil(iconKeys.length/threads));
-                console.log(iconsToMake)
+            const chunkSize = Math.ceil(iconKeys.length / threads);
+
+            for(let i = 0; i < iconKeys.length; i += chunkSize) {
+                const chunk = iconKeys.slice(i, i + chunkSize);
+                console.log(chunk)
                 iconPromises.push(new Promise(async res => {    
                     const starttime = Date.now();
 
-                    for(let iconFile of iconsToMake) await new Promise(async r => {
+                    for(let iconFile of chunk) await new Promise(async r => {
                         let inv = iconFile.endsWith(`Inv`);
 
                         if(inv) iconFile = iconFile.slice(0, -3);
@@ -114,7 +117,7 @@ module.exports = {
 
                     res();
                 }));
-            };
+            }
 
             await Promise.all(iconPromises);
 
