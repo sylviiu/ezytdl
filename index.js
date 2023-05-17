@@ -13,6 +13,8 @@ const locked = app.requestSingleInstanceLock();
 if(!locked) {
     app.quit();
 } else {
+    let startedLoading = false;
+
     app.on(`second-instance`, () => {
         console.log(`second instance!`)
         require(`./core/bringToFront`)()
@@ -21,17 +23,19 @@ if(!locked) {
     require(`./core/depcheck`)().then(() => {
         console.log(`Took [${Date.now() - startTime}ms] to finish depcheck`);
 
-        let doneLoading = false;
-        let loadingPromise = null;
-
         const start = async () => {
             console.log(`Took [${Date.now() - startTime}ms] to finish app.whenReady`);
 
             const createWindow = require(`./core/window`)
         
             const window = createWindow();
-        
-            loadingPromise = new Promise(async res => {
+            
+            ipcMain.handle(`loading`, () => new Promise(async res => {
+                console.log(`[${Date.now() - startTime}ms] Loading requested!`);
+
+                if(startedLoading) return;
+                startedLoading = true;
+
                 const init = await require(`./init`)();
 
                 console.log(`Took [${Date.now() - startTime}ms] to finish init!`, init);
@@ -44,18 +48,7 @@ if(!locked) {
                 loadingPromise = null;
                 console.log(`[${Date.now() - startTime}ms] to finish loading app!`);
             
-                if(!app.isPackaged) window.webContents.openDevTools()
-            });
-        
-            ipcMain.handle(`loading`, () => new Promise(async res => {
-                console.log(`[${Date.now() - startTime}ms] Loading requested!`)
-                if(doneLoading) {
-                    console.log(`already done loading; resolving`)
-                    return res(doneLoading);
-                } else if(loadingPromise) {
-                    console.log(`promise exists; waiting`)
-                    return loadingPromise.then(res)
-                }
+                //if(!app.isPackaged) window.webContents.openDevTools()
             }));
         
             window.loadFile(`./html/loading.html`);
