@@ -75,7 +75,13 @@ module.exports = async () => {
                 writeStream.on(`finish`, () => {
                     console.log(`done!`);
 
-                    if(!platform().toLowerCase().includes(`win32`)) fs.chmodSync(downloadPath, 0o777)
+                    if(!platform().toLowerCase().includes(`win32`)) {
+                        try {
+                            require(`child_process`).execFileSync(`chmod`, [`+x`, downloadPath])
+                        } catch(e) {
+                            fs.chmodSync(downloadPath, 0o777)
+                        }
+                    }
     
                     ws.close();
                 })
