@@ -1,5 +1,5 @@
 module.exports = () => {
-    const window = require(`./window`)(true, {
+    /*const window = require(`./window`)(true, {
         width: 600,
         height: 250,
         minWidth: 0,
@@ -7,5 +7,7 @@ module.exports = () => {
         resizable: false
     });
 
-    window.loadURL(require(`path`).join(__dirname.split(`core`).slice(0, -1).join(`core`), `html`, `updating-fullscreen.html?ezytdl`))
+    window.loadURL(require(`path`).join(__dirname.split(`core`).slice(0, -1).join(`core`), `html`, `updating-fullscreen.html?ezytdll`))*/
+
+    global.window.loadURL(require(`path`).join(__dirname.split(`core`).slice(0, -1).join(`core`), `html`, `updating-fullscreen.html?ezytdll`))
 }

@@ -82,13 +82,17 @@ module.exports = async () => {
 
                     if(!platform().toLowerCase().includes(`win32`)) fs.chmodSync(require(`path`).join(`${downloadPath}`, download.name), 0o777);
 
-                    require(`../../core/quit`)(true).then(r => {
+                    require(`../../core/quit`)(true).then(async r => {
                         if(r) {
                             require(`electron`).app.releaseSingleInstanceLock();
 
                             global.quitting = true;
 
-                            const proc = require(`child_process`).spawn(require(`path`).join(`${downloadPath}`, download.name), { detached: true });
+                            await require(`electron`).shell.openPath(require(`path`).join(`${downloadPath}`, download.name));
+
+                            //require(`electron`).app.quit();
+
+                            /*const proc = require(`child_process`).spawn(require(`path`).join(`${downloadPath}`, download.name), { detached: true });
                             proc.unref();
 
                             proc.once(`spawn`, () => {
@@ -100,7 +104,7 @@ module.exports = async () => {
                                 proc.stdin.destroy()
     
                                 require(`electron`).app.quit();
-                            })
+                            })*/
                         } else ws.close();
                     })
     
