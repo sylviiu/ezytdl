@@ -53,10 +53,18 @@ module.exports = {
         if(getIconsComplete) return Promise.resolve(icons);
 
         if(!getIconsPromise) getIconsPromise = new Promise(async res => {
-            let supportedMultipliers = [ 1, 1.25, 1.33, 1.4, 1.5, 1.8, 2/*, 2.5, 3, 4, 5, 32*/ ];
+            let supportedMultipliers = [ 1, 1.25, 1.33, 1.4, 1.5, 1.8, 2 ];
+
+            if(process.platform == `win32`) supportedMultipliers = [ 1, 1.25, 1.5, 2 ];
+            // scales based on https://www.electronjs.org/docs/latest/api/native-image#high-resolution-image
+            
+            if(process.platform == `linux`) supportedMultipliers = [ 1, 1.25, 1.33, 1.4, 1.5, 1.8, 2, 2.5, 3, 4, 5 ];
+            // scales are inconsistent with linux, so we just use all supported
+
+            if(process.platform == `darwin`) supportedMultipliers = [ 1, 2 ]
+            // so far as i'm aware, tray icons only use up to 2x on macos
 
             let sizes = supportedMultipliers.map(m => 16 * m);
-            // https://www.electronjs.org/docs/latest/api/native-image#high-resolution-image
     
             console.log(`Getting icons...`)
     
