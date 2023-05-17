@@ -25,6 +25,7 @@
         "target": [
             "AppImage",
             "rpm",
+            "flatpak",
             "tar.gz"
         ]
     },
