@@ -1,5 +1,19 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+const addScript = (path) => new Promise(res => {
+    const script = document.createElement(`script`);
+
+    script.setAttribute(`src`, path);
+    script.setAttribute(`async`, false);
+
+    document.head.appendChild(script);
+
+    script.addEventListener(`load`, () => {
+        console.log(`loaded script ${path}`)
+        res()
+    });
+})
+
 console.log(`preload :D`);
 
 window.addEventListener("mouseup", (e) => {
@@ -32,7 +46,8 @@ contextBridge.exposeInMainWorld(`windowControls`, {
 })
 
 contextBridge.exposeInMainWorld(`system`, {
-    loading: () => invoke(`loading`)
+    loading: () => invoke(`loading`),
+    addScript
 })
 
 contextBridge.exposeInMainWorld(`dialog`, {
@@ -82,18 +97,12 @@ window.onerror = (msg, url, line, col, error) => send(`uiError`, { msg, url, lin
 
 const name = window.location.pathname.split(`/`).slice(-1)[0].split(`.`).slice(0, -1).join(`.`);
 
-const script = document.createElement(`script`);
-script.setAttribute(`src`, `./pagescripts/${name.includes(`-`) ? name.split(`-`)[0] : name}.js`);
-script.setAttribute(`async`, false);
-
-script.addEventListener(`load`, () => {
-    console.log(`loaded script!`)
-});
-
 contextBridge.exposeInMainWorld(`preload`, {
     oncomplete: (cb) => script.addEventListener(`load`, cb)
 });
 
-addEventListener(`DOMContentLoaded`, () => {
-    document.body.insertBefore(script, document.body.firstElementChild);
+addEventListener(`DOMContentLoaded`, async () => {
+    await addScript(`./pagescripts/${name.includes(`-`) ? name.split(`-`)[0] : name}.js`)
+    await addScript(`./topjs/feelLikeNativeApp.js`)
+    await addScript(`./topjs/downloadManager.js`)
 });

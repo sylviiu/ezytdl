@@ -1,19 +1,17 @@
-var start = () => () => {
-    if(document.getElementById('downloadsList') && document.getElementById('downloadsIcon')) {
-        let currentDownloads = 0
-        
+var downloadManagerMainQueueRegistered = false;
+
+var initDownloadManager = () => {
+    console.log(`initDownloadManager / ${downloadManagerMainQueueRegistered}`)
+
+    if(document.getElementById('downloadsList') && document.getElementById('downloadsIcon') && !downloadManagerMainQueueRegistered) {
         const downloadsList = document.getElementById('downloadsList');
         const downloadsIcon = document.getElementById('downloadsIcon').cloneNode(true);
-        
-        let queueUpdates = [];
         
         mainQueue.queueUpdate((m) => {
             if(m.type == `queue`) {
                 console.log(m.data)
             
                 const queueLength = m.data.active.length + m.data.queue.length + m.data.paused.length;
-            
-                currentDownloads = queueLength
             
                 if(queueLength > 0) {
                     if(downloadsList.querySelector(`#downloadsIcon`)) {
@@ -29,7 +27,9 @@ var start = () => () => {
                     };
                 };
             }
-        })
+        });
+
+        downloadManagerMainQueueRegistered = true;
         
         if(document.body.querySelector(`#urlBox`)) {
             const downloadsQueue = formatListTemplate.cloneNode(true);
@@ -451,6 +451,10 @@ var start = () => () => {
     }
 }
 
-if(typeof preload != `undefined`) {
-    preload.oncomplete(start);
-} else document.addEventListener(`DOMContentLoaded`, start)
+if(typeof document.body == `undefined`) {
+    console.log(`waiting for body to load`)
+    document.addEventListener(`DOMContentLoaded`, initDownloadManager)
+} else {
+    console.log(`body already loaded`)
+    initDownloadManager();
+}

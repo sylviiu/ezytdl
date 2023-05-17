@@ -21,20 +21,6 @@ const ajax = new XMLHttpRequest();
 ajax.open(`GET`, path, true);
 console.log(path);
 
-const addScript = (path) => new Promise(res => {
-    const script = document.createElement(`script`);
-
-    script.setAttribute(`src`, path);
-    script.setAttribute(`async`, false);
-
-    document.body.appendChild(script);
-
-    script.addEventListener(`load`, () => {
-        console.log(`loaded script ${path}`)
-        res()
-    });
-})
-
 ajax.onload = async () => {
     console.log(ajax.responseText);
 
@@ -49,15 +35,16 @@ ajax.onload = async () => {
 
     document.body = h.querySelector(`body`);
     
-    await addScript(`./pagescripts/${htmlFile.split(`.`).slice(0, -1).join(`.`)}.js`)
-    await addScript(`./topjs/feelLikeNativeApp.js`)
-    await addScript(`./topjs/downloadManager.js`)
+    await system.addScript(`./pagescripts/${htmlFile.split(`.`).slice(0, -1).join(`.`)}.js`)
+    await system.addScript(`./topjs/feelLikeNativeApp.js`)
+    await system.addScript(`./topjs/downloadManager.js`)
     
     console.log(`loaded scripts!`);
 
     callback();
 
     if(typeof getVersion != `undefined`) getVersion()
+    initDownloadManager()
 
     const navigationBar = document.body.querySelector(`#navigationBar`);
     const everythingElse = document.body.querySelectorAll(`body > div:not(#navigationBar)`);
