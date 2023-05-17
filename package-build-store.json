@@ -30,8 +30,7 @@
         ]
     },
     "mac": {
-        "icon": "res/packageIcons/icon-512x512.icns",
-        "target": "dmg"
+        "icon": "res/packageIcons/icon-512x512.icns"
     },
     "compression": "store",
     "asar": true,
