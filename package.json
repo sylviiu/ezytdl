@@ -20,7 +20,7 @@
     "type": "git",
     "url": "git+https://github.com/sylviiu/ezytdl.git"
   },
-  "author": "Syl",
+  "author": "Syl <hi@sylviiu.dev>",
   "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/sylviiu/ezytdl/issues"

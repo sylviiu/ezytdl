@@ -23,9 +23,6 @@
     "linux": {
         "icon": "res/packageIcons/icon-512x512.png",
         "target": [
-            "AppImage",
-            "deb",
-            "rpm",
             "tar.gz"
         ]
     },
