@@ -1,6 +1,6 @@
 // just disable text selecting and disable link mouse changing and stuff
 
-const process = (windowControlsEnabled) => {
+var process = (windowControlsEnabled) => {
     document.body.style.userSelect = `none`;
     
     const makeButton = (btn) => {
@@ -33,7 +33,7 @@ const process = (windowControlsEnabled) => {
         
         if(document.getElementById(`windowControls`)) {
             console.log(`windowControls present`);
-            if(windowControlsEnabled) {        
+            if(windowControlsEnabled) {
                 document.getElementById(`minimizeWindows`).onclick = () => windowControls.minimize();
                 document.getElementById(`maximizeWindows`).onclick = () => windowControls.maximize();
                 document.getElementById(`closeWindows`).onclick = () => windowControls.close();
@@ -56,19 +56,23 @@ const process = (windowControlsEnabled) => {
     }
 };
 
-let doneLoading = false;
-let value = undefined;
+var doneLoading = false;
+var value = undefined;
 
-addEventListener(`DOMContentLoaded`, () => {
+if(document.body) {
+    doneLoading = true;
+} else addEventListener(`DOMContentLoaded`, () => {
     if(!doneLoading) {
         doneLoading = true;
     } else process(value);
 });
 
-windowControls.enabled().then(enabled => {
-    value = enabled;
-
-    if(!doneLoading) {
-        doneLoading = true;
-    } else process(value);
-})
+if(typeof windowControls != `undefined`) {
+    windowControls.enabled().then(enabled => {
+        value = enabled;
+    
+        if(!doneLoading) {
+            doneLoading = true;
+        } else process(value);
+    })
+}

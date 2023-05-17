@@ -43,6 +43,8 @@ if(!locked) {
                 res(redirect);
                 loadingPromise = null;
                 console.log(`[${Date.now() - startTime}ms] to finish loading app!`);
+            
+                if(!app.isPackaged) window.webContents.openDevTools()
             });
         
             ipcMain.handle(`loading`, () => new Promise(async res => {

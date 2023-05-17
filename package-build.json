@@ -41,6 +41,7 @@
         "html/*.html",
         "html/assets/**/*",
         "html/topjs/*",
+        "html/scripts/*",
         "node_modules/**/*",
         "res/**/*",
         "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",

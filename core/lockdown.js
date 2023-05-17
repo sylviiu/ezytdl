@@ -45,7 +45,7 @@ module.exports = () => {
         callback({
             responseHeaders: {
                 ...details.responseHeaders,
-                'Content-Security-Policy': [`script-src 'unsafe-inline' 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net`],
+                'Content-Security-Policy': [`script-src 'self'`],
             }
         })
     })

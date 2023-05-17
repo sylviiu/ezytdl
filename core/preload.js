@@ -42,7 +42,9 @@ contextBridge.exposeInMainWorld(`dialog`, {
 })
 
 contextBridge.exposeInMainWorld(`version`, {
-    get: () => invoke(`version`)
+    get: () => invoke(`version`),
+    checkForUpdates: () => invoke(`checkForUpdates`),
+    openUpdatePage: () => send(`openUpdatePage`),
 });
 
 contextBridge.exposeInMainWorld(`configuration`, {
@@ -78,13 +80,20 @@ contextBridge.exposeInMainWorld(`changelog`, {
 
 window.onerror = (msg, url, line, col, error) => send(`uiError`, { msg, url, line, col, error });
 
-addEventListener(`DOMContentLoaded`, () => {
-    invoke(`checkForUpdates`).then(update => {
-        if(update && document.getElementById(`updateAvailable`)) {
-            document.getElementById(`updateAvailable`).classList.remove(`d-none`);
-            document.getElementById(`updateAvailable`).classList.add(`d-flex`);
+const name = window.location.pathname.split(`/`).slice(-1)[0].split(`.`).slice(0, -1).join(`.`);
 
-            document.getElementById(`updateAvailable`).onclick = () => send(`openUpdatePage`)
-        }
-    })
+const script = document.createElement(`script`);
+script.setAttribute(`src`, `./pagescripts/${name.includes(`-`) ? name.split(`-`)[0] : name}.js`);
+script.setAttribute(`async`, false);
+
+script.addEventListener(`load`, () => {
+    console.log(`loaded script!`)
+});
+
+contextBridge.exposeInMainWorld(`preload`, {
+    oncomplete: (cb) => script.addEventListener(`load`, cb)
+});
+
+addEventListener(`DOMContentLoaded`, () => {
+    document.body.insertBefore(script, document.body.firstElementChild);
 });
