@@ -65,7 +65,8 @@ module.exports = async (startTime) => {
         if(passed != total) {
             process.exit(1);
         } else {
-            process.exit(0);
+            global.quitting = true;
+            require(`electron`).app.quit();
         }
     }
 }
