@@ -141,11 +141,11 @@ const startDownload = (originalCard, opt) => {
     } else {
         formatDownloadButtonPosition = originalCard.getBoundingClientRect();
 
-        formatDownloadButtonPosition.x += formatDownloadButtonPosition.width/2;
-        formatDownloadButtonPosition.y += formatDownloadButtonPosition.height/2;
+        //formatDownloadButtonPosition.x += formatDownloadButtonPosition.width/2;
+        //formatDownloadButtonPosition.y += formatDownloadButtonPosition.height/2;
 
-        formatDownloadButtonPosition.x += downloadsListBtn.style.width/2;
-        formatDownloadButtonPosition.y -= downloadsListBtn.style.height/2;
+        //formatDownloadButtonPosition.x += downloadsListBtn.style.width/2;
+        //formatDownloadButtonPosition.y -= downloadsListBtn.style.height/2;
     }
 
     const card = originalCard.cloneNode(true);
@@ -234,9 +234,15 @@ const startDownload = (originalCard, opt) => {
     setTimeout(() => mainQueue.download(opt), 780);
     
     setTimeout(() => {
+        let currentX = card.getBoundingClientRect().x;
+
+        setTimeout(() => {
+            currentX = card.getBoundingClientRect().x;
+        }, 450);
+
         const targetPosition = downloadsListBtn.getBoundingClientRect();
 
-        console.log(currentPosition, targetPosition)
+        console.log(currentPosition, targetPosition);
 
         anime({
             targets: card,
@@ -276,8 +282,8 @@ const startDownload = (originalCard, opt) => {
                 anime({
                     targets: copy,
                     filter: [`invert(1)`, `invert(0)`],
-                    top: [newTarget.y-10, newTarget.y],
-                    left: [newTarget.x+2, newTarget.x],
+                    top: [((newTarget.y - formatDownloadButtonPosition.y)/15) + newTarget.y, newTarget.y],
+                    left: [((newTarget.x - currentX)/15) + newTarget.x, newTarget.x],
                     duration: 400,
                     easing: `easeOutExpo`,
                     complete: () => {
