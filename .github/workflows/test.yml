@@ -24,10 +24,6 @@ jobs:
         run: |
           npm start -- --testrun
 
-      - name: Test from source
-        run: |
-          npm start -- --testrun
-
       - name: Run uncompressed (store) build
         run: |
           npm run store
@@ -37,6 +33,11 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
+
+      - name: Install xvfb for headless testing (linux only)
+        run: |
+          apt update -y
+          apt install xvfb x11-xserver-utils -y
 
       - name: Install Node.js & NPM
         uses: actions/setup-node@main
@@ -49,11 +50,7 @@ jobs:
 
       - name: Test from source
         run: |
-          npm start -- --testrun
-
-      - name: Test from source
-        run: |
-          npm start -- --testrun
+          xvfb-run --auto-servernum npm start -- --testrun
 
       - name: Run uncompressed (store) build
         run: |
@@ -65,6 +62,10 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v2
 
+      - name: Install ffmpeg from homebrew (macos only)
+        run: |
+          brew install ffmpeg
+
       - name: Install Node.js & NPM
         uses: actions/setup-node@main
         with:
@@ -73,10 +74,6 @@ jobs:
       - name: Install npm deps
         run: |
           npm install
-
-      - name: Install ffmpeg from homebrew (macos only)
-        run: |
-          brew install ffmpeg
 
       - name: Test from source
         run: |
