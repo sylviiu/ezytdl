@@ -12,7 +12,10 @@ module.exports = async () => new Promise(async res => {
     activeDownload = true;
 
     const ws = {
-        send: (args) => global.window ? global.window.webContents.send(`updateClientEvent`, args) : null,
+        send: (args) => {
+            if(global.testrun) console.log(args)
+            global.window ? global.window.webContents.send(`updateClientEvent`, args) : null
+        },
         close: () => {
             activeDownload = null;
             global.window ? global.window.webContents.send(`updateClientEvent`, {complete: true}) : null;
