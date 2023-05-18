@@ -30,7 +30,7 @@ module.exports = async (startTime) => {
                         result: `TIMED OUT`,
                     }
                     console.log(`[${Date.now() - startTime}ms / ${Date.now() - startedThisTest}] - ${testFile} (${Number(i)+1}/${tests.length}) -- TIMED OUT.`)
-                    res();
+                    return res();
                 }
             }, 15000)
 
@@ -44,7 +44,7 @@ module.exports = async (startTime) => {
                     }
                     console.log(`[${Date.now() - startTime}ms / ${Date.now() - startedThisTest}] - ${testFile} (${Number(i)+1}/${tests.length}) - `, result)
                 };
-                res();
+                return res();
             }).catch(e => {
                 clearTimeout(timeout);
                 testObject[testFile] = {
@@ -53,7 +53,7 @@ module.exports = async (startTime) => {
                     result: e,
                 }
                 console.log(`[${Date.now() - startTime}ms / ${Date.now() - startedThisTest}] - ${testFile} (${Number(i)+1}/${tests.length}) - FAILED - `, e)
-                res();
+                return res();
             })
         });
 
@@ -61,6 +61,8 @@ module.exports = async (startTime) => {
 
         const passed = Object.values(testObject).map(o => o.passed).length, total = Object.keys(testObject).length;
         console.log(`[${Date.now() - startTime}ms] ${passed}/${total} tests passed.`);
+
+        console.log(`${require(`os`).freemem()} free, \n~${Math.round(process.memoryUsage().rss/1000000)}MB used / ~${Math.round(require(`os`).totalmem()/1000000)}MB total`)
 
         if(passed != total) {
             process.exit(1);
