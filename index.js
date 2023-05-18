@@ -3,6 +3,11 @@ const startTime = Date.now();
 global.testrun = process.argv.find(s => s == `--testrun`) ? true : false;
 global.headless = process.argv.find(s => s == `--headless`) ? true : false;
 
+if(global.testrun || global.headless) {
+    app.commandLine.appendSwitch(`--ignore-gpu-blacklist`);
+    app.disableHardwareAcceleration();
+}
+
 console.log(`Starting ezytdl v${require(`./package.json`).version}`)
 
 const { app, ipcMain } = require(`electron`);
