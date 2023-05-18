@@ -16,7 +16,11 @@ module.exports = (content) => {
             };
         }
     } else if((!global.window || global.windowHidden) && content.systemAllowed) {
-        const notif = new Notification({ title: (content.type ? `[${content.type.toUpperCase()}] ` : ``) + content.headingText, body: content.bodyText });
+        const notif = new Notification({ 
+            title: (content.type ? `[${content.type.toUpperCase()}] ` : ``) + content.headingText, 
+            body: content.bodyText,
+            icon: content.icon || require(`./downloadIcon`).get(`active`, null, true),
+        });
         notif.show();
         return true;
     } else if(!global.window || global.windowHidden) {

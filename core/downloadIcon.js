@@ -19,20 +19,20 @@ const events = new (require(`events`).EventEmitter)();
 let currentIcon = icons.regularIcon;
 events.on(`icon`, i => currentIcon = i);
 
-const iconGetter = (type, alwaysUseLightIcon) => {
+const iconGetter = (type, alwaysUseLightIcon, maxRes) => {
     let useDark = nativeTheme.shouldUseDarkColors;
 
     if(alwaysUseLightIcon === true) useDark = true;
     if(alwaysUseLightIcon === false) useDark = false;
 
-    if(!icons[type]) type = global.updateAvailable ? `update` : `noQueue`
+    if(!icons[type]) type = global.updateAvailable ? `update` : `noQueue`;
 
     if(useDark) {
         console.log(`getting ${type} light`);
-        return icons[type + `Inv`]
+        return icons[type + `Inv` + (maxRes ? `Max` : ``)]
     } else {
         console.log(`getting ${type} dark`);
-        return icons[type]
+        return icons[type + (maxRes ? `Max` : ``)]
     }
 };
 
@@ -68,28 +68,35 @@ module.exports = {
     
             console.log(`Getting icons...`)
     
-            const createIcon = (iconFile, negate) => new Promise(async res => {
-                let nativeIcon = nativeImage.createEmpty();
+            const createIcon = (iconFile, negate, maxRes) => new Promise(async res => {
+                let nativeIcon = null;
     
                 console.log(`Creating ${iconFile} / negate: ${negate}`);
-    
-                for(let i in sizes) {
-                    const size = sizes[i];
-                    const icon = await iconToPNG(iconFile, size, negate);
-    
-                    if(nativeIcon) {
-                        nativeIcon.addRepresentation({
-                            scaleFactor: supportedMultipliers[i],
-                            width: size,
-                            height: size,
-                            buffer: icon
-                        });
-                    } else {
-                        nativeIcon = nativeImage.createFromBuffer(icon);
-                    }
-                };
 
-                if(process.platform == `darwin`) {
+                if(maxRes) {
+                    const icon = await iconToPNG(iconFile, 512, negate);
+                    nativeIcon = nativeImage.createFromBuffer(icon)
+                } else {
+                    nativeIcon = nativeImage.createEmpty();
+
+                    for(let i in sizes) {
+                        const size = sizes[i];
+                        const icon = await iconToPNG(iconFile, size, negate);
+        
+                        if(nativeIcon) {
+                            nativeIcon.addRepresentation({
+                                scaleFactor: supportedMultipliers[i],
+                                width: size,
+                                height: size,
+                                buffer: icon
+                            });
+                        } else {
+                            nativeIcon = nativeImage.createFromBuffer(icon);
+                        }
+                    };
+                }
+
+                if(process.platform == `darwin` && !maxRes) {
                     console.log(`Setting template image`)
                     nativeIcon.setTemplateImage(true);
                 }
@@ -122,8 +129,18 @@ module.exports = {
                         if(typeof originalIcons[iconFile] == `string`) {
                             const str = originalIcons[iconFile];
 
-                            icons[iconFile + (inv ? `Inv` : ``)] = await createIcon(str, inv);
-                            console.log(`(${Date.now() - starttime}ms) nativeIcon ${iconFile}${inv ? ` (inv)` : ``} complete`);
+                            await Promise.all([
+                                new Promise(async r => {
+                                    icons[iconFile + (inv ? `Inv` : ``)] = await createIcon(str, inv);
+                                    console.log(`(${Date.now() - starttime}ms) nativeIcon ${iconFile}${inv ? ` (inv)` : ``} complete`);
+                                    r();
+                                }),
+                                new Promise(async r => {
+                                    icons[iconFile + (inv ? `Inv` : ``) + `Max`] = await createIcon(str, inv, true);
+                                    console.log(`(${Date.now() - starttime}ms) nativeIcon [MAX] ${iconFile}${inv ? ` (inv)` : ``} complete`);
+                                    r();
+                                }),
+                            ])
                         };
 
                         r();
@@ -142,7 +159,7 @@ module.exports = {
 
         return getIconsPromise;
     },
-    get: (type) => iconGetter(type),
+    get: (...content) => iconGetter(...content),
     set: (type) => {
         const { alwaysUseLightIcon } = require(`../getConfig`)();
     

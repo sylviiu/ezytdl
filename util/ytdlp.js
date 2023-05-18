@@ -169,7 +169,7 @@ module.exports = {
         })
     }),
     download: ({url, format, ext, filePath, info}, updateFunc) => new Promise(async res => {
-        const temporaryFilename = `ezytdl-` + idGen(8);
+        const temporaryFilename = `ezytdl-` + idGen(24);
         
         let obj = {};
 
