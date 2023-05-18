@@ -13,6 +13,11 @@ jobs:
 
       - name: Setup headless display
         uses: pyvista/setup-headless-display-action@v1
+      
+      - name: Update existing packages (linux only)
+        run: |
+          sudo apt update -y
+          sudo apt upgrade -y
 
       - name: Install Node.js & NPM
         uses: actions/setup-node@main
