@@ -4,7 +4,7 @@ run-name: ${{ github.actor }} - ${{ github.event_name }} - ${{ github.sha }}
 on: [push]
 
 jobs:
-  Explore-GitHub-Actions:
+  build:
     runs-on: ${{ matrix.os }}
 
     strategy:
