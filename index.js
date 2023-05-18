@@ -8,8 +8,8 @@ console.log(`Starting ezytdl v${require(`./package.json`).version}`)
 const { app, ipcMain } = require(`electron`);
 global.configPath = app.getPath('userData');
 
-process.on(`uncaughtException`, (err) => require(`./util/errorHandler`)(`${err}\n\n${err.stack? err.stack : `(no stack)`}`))
-process.on(`unhandledRejection`, (err) => require(`./util/errorHandler`)(`${err}\n\n${err.stack? err.stack : `(no stack)`}`))
+process.on(`uncaughtException`, (err) => (global.testrun ? require(`./util/errorAndExit`) : require(`./util/errorHandler`))(`${typeof err == `object` ? JSON.stringify(err, null, 4) : err}\n\n${err.stack? err.stack : `(no stack)`}`))
+process.on(`unhandledRejection`, (err) => (global.testrun ? require(`./util/errorAndExit`) : require(`./util/errorHandler`))(`${typeof err == `object` ? JSON.stringify(err, null, 4) : err}\n\n${err.stack? err.stack : `(no stack)`}`))
 
 const locked = app.requestSingleInstanceLock();
 
