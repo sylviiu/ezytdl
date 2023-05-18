@@ -44,7 +44,7 @@ if(!locked) {
                 console.log(`Took [${Date.now() - startTime}ms] to finish init!`, init);
         
                 let redirect = `index.html`
-                if(!init.ytdlpDownloaded) redirect = `updating.html`;
+                if(!init.ytdlpDownloaded && !global.testrun) redirect = `updating.html`;
         
                 doneLoading = redirect;
                 res(redirect);
