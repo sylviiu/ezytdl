@@ -22,13 +22,8 @@ jobs:
 
       - name: Build app
         run: |
-          npm run dist
-
-      - name: Install flatpak & builder
-        run: |
-          sudo apt update -y
-          sudo apt install flatpak flatpak-builder -y
-
+          npm run store
+          
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
