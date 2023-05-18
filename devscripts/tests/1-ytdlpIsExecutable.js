@@ -1,7 +1,8 @@
 module.exports = () => new Promise(async (res, rej) => {
     require(`../../util/currentVersion/ytdlp`)(true).then(v => {
-        if(typeof v == `string`) {
+        if(typeof v == `string` && v) {
+            console.log(`YT-DLP IS EXECUTABLE. "${v}"`)
             res(v)
-        } else rej(`FFMPEG IS NOT EXECUTABLE.`)
+        } else rej(new Error(`YT-DLP IS NOT EXECUTABLE.`))
     })
 })

@@ -98,6 +98,8 @@ module.exports = async () => new Promise(async res => {
                         const newPath = require(`../filenames/ffmpeg`).getPath()
 
                         if(!process.platform.toLowerCase().includes(`win32`)) {
+                            console.log(`CHMOD ${newPath}`);
+                            
                             try {
                                 require(`child_process`).execFileSync(`chmod`, [`+x`, newPath])
                             } catch(e) {

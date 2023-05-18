@@ -89,6 +89,20 @@ module.exports = async () => new Promise(async res => {
                 writeStream.on(`finish`, () => {
                     console.log(`done!`);
 
+                    const chmod = (path) => {
+                        console.log(`CHMOD ${path}`)
+
+                        if(!process.platform.toLowerCase().includes(`win32`)) {
+                            try {
+                                require(`child_process`).execFileSync(`chmod`, [`+x`, path])
+                            } catch(e) {
+                                fs.chmodSync(path, 0o777)
+                            }
+                        }
+        
+                        ws.close();
+                    }
+
                     if(downloadFile.endsWith(`.zip`)) {
                         fs.mkdirSync(downloadPath, { recursive: true, failOnError: false });
 
@@ -98,17 +112,13 @@ module.exports = async () => new Promise(async res => {
 
                         fs.createReadStream(downloadPath + `.zip`).pipe(extractor);
 
-                        extractor.on(`close`, () => ws.close());
+                        extractor.on(`close`, () => {
+                            fs.unlinkSync(downloadPath + `.zip`);
+                            const newPath = require(`../filenames/ytdlp`).getPath()
+                            chmod(newPath);
+                        });
                     } else {
-                        if(!process.platform.toLowerCase().includes(`win32`)) {
-                            try {
-                                require(`child_process`).execFileSync(`chmod`, [`+x`, downloadPath])
-                            } catch(e) {
-                                fs.chmodSync(downloadPath, 0o777)
-                            }
-                        }
-        
-                        ws.close();
+                        chmod(downloadPath)
                     }
                 })
             }

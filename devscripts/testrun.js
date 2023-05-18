@@ -52,7 +52,7 @@ module.exports = async (startTime) => {
                     passed: false,
                     result: e,
                 }
-                console.log(`[${Date.now() - startTime}ms / ${Date.now() - startedThisTest}] - ${testFile} (${Number(i)+1}/${tests.length}) - FAILED - `, result)
+                console.log(`[${Date.now() - startTime}ms / ${Date.now() - startedThisTest}] - ${testFile} (${Number(i)+1}/${tests.length}) - FAILED - `, e)
                 res();
             })
         });

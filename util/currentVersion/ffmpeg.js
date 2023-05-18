@@ -5,7 +5,7 @@ const child_process = require('child_process');
 
 let currentVersion = null;
 
-module.exports = (forceCheck) => new Promise(async res => {
+module.exports = (forceCheck) => new Promise(async (res, rej) => {
     let path = getPath()
     
     if(!forceCheck && currentVersion) {
@@ -17,6 +17,7 @@ module.exports = (forceCheck) => new Promise(async res => {
         if(exists) {
             const proc = child_process.spawnSync(path, [`-version`]);
             if(proc.stderr) console.log(`STDERR`, proc.stderr.toString());
+            if(proc.error) return rej(proc.error)
             //const versionString = child_process.execSync(`${path} -version`).toString().trim();
             if(!proc.stdout) return res(null);
             const versionString = proc.stdout.toString().trim();
