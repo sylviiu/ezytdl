@@ -16,10 +16,13 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Build app
+      - name: Install npm deps
         run: |
           npm install
-          npm run store
+
+      - name: Build app
+        run: |
+          npm run dist
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2

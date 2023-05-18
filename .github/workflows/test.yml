@@ -54,6 +54,10 @@ jobs:
         with:
           node-version: '18'
 
+      - name: Install npm deps
+        run: |
+          npm install
+
       - name: Install ffmpeg from homebrew (macos only)
         run: |
           brew install ffmpeg
@@ -65,3 +69,10 @@ jobs:
       - name: Run uncompressed (store) build
         run: |
           npm run store
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: |
+            dist/ezytdl*
+            dist/latest*.yml

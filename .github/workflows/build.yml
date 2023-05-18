@@ -23,9 +23,12 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Build app
+      - name: Install npm deps
         run: |
           npm install
+
+      - name: Build app
+        run: |
           npm run dist
 
       - if: ${{ matrix.os }} == 'ubuntu-latest'
