@@ -248,7 +248,13 @@ module.exports = {
     
             update({saveLocation: saveTo, url, format, kill: () => {
                 killAttempt++
-                proc.kill(`SIGKILL`);
+
+                if(process.platform == `win32`) {
+                    proc.kill(`SIGTERM`);
+                    //proc.kill(`SIGINT`);
+                } else {
+                    proc.kill(`SIGKILL`);
+                }
             }, status: `Downloading...`})
     
             proc.stdout.on(`data`, data => {

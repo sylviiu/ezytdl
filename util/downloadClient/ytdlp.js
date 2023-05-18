@@ -45,15 +45,19 @@ module.exports = async () => {
     
             console.log(`Latest version: ${version}`);
             console.log(`Downloads: ${downloads.map(d => d.name).join(`, `)}`);
+
+            let downloadFile = file.replace(`.exe`, `_win`) + `.zip`;
+
+            //if(!downloads.find(d => d.name === downloadFile)) downloadFile = file;
     
-            if(!downloads.find(d => d.name === file)) {
-                return errorHandler(`Failed to find download for ${file} in latest release; please make sure that you are using a supported a platform!\n\nIf you are, please open an issue on GitHub.`)
+            if(!downloads.find(d => d.name === downloadFile)) {
+                return errorHandler(`Failed to find download for ${downloadFile} in latest release; please make sure that you are using a supported a platform!\n\nIf you are, please open an issue on GitHub.`)
             } else {
-                const download = downloads.find(d => d.name === file);
+                const download = downloads.find(d => d.name === downloadFile);
     
                 console.log(`Found target file! (${file} / ${download.size} size); downloading ${download.name} from "${download.browser_download_url}"`);
     
-                const writeStream = fs.createWriteStream(`${downloadPath}`, { flags: `w` });
+                const writeStream = fs.createWriteStream(`${downloadPath}` + `.zip`, { flags: `w` });
     
                 const req = require('superagent').get(download.browser_download_url).set(`User-Agent`, `node`);
     
@@ -75,15 +79,27 @@ module.exports = async () => {
                 writeStream.on(`finish`, () => {
                     console.log(`done!`);
 
-                    if(!platform().toLowerCase().includes(`win32`)) {
-                        try {
-                            require(`child_process`).execFileSync(`chmod`, [`+x`, downloadPath])
-                        } catch(e) {
-                            fs.chmodSync(downloadPath, 0o777)
+                    if(downloadFile.endsWith(`.zip`)) {
+                        fs.mkdirSync(downloadPath, { recursive: true, failOnError: false });
+
+                        const extractor = require(`unzipper`).Extract({
+                            path: downloadPath
+                        });
+
+                        fs.createReadStream(downloadPath + `.zip`).pipe(extractor);
+
+                        extractor.on(`close`, () => ws.close());
+                    } else {
+                        if(!platform().toLowerCase().includes(`win32`)) {
+                            try {
+                                require(`child_process`).execFileSync(`chmod`, [`+x`, downloadPath])
+                            } catch(e) {
+                                fs.chmodSync(downloadPath, 0o777)
+                            }
                         }
+        
+                        ws.close();
                     }
-    
-                    ws.close();
                 })
             }
         }

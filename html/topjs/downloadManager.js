@@ -103,7 +103,7 @@ var initDownloadManager = () => {
                     card.querySelector(`#downloadicon`).classList.add(`d-none`);
                     card.querySelector(`#stopicon`).classList.remove(`d-none`);
             
-                    if(platform == `win32`) card.querySelector(`#formatDownload`).classList.add(`d-none`)
+                    //if(platform == `win32`) card.querySelector(`#formatDownload`).classList.add(`d-none`)
             
                     card.querySelector(`#formatDownload`).onclick = () => {
                         mainQueue.action({
@@ -127,7 +127,7 @@ var initDownloadManager = () => {
                     card.querySelector(`#downloadicon`).classList.add(`d-none`);
                     card.querySelector(`#stopicon`).classList.remove(`d-none`);
                     
-                    if(platform == `win32`) card.querySelector(`#formatDownload`).classList.add(`d-none`)
+                    //if(platform == `win32`) card.querySelector(`#formatDownload`).classList.add(`d-none`)
             
                     card.querySelector(`#formatDownload`).onclick = () => {
                         mainQueue.action({

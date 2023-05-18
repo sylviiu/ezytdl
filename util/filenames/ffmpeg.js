@@ -1,5 +1,4 @@
 let platform = require('os').platform();
-let arch = require('os').arch();
 
 if(platform == `win32`) platform = `win`
 
