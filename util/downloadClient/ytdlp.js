@@ -7,6 +7,8 @@ const { platform } = require('os');
 
 let activeDownload = null;
 
+let lastRoundedNum = 0;
+
 module.exports = async () => new Promise(async res => {
     if(activeDownload) return activeDownload;
 
@@ -14,8 +16,13 @@ module.exports = async () => new Promise(async res => {
 
     const ws = {
         send: (args) => {
-            if(global.testrun) console.log(args)
-            global.window ? global.window.webContents.send(`updateClientEvent`, args) : null
+            if(global.testrun) {
+                const newNum = Math.round(args.progress * 100);
+                if(newNum != lastRoundedNum) {
+                    lastRoundedNum = newNum;
+                    console.log(`Downloaded ` + Math.round(args.progress * 100) + `% ...`)
+                }
+            }
         },
         close: () => {
             activeDownload = null;
