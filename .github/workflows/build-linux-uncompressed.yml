@@ -26,8 +26,8 @@ jobs:
 
       - name: Install flatpak & builder
         run: |
-          apt update -y
-          apt install flatpak flatpak-builder -y
+          sudo apt update -y
+          sudo apt install flatpak flatpak-builder -y
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2

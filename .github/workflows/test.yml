@@ -36,8 +36,8 @@ jobs:
 
       - name: Install xvfb for headless testing (linux only)
         run: |
-          apt update -y
-          apt install xvfb x11-xserver-utils -y
+          sudo apt update -y
+          sudo apt install xvfb x11-xserver-utils -y
 
       - name: Install Node.js & NPM
         uses: actions/setup-node@main
