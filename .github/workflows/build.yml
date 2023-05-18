@@ -16,7 +16,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install Node.js & NPM
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@main
+        with:
+          node-version: '18'
 
       - name: Build app
         run: |
