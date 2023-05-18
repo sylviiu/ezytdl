@@ -11,10 +11,8 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v2
 
-      - name: Install xvfb for headless testing (linux only)
-        run: |
-          sudo apt update -y
-          sudo apt install xvfb x11-xserver-utils -y
+      - name: Setup headless display
+        uses: pyvista/setup-headless-display-action@v1
 
       - name: Install Node.js & NPM
         uses: actions/setup-node@main
@@ -27,7 +25,7 @@ jobs:
 
       - name: Test from source
         run: |
-          xvfb-run --auto-servernum npm start -- --testrun
+          npm start -- --testrun
 
       - name: Run uncompressed (store) build
         run: |
