@@ -13,8 +13,8 @@
   },
   "scripts": {
     "start": "electron .",
-    "store": "electron-builder -c ./package-build-store.json",
-    "dist": "electron-builder -c ./package-build.json"
+    "store": "electron-builder -c ./package-build-store.json -p never",
+    "dist": "electron-builder -c ./package-build.json -p never"
   },
   "repository": {
     "type": "git",
