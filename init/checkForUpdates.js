@@ -1,4 +1,4 @@
 module.exports = () => new Promise(async r => {
     r(null);
-    require(`../core/checkForUpdates`)();
+    if(!global.testrun || !require(`electron`).app.isPackaged) require(`../core/checkForUpdates`)();
 })
