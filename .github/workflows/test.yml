@@ -16,6 +16,14 @@ jobs:
         with:
           node-version: '18'
 
+      - name: Install npm deps
+        run: |
+          npm install
+
+      - name: Test from source
+        run: |
+          npm start -- --testrun
+
       - name: Test from source
         run: |
           npm start -- --testrun
@@ -34,6 +42,14 @@ jobs:
         uses: actions/setup-node@main
         with:
           node-version: '18'
+
+      - name: Install npm deps
+        run: |
+          npm install
+
+      - name: Test from source
+        run: |
+          npm start -- --testrun
 
       - name: Test from source
         run: |
