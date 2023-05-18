@@ -248,8 +248,6 @@ var initDownloadManager = () => {
         
             let totalQueue = [], order = [], pageNum = 0, totalPages = 0, cardsPerPage = 5;
         
-            let firstRefresh = true;
-        
             const refreshListView = () => {
                 console.log(`refreshing list view`)
         
@@ -258,6 +256,7 @@ var initDownloadManager = () => {
                 downloadsQueue.querySelectorAll(`.card`).forEach(card => {
                     if(!queue.find(o => o.id == card.id.split(`-`)[1])) {
                         if(downloadManagers[card.id.split(`-`)[1]]) delete downloadManagers[card.id.split(`-`)[1]];
+                        //removeCardAnim(card)
                         card.parentNode.removeChild(card);
                     }
                 });

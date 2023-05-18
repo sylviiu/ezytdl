@@ -169,6 +169,8 @@ module.exports = {
         })
     }),
     download: ({url, format, ext, filePath, info}, updateFunc) => new Promise(async res => {
+        const temporaryFilename = `ezytdl-` + idGen(8);
+        
         let obj = {};
 
         let proc;
@@ -184,11 +186,13 @@ module.exports = {
             const purgeFiles = (from, filename) => {
                 let findFiles = filename;
 
-                if(findFiles.endsWith(`.part`)) {
+                if(findFiles.startsWith(temporaryFilename)) {
+                    findFiles = temporaryFilename;
+                } else if(findFiles.endsWith(`.part`)) {
                     findFiles = findFiles.split(`.part`).slice(0, -1).join(`.part`)
                 } else if(findFiles.endsWith(`.ytdl`)) {
                     findFiles = findFiles.split(`.part`).slice(0, -1).join(`.ytdl`)
-                };
+                }
 
                 if(findFiles) {
                     const dir = fs.readdirSync(saveTo);
@@ -229,8 +233,8 @@ module.exports = {
 
         try {
             const path = getPath();
-            
-            const temporaryFilename = `ezytdl-` + idGen(8);
+
+            let ytdlpFilename = null;
 
             filenames.push(temporaryFilename)
     
@@ -290,7 +294,12 @@ module.exports = {
             
             if(ext) {
                 args[4] = args[4].replace(outputFilename, temporaryFilename);
-                args.splice(5, 2)
+                args.splice(5, 2);
+
+                module.exports.getFilename(url, format).then(result => {
+                    ytdlpFilename = result;
+                    filenames.push(ytdlpFilename);
+                })
             }
             
             console.log(`saveTo: ` + saveTo, `\n- ` + args.join(`\n- `))
@@ -332,8 +341,6 @@ module.exports = {
             proc.on(`close`, async code => {
                 update({kill: () => {killAttempt++}});
     
-                let ytdlFilename = `--`
-    
                 let previousFilename = obj.destinationFile ? `ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0] : temporaryFilename;
 
                 const fallback = (msg, deleteFile) => {
@@ -342,35 +349,33 @@ module.exports = {
                         if(deleteFile) {
                             fs.unlinkSync(saveTo + previousFilename)
                         } else {
-                            fs.renameSync(saveTo + previousFilename, saveTo + ytdlFilename + `.` + previousFilename.split(`.`).slice(-1)[0]);
+                            fs.renameSync(saveTo + previousFilename, saveTo + ytdlpFilename + `.` + previousFilename.split(`.`).slice(-1)[0]);
                         }
                     } catch(e) { console.log(e) }
-                    update({failed: true, percentNum: 100, status: `Could not convert to ${`${ext}`.toUpperCase()}.` + msg && typeof msg == `string` ? `\n\n${msg}` : ``, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.` + previousFilename.split(`.`).slice(-1)[0], url, format});
+                    update({failed: true, percentNum: 100, status: `Could not convert to ${`${ext}`.toUpperCase()}.` + msg && typeof msg == `string` ? `\n\n${msg}` : ``, saveLocation: saveTo, destinationFile: saveTo + ytdlpFilename + `.` + previousFilename.split(`.`).slice(-1)[0], url, format});
                     return res(obj)
                     //purgeLeftoverFiles(saveTo)
                 };
     
-                if(killAttempt > 0) return fallback(`Download canceled.`, true)
+                if(killAttempt > 0) return fallback(`Download canceled.`, true);
     
-                const files = fs.readdirSync(saveTo);
-    
-                ytdlFilename = await module.exports.getFilename(url, format);
+                if(!ytdlpFilename) ytdlpFilename = await module.exports.getFilename(url, format);
 
-                filenames.push(ytdlFilename)
+                filenames.push(ytdlpFilename)
     
                 if(!fs.existsSync(previousFilename)) previousFilename = await module.exports.getFilename(url, format, temporaryFilename + `.%(ext)s`);
     
                 filenames.push(previousFilename)
 
                 if(ext) {
-                    const mainArgs = [`-i`, saveTo + previousFilename, saveTo + ytdlFilename + `.${ext}`];
+                    const mainArgs = [`-i`, saveTo + previousFilename, saveTo + ytdlpFilename + `.${ext}`];
     
                     const inputArgs = [`-i`, saveTo + previousFilename];
-                    const outputArgs = [saveTo + ytdlFilename + `.${ext}`];
+                    const outputArgs = [saveTo + ytdlpFilename + `.${ext}`];
     
                     const spawnFFmpeg = (args2, name) => new Promise((resolveFFmpeg, rej) => {
                         if(killAttempt > 0) {
-                            update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.${ext}`, url, format})
+                            update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: saveTo + ytdlpFilename + `.${ext}`, url, format})
                             return res(obj)
                             //purgeLeftoverFiles(saveTo)
                             //return res(`Download canceled.`, true);
@@ -418,14 +423,14 @@ module.exports = {
         
                         proc.on(`close`, (code) => {
                             if(killAttempt > 0) {
-                                update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.${ext}`, url, format})
+                                update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: saveTo + ytdlpFilename + `.${ext}`, url, format})
                                 return res(obj)
                                 //return purgeLeftoverFiles(saveTo)
                                 //return res(`Download canceled.`, true);
-                            } else if(fs.existsSync(saveTo + ytdlFilename + `.${ext}`) && code == 0) {
+                            } else if(fs.existsSync(saveTo + ytdlpFilename + `.${ext}`) && code == 0) {
                                 console.log(`ffmpeg completed; deleting temporary file...`);
                                 fs.unlinkSync(saveTo + previousFilename);
-                                update({percentNum: 100, status: `Done!`, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.${ext}`, url, format});
+                                update({percentNum: 100, status: `Done!`, saveLocation: saveTo, destinationFile: saveTo + ytdlpFilename + `.${ext}`, url, format});
                                 resolveFFmpeg(obj)
                             } else {
                                 rej(code)
@@ -437,7 +442,7 @@ module.exports = {
     
                     console.log(`Retrieving filename`);
                     
-                    obj.destinationFile = ytdlFilename;
+                    obj.destinationFile = ytdlpFilename;
     
                     console.log(`file extension was provided! continuing with ffmpeg...`, obj.destinationFile);
     
@@ -524,7 +529,7 @@ module.exports = {
                     }
                 } else if(ext === false) {
                     if(killAttempt > 0) {
-                        update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.${downloadInExt}`, url, format})
+                        update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: saveTo + ytdlpFilename + `.${downloadInExt}`, url, format})
                         return res(obj)
                         //purgeLeftoverFiles(saveTo)
                     } else if(args.includes(`-S`)) {
