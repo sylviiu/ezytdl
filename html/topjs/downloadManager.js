@@ -83,17 +83,15 @@ var initDownloadManager = () => {
                         })
                     };
 
-                    if(!downloadManagers[card.id.split(`-`)[1]] || !downloadManagers[card.id.split(`-`)[1]].status || !downloadManagers[card.id.split(`-`)[1]].status.failed) {
-                        const btn2 = card.querySelector(`#pausePlayButton`);
+                    const btn2 = card.querySelector(`#pausePlayButton`);
                 
-                        card.querySelector(`#trashicon`).classList.remove(`d-none`);
-                        card.querySelector(`#pauseicon`).classList.add(`d-none`);
-                
-                        btn2.onclick = () => mainQueue.deleteFiles(card.id.split(`-`)[1]);
-                
-                        btn2.classList.remove(`d-none`);
-                        btn2.classList.add(`d-flex`);
-                    }
+                    card.querySelector(`#trashicon`).classList.remove(`d-none`);
+                    card.querySelector(`#pauseicon`).classList.add(`d-none`);
+            
+                    btn2.onclick = () => mainQueue.deleteFiles(card.id.split(`-`)[1]);
+            
+                    btn2.classList.remove(`d-none`);
+                    btn2.classList.add(`d-flex`);
                     
                     card.querySelector(`#formatDownload`).onclick = clear
                 },

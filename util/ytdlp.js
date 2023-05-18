@@ -346,7 +346,8 @@ module.exports = {
                         }
                     } catch(e) { console.log(e) }
                     update({failed: true, percentNum: 100, status: `Could not convert to ${`${ext}`.toUpperCase()}.` + msg && typeof msg == `string` ? `\n\n${msg}` : ``, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.` + previousFilename.split(`.`).slice(-1)[0], url, format});
-                    purgeLeftoverFiles(saveTo)
+                    return res(obj)
+                    //purgeLeftoverFiles(saveTo)
                 };
     
                 if(killAttempt > 0) return fallback(`Download canceled.`, true)
@@ -370,7 +371,8 @@ module.exports = {
                     const spawnFFmpeg = (args2, name) => new Promise((resolveFFmpeg, rej) => {
                         if(killAttempt > 0) {
                             update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.${ext}`, url, format})
-                            purgeLeftoverFiles(saveTo)
+                            return res(obj)
+                            //purgeLeftoverFiles(saveTo)
                             //return res(`Download canceled.`, true);
                         }
     
@@ -417,7 +419,8 @@ module.exports = {
                         proc.on(`close`, (code) => {
                             if(killAttempt > 0) {
                                 update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.${ext}`, url, format})
-                                return purgeLeftoverFiles(saveTo)
+                                return res(obj)
+                                //return purgeLeftoverFiles(saveTo)
                                 //return res(`Download canceled.`, true);
                             } else if(fs.existsSync(saveTo + ytdlFilename + `.${ext}`) && code == 0) {
                                 console.log(`ffmpeg completed; deleting temporary file...`);
@@ -521,7 +524,9 @@ module.exports = {
                     }
                 } else if(ext === false) {
                     if(killAttempt > 0) {
-                        purgeLeftoverFiles(saveTo)
+                        update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.${downloadInExt}`, url, format})
+                        return res(obj)
+                        //purgeLeftoverFiles(saveTo)
                     } else if(args.includes(`-S`)) {
                         update({code, saveLocation, url, format, status: `Downloaded best quality ${info.webpage_url_domain} provided for ${downloadInExt} format (no conversion done${reasonConversionNotDone ? ` -- ${reasonConversionNotDone}` : ``})`});
                     } else {
