@@ -1,0 +1,31 @@
+name: ezytdl build
+run-name: ${{ github.actor }} - ${{ github.event_name }} - ${{ github.sha }}
+
+on: [push]
+
+jobs:
+  Explore-GitHub-Actions:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Install Node.js & NPM
+        uses: actions/setup-node@v1
+
+      - name: Build app
+        run: |
+          npm install
+          npm run dist
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: |
+            dist/ezytdl-*
+            dist/latest*.yml
