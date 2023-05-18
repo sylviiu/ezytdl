@@ -178,10 +178,53 @@ module.exports = {
             updateFunc({ latest: o, overall: obj }, proc);
         };
 
+        let filenames = [];
+        
+        const purgeLeftoverFiles = (saveTo) => {
+            const purgeFiles = (from, filename) => {
+                const findFiles = filename.includes(`.`) ? filename.split(`.`)[0] : filename
+
+                const dir = fs.readdirSync(saveTo);
+
+                const prevFiles = dir.filter(f => f.startsWith(findFiles));
+                console.log(`${from} / files:`, prevFiles, `from:`, dir, `starting with:`, findFiles);
+
+                prevFiles.forEach(f => {
+                    const file = require(`path`).join(saveTo, f);
+                    update({status: `Removing ${from} file ${file} ...`})
+                    console.log(`removing previous ${from} file ${file}`);
+                    try {
+                        if(fs.existsSync(file)) {
+                            console.log(`removing ${file}...`)
+                            fs.unlinkSync(file)
+                        } else console.log(`${file} nonexistent?`)
+                    } catch(e) {
+                        console.log(`failed removing ${file}: ${e}`)
+                    }
+                });
+
+                if(fs.existsSync(saveTo + filename)) {
+                    console.log(`original file removing...`)
+                    fs.unlinkSync(saveTo + filename);
+                } else console.log(`original file nonexistent?`)
+            };
+
+            filenames.forEach((f, i) => {
+                console.log(`purging files from index ${i}: ${f}`)
+                purgeFiles(`${i}`, f)
+            });
+
+            updateFunc({status: `Download cancelled.`})
+
+            res(obj)
+        }
+
         try {
             const path = getPath();
             
             const temporaryFilename = `ezytdl-` + idGen(8);
+
+            filenames.push(temporaryFilename)
     
             const { saveLocation, outputFilename, onlyGPUConversion, allowVideoConversion, allowAudioConversion, disableHWAcceleratedConversion } = require(`../getConfig`)();
     
@@ -190,6 +233,8 @@ module.exports = {
             console.log(saveLocation, filePath, outputFilename)
     
             const saveTo = (filePath || saveLocation) + (require('os').platform() == `win32` ? `\\` : `/`)
+
+            updateFunc({ deleteFiles: () => purgeLeftoverFiles(saveTo) })
     
             fs.mkdirSync(saveTo, { recursive: true, failIfExists: false });
             
@@ -248,13 +293,7 @@ module.exports = {
     
             update({saveLocation: saveTo, url, format, kill: () => {
                 killAttempt++
-
-                if(process.platform == `win32`) {
-                    proc.kill(`SIGTERM`);
-                    //proc.kill(`SIGINT`);
-                } else {
-                    proc.kill(`SIGKILL`);
-                }
+                proc.kill(`SIGKILL`);
             }, status: `Downloading...`})
     
             proc.stdout.on(`data`, data => {
@@ -262,7 +301,10 @@ module.exports = {
     
                 //console.log(string.trim());
     
-                if(string.includes(`Destination:`)) update({destinationFile: string.split(`Destination:`)[1].trim()})
+                if(string.includes(`Destination:`)) {
+                    update({destinationFile: string.split(`Destination:`)[1].trim()});
+                    if(!filenames.find(s => s == obj.destinationFile)) filenames.push(obj.destinationFile)
+                }
     
                 const percent = string.includes(`%`) ? string.split(`%`)[0].split(` `).slice(-1)[0] : null;
                 if(percent) {
@@ -285,7 +327,7 @@ module.exports = {
                 let ytdlFilename = `--`
     
                 let previousFilename = obj.destinationFile ? `ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0] : temporaryFilename;
-    
+
                 const fallback = (msg, deleteFile) => {
                     try {
                         console.log(`ffmpeg did not save file, renaming temporary file`);
@@ -295,8 +337,8 @@ module.exports = {
                             fs.renameSync(saveTo + previousFilename, saveTo + ytdlFilename + `.` + previousFilename.split(`.`).slice(-1)[0]);
                         }
                     } catch(e) { console.log(e) }
-                    update({failed: true, percentNum: 100, status: `Could not convert to ${ext.toUpperCase()}.` + msg && typeof msg == `string` ? `\n\n${msg}` : ``, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.` + previousFilename.split(`.`).slice(-1)[0], url, format});
-                    res(obj)
+                    update({failed: true, percentNum: 100, status: `Could not convert to ${`${ext}`.toUpperCase()}.` + msg && typeof msg == `string` ? `\n\n${msg}` : ``, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.` + previousFilename.split(`.`).slice(-1)[0], url, format});
+                    purgeLeftoverFiles(saveTo)
                 };
     
                 if(killAttempt > 0) return fallback(`Download canceled.`, true)
@@ -304,9 +346,13 @@ module.exports = {
                 const files = fs.readdirSync(saveTo);
     
                 ytdlFilename = await module.exports.getFilename(url, format);
+
+                filenames.push(ytdlFilename)
     
                 if(!fs.existsSync(previousFilename)) previousFilename = await module.exports.getFilename(url, format, temporaryFilename + `.%(ext)s`);
     
+                filenames.push(previousFilename)
+
                 if(ext) {
                     const mainArgs = [`-i`, saveTo + previousFilename, saveTo + ytdlFilename + `.${ext}`];
     
@@ -314,11 +360,15 @@ module.exports = {
                     const outputArgs = [saveTo + ytdlFilename + `.${ext}`];
     
                     const spawnFFmpeg = (args2, name) => new Promise((resolveFFmpeg, rej) => {
-                        if(killAttempt > 0) return rej(`Download canceled.`, true);
+                        if(killAttempt > 0) {
+                            update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.${ext}`, url, format})
+                            purgeLeftoverFiles(saveTo)
+                            //return res(`Download canceled.`, true);
+                        }
     
                         console.log(`- ` + args2.join(`\n- `))
     
-                        update({status: `Converting to ${ext.toUpperCase()} using ${name}...`, percentNum: -1, eta: `--`});
+                        update({status: `Converting to ${`${ext}`.toUpperCase()} using ${name}...`, percentNum: -1, eta: `--`});
     
                         proc = child_process.execFile(ffmpegPath, [`-y`, ...args2]);
                         
@@ -357,7 +407,11 @@ module.exports = {
                         });
         
                         proc.on(`close`, (code) => {
-                            if(fs.existsSync(saveTo + ytdlFilename + `.${ext}`) && code == 0) {
+                            if(killAttempt > 0) {
+                                update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.${ext}`, url, format})
+                                return purgeLeftoverFiles(saveTo)
+                                //return res(`Download canceled.`, true);
+                            } else if(fs.existsSync(saveTo + ytdlFilename + `.${ext}`) && code == 0) {
                                 console.log(`ffmpeg completed; deleting temporary file...`);
                                 fs.unlinkSync(saveTo + previousFilename);
                                 update({percentNum: 100, status: `Done!`, saveLocation: saveTo, destinationFile: saveTo + ytdlFilename + `.${ext}`, url, format});
@@ -458,7 +512,9 @@ module.exports = {
                         spawnFFmpeg(mainArgs, `software`).then(res).catch(fallback)
                     }
                 } else if(ext === false) {
-                    if(args.includes(`-S`)) {
+                    if(killAttempt > 0) {
+                        purgeLeftoverFiles(saveTo)
+                    } else if(args.includes(`-S`)) {
                         update({code, saveLocation, url, format, status: `Downloaded best quality ${info.webpage_url_domain} provided for ${downloadInExt} format (no conversion done${reasonConversionNotDone ? ` -- ${reasonConversionNotDone}` : ``})`});
                     } else {
                         update({failed: true, code, saveLocation, url, format, status: `Could not convert: FFmpeg is not installed! (Install through Settings)`});

@@ -48,7 +48,7 @@ if(!locked) {
                 loadingPromise = null;
                 console.log(`[${Date.now() - startTime}ms] to finish loading app!`);
             
-                //if(!app.isPackaged) window.webContents.openDevTools()
+                if(!app.isPackaged) window.webContents.openDevTools()
             }));
         
             window.loadFile(`./html/loading.html`);

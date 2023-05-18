@@ -210,9 +210,10 @@ const createDownloadObject = (opt, rawUpdateFunc) => {
         failed: false,
         killed: false,
         updateFunc: (update) => {
-            if(typeof update == `object` && !update.latest) update = { latest: update };
+            if(typeof update == `object` && !update.latest) update = { latest: update, overall: update };
 
             if(update.overall && update.overall.kill) obj.killFunc = () => update.overall.kill();
+            if(update.overall && update.overall.deleteFiles) obj.deleteFiles = () => update.overall.deleteFiles();
             obj.status = Object.assign({}, obj.status, update.latest);
             if(update.latest.percentNum) {
                 activeProgress[obj.id] = update.latest.percentNum;
@@ -227,6 +228,7 @@ const createDownloadObject = (opt, rawUpdateFunc) => {
         },
         ytdlpProc: null,
         killFunc: null,
+        deleteFiles: null,
         start: () => {
             const index = queue.queue.findIndex(e => e.id == obj.id);
 

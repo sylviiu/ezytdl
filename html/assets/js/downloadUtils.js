@@ -18,8 +18,12 @@ function createDownloadManager(card, id) {
     let location;
     let destinationFile;
 
+    let status = {};
+
     const update = (m) => {
         if(m) {
+            for(key of Object.keys(m)) status[key] = m[key];
+
             if(m.saveLocation) location = m.saveLocation;
     
             if(m.percentNum) {
@@ -74,10 +78,10 @@ function createDownloadManager(card, id) {
 
         const btn2 = card.querySelector(`#pausePlayButton`);
 
-        card.querySelector(`#fileicon`).classList.remove(`d-none`);
+        card.querySelector(`#trashicon`).classList.remove(`d-none`);
         card.querySelector(`#pauseicon`).classList.add(`d-none`);
 
-        btn2.onclick = () => mainQueue.openDir(id || ``);
+        btn2.onclick = () => mainQueue.deleteFiles(id || ``);
 
         btn2.classList.remove(`d-none`);
 
@@ -86,7 +90,7 @@ function createDownloadManager(card, id) {
         if(!card.querySelector(`#speed`).classList.contains(`d-none`)) card.querySelector(`#speed`).classList.add(`d-none`);
     };
 
-    return { update, complete }
+    return { update, complete, status }
 }
 
 const removeElements = (card, opt) => {

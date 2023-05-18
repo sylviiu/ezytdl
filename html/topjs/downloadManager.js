@@ -82,15 +82,18 @@ var initDownloadManager = () => {
                             id: card.id.split(`-`)[1]
                         })
                     };
-                    const btn2 = card.querySelector(`#pausePlayButton`);
-            
-                    card.querySelector(`#fileicon`).classList.remove(`d-none`);
-                    card.querySelector(`#pauseicon`).classList.add(`d-none`);
-            
-                    btn2.onclick = () => mainQueue.openDir(card.id.split(`-`)[1]);
-            
-                    btn2.classList.remove(`d-none`);
-                    btn2.classList.add(`d-flex`);
+
+                    if(!downloadManagers[card.id.split(`-`)[1]] || !downloadManagers[card.id.split(`-`)[1]].status || !downloadManagers[card.id.split(`-`)[1]].status.failed) {
+                        const btn2 = card.querySelector(`#pausePlayButton`);
+                
+                        card.querySelector(`#trashicon`).classList.remove(`d-none`);
+                        card.querySelector(`#pauseicon`).classList.add(`d-none`);
+                
+                        btn2.onclick = () => mainQueue.deleteFiles(card.id.split(`-`)[1]);
+                
+                        btn2.classList.remove(`d-none`);
+                        btn2.classList.add(`d-flex`);
+                    }
                     
                     card.querySelector(`#formatDownload`).onclick = clear
                 },
@@ -220,6 +223,10 @@ var initDownloadManager = () => {
             const clearCompletedButton = pageBtn.cloneNode(true);
             clearCompletedButton.innerHTML = `Clear Completed`;
             clearQueueDiv.appendChild(clearCompletedButton);
+        
+            const openFolder = pageBtn.cloneNode(true);
+            openFolder.innerHTML = `Open Folder`;
+            clearQueueDiv.appendChild(openFolder);
         
             const clearQueueButton = pageBtn.cloneNode(true);
             clearQueueButton.innerHTML = `Clear Queue`;
@@ -372,6 +379,7 @@ var initDownloadManager = () => {
             const clearFromQueue = async (queue) => mainQueue.action({ action: `remove`, id: queue.map(o => o.id) });
         
             clearCompletedButton.onclick = () => clearFromQueue(totalQueue.filter(o => o.state == `complete`))
+            openFolder.onclick = () => mainQueue.openDir();
             clearQueueButton.onclick = () => clearFromQueue(totalQueue.filter(o => o.state != `active` && o.state != `paused` && o.state != `complete`));
         
             mainQueue.queueUpdate((m) => {
