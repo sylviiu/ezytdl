@@ -1,0 +1,41 @@
+name: ezytdl auto test-run (w/ store compression)
+run-name: ${{ github.actor }} - ${{ github.event_name }} - ${{ github.sha }}
+
+on: [push, pull_request]
+
+jobs:
+  linux:
+    runs-on: "ubuntu-latest"
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Install xvfb for headless testing (linux only)
+        run: |
+          sudo apt update -y
+          sudo apt install xvfb x11-xserver-utils -y
+
+      - name: Install Node.js & NPM
+        uses: actions/setup-node@main
+        with:
+          node-version: "18"
+
+      - name: Install npm deps
+        run: |
+          npm install
+
+      - name: Test from source
+        run: |
+          xvfb-run --auto-servernum npm start -- --testrun
+
+      - name: Run uncompressed (store) build
+        run: |
+          npm run store
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: |
+            dist/ezytdl*
+            dist/latest*.yml
