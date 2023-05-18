@@ -1,4 +1,4 @@
-name: ezytdl auto test-run (using store compression)
+name: ezytdl auto test-run (w/ store compression)
 run-name: ${{ github.actor }} - ${{ github.event_name }} - ${{ github.sha }}
 
 on: [push, pull_request]
@@ -21,7 +21,6 @@ jobs:
           node-version: '18'
 
       - if: ${{ matrix.os }} == 'macos-latest'
-        name: Install ffmpeg from homebrew (macos only)
         run: |
           brew install ffmpeg
 
