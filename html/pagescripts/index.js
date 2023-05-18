@@ -172,9 +172,11 @@ const runSearch = async (url) => {
                     card.appendChild(newDiv);
 
                     const removeEntry = () => {
-                        const thisIndex = info.entries.findIndex(o => (o.id || o.webpage_url || o.url) == (entry.id || entry.webpage_url || entry.url))
-                        console.log(`Removing index ${thisIndex}`)
-                        info.entries.splice(thisIndex, 1);
+                        const thisIndex = info.entries.findIndex(o => (o.id || o.webpage_url || o.url) == (entry.id || entry.webpage_url || entry.url));
+                        if(thisIndex != -1) {
+                            console.log(`Removing index ${thisIndex}`)
+                            info.entries.splice(thisIndex, 1);
+                        } else console.log(`Failed to find index for ${entry.id || entry.webpage_url || entry.url}`)
                     }
 
                     qualityButtons({ node: card, info: entry, card, removeEntry: () => removeEntry() });

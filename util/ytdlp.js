@@ -182,31 +182,39 @@ module.exports = {
         
         const purgeLeftoverFiles = (saveTo) => {
             const purgeFiles = (from, filename) => {
-                const findFiles = filename.includes(`.`) ? filename.split(`.`)[0] : filename
+                let findFiles = filename;
 
-                const dir = fs.readdirSync(saveTo);
+                if(findFiles.endsWith(`.part`)) {
+                    findFiles = findFiles.split(`.part`).slice(0, -1).join(`.part`)
+                } else if(findFiles.endsWith(`.ytdl`)) {
+                    findFiles = findFiles.split(`.part`).slice(0, -1).join(`.ytdl`)
+                };
 
-                const prevFiles = dir.filter(f => f.startsWith(findFiles));
-                console.log(`${from} / files:`, prevFiles, `from:`, dir, `starting with:`, findFiles);
-
-                prevFiles.forEach(f => {
-                    const file = require(`path`).join(saveTo, f);
-                    update({status: `Removing ${from} file ${file} ...`})
-                    console.log(`removing previous ${from} file ${file}`);
-                    try {
-                        if(fs.existsSync(file)) {
-                            console.log(`removing ${file}...`)
-                            fs.unlinkSync(file)
-                        } else console.log(`${file} nonexistent?`)
-                    } catch(e) {
-                        console.log(`failed removing ${file}: ${e}`)
-                    }
-                });
-
-                if(fs.existsSync(saveTo + filename)) {
-                    console.log(`original file removing...`)
-                    fs.unlinkSync(saveTo + filename);
-                } else console.log(`original file nonexistent?`)
+                if(findFiles) {
+                    const dir = fs.readdirSync(saveTo);
+    
+                    const prevFiles = dir.filter(f => f.startsWith(findFiles));
+                    console.log(`${from} / files:`, prevFiles, `from:`, dir, `starting with:`, findFiles);
+    
+                    prevFiles.forEach(f => {
+                        const file = require(`path`).join(saveTo, f);
+                        update({status: `Removing ${from} file ${file} ...`})
+                        console.log(`removing previous ${from} file ${file}`);
+                        try {
+                            if(fs.existsSync(file)) {
+                                console.log(`removing ${file}...`)
+                                fs.unlinkSync(file)
+                            } else console.log(`${file} nonexistent?`)
+                        } catch(e) {
+                            console.log(`failed removing ${file}: ${e}`)
+                        }
+                    });
+    
+                    if(fs.existsSync(saveTo + filename)) {
+                        console.log(`original file removing...`)
+                        fs.unlinkSync(saveTo + filename);
+                    } else console.log(`original file nonexistent?`)
+                }
             };
 
             filenames.forEach((f, i) => {
