@@ -1,4 +1,4 @@
-name: ezytdl auto-run linux (uncompressed build)
+name: linux
 run-name: ${{ github.actor }} - ${{ github.event_name }} - ${{ github.sha }}
 
 on: [push, pull_request]
