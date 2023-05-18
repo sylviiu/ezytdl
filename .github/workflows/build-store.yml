@@ -1,7 +1,7 @@
-name: ezytdl build/compressed
+name: ezytdl build/uncompressed
 run-name: ${{ github.actor }} - ${{ github.event_name }} - ${{ github.sha }}
 
-on: workflow_dispatch
+on: [push, pull_request]
 
 jobs:
   build:
@@ -23,7 +23,7 @@ jobs:
       - name: Build app
         run: |
           npm install
-          npm run dist
+          npm run store
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2

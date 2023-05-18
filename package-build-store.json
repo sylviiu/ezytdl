@@ -16,6 +16,7 @@
     "linux": {
         "icon": "res/packageIcons/icon-512x512.png",
         "target": [
+            "AppImage",
             "tar.gz"
         ]
     },

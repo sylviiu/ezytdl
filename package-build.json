@@ -17,7 +17,6 @@
         "icon": "res/packageIcons/icon-512x512.png",
         "target": [
             "AppImage",
-            "flatpak",
             "tar.gz"
         ]
     },
