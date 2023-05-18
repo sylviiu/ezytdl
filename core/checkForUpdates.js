@@ -55,6 +55,8 @@ const notifyWithInfo = (info) => {
 global.updateCheckResult = null;
 
 module.exports = async (manual) => {
+    if(global.testrun) return null;
+    
     const process = (info) => {
         const currentVersion = require(`../package.json`).version;
         const newVersion = info.response.tag_name || info.version;
