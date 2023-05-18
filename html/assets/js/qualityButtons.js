@@ -118,7 +118,7 @@ const saveOptionsAnimations = {
     })
 };
 
-const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox}) => {
+const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, removeEntry}) => {
     addMissingNodes(node);
 
     node = getQualityButtons(node);
@@ -194,6 +194,8 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox}) =
 
     const send = () => {
         node.querySelectorAll(`.btn`).forEach(btn => btn.disabled = true);
+
+        if(typeof removeEntry == `function`) removeEntry();
 
         if(info.entries) {
             startDownload(card || node, {

@@ -169,9 +169,42 @@ const runSearch = async (url) => {
 
                     innerQualityButtons.style.minWidth = `100%`;
 
-                    card.appendChild(newDiv)
+                    card.appendChild(newDiv);
 
-                    qualityButtons({ node: card, info: entry, card })
+                    const removeEntry = () => {
+                        const thisIndex = info.entries.findIndex(o => (o.id || o.webpage_url || o.url) == (entry.id || entry.webpage_url || entry.url))
+                        console.log(`Removing index ${thisIndex}`)
+                        info.entries.splice(thisIndex, 1);
+                    }
+
+                    qualityButtons({ node: card, info: entry, card, removeEntry: () => removeEntry() });
+
+                    card.querySelector(`#pausePlayButton`).classList.remove(`d-none`);
+                    card.querySelector(`#pausePlayButton`).classList.add(`d-flex`);
+                    card.querySelector(`#crossicon`).classList.remove(`d-none`);
+                    card.querySelector(`#pauseicon`).classList.add(`d-none`);
+
+                    card.querySelector(`#pausePlayButton`).onclick = () => {
+                        card.querySelector(`#pausePlayButton`).onclick = () => {};
+
+                        removeEntry();
+
+                        const currentHeight = card.getBoundingClientRect().height;
+
+                        anime({
+                            targets: card,
+                            maxHeight: [currentHeight, 0],
+                            height: [currentHeight, 0],
+                            opacity: [1, 0],
+                            minHeight: [currentHeight, 0],
+                            padding: [12, 0],
+                            marginTop: [12, 0],
+                            scaleY: [1, 0],
+                            duration: 1000,
+                            easing: `easeOutExpo`,
+                            complete: () => card.parentElement.removeChild(card)
+                        })
+                    }
 
                     formatList.appendChild(card);
 
