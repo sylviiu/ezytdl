@@ -1,15 +1,11 @@
-name: ezytdl build/uncompressed
+name: ezytdl uncompressed windows build
 run-name: ${{ github.actor }} - ${{ github.event_name }} - ${{ github.sha }}
 
-on: [push, pull_request]
+on: workflow_dispatch
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: windows-latest
 
     steps:
       - name: Checkout repo
@@ -29,5 +25,5 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           path: |
-            dist/ezytdl-*
+            dist/ezytdl*
             dist/latest*.yml

@@ -55,6 +55,8 @@ module.exports = (notDefault, overrideArgs) => {
         icon: iconPath
     };
 
+    if(global.headless || global.testrun) args.show = false;
+
     if(!conf.defaultWindowControls) {
         console.log(`Hiding window controls and using custom ones`)
         args.frame = false

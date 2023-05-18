@@ -3,7 +3,7 @@ module.exports = async () => {
     
     const config = require(`../getConfig`)();
     
-    if(config.logsEnabled) {
+    if(config.logsEnabled || global.testrun || global.headless) {
         console.log(`Keeping logs enabled`)
         sendNotification({
             type: `warn`,

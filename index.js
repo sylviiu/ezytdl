@@ -1,5 +1,8 @@
 const startTime = Date.now();
 
+global.testrun = process.argv.find(s => s == `--testrun`) ? true : false;
+global.headless = process.argv.find(s => s == `--headless`) ? true : false;
+
 console.log(`Starting ezytdl v${require(`./package.json`).version}`)
 
 const { app, ipcMain } = require(`electron`);
@@ -47,8 +50,15 @@ if(!locked) {
                 res(redirect);
                 loadingPromise = null;
                 console.log(`[${Date.now() - startTime}ms] to finish loading app!`);
-            
-                if(!app.isPackaged) window.webContents.openDevTools()
+
+                if(global.testrun) {
+                    console.log(`[${Date.now() - startTime}ms] Waiting a few seconds before starting testrun...`);
+    
+                    setTimeout(() => {
+                        console.log(`[${Date.now() - startTime}ms] Starting testrun...`)
+                        require(`./devscripts/testrun`)(startTime);
+                    }, 2500)
+                } else if(!app.isPackaged) window.webContents.openDevTools()
             }));
         
             window.loadFile(`./html/loading.html`);

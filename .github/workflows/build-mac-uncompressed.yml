@@ -1,18 +1,11 @@
-name: ezytdl distributable build
+name: ezytdl uncompressed mac build
 run-name: ${{ github.actor }} - ${{ github.event_name }} - ${{ github.sha }}
 
 on: workflow_dispatch
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: macos-latest
 
     steps:
       - name: Checkout repo
@@ -26,13 +19,7 @@ jobs:
       - name: Build app
         run: |
           npm install
-          npm run dist
-
-      - if: ${{ matrix.os }} == 'ubuntu-latest'
-        name: Install flatpak & flatpak builder (ubuntu only)
-        run: |
-          sudo apt update
-          sudo apt install flatpak flatpak-builder -y
+          npm run store
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2

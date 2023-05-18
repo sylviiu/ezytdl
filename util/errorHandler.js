@@ -5,7 +5,7 @@ module.exports = (err) => {
 
     const str = `${typeof err == `object` ? JSON.stringify(err, null, 4) : err}\n\n${typeof err == `object` && err.stack? err.stack : `(no stack)`}`
 
-    const notifSent = sendNotification({
+    const notifSent = global.testrun ? false : sendNotification({
         headingText: `Internal error occurred!`,
         bodyText: str,
         type: `error`

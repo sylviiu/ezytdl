@@ -7,7 +7,7 @@ const { platform } = require('os');
 
 let activeDownload = null;
 
-module.exports = async () => {
+module.exports = async () => new Promise(async res => {
     if(activeDownload) return activeDownload;
 
     activeDownload = true;
@@ -16,7 +16,8 @@ module.exports = async () => {
         send: (args) => global.window ? global.window.webContents.send(`updateClientEvent`, args) : null,
         close: () => {
             activeDownload = null;
-            global.window ? global.window.webContents.send(`updateClientEvent`, {complete: true}) : null
+            global.window ? global.window.webContents.send(`updateClientEvent`, {complete: true}) : null;
+            res()
         }
     }
 
@@ -104,4 +105,4 @@ module.exports = async () => {
             }
         }
     })
-}
+})
