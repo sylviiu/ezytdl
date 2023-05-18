@@ -3,7 +3,6 @@ const fs = require('fs');
 const Stream = require('stream');
 
 const errorHandler = require(`../errorHandler`);
-const { platform } = require('os');
 
 let activeDownload = null;
 
@@ -101,7 +100,7 @@ module.exports = async () => new Promise(async res => {
 
                         extractor.on(`close`, () => ws.close());
                     } else {
-                        if(!platform().toLowerCase().includes(`win32`)) {
+                        if(!process.platform.toLowerCase().includes(`win32`)) {
                             try {
                                 require(`child_process`).execFileSync(`chmod`, [`+x`, downloadPath])
                             } catch(e) {
