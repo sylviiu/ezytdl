@@ -7,6 +7,12 @@ jobs:
   win:
     runs-on: "windows-latest"
 
+    permissions:
+      contents: read
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
