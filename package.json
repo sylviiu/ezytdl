@@ -14,6 +14,7 @@
   },
   "scripts": {
     "start": "electron .",
+    "electron-builder": "electron-builder",
     "store": "node build store",
     "dist": "node build publish"
   },

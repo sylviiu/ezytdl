@@ -1,5 +1,6 @@
 const child_process = require(`child_process`);
 const fs = require(`fs`);
+const which = require('which')
 
 // previous store: electron-builder -c ./package-build-store.json -p never
 // previous dist: electron-builder -c ./package-build.json -p always
@@ -116,10 +117,14 @@ fs.writeFileSync(`./build.json`, JSON.stringify(config, null, 4));
 
 console.log(`Wrote config, starting build...`);
 
-const proc = child_process.spawn(`./node_modules/.bin/electron-builder${process.platform == `win32` ? `.exe` : ``}`, [`-c`, `./build.json`, ...(config.publish ? [`-p`, `always`] : [])], { stdio: "inherit" });
+which(`npm`).then(path => {
+    console.log(`Spawning npm at ${path}`);
 
-proc.on(`close`, (code) => {
-    console.log(`Build closed with code ${code}`);
-
-    if(fs.existsSync(`./build.json`)) fs.unlinkSync(`./build.json`);
+    const proc = child_process.spawn(path, [`run`, `electron-builder`, `--`, `-c`, `./build.json`, ...(config.publish ? [`-p`, `always`] : [])], { stdio: "inherit" });
+    
+    proc.on(`close`, (code) => {
+        console.log(`Build closed with code ${code}`);
+    
+        if(fs.existsSync(`./build.json`)) fs.unlinkSync(`./build.json`);
+    })
 })
