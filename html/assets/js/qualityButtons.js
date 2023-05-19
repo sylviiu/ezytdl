@@ -19,8 +19,7 @@ const setDefaultSaveOptValues = (node, info) => {
     if(node.querySelector(`#saveLocation`)) {
         console.log(`setting saveLocation values`)
 
-        node.querySelector(`#saveLocation`).placeholder = `${config && config.saveLocation ? config.saveLocation : `{default save location}`}`;
-        node.querySelector(`#saveLocation`).value = `${config && config.saveLocation ? config.saveLocation : ``}`;
+        conversionOptions(node, info)
 
         if(info.entries && info.entries.length > 0) {
             if(!node.querySelector(`#saveLocation`).value.endsWith(navigator.platform.toLowerCase() == `win32` ? `\\` : `/`)) node.querySelector(`#saveLocation`).value += navigator.platform.toLowerCase() == `win32` ? `\\` : `/`
@@ -94,9 +93,10 @@ const saveOptionsAnimations = {
         if(saveOptions.style.opacity < 0.35) {
             return res()
         } else {
+            const { height } = saveOptions.getBoundingClientRect();
             anime({
                 targets: saveOptions,
-                maxHeight: `0px`,
+                maxHeight: [height, `0px`],
                 opacity: `0%`,
                 marginTop: `0px`,
                 duration: 500,
@@ -119,11 +119,17 @@ const saveOptionsAnimations = {
 };
 
 const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, removeEntry}) => {
+    console.log(`qualityButtons`, info)
+
     addMissingNodes(node);
 
     node = getQualityButtons(node);
 
     const formatConversionTextbox = node.querySelector(`#formatConversionTextbox`);
+
+    const ffmpegOptions = node.querySelector(`#ffmpegOptions`);
+    const convertDownload = node.querySelector(`#convertDownload`);
+    const confirmDownload = node.querySelector(`#confirmDownload`);
 
     let qualities = [`bv*+ba/b`, `ba`, `bv`];
 
@@ -171,10 +177,56 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
 
     const modifyQualityButtonsDropdown = () => {
         console.log(currentSelected)
-        if(/*currentSelected == 1*/ true) {
-            if(formatConversionTextbox.classList.contains(`d-none`)) formatConversionTextbox.classList.remove(`d-none`);
-        } else {
-            if(!formatConversionTextbox.classList.contains(`d-none`)) formatConversionTextbox.classList.add(`d-none`);
+        if(formatConversionTextbox.classList.contains(`d-none`)) formatConversionTextbox.classList.remove(`d-none`);
+
+        const clearInput = (n) => {
+            if(n && n.placeholder) {
+                n.value = ``;
+            }
+        }
+
+        node.querySelector(`#audioOptions`).childNodes.forEach(clearInput)
+        node.querySelector(`#videoOptions`).childNodes.forEach(clearInput)
+        
+        if(!ffmpegOptions.classList.contains(`d-none`)) {
+            ffmpegOptions.classList.add(`d-none`);
+        }
+
+        if(convertDownload.style.width != `49%`) {
+            anime.remove(convertDownload);
+            anime.remove(confirmDownload);
+            convertDownload.style.opacity = 1;
+            convertDownload.style.width = `49%`;
+            confirmDownload.style.width = `49%`;
+            convertDownload.style.maxWidth = null;
+        }
+
+        if(ffmpegOptions.style.maxHeight) {
+            anime.remove(ffmpegOptions);
+            ffmpegOptions.style.maxHeight = null;
+        }
+    
+        if(formatConversionTextbox.parentNode.id != `fileOptions`) {
+            console.log(`formatConversionTextbox not in fileOptions`)
+            formatConversionTextbox.parentNode.removeChild(formatConversionTextbox);
+            node.querySelector(`#fileOptions`).appendChild(formatConversionTextbox);
+        } else console.log(`formatConversionTextbox already in fileOptions`)
+
+        if(currentSelected == 0) {
+            console.log(`modifying conversion options to both`)
+            // Both
+            if(node.querySelector(`#audioOptions`).classList.contains(`d-none`)) node.querySelector(`#audioOptions`).classList.remove(`d-none`)
+            if(node.querySelector(`#videoOptions`).classList.contains(`d-none`)) node.querySelector(`#videoOptions`).classList.remove(`d-none`)
+        } else if(currentSelected == 1) {
+            console.log(`modifying conversion options to audio`)
+            // Audio
+            if(node.querySelector(`#audioOptions`).classList.contains(`d-none`)) node.querySelector(`#audioOptions`).classList.remove(`d-none`)
+            if(!node.querySelector(`#videoOptions`).classList.contains(`d-none`)) node.querySelector(`#videoOptions`).classList.add(`d-none`)
+        } else if(currentSelected == 2) {
+            console.log(`modifying conversion options to video`)
+            // Video
+            if(!node.querySelector(`#audioOptions`).classList.contains(`d-none`)) node.querySelector(`#audioOptions`).classList.add(`d-none`)
+            if(node.querySelector(`#videoOptions`).classList.contains(`d-none`)) node.querySelector(`#videoOptions`).classList.remove(`d-none`)
         }
     }
 
@@ -188,14 +240,40 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
         })
     }
 
-    node.querySelectorAll(`.btn`).forEach((btn, i) => {
-        btn.onclick = () => btnClick(i)
-    });
+    node.querySelector(`#downloadBest`).onclick = () => btnClick(0);
+    node.querySelector(`#downloadBestAudio`).onclick = () => btnClick(1);
+    node.querySelector(`#downloadBestVideo`).onclick = () => btnClick(2);
 
     const send = () => {
         node.querySelectorAll(`.btn`).forEach(btn => btn.disabled = true);
 
         if(typeof removeEntry == `function`) removeEntry();
+
+        /*
+        if(info.resolution) node.querySelector(`#videoResolution`).placeholder = `Resolution (${info.resolution})`
+        if(info.vbr) node.querySelector(`#videoBitrate`).placeholder = `Bitrate (${info.vbr}k)`
+        
+        if(info.asr) node.querySelector(`#audioSampleRate`).placeholder = `Sample Rate (${info.asr/1000}k)`
+        if(info.abr) node.querySelector(`#audioBitrate`).placeholder = `Bitrate (${info.abr}k)`
+        */
+
+        let convertInfo = { ext: formatConversionTextbox.value };
+
+        let convert = false;
+
+        if(convertDownload.style.width != `49%`) {
+            convert = true;
+
+            node.querySelector(`#audioOptions`).childNodes.forEach(n => {
+                if(n && n.placeholder && n.id) convertInfo[n.id] = n.value;
+            });
+
+            node.querySelector(`#videoOptions`).childNodes.forEach(n => {
+                if(n && n.placeholder && n.id) convertInfo[n.id] = n.value;
+            });
+        };
+
+        console.log(`convert? ${convert}`, convertInfo)
 
         if(info.entries) {
             startDownload(card || node, {
@@ -203,7 +281,8 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
                     return Object.assign({}, {
                         url: e.webpage_url || e.url,
                         format: qualities[currentSelected] || qualities[0],
-                        ext: formatConversionTextbox.value ? formatConversionTextbox.value : null,
+                        ext: convert ? null : formatConversionTextbox.value,
+                        convert: convert ? convertInfo : null,
                         filePath: node.querySelector(`#saveLocation`).value || null,
                         info: e
                     }, overrideDownloadObj && typeof overrideDownloadObj == `object` ? overrideDownloadObj : {})
@@ -214,7 +293,8 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
             startDownload(card || node, Object.assign({}, {
                 url: info.webpage_url || info.url,
                 format: qualities[currentSelected] || qualities[0],
-                ext: formatConversionTextbox.value ? formatConversionTextbox.value : null,
+                ext: convert ? null : formatConversionTextbox.value,
+                convert: convert ? convertInfo : null,
                 filePath: node.querySelector(`#saveLocation`).value || null,
                 info: info
             }, overrideDownloadObj && typeof overrideDownloadObj == `object` ? overrideDownloadObj : {}))
