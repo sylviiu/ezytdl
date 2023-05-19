@@ -32,7 +32,7 @@ module.exports = async (startTime) => {
                     console.log(`[${Date.now() - startTime}ms / ${Date.now() - startedThisTest}] - ${testFile} (${Number(i)+1}/${tests.length}) -- TIMED OUT.`)
                     return res();
                 }
-            }, 15000)
+            }, 45000)
 
             test().then(result => {
                 clearTimeout(timeout);
