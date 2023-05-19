@@ -3,6 +3,8 @@ const child_process = require('child_process');
 const fs = require('fs');
 const idGen = require(`../util/idGen`);
 
+const sanitize = require(`sanitize-filename`);
+
 var ffmpegVideoCodecs = null;
 var ffmpegRawVideoCodecsOutput = null;
 var ffmpegPath = null;
@@ -168,7 +170,7 @@ module.exports = {
             res(data)
         })
     }),
-    download: ({url, format, ext, filePath, info}, updateFunc) => new Promise(async res => {
+    download: ({url, format, ext, convert, filePath, info}, updateFunc) => new Promise(async res => {
         const temporaryFilename = `ezytdl-` + idGen(24);
         
         let obj = {};
@@ -234,15 +236,16 @@ module.exports = {
         try {
             const path = getPath();
 
-            let ytdlpFilename = null;
-
+            let ytdlpFilename = sanitize(await module.exports.getFilename(url, format));
+            
+            filenames.push(ytdlpFilename)
             filenames.push(temporaryFilename)
     
-            const { saveLocation, outputFilename, onlyGPUConversion, allowVideoConversion, allowAudioConversion, disableHWAcceleratedConversion } = require(`../getConfig`)();
+            const { saveLocation, onlyGPUConversion, disableHWAcceleratedConversion } = require(`../getConfig`)();
     
             if(!ffmpegPath || !ffmpegVideoCodecs) refreshFFmpeg();
     
-            console.log(saveLocation, filePath, outputFilename)
+            console.log(saveLocation, filePath, ytdlpFilename)
     
             const saveTo = (filePath || saveLocation) + (require('os').platform() == `win32` ? `\\` : `/`)
 
@@ -250,13 +253,26 @@ module.exports = {
     
             fs.mkdirSync(saveTo, { recursive: true, failIfExists: false });
             
-            const args = [`-f`, format, url, `-o`, saveTo + outputFilename + `.%(ext)s`, `--no-mtime`];
+            const args = [`-f`, format, url, `-o`, saveTo + ytdlpFilename + `.%(ext)s`, `--no-mtime`];
     
-            let downloadInExt = `{any}`;
+            let downloadInExt = null;
     
             let reasonConversionNotDone = null;
     
-            if((format == `bv*+ba/b` || format == `bv`) && (!ffmpegPath || !allowVideoConversion) && ext) {
+            if(fs.existsSync(ffmpegPath)) {
+                args.push(`--ffmpeg-location`, ffmpegPath);
+            } else {
+                if(convert && convert.ext) {
+                    ext = convert.ext
+                    convert = false;
+                    reasonConversionNotDone = `ffmpeg not installed`
+                };
+            }
+            
+            if(convert && !ext) {
+                args[4] = args[4].replace(ytdlpFilename, temporaryFilename);
+                args.splice(5, 2);
+            } else if((format == `bv*+ba/b` || format == `bv`) && ext) {
                 if(format == `bv`) {
                     args.splice(2, 0, `-S`, `ext:${ext}`)
                     downloadInExt = ext
@@ -264,42 +280,10 @@ module.exports = {
                     args.splice(2, 0, `-S`, `ext:${ext}:m4a`)
                     downloadInExt = ext + `:m4a`
                 };
-    
-                if(!allowVideoConversion) {
-                    reasonConversionNotDone = `video conversion disabled in settings`
-                } else if(!ffmpegPath) {
-                    reasonConversionNotDone = `ffmpeg not installed`
-                }
-    
-                ext = false;
-            } else if(format == `ba` && (!ffmpegPath || !allowAudioConversion) && ext) {
+            } else if(format == `ba` && ext) {
                 args.splice(2, 0, `-S`, `ext:${ext}`);
     
                 downloadInExt = ext
-    
-                if(!allowAudioConversion) {
-                    reasonConversionNotDone = `audio conversion disabled in settings`
-                } else if(!ffmpegPath) {
-                    reasonConversionNotDone = `ffmpeg not installed`
-                }
-    
-                ext = false;
-            }
-    
-            if(fs.existsSync(ffmpegPath)) {
-                args.push(`--ffmpeg-location`, ffmpegPath);
-            } else {
-                ext = false;
-            }
-            
-            if(ext) {
-                args[4] = args[4].replace(outputFilename, temporaryFilename);
-                args.splice(5, 2);
-
-                module.exports.getFilename(url, format).then(result => {
-                    ytdlpFilename = result;
-                    filenames.push(ytdlpFilename);
-                })
             }
             
             console.log(`saveTo: ` + saveTo, `\n- ` + args.join(`\n- `))
@@ -352,14 +336,12 @@ module.exports = {
                             fs.renameSync(saveTo + previousFilename, saveTo + ytdlpFilename + `.` + previousFilename.split(`.`).slice(-1)[0]);
                         }
                     } catch(e) { console.log(e) }
-                    update({failed: true, percentNum: 100, status: `Could not convert to ${`${ext}`.toUpperCase()}.` + msg && typeof msg == `string` ? `\n\n${msg}` : ``, saveLocation: saveTo, destinationFile: saveTo + ytdlpFilename + `.` + previousFilename.split(`.`).slice(-1)[0], url, format});
+                    update({failed: true, percentNum: 100, status: `Could not convert to ${`${convert.ext}`.toUpperCase()}.` + msg && typeof msg == `string` ? `\n\n${msg}` : ``, saveLocation: saveTo, destinationFile: saveTo + ytdlpFilename + `.` + previousFilename.split(`.`).slice(-1)[0], url, format});
                     return res(obj)
                     //purgeLeftoverFiles(saveTo)
                 };
     
                 if(killAttempt > 0) return fallback(`Download canceled.`, true);
-    
-                if(!ytdlpFilename) ytdlpFilename = await module.exports.getFilename(url, format);
 
                 filenames.push(ytdlpFilename)
     
@@ -367,11 +349,25 @@ module.exports = {
     
                 filenames.push(previousFilename)
 
-                if(ext) {
-                    const mainArgs = [`-i`, saveTo + previousFilename, saveTo + ytdlpFilename + `.${ext}`];
-    
+                if(convert) {
+                    const savedExt = fs.readdirSync(saveTo).find(s => s.startsWith(previousFilename)).split(`.`).slice(-1)[0]
+
+                    console.log(`extensions`, downloadInExt, (convert || {}).ext, ext, savedExt)
+
+                    ext = `.${convert.ext}`
+
                     const inputArgs = [`-i`, saveTo + previousFilename];
-                    const outputArgs = [saveTo + ytdlpFilename + `.${ext}`];
+                    const outputArgs = [saveTo + ytdlpFilename + ext];
+
+                    if(convert.audioBitrate) outputArgs.unshift(`-b:a`, convert.audioBitrate);
+                    if(convert.audioSampleRate) outputArgs.unshift(`-ar`, convert.audioSampleRate);
+                    if(convert.videoBitrate) outputArgs.unshift(`-b:v`, convert.videoBitrate);
+                    if(convert.videoFPS) outputArgs.unshift(`-r`, convert.videoFPS);
+                    if(convert.videoResolution) outputArgs.unshift(`-vf`, `scale=${convert.videoResolution.trim().replace(`x`, `:`)}`);
+
+                    const mainArgs = [...inputArgs, ...outputArgs];
+
+                    console.log(`mainArgs: `, mainArgs)
     
                     const spawnFFmpeg = (args2, name) => new Promise((resolveFFmpeg, rej) => {
                         if(killAttempt > 0) {
@@ -383,7 +379,7 @@ module.exports = {
     
                         console.log(`- ` + args2.join(`\n- `))
     
-                        update({status: `Converting to ${`${ext}`.toUpperCase()} using ${name}...`, percentNum: -1, eta: `--`});
+                        update({status: `Converting to ${`${ext}`.toUpperCase()} using ${name}...<br><br>- ${Object.keys(convert).map(s => `${s}: ${convert[s] || `(no conversion)`}`).join(`<br>- `)}`, percentNum: -1, eta: `--`});
     
                         proc = child_process.execFile(ffmpegPath, [`-y`, ...args2]);
                         
@@ -527,20 +523,26 @@ module.exports = {
                     } else {
                         spawnFFmpeg(mainArgs, `software`).then(res).catch(fallback)
                     }
-                } else if(ext === false) {
+                } else if(!convert) {
                     if(killAttempt > 0) {
-                        update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: saveTo + ytdlpFilename + `.${downloadInExt}`, url, format})
+                        update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: saveTo + ytdlpFilename + `.${ext}`, url, format})
                         return res(obj)
                         //purgeLeftoverFiles(saveTo)
                     } else if(args.includes(`-S`)) {
-                        update({code, saveLocation, url, format, status: `Downloaded best quality ${info.webpage_url_domain} provided for ${downloadInExt} format (no conversion done${reasonConversionNotDone ? ` -- ${reasonConversionNotDone}` : ``})`});
-                    } else {
-                        update({failed: true, code, saveLocation, url, format, status: `Could not convert: FFmpeg is not installed! (Install through Settings)`});
-                    }
+                        update({code, saveLocation, url, format, status: `Downloaded best quality provided for ${ext} format (no conversion done${reasonConversionNotDone ? ` -- ${reasonConversionNotDone}` : ``})`});
+                    } else if(reasonConversionNotDone) {
+                        update({code, saveLocation, url, format, status: `Could not convert: ${reasonConversionNotDone}`});
+                    } else update({code, saveLocation, url, format, status: `Done!`});
                     res(obj)
                 } else {
-                    update({code, saveLocation, url, format, status: `Done!`})
-                    res(obj)
+                    if(killAttempt > 0) {
+                        update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: saveTo + ytdlpFilename + `.${ext}`, url, format})
+                        return res(obj)
+                        //purgeLeftoverFiles(saveTo)
+                    } else {
+                        update({code, saveLocation, url, format, status: `Done!`})
+                        res(obj)
+                    }
                 }
             })
         } catch(e) {
