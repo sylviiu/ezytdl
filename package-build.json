@@ -3,6 +3,13 @@
     "productName": "ezytdl",
     "artifactName": "${productName}-${platform}-${version}.${ext}",
     "beforePack": "scripts/beforePack.js",
+    "publish": {
+        "provider": "github",
+        "owner": "sylviiu",
+        "repo": "ezytdl",
+        "vPrefixedTagName": false,
+        "releaseType": "draft"
+    },
     "portable": {
         "artifactName": "${productName}-${platform}-portable-${version}.${ext}"
     },
