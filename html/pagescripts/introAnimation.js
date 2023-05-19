@@ -2,6 +2,12 @@ console.log(`introAnimation called`);
 
 document.body.style.opacity = 0;
 
+const enableUpdateButton = () => {
+    document.getElementById(`updateAvailable`).classList.add(`d-flex`);
+    document.getElementById(`updateAvailable`).classList.remove(`d-none`);
+    document.getElementById(`updateAvailable`).onclick = () => version.openUpdatePage()
+}
+
 let givenCB;
 
 const callback = () => {
@@ -44,7 +50,13 @@ ajax.onload = async () => {
     callback();
 
     if(typeof getVersion != `undefined`) getVersion()
-    initDownloadManager()
+    initDownloadManager();
+
+    if(document.getElementById(`updateAvailable`)) {
+        console.log(`updateAvailable Enabled`)
+        version.checkForUpdates().then(r => r ? enableUpdateButton() : null);
+        version.onUpdate(() => enableUpdateButton())
+    }
 
     const navigationBar = document.body.querySelector(`#navigationBar`);
     const everythingElse = document.body.querySelectorAll(`body > div:not(#navigationBar)`);

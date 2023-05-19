@@ -10,6 +10,8 @@ let current = `regular`;
 
 const downloadIcons = require(`./downloadIcon`);
 
+let createArrayAndApply = () => {};
+
 module.exports = async () => {
     await downloadIcons.getIcons();
 
@@ -17,7 +19,7 @@ module.exports = async () => {
 
     downloadIcons.on(`icon`, i => global.tray.setImage(i));
 
-    const createArrayAndApply = (queue) => {
+    createArrayAndApply = (queue) => {
         if(!queue) queue = Object.assign({}, require(`../util/downloadManager`).queue, { length: Object.values(require(`../util/downloadManager`).queue).slice(1).reduce((a,b) => a+b.length, 0) });
 
         const length = Object.values(queue).slice(1).reduce((a,b) => a+b.length, 0);
@@ -105,3 +107,5 @@ module.exports = async () => {
 
     global.tray.on(`click`, require(`./bringToFront`));
 }
+
+module.exports.refresh = createArrayAndApply

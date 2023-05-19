@@ -1,9 +1,11 @@
 const sendNotification = require("./sendNotification.js");
 
-const { shell, app } = require(`electron`);
+const { shell, app, ipcMain } = require(`electron`);
 
 const notifyWithInfo = (info) => {
     global.updateAvailable = info.response.name || info.version;
+
+    ipcMain.emit(`updateAvailable`)
 
     //console.log(info)
 
@@ -70,8 +72,6 @@ module.exports = async (manual) => {
         } else {
             console.log(`latest update is not newer than current version (current: ${currentVersion.join(`.`)}; latest: ${newVersion.join(`.`)})`)
         };
-
-        return;
 
         if(newVersion !== currentVersion) {
             notifyWithInfo(info)

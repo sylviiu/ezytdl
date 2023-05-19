@@ -16,6 +16,8 @@ const addScript = (path) => new Promise(res => {
 
 console.log(`preload :D`);
 
+let updateAvailable = false;
+
 window.addEventListener("mouseup", (e) => {
     if(e.button === 3 || e.button === 4) e.preventDefault();
 });
@@ -38,6 +40,8 @@ const on = (...args) => {
     return ipcRenderer.on(...args);
 }
 
+on(`updateAvailable`, () => updateAvailable = true)
+
 contextBridge.exposeInMainWorld(`windowControls`, {
     close: () => send(`windowClose`),
     maximize: () => send(`windowMaximize`),
@@ -59,7 +63,8 @@ contextBridge.exposeInMainWorld(`dialog`, {
 contextBridge.exposeInMainWorld(`version`, {
     get: () => invoke(`version`),
     checkForUpdates: () => invoke(`checkForUpdates`),
-    openUpdatePage: () => send(`openUpdatePage`),
+    onUpdate: (cb) => on(`updateAvailable`, cb),
+    openUpdatePage: () => send(`openUpdatePage`)
 });
 
 contextBridge.exposeInMainWorld(`configuration`, {
@@ -103,7 +108,19 @@ contextBridge.exposeInMainWorld(`preload`, {
 });
 
 addEventListener(`DOMContentLoaded`, async () => {
-    await addScript(`./pagescripts/${name.includes(`-`) ? name.split(`-`)[0] : name}.js`)
-    await addScript(`./topjs/feelLikeNativeApp.js`)
-    await addScript(`./topjs/downloadManager.js`)
+    await addScript(`./pagescripts/${name.includes(`-`) ? name.split(`-`)[0] : name}.js`);
+    await addScript(`./topjs/feelLikeNativeApp.js`);
+    await addScript(`./topjs/downloadManager.js`);
+
+    const enableUpdateButton = () => {
+        document.getElementById(`updateAvailable`).classList.add(`d-flex`);
+        document.getElementById(`updateAvailable`).classList.remove(`d-none`);
+        document.getElementById(`updateAvailable`).onclick = () => send(`openUpdatePage`)
+    }
+
+    if(document.getElementById(`updateAvailable`)) {
+        console.log(`updateAvailable Enabled`)
+        invoke(`checkForUpdates`).then(r => r ? enableUpdateButton() : null);
+        if(updateAvailable) enableUpdateButton()
+    }
 });

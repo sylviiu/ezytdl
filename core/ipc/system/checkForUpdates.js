@@ -1,4 +1,4 @@
 module.exports = {
     type: `handle`,
-    func: () => global.updateCheckResult && global.updateCheckResult.version != require(`../../../package.json`).version ? true : false
+    func: () => new Promise(r => global.updateAvailable ? r(true) : r(false))
 }
