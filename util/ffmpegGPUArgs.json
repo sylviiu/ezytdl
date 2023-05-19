@@ -1,45 +1,54 @@
 {
     "Nvidia / NVENC (cuda accelerated)": {
+        "platform": ["win32", "linux"],
         "string": "nvenc",
         "pre": ["-hwaccel", "nvdec", "-hwaccel_output_format", "cuda", "-extra_hw_frames", "10"],
         "post": ["-c:v", "h264_nvenc"]
     },
     "Nvidia / NVENC": {
+        "platform": ["win32", "linux"],
         "string": "nvenc",
         "pre": ["-hwaccel", "nvdec", "-extra_hw_frames", "10"],
         "post": ["-c:v", "h264_nvenc"]
     },
     "Nvidia / NVENC [auto]": {
+        "platform": ["win32", "linux"],
         "string": "nvenc",
         "pre": ["-hwaccel", "auto"],
         "post": ["-c:v", "h264_nvenc"]
     },
     "Intel / QSV": {
+        "platform": ["win32", "linux"],
         "string": "qsv",
         "pre": ["-hwaccel", "auto"],
         "post": ["-c:v", "h264_qsv"]
     },
     "Nvidia / CUDA": {
+        "platform": ["win32", "linux"],
         "string": "nvenc",
         "pre": ["-hwaccel", "cuda", "-hwaccel_output_format", "cuda", "-extra_hw_frames", "10"],
         "post": ["-c:v", "h264_nvenc"]
     },
     "Nvidia / CUVID": {
+        "platform": ["win32", "linux"],
         "string": "cuvid",
         "pre": ["-hwaccel", "auto"],
         "post": ["-c:v", "h264_cuvid"]
     },
     "VAAPI": {
+        "platform": ["linux"],
         "string": "vaapi",
         "pre": ["-hwaccel", "vaapi", "-hwaccel_output_format", "vaapi"],
         "post": ["-c:v", "h264_vaapi"]
     },
     "AMD AMF": {
+        "platform": ["win32", "linux"],
         "string": "amf",
         "pre": ["-hwaccel", "auto"],
         "post": ["-c:v", "h264_amf"]
     },
     "Apple / VideoToolbox": {
+        "platform": ["darwin"],
         "string": "videotoolbox",
         "pre": ["-hwaccel", "auto"],
         "post": ["-c:v", "h264_videotoolbox"]

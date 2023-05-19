@@ -27,7 +27,7 @@ const constructPromise = (name, accelArgs) => new Promise((res) => {
             complete = true;
             res({ name, works: false, log: str + `\n[ DID NOT COMPLETE IN TIME ]`, pre: accelArgs.pre || [], post: accelArgs.post || [], string: accelArgs.string })
         }
-    }, 2500)
+    }, 7500)
 
     let str = ``;
 
@@ -62,6 +62,16 @@ module.exports = () => {
                 const transcoders = require(`./ffmpegGPUArgs.json`);
 
                 let tested = {};
+
+                for (let key of Object.keys(transcoders)) {
+                    const obj = transcoders[key];
+                    if(!obj.platform.find(s => s == process.platform)) {
+                        console.log(`[FFMPEG/HW -- NOT USING] ${key}`)
+                        delete transcoders[key]
+                    } else {
+                        console.log(`[FFMPEG/HW -- USING] ${key}`)
+                    }
+                }
 
                 for (transcoder of Object.keys(transcoders)) tested[transcoder] = constructPromise(transcoder, transcoders[transcoder])
 

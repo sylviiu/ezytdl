@@ -1,4 +1,4 @@
 module.exports = () => {
-    require(`./util/determineGPUDecode.js`)();
+    require(`../util/determineGPUDecode`)();
     return true;
 }
