@@ -27,15 +27,15 @@ jobs:
         run: |
           npm install
 
-      - name: Build app
-        run: |
-          npm run dist
-
       - if: ${{ matrix.os }} == 'ubuntu-latest'
         name: Install flatpak & flatpak builder (ubuntu only)
         run: |
           sudo apt update
           sudo apt install flatpak flatpak-builder -y
+
+      - name: Build app
+        run: |
+          npm run dist
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
