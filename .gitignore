@@ -2,3 +2,4 @@ node_modules/
 dist/
 keys.json
 .DS_Store
+build.json
