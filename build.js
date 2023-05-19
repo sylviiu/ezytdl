@@ -83,23 +83,7 @@ const config = {
     ]
 };
 
-if(process.platform == `darwin`) {
-    console.log(`Building for MacOS`);
-
-    if(process.env["MAC_CERTS"] && process.env["MAC_CERTS_KEY"]) {
-        console.log(`MAC_CERTS exists! Adding env variable...`);
-        process.env["CSC_LINK"] = process.env["MAC_CERTS"];
-        process.env["CSC_KEY_PASSWORD"] = process.env["MAC_CERTS_KEY"];
-    } else console.log(`MAC_CERTS DOES NOT EXIST. Skipping...`)
-} else if(process.platform == `win32`) {
-    console.log(`Building for Windows`);
-
-    if(process.env["WIN_CSC"] && process.env["WIN_CSC_KEY"]) {
-        console.log(`WIN_CSC exists! Adding env variable...`);
-        process.env["CSC_LINK"] = process.env["WIN_CSC"];
-        process.env["CSC_KEY_PASSWORD"] = process.env["WIN_CSC_KEY"];
-    }
-} else console.log(`Building for unsigned target: ${process.platform}`);
+console.log(`Building for ${process.platform}... (${process.env["CSC_LINK"] && process.env["CSC_KEY_PASSWORD"] ? "SIGNED" : "UNSIGNED"})`);
 
 if(process.argv.find(s => s == `store`)) {
     console.log(`Using store compression... Using first build target of each platform.`);
@@ -132,7 +116,7 @@ fs.writeFileSync(`./build.json`, JSON.stringify(config, null, 4));
 
 console.log(`Wrote config, starting build...`);
 
-const proc = child_process.spawn("./node_modules/.bin/electron-builder" + process.platform == `win32` ? `.exe` : ``, [`-c`, `./build.json`, ...(config.publish ? [`-p`, `always`] : [])], { stdio: "inherit" });
+const proc = child_process.spawn(`./node_modules/.bin/electron-builder${process.platform == `win32` ? `.exe` : ``}`, [`-c`, `./build.json`, ...(config.publish ? [`-p`, `always`] : [])], { stdio: "inherit" });
 
 proc.on(`close`, (code) => {
     console.log(`Build closed with code ${code}`);
