@@ -63,17 +63,22 @@ module.exports = async (manual) => {
         const currentVersion = (require(`../package.json`).version).split(`.`).map(s => Number(s));
         const newVersion = (info.response.tag_name || info.version).split(`.`).map(s => Number(s));
 
+        let updateAvailable = false;
+
         if(newVersion[0] > currentVersion[0]) {
             console.log(`apparently a new Huge update released. (${currentVersion[0]}.x.x -> ${newVersion[0]}.x.x)`);
+            updateAvailable = true;
         } else if(newVersion[1] > currentVersion[1]) {
             console.log(`new Big update! (x.${currentVersion[1]}.x -> x.${newVersion[1]}.x)`);
+            updateAvailable = true;
         } else if(newVersion[2] > currentVersion[2]) {
             console.log(`new minor update! (x.x.${currentVersion[2]} -> x.x.${newVersion[2]})`);
+            updateAvailable = true;
         } else {
             console.log(`latest update is not newer than current version (current: ${currentVersion.join(`.`)}; latest: ${newVersion.join(`.`)})`)
         };
 
-        if(newVersion !== currentVersion) {
+        if(updateAvailable) {
             notifyWithInfo(info)
         } else if(manual) {
             sendNotification({
