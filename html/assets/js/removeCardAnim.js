@@ -1,5 +1,5 @@
 const removeCardAnim = (card, removeEntry) => {
-    if(card.querySelector(`#pausePlayButton`)) card.querySelector(`#pausePlayButton`).onclick = () => {};
+    if(card.querySelector(`.btn`)) card.querySelectorAll(`#pausePlayButton`).forEach(b => b.onclick = () => {});
 
     if(typeof removeEntry == `function`) removeEntry();
 
