@@ -58,8 +58,20 @@ module.exports = async (manual) => {
     if(global.testrun) return null;
     
     const process = (info) => {
-        const currentVersion = require(`../package.json`).version;
-        const newVersion = info.response.tag_name || info.version;
+        const currentVersion = (require(`../package.json`).version).split(`.`).map(s => Number(s));
+        const newVersion = (info.response.tag_name || info.version).split(`.`).map(s => Number(s));
+
+        if(newVersion[0] > currentVersion[0]) {
+            console.log(`apparently a new Huge update released. (${currentVersion[0]}.x.x -> ${newVersion[0]}.x.x)`);
+        } else if(newVersion[1] > currentVersion[1]) {
+            console.log(`new Big update! (x.${currentVersion[1]}.x -> x.${newVersion[1]}.x)`);
+        } else if(newVersion[2] > currentVersion[2]) {
+            console.log(`new minor update! (x.x.${currentVersion[2]} -> x.x.${newVersion[2]})`);
+        } else {
+            console.log(`latest update is not newer than current version (current: ${currentVersion.join(`.`)}; latest: ${newVersion.join(`.`)})`)
+        };
+
+        return;
 
         if(newVersion !== currentVersion) {
             notifyWithInfo(info)
