@@ -60,6 +60,9 @@ module.exports = async (manual) => {
     if(global.testrun) return null;
     
     const process = (info) => {
+        if(info.response && info.response.tag_name.startsWith(`v`)) info.response.tag_name = info.response.tag_name.slice(1);
+        if(info.version && info.version.startsWith(`v`)) info.version = info.version.slice(1);
+
         const currentVersion = (require(`../package.json`).version).split(`.`).map(s => Number(s));
         const newVersion = (info.response.tag_name || info.version).split(`.`).map(s => Number(s));
 

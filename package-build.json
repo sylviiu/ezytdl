@@ -1,6 +1,7 @@
 {
     "appId": "dev.sylviiu.ezytdl",
     "productName": "ezytdl",
+    "publish": [ "github" ],
     "artifactName": "${productName}-${platform}-${version}.${ext}",
     "beforePack": "scripts/beforePack.js",
     "portable": {
@@ -21,7 +22,11 @@
         ]
     },
     "mac": {
-        "icon": "res/packageIcons/icon-512x512.icns"
+        "icon": "res/packageIcons/icon-512x512.icns",
+        "target": [
+            "dmg",
+            "zip"
+        ]
     },
     "compression": "maximum",
     "asar": true,
