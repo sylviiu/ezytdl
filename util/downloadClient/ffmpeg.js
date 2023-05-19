@@ -73,6 +73,11 @@ module.exports = async () => new Promise(async res => {
                 const writeStream = fs.createWriteStream(downloadPath + ext, { flags: `w` });
     
                 const req = require('superagent').get(download.browser_download_url).set(`User-Agent`, `node`);
+
+                if(process.env["GITHUB_TOKEN"] && global.testrun) {
+                    console.log(`[TESTRUN] GITHUB_TOKEN found in environment! Authorizing this release request`)
+                    req.set(`Authorization`, process.env["GITHUB_TOKEN"])
+                }
     
                 const pt = new Stream.PassThrough();
     
