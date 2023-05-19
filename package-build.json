@@ -31,10 +31,7 @@
     "mac": {
         "icon": "res/packageIcons/icon-512x512.icns",
         "category": "public.app-category.utilities",
-        "target": [
-            "dmg",
-            "zip"
-        ]
+        "target": [ "dmg" ]
     },
     "compression": "maximum",
     "asar": true,
