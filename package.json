@@ -14,8 +14,8 @@
   },
   "scripts": {
     "start": "electron .",
-    "store": "electron-builder -c ./package-build-store.json -p never",
-    "dist": "electron-builder -c ./package-build.json -p always"
+    "store": "node build store",
+    "dist": "node build publish"
   },
   "repository": {
     "type": "git",
