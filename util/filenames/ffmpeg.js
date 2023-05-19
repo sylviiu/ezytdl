@@ -11,6 +11,13 @@ const s = require('os').platform() == `win32` ? `\\` : `/`
 
 const downloadPath = `${global.configPath}${s}ffmpeg-${file}`;
 
+const fs = require('fs')
+
+if(fs.existsSync(downloadPath) && !fs.existsSync(require('path').join(downloadPath + '/'))) {
+    console.log(`Not a directory. Removing.`)
+    fs.unlinkSync(downloadPath)
+}
+
 module.exports = {
     platform, file, path: downloadPath, downloadPath, systemPath: require(`which`).sync(`ffmpeg`, {nothrow: true}), getPath: () => {
         let systemPath = require(`which`).sync(`ffmpeg`, {nothrow: true});

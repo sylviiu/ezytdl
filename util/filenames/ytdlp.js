@@ -13,6 +13,13 @@ const downloadPath = `${global.configPath}${require('os').platform() == `win32` 
 
 const systemPath = require(`which`).sync(`yt-dlp`, {nothrow: true});
 
+const fs = require('fs')
+
+if(fs.existsSync(downloadPath) && !fs.existsSync(require('path').join(downloadPath + '/'))) {
+    console.log(`Not a directory. Removing.`)
+    fs.unlinkSync(downloadPath)
+}
+
 module.exports = {
     platform, file: file.replace(`_win`, `.exe`), path: downloadPath, downloadPath, systemPath, getPath: () => {
         let systemPath = require(`which`).sync(`yt-dlp`, {nothrow: true});
