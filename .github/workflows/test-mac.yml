@@ -12,6 +12,8 @@ jobs:
 
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CSC_LINK: ${{ secrets.MAC_CERTS }}
+      CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTS_KEY }}
 
     steps:
       - name: Checkout repo
