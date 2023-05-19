@@ -47,7 +47,7 @@ module.exports = async () => {
             console.log(`Latest version: ${version}`);
             console.log(`Downloads: ${downloads.map(d => d.name).join(`, `)}`);
 
-            const file = downloads.find(d => d.name.startsWith(`ezytdl-${require('os').platform()}-${version}`));
+            const file = downloads.find(d => d.name.startsWith(`ezytdl-${require('os').platform()}-${version}`) && !d.name.endsWith(`blockmap`));
     
             if(!file) {
                 return errorHandler(`Failed to find download for ${require('os').platform()} in latest release; please make sure that you are using a supported a platform!\n\nIf you are, please open an issue on GitHub.`)
