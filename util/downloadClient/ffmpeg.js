@@ -15,6 +15,7 @@ module.exports = async () => new Promise(async res => {
 
     const ws = {
         send: (args) => {
+            global.window ? global.window.webContents.send(`updateClientEvent`, args) : null
             if(global.testrun) {
                 const newNum = Math.round(args.progress * 100);
                 if(newNum != lastRoundedNum) {
@@ -22,11 +23,10 @@ module.exports = async () => new Promise(async res => {
                     console.log(`Downloaded ` + Math.round(args.progress * 100) + `% ...`)
                 }
             }
-            global.window ? global.window.webContents.send(`updateClientEvent`, args) : null
         },
         close: () => {
-            activeDownload = null;
             global.window ? global.window.webContents.send(`updateClientEvent`, {complete: true}) : null;
+            activeDownload = null;
             res()
         }
     }

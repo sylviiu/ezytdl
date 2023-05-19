@@ -15,6 +15,7 @@ module.exports = async () => new Promise(async res => {
 
     const ws = {
         send: (args) => {
+            global.window ? global.window.webContents.send(`updateClientEvent`, args) : null
             if(global.testrun) {
                 const newNum = Math.round(args.progress * 100);
                 if(newNum != lastRoundedNum) {
