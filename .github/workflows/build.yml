@@ -7,8 +7,8 @@ jobs:
   linux-dist:
     runs-on: ubuntu-latest
 
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repo
@@ -38,6 +38,8 @@ jobs:
   macos-dist:
     runs-on: macos-latest
 
+    permissions: write-all
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
@@ -66,8 +68,7 @@ jobs:
   windows-dist:
     runs-on: windows-latest
 
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    permissions: write-all
 
     steps:
       - name: Checkout repo
