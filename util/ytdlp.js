@@ -423,7 +423,7 @@ module.exports = {
                                 return res(obj)
                                 //return purgeLeftoverFiles(saveTo)
                                 //return res(`Download canceled.`, true);
-                            } else if(fs.existsSync(saveTo + ytdlpFilename + `.${ext}`) && code == 0) {
+                            } else if(code == 0) {
                                 console.log(`ffmpeg completed; deleting temporary file...`);
                                 fs.unlinkSync(saveTo + previousFilename);
                                 update({percentNum: 100, status: `Done!`, saveLocation: saveTo, destinationFile: saveTo + ytdlpFilename + `.${ext}`, url, format});
