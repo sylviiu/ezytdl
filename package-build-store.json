@@ -8,20 +8,15 @@
     },
     "win": {
         "icon": "res/packageIcons/icon-512x512.ico",
-        "target": [
-            "portable",
-            "nsis"
-        ]
+        "target": [ "portable" ]
     },
     "linux": {
         "icon": "res/packageIcons/icon-512x512.png",
-        "target": [
-            "AppImage",
-            "tar.gz"
-        ]
+        "target": [ "AppImage" ]
     },
     "mac": {
-        "icon": "res/packageIcons/icon-512x512.icns"
+        "icon": "res/packageIcons/icon-512x512.icns",
+        "target": [ "dmg" ]
     },
     "compression": "store",
     "asar": true,
@@ -33,6 +28,7 @@
         "html/*.html",
         "html/assets/**/*",
         "html/topjs/*",
+        "html/pagescripts/*",
         "html/scripts/*",
         "node_modules/**/*",
         "res/**/*",
@@ -68,6 +64,7 @@
         "core/depcheck/*/*.js",
         "core/depcheck/*.js",
         "core/*.js",
+        "devscripts/testrun.js",
         "checks/*.js"
     ]
 }

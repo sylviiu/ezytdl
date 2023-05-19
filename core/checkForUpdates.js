@@ -48,7 +48,7 @@ const notifyWithInfo = (info) => {
 
     sendNotification({
         headingText: `Update available! (${info.version})`,
-        bodyText: `${date} -- "${global.updateAvailable}" will be installed when you close the app!`
+        bodyText: `${date} -- "${global.updateAvailable}" is available to download!`
     })
 };
 

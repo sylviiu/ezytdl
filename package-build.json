@@ -33,6 +33,7 @@
         "html/*.html",
         "html/assets/**/*",
         "html/topjs/*",
+        "html/pagescripts/*",
         "html/scripts/*",
         "node_modules/**/*",
         "res/**/*",
@@ -68,6 +69,7 @@
         "core/depcheck/*/*.js",
         "core/depcheck/*.js",
         "core/*.js",
+        "devscripts/testrun.js",
         "checks/*.js"
     ]
 }

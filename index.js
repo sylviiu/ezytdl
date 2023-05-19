@@ -64,7 +64,10 @@ if(!locked) {
                         console.log(`[${Date.now() - startTime}ms] Starting testrun...`)
                         require(`./devscripts/testrun`)(startTime);
                     }, 2500)
-                } else if(!app.isPackaged) window.webContents.openDevTools()
+                } else {
+                    if(/*!app.isPackaged*/ true) window.webContents.openDevTools();
+                    console.log(`complete`)
+                }
             }));
         
             window.loadFile(`./html/loading.html`);

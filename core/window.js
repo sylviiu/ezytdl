@@ -55,7 +55,9 @@ module.exports = (notDefault, overrideArgs) => {
         icon: iconPath
     };
 
-    if(global.headless || global.testrun) args.show = false;
+    if(global.headless || global.testrun) {
+        args.show = false;
+    }
 
     if(!conf.defaultWindowControls) {
         console.log(`Hiding window controls and using custom ones`)
@@ -139,9 +141,12 @@ module.exports = (notDefault, overrideArgs) => {
     if(firstRun) {
         require(`./ipcHandler`)();
         require(`./lockdown`)();
-    }
+        console.log(`-- FIRSTRUN TASKS COMPLETE`)
+    };
 
     firstRun = false;
+
+    console.log(`returning window`)
 
     return window;
 }
