@@ -132,7 +132,7 @@ fs.writeFileSync(`./build.json`, JSON.stringify(config, null, 4));
 
 console.log(`Wrote config, starting build...`);
 
-const proc = child_process.spawn("./node_modules/.bin/electron-builder", [`-c`, `./build.json`, ...(config.publish ? [`-p`, `always`] : [])], { stdio: "inherit" });
+const proc = child_process.spawn("./node_modules/.bin/electron-builder" + process.platform == `win32` ? `.exe` : ``, [`-c`, `./build.json`, ...(config.publish ? [`-p`, `always`] : [])], { stdio: "inherit" });
 
 proc.on(`close`, (code) => {
     console.log(`Build closed with code ${code}`);
