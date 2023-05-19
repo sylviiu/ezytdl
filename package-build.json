@@ -1,7 +1,6 @@
 {
     "appId": "dev.sylviiu.ezytdl",
     "productName": "ezytdl",
-    "publish": [ "github" ],
     "artifactName": "${productName}-${platform}-${version}.${ext}",
     "beforePack": "scripts/beforePack.js",
     "portable": {
@@ -16,14 +15,15 @@
     },
     "linux": {
         "icon": "res/packageIcons/icon-512x512.png",
+        "category": "Utility",
         "target": [
             "AppImage",
-            "tar.gz",
-            "flatpak"
+            "tar.gz"
         ]
     },
     "mac": {
         "icon": "res/packageIcons/icon-512x512.icns",
+        "category": "public.app-category.utilities",
         "target": [
             "dmg",
             "zip"

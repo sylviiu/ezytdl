@@ -23,12 +23,9 @@ jobs:
         run: |
           npm install
 
-      - name: Install flatpak & flatpak builder (ubuntu only)
-        run: |
-          sudo apt update
-          sudo apt install flatpak flatpak-builder -y
-
       - name: Build app
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm run dist
 
@@ -40,9 +37,6 @@ jobs:
             dist/latest*.yml
   macos-dist:
     runs-on: macos-latest
-
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Checkout repo
@@ -58,6 +52,8 @@ jobs:
           npm install
 
       - name: Build app
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm run dist
 
@@ -87,6 +83,8 @@ jobs:
           npm install
 
       - name: Build app
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm run dist
 
