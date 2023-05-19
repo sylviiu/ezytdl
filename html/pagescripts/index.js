@@ -1,9 +1,3 @@
-let config;
-
-configuration.get().then(newConf => {
-    config = newConf
-})
-
 const mainContainer = document.getElementById(`mainContainer`);
 
 const searchBoxHeights = () => [`${window.innerHeight - 80}px`, `225px`]
@@ -188,6 +182,10 @@ const runSearch = async (url) => {
 
                     card.querySelector(`#pausePlayButton`).onclick = () => removeCardAnim(card, removeEntry)
 
+                    console.log(`running conversionOptions`)
+
+                    conversionOptions(card, entry)
+
                     formatList.appendChild(card);
 
                     await new Promise((resolve) => setTimeout(resolve, 1));
@@ -360,12 +358,17 @@ const runSearch = async (url) => {
                         startDownload(card, {
                             url: url,
                             format: format.format_id,
-                            ext: card.querySelector(`#formatConversionTextbox`).value || null,
+                            convert: card.querySelector(`#formatConversionTextbox`).value ? {
+                                ext: card.querySelector(`#formatConversionTextbox`).value
+                            } : null,
+                            ext: null,
                             filePath: card.querySelector(`#saveLocation`).value || null,
                             info: Object.assign({}, info, { formats: null }),
                         });
                     }
 
+                    card.querySelector(`#convertDownload`).parentElement.removeChild(card.querySelector(`#convertDownload`));
+                    card.querySelector(`#confirmDownload`).style.width = `100%`
                     card.querySelector(`#confirmDownload`).onclick = () => confirmDownload();
 
                     const btnClick = () => {
