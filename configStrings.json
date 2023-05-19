@@ -3,10 +3,8 @@
     "outputFilename": "File Name Format",
     "lastMediaConversionOutputs": "Default Media Conversion",
     "concurrentDownloads": "Maximum Concurrent Downloads",
-    "allowVideoConversion": "Allow Video Conversion",
     "onlyGPUConversion": "Only Allow Hardware-Accelerated Video Conversion",
     "disableHWAcceleratedConversion": "Disable Hardware-Accelerated Video Conversion",
-    "allowAudioConversion": "Allow Audio Conversion",
     "closeToTray": "Close to System Tray",
     "logsEnabled": "Enable Runtime Logs",
     "defaultWindowControls": "Use System Window Controls"

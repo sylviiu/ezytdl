@@ -3,10 +3,8 @@
     "outputFilename": "Change the format of the output filename. You can find the full list of fields at [yt-dlp's README](https://github.com/yt-dlp/yt-dlp#output-template)",
     "lastMediaConversionOutputs": "Set the format ezytdl should convert media files to.",
     "concurrentDownloads": "Set the maximum amount of yt-dlp downloads & FFmpeg conversions should be running at a time.",
-    "allowVideoConversion": "Allows ezytdl to convert videos. If this is disabled and an output format is supplied at download, ezytdl will instead attempt to download the best quality video in the given format (if applicable).",
     "onlyGPUConversion": "Prevent ezytdl from converting a video if it cannot be accelerated by any of your system's hardware. This is useful if you want to prevent ezytdl from using your CPU to convert videos.",
     "disableHWAcceleratedConversion": "Prevent ezytdl from using your system's hardware to convert videos. This is useful if you want to prevent ezytdl from using your GPU to convert videos.",
-    "allowAudioConversion": "Allows ezytdl to convert audios. If this is disabled and an output format is supplied at download, ezytdl will instead attempt to download the best quality audio in the given format (if applicable).",
     "closeToTray": "Allow ezytdl to close to the system tray instead of exiting when the window is closed.",
     "logsEnabled": "Allows ezytdl to log information to the console. This is useful for debugging and/or bug reporting.",
     "defaultWindowControls": "If this is enabled, ezytdl will use your operating system's default window border & controls. This will only be applied on the next launch of ezytdl."

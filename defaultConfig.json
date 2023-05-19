@@ -7,10 +7,8 @@
         "both": "mp4"
     },
     "concurrentDownloads": 2,
-    "allowVideoConversion": false,
     "onlyGPUConversion": true,
     "disableHWAcceleratedConversion": false,
-    "allowAudioConversion": false,
     "closeToTray": true,
     "logsEnabled": false,
     "defaultWindowControls": false,
