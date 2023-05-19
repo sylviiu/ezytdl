@@ -94,6 +94,6 @@ module.exports = async (manual) => {
             bodyText: `${e}`,
             systemAllowed: true,
         }));
-        global.updateCheckResult.then(process);
+        global.updateCheckResult.then(i => typeof i == `object` ? process(i) : null);
     };
 };
