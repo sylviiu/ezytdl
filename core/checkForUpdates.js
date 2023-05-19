@@ -2,29 +2,26 @@ const sendNotification = require("./sendNotification.js");
 
 const { shell, app, ipcMain } = require(`electron`);
 
-const notifyWithInfo = (info) => {
-    global.updateAvailable = info.response.name || info.version;
+const notifyWithInfo = (info, downloaded) => {
+    global.updateAvailable = info.version;
 
     ipcMain.emit(`updateAvailable`)
 
     //console.log(info)
 
-    const file = info.assets.find(d => d.name.startsWith(`ezytdl-${require('os').platform()}-${info.response.tag_name || info.version}`));
-
-    console.log(`update file`, file)
-
-    if(file && process.platform != `linux`) {
-        console.log(`internal updater enabled`)
-        //global.updateFunc = async () => global.window.loadURL(require('path').join(__dirname.split(`core`).slice(0, -1).join(`core`) + `/html/updating.html?ezytdll`))
-        global.updateFunc = () => require(`./downloadClientPopout.js`)();
-    } else {
-        console.log(`internal updater disabled`)
-        global.updateFunc = async () => shell.openExternal(info.url);
+    global.updateFunc = () => {
+        if(downloaded) {
+            autoUpdater.quitAndInstall(false, true);
+        } else {
+            global.updateFunc = async () => shell.openExternal(`https://github.com/sylviiu/ezytdl/releases/tag/${info.version}`);
+        }
     }
     
     require(`./tray.js`).refresh();
 
-    const d = new Date(info.response.published_at);
+    require(`./downloadIcon.js`).set();
+
+    const d = new Date(info.releaseDate);
 
     const timeSinceReleased = new Date(Date.now() - d.getTime());
 
@@ -50,58 +47,39 @@ const notifyWithInfo = (info) => {
 
     sendNotification({
         headingText: `Update available! (${info.version})`,
-        bodyText: `${date} -- "${global.updateAvailable}" is available to download!`
+        bodyText: (`${date} -- "${global.updateAvailable}" `) + (downloaded ? `is available to download!` : `will be installed when you exit!`)
     })
 };
 
-global.updateCheckResult = null;
+const { autoUpdater } = require(`electron-updater`);
+
+autoUpdater.autoDownload = false;
+
+if(process.platform == `win32` || process.platform == `darwin`) {
+    autoUpdater.autoDownload = true;
+    // linux also has auto app updates, but it just downloads a new appimage and deletes the old one. it's very inconvenient.
+    
+    autoUpdater.on(`update-downloaded`, (info) => {
+        notifyWithInfo(info, true);
+    });
+} else {
+    autoUpdater.on(`update-available`, (info) => {
+        notifyWithInfo(info, false);
+    });
+};
+
+autoUpdater.on(`update-not-available`, (info) => {
+    sendNotification({
+        headingText: `Up to date!`,
+        bodyText: `You're already on the latest version!`,
+        systemAllowed: true,
+    })
+})
 
 module.exports = async (manual) => {
     if(global.testrun) return null;
-    
-    const process = (info) => {
-        if(info.response && info.response.tag_name.startsWith(`v`)) info.response.tag_name = info.response.tag_name.slice(1);
-        if(info.version && info.version.startsWith(`v`)) info.version = info.version.slice(1);
 
-        const currentVersion = (require(`../package.json`).version).split(`.`).map(s => Number(s));
-        const newVersion = (info.response.tag_name || info.version).split(`.`).map(s => Number(s));
-
-        let updateAvailable = false;
-
-        if(newVersion[0] > currentVersion[0]) {
-            console.log(`apparently a new Huge update released. (${currentVersion[0]}.x.x -> ${newVersion[0]}.x.x)`);
-            updateAvailable = true;
-        } else if(newVersion[1] > currentVersion[1]) {
-            console.log(`new Big update! (x.${currentVersion[1]}.x -> x.${newVersion[1]}.x)`);
-            updateAvailable = true;
-        } else if(newVersion[2] > currentVersion[2]) {
-            console.log(`new minor update! (x.x.${currentVersion[2]} -> x.x.${newVersion[2]})`);
-            updateAvailable = true;
-        } else {
-            console.log(`latest update is not newer than current version (current: ${currentVersion.join(`.`)}; latest: ${newVersion.join(`.`)})`)
-        };
-
-        if(updateAvailable) {
-            notifyWithInfo(info)
-        } else if(manual) {
-            sendNotification({
-                headingText: `Up to date!`,
-                bodyText: `You're already on the latest version!`,
-                systemAllowed: true,
-            })
-        }
+    if(!global.updateAvailable || manual) {
+        autoUpdater.checkForUpdates();
     }
-
-    if(!app.isPackaged || global.testrun) return null;
-
-    if(!global.updateCheckResult || manual) {
-        global.updateCheckResult = require(`../util/fetchLatestVersion/ezytdl`)();
-        global.updateCheckResult.catch((e) => sendNotification({
-            type: `error`, 
-            headingText: `Error checking for updates!`,
-            bodyText: `${e}`,
-            systemAllowed: true,
-        }));
-        global.updateCheckResult.then(i => typeof i == `object` ? process(i) : null);
-    };
 };

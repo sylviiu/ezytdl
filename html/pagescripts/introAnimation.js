@@ -52,10 +52,16 @@ ajax.onload = async () => {
     if(typeof getVersion != `undefined`) getVersion()
     initDownloadManager();
 
+    const enableUpdateButton = () => {
+        document.getElementById(`updateAvailable`).classList.add(`d-flex`);
+        document.getElementById(`updateAvailable`).classList.remove(`d-none`);
+        document.getElementById(`updateAvailable`).onclick = () => send(`openUpdatePage`)
+    }
+
     if(document.getElementById(`updateAvailable`)) {
         console.log(`updateAvailable Enabled`)
         version.checkForUpdates().then(r => r ? enableUpdateButton() : null);
-        version.onUpdate(() => enableUpdateButton())
+        version.onUpdate(enableUpdateButton)
     }
 
     const navigationBar = document.body.querySelector(`#navigationBar`);

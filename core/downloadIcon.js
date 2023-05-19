@@ -165,7 +165,7 @@ module.exports = {
     
         if(!type) type = current;
 
-        if(type == `noQueue` && global.updateAvailable) type == `update`
+        if(type == `noQueue` && global.updateAvailable) type = `update`
         
         console.log(`Updating tray -- type: ${type} / use dark colors? ${nativeTheme.shouldUseDarkColors} / force light? ${alwaysUseLightIcon}`);
         

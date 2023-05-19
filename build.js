@@ -47,6 +47,7 @@ const config = {
         "node_modules/**/*",
         "res/*.*",
         "res/trayIcons/*",
+        "res/packageIcons/*",
         "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
         "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
         "!**/node_modules/*.d.ts",
@@ -87,11 +88,8 @@ const config = {
 console.log(`Building for ${process.platform}... (${process.env["CSC_LINK"] && process.env["CSC_KEY_PASSWORD"] ? "SIGNED" : "UNSIGNED"})`);
 
 if(process.argv.find(s => s == `store`)) {
-    console.log(`Using store compression... Using first build target of each platform.`);
+    console.log(`Using store compression...`);
     config.compression = "store";
-    config.win.target = config.win.target[0];
-    config.linux.target = config.linux.target[0];
-    config.mac.target = config.mac.target[0];
 } else {
     console.log(`Using maximum compression...`);
     config.compression = "maximum";
