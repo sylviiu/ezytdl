@@ -15,7 +15,7 @@
         "target": [ "AppImage" ]
     },
     "mac": {
-        "icon": "res/packageIcons/icon-512x512.icns",
+        "icon": "res/packageIcons/icon.icns",
         "target": [ "dmg" ]
     },
     "compression": "store",
@@ -31,7 +31,8 @@
         "html/pagescripts/*",
         "html/scripts/*",
         "node_modules/**/*",
-        "res/**/*",
+        "res/*.*",
+        "res/trayIcons/*",
         "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
         "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
         "!**/node_modules/*.d.ts",

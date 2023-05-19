@@ -29,7 +29,17 @@ module.exports = (notDefault, overrideArgs) => {
 
     console.log(platform)
 
-    const iconPath = getPath(`res/packageIcons/icon-` + (platform == `win32` ? `64x64.ico` : `512x512.png`))
+    let iconPath = `res/packageIcons/icon`;
+
+    if(process.platform == `win32`) {
+        iconPath += `-64x64.ico`;
+    } else if(process.platform == `darwin`) {
+        iconPath += `.icns`
+    } else {
+        iconPath += `-512x512.png`
+    }
+
+    iconPath = getPath(iconPath);
 
     console.log(`Icon path: ${iconPath}`)
 
