@@ -92,7 +92,7 @@ module.exports = async (manual) => {
         }
     }
 
-    //if(!app.isPackaged) return null;
+    if(!app.isPackaged || global.testrun) return null;
 
     if(!global.updateCheckResult || manual) {
         global.updateCheckResult = require(`../util/fetchLatestVersion/ezytdl`)();

@@ -14,7 +14,7 @@
   "scripts": {
     "start": "electron .",
     "store": "electron-builder -c ./package-build-store.json -p never",
-    "dist": "electron-builder -c ./package-build.json"
+    "dist": "electron-builder -c ./package-build.json -p onTagOrDraft"
   },
   "repository": {
     "type": "git",
