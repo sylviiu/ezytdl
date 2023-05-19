@@ -47,7 +47,7 @@ if(!locked) {
 
                 const init = await require(`./init`)();
 
-                console.log(`Took [${Date.now() - startTime}ms] to finish init!`, init);
+                console.log(`Took [${Date.now() - startTime}ms] to finish init!`);
         
                 let redirect = `index.html`
                 if(!init.ytdlpDownloaded && !global.testrun) redirect = `updating.html`;
