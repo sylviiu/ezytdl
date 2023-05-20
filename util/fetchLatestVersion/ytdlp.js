@@ -1,10 +1,8 @@
-let latest = null;
-
 module.exports = () => {
-    if(latest) {
-        return Promise.resolve(latest)
-    } else {
-        latest = require(`../githubReleasesRequest`)(`yt-dlp`, `yt-dlp`);
-        return latest;
-    }
+    const { ytdlpNightlyBuilds } = require(`../../getConfig`)();
+    const repo = ytdlpNightlyBuilds ? `yt-dlp-nightly-builds` : `yt-dlp`
+
+    console.log(`Downloading release from ${repo} (nightly builds: ${ytdlpNightlyBuilds})`)
+
+    return require(`../githubReleasesRequest`)(`yt-dlp`, repo);
 }

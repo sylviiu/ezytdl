@@ -1,6 +1,7 @@
 {
     "saveLocation": "Save Location",
     "outputFilename": "File Name Format",
+    "ytdlpNightlyBuilds": "Download YT-DLP Nightly Builds",
     "lastMediaConversionOutputs": "Default Media Conversion",
     "concurrentDownloads": "Maximum Concurrent Downloads",
     "onlyGPUConversion": "Only Allow Hardware-Accelerated Video Conversion",

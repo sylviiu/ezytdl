@@ -1,6 +1,7 @@
 {
     "saveLocation": "Set the directory where media files are saved.",
     "outputFilename": "Change the format of the output filename. You can find the full list of fields at [yt-dlp's README](https://github.com/yt-dlp/yt-dlp#output-template)",
+    "ytdlpNightlyBuilds": "Allow the app to download the nightly builds of yt-dlp. This usually includes bugfixes and new features much earlier than a stable release, but may also include bugs and/or regressions.",
     "lastMediaConversionOutputs": "Set the format ezytdl should convert media files to.",
     "concurrentDownloads": "Set the maximum amount of yt-dlp downloads & FFmpeg conversions should be running at a time.",
     "onlyGPUConversion": "Prevent ezytdl from converting a video if it cannot be accelerated by any of your system's hardware. This is useful if you want to prevent ezytdl from using your CPU to convert videos.",

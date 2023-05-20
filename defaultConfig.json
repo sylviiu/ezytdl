@@ -1,6 +1,7 @@
 {
     "saveLocation": "",
     "outputFilename": "[ %(webpage_url_domain)s ] %(format_id)s - %(fulltitle)s",
+    "ytdlpNightlyBuilds": false,
     "lastMediaConversionOutputs": {
         "audio": "mp3",
         "video": "mp4",
