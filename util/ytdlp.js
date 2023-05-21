@@ -82,16 +82,14 @@ const sendUpdates = (proc, initialMsg) => {
         };
 
         if(!downloadingList) {
-            if(str.includes(`Extracting URL`)) {
+            if(str.includes(`page`) && str.toLowerCase().includes(`downloading`)) {
+                updateStatusPercent([-1, 5])
+            } else if(str.includes(`Extracting URL`)) {
                 updateStatusPercent([1, 5])
-            } else if(str.includes(`Downloading webpage`)) {
-                updateStatusPercent([2, 5])
-            } else if(str.includes(`Downloading video info webpage`)) {
+            } else if(str.includes(`Downloading`)) {
                 updateStatusPercent([3, 5])
-            } else if(str.includes(`Downloading JSON metadata`)) {
-                updateStatusPercent([4, 5])
             } else if(str.toLowerCase().includes(`format`)) {
-                updateStatusPercent([5, 5])
+                updateStatusPercent([4, 5])
             }
         }
 
