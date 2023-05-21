@@ -1,6 +1,10 @@
 const getVersion = () => {
     if(document.getElementById(`version`)) {
-        version.get().then(v => document.getElementById(`version`).innerHTML = `v` + v)
+        version.get().then(v => {
+            if(isNaN(Number(v[0]))) {
+                document.getElementById(`version`).innerHTML = v
+            } else document.getElementById(`version`).innerHTML = `v` + v
+        })
     }
 }
 
