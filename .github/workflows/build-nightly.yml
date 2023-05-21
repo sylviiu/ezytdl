@@ -41,17 +41,17 @@ jobs:
       id: get_tag
       run: |
         echo ::set-output name=tag::"$(node -e "console.log(require('./package.json').version)")-nightly.$(git rev-parse --short HEAD)"
-        echo ::set-output name=name::"[PRE-RELEASE] $(node -e "console.log(require('./package.json').version)")-nightly.$(git rev-parse --short HEAD)"
+        echo ::set-output name=name::"[NIGHTLY] $(node -e "console.log(require('./package.json').version)")-nightly.$(git rev-parse --short HEAD)"
     - name: Create pre-release draft
       id: create_release
-      uses: actions/create-release@v1
-      env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: shogo82148/actions-create-release@v1
       with:
           tag_name: ${{ steps.get_tag.outputs.tag }}
           release_name: ${{ steps.get_tag.outputs.name }}
+          commitish: ${{ github.sha }}
           draft: true
           prerelease: true
+          make_latest: false
 
   linux-dist:
     needs: release_tag
