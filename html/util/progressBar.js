@@ -70,11 +70,15 @@ const addProgressBar = (node, width, height) => {
 
     let lastProgress = 0;
 
+    let allowProgressChanges = true;
+
     return {
         setProgress: (progress, txt) => {
             // progress range: 0 -> 1
 
-            if(typeof progress == `number` && progress) {
+            if(!allowProgressChanges) return;
+
+            if(typeof progress == `number` && progress > 0) {
                 anime.remove(fill);
                 fill.style.opacity = 1;
                 anime({
@@ -85,19 +89,31 @@ const addProgressBar = (node, width, height) => {
                     easing: `easeOutExpo`,
                 });
 
-                lastProgress = progress;
-
                 if(txt) {
                     fillText.innerText = txt;
                 } else {
                     fillText.innerText = ``;
                 }
-            } else {
+            } else if(lastProgress != progress) {
                 startPendingAnimation();
             }
+
+            lastProgress = typeof progress == `number` ? progress : lastProgress;
         },
         remove: () => {
+            if(!allowProgressChanges) return;
+
+            allowProgressChanges = false;
+
             anime.remove(fill);
+            
+            anime({
+                targets: fill,
+                left: `0px`,
+                width: [lastProgress, `100%`],
+                duration: 350,
+                easing: `easeOutExpo`,
+            });
 
             anime({
                 targets: bar,
