@@ -1,5 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+const fs = require('fs')
+
 const addScript = (path) => new Promise(res => {
     const script = document.createElement(`script`);
 
@@ -109,20 +111,26 @@ contextBridge.exposeInMainWorld(`preload`, {
     oncomplete: (cb) => script.addEventListener(`load`, cb)
 });
 
+const util = fs.readdirSync(`./html/util`).filter(f => f.endsWith(`.js`));
+const topjs = fs.readdirSync(`./html/topjs`).filter(f => f.endsWith(`.js`));
+const afterload = fs.readdirSync(`./html/afterload`).filter(f => f.endsWith(`.js`));
+
 addEventListener(`DOMContentLoaded`, async () => {
+    console.log(`-- ADDING UTIL`)
+
+    for(const script of util) await addScript(`./util/${script}`);
+
     console.log(`-- ADDING TOPJS`)
 
-    await addScript(`./topjs/feelLikeNativeApp.js`);
-    await addScript(`./topjs/progressBar.js`);
-    await addScript(`./topjs/vars.js`);
+    for(const script of topjs) await addScript(`./topjs/${script}`);
 
     console.log(`-- ADDING PAGESCRIPT`)
 
     await addScript(`./pagescripts/${name.includes(`-`) ? name.split(`-`)[0] : name}.js`);
 
     console.log(`-- ADDING AFTERLOAD`)
-    
-    await addScript(`./afterload/downloadManager.js`);
+
+    for(const script of afterload) await addScript(`./afterload/${script}`);
 
     const enableUpdateButton = () => {
         document.getElementById(`updateAvailable`).classList.add(`d-flex`);
