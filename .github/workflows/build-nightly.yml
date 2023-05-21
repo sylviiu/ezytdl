@@ -23,7 +23,7 @@ jobs:
         if: ${{ github.event_name == 'schedule' }}
         run: test -z $(git rev-list --after="24 hours"  ${{ github.sha }}) && echo "::set-output name=should_run::false"
 
-  release_tag:
+  release_info:
     needs: check_date
     if: ${{ needs.check_date.outputs.should_run != 'false' }}
     runs-on: ubuntu-latest
@@ -40,21 +40,23 @@ jobs:
     - name: Get the pre-release tag
       id: get_tag
       run: |
-        echo ::set-output name=tag::"$(node -e "console.log(require('./package.json').version)")-nightly.$(git rev-parse --short HEAD)"
-        echo ::set-output name=name::"[NIGHTLY] $(node -e "console.log(require('./package.json').version)")-nightly.$(git rev-parse --short HEAD)"
+        echo ::set-env name=TAG_NAME::"$(node -e "console.log(require('./package.json').version)")-nightly.$(git rev-parse --short HEAD)"
+        echo ::set-env name=RELEASE_NAME::"[NIGHTLY] $(node -e "console.log(require('./package.json').version)")-nightly.$(git rev-parse --short HEAD)"
+        echo "$(git log --pretty=oneline $(git rev-list -n 1 $(git describe --tags --abbrev=0))...$(git rev-parse HEAD))" > body.txt
     - name: Create pre-release draft
       id: create_release
       uses: shogo82148/actions-create-release@v1
       with:
-          tag_name: ${{ steps.get_tag.outputs.tag }}
-          release_name: ${{ steps.get_tag.outputs.name }}
+          tag_name: ${{ env.TAG_NAME }}
+          release_name: ${{ env.RELEASE_NAME }}
           commitish: ${{ github.sha }}
           draft: true
           prerelease: true
           make_latest: false
+          body_path: body.txt
 
   linux-dist:
-    needs: release_tag
+    needs: release_info
 
     runs-on: ubuntu-latest
 
@@ -79,7 +81,7 @@ jobs:
         run: |
           npm run nightly
   macos-dist:
-    needs: release_tag
+    needs: release_info
     
     runs-on: macos-latest
 
@@ -106,7 +108,7 @@ jobs:
         run: |
           npm run nightly
   windows-dist:
-    needs: release_tag
+    needs: release_info
     
     runs-on: windows-latest
 
@@ -131,21 +133,15 @@ jobs:
         run: |
           npm run nightly
   release:
-    needs: [linux-dist, macos-dist, windows-dist, release_tag]
+    needs: [linux-dist, macos-dist, windows-dist, release_info]
     name: "Release the build"
     runs-on: "ubuntu-latest"
 
     permissions: write-all
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Get the pre-release id
-      id: get_tag
-      run: |
-        echo ::set-output name=tag::"$(git describe --tags --abbrev=0)-nightly.$(git rev-parse --short HEAD)"
-
     - uses: eregon/publish-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        release_id: ${{ needs.release_tag.outputs.release_id }}
+        release_id: ${{ needs.release_info.outputs.release_id }}
