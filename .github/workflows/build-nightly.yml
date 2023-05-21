@@ -125,3 +125,20 @@ jobs:
           path: |
             dist/ezytdl*
             dist/latest*.yml
+  release:
+    needs: [linux-dist, macos-dist, windows-dist]
+    name: "Tagged Release"
+    runs-on: "ubuntu-latest"
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Get the pre-release id
+      id: get_tag
+      run: |
+        echo ::set-output name=tag::"$(git describe --tags --abbrev=0)-nightly.$(git rev-parse --short HEAD)"
+
+    - uses: eregon/publish-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        release_id: ${{ steps.get_tag.outputs.tag }}
