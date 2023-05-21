@@ -122,7 +122,7 @@ const runSearch = async (url, initialMsg, func) => {
             let parseProgress = addProgressBar(document.getElementById(`urlBox`), `80%`);
 
             if(info.entries) {
-                if(info.entries.filter(e => e.entries).length == info.entries.length) {
+                if(info.entries.filter(e => e.entries).length == info.entries.length || info.entries.length == 0) {
                     listbox.querySelector(`#qualityButtons`).classList.add(`d-none`);
                 }
 
@@ -432,6 +432,8 @@ const runSearch = async (url, initialMsg, func) => {
 
                     //card.querySelector(`#convertDownload`).parentElement.removeChild(card.querySelector(`#convertDownload`));
                     //card.querySelector(`#confirmDownload`).style.width = `100%`
+
+                    card.querySelector(`#conversionDiv`).appendChild(card.querySelector(`#formatConversionTextbox`));
 
                     conversionOptions(card, format);
                     
