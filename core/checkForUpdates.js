@@ -74,10 +74,30 @@ autoUpdater.on(`update-not-available`, (info) => {
         bodyText: `You're already on the latest version!`,
         systemAllowed: true,
     })
+});
+
+autoUpdater.on(`error`, (e) => {
+    console.error(e)
+    sendNotification({
+        headingText: `Update error!`,
+        bodyText: `An error occurred while checking for updates. Please try again later.`,
+        type: `error`
+    })
 })
 
 module.exports = async (manual) => {
     if(global.testrun) return null;
+
+    const currentVersion = require(`../package.json`).version;
+
+    if(currentVersion.includes(`-nightly.`)) {
+        sendNotification({
+            headingText: `Nightly build!`,
+            bodyText: `You're using a nightly build! These are used for testing and may contain bugs.`
+        });
+
+        autoUpdater.allowPrerelease = true;
+    }
 
     if(!global.updateAvailable || manual) {
         autoUpdater.checkForUpdates();
