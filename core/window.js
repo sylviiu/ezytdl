@@ -53,11 +53,11 @@ module.exports = (notDefault, overrideArgs) => {
         backgroundColor: `rgb(10,10,10)`,
         darkTheme: true,
         webPreferences: {
-            nodeIntegration: true,
+            nodeIntegration: false,
             nodeIntegrationInWorker: false,
             contextIsolation: true,
             devTools: true,
-            sandbox: false,
+            sandbox: true,
             scrollBounce: true,
             backgroundThrottling: false,
             preload: path.join(__dirname, `preload.js`)
@@ -78,7 +78,7 @@ module.exports = (notDefault, overrideArgs) => {
     if(app.isPackaged) {
         console.log(`-------------\nSTARTING WITH PRODUCTION MODE\n-------------`)
 
-        args.webPreferences.devTools = false;
+        /*args.webPreferences.devTools = false;
 
         const setShortcuts = (enable) => {
             const accelerators = [`CommandOrControl+Shift+I`, `F12`];
@@ -100,7 +100,7 @@ module.exports = (notDefault, overrideArgs) => {
 
         app.on('browser-window-focus', function () {
             setShortcuts(true);
-        })
+        })*/
     } else {
         console.log(`-------------\nSTARTING WITH DEVELOPMENT MODE\n-------------`);
 

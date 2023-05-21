@@ -1,7 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-const fs = require('fs')
-
 const addScript = (path) => new Promise(res => {
     const script = document.createElement(`script`);
 
@@ -111,9 +109,9 @@ contextBridge.exposeInMainWorld(`preload`, {
     oncomplete: (cb) => script.addEventListener(`load`, cb)
 });
 
-const util = fs.readdirSync(`./html/util`).filter(f => f.endsWith(`.js`));
-const topjs = fs.readdirSync(`./html/topjs`).filter(f => f.endsWith(`.js`));
-const afterload = fs.readdirSync(`./html/afterload`).filter(f => f.endsWith(`.js`));
+const util = [`popout.js`, `progressBar.js`, `removeCardAnim.js`, `removeElements.js`];
+const topjs = [`feelLikeNativeApp.js`, `vars.js`];
+const afterload = [`downloadManager.js`];
 
 addEventListener(`DOMContentLoaded`, async () => {
     console.log(`-- ADDING UTIL`)
