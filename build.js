@@ -9,7 +9,6 @@ const config = {
     "appId": "dev.sylviiu.ezytdl",
     "productName": "ezytdl",
     "artifactName": "${productName}-${platform}-${version}.${ext}",
-    //"beforePack": "scripts/beforePack.js",
     "portable": {
         "artifactName": "${productName}-${platform}-portable-${version}.${ext}"
     },
@@ -84,8 +83,13 @@ const config = {
         "core/*.js",
         "devscripts/testrun.js",
         "checks/*.js"
-    ]
+    ],
+    "extraMetadata": {},
 };
+
+const commitHash = child_process.execSync(`git rev-parse --short HEAD`).toString().trim();
+
+const pkg = JSON.parse(fs.readFileSync(`./package.json`).toString());
 
 console.log(`Building for ${process.platform}... (${process.env["CSC_LINK"] && process.env["CSC_KEY_PASSWORD"] ? "SIGNED" : "UNSIGNED"})`);
 
@@ -111,11 +115,25 @@ if(process.argv.find(s => s == `publish`)) {
         "vPrefixedTagName": false,
         "releaseType": "draft"
     };
-};
+} else if(process.argv.find(s => s == `nightly`)) {
+    console.log(`Using nightly build...`);
+
+    config.extraMetadata.version = `${pkg.version}-nightly.${commitHash}`;
+
+    config.productName += `-nightly`;
+    
+    config.publish = {
+        "provider": "github",
+        "owner": "sylviiu",
+        "repo": "ezytdl",
+        "vPrefixedTagName": false,
+        "releaseType": "draft"
+    };
+}
 
 fs.writeFileSync(`./build.json`, JSON.stringify(config, null, 4));
 
-console.log(`Wrote config, starting build...`);
+console.log(`Wrote config!`);
 
 which(`npm`).then(path => {
     console.log(`Spawning npm at ${path}`);

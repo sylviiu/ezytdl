@@ -1,0 +1,127 @@
+name: ezytdl nightly distributable build
+run-name: ${{ github.actor }} - ${{ github.event_name }} - ${{ github.sha }}
+
+on: 
+    schedule:
+      - cron: '0 0 * * *' # every day at 00:00 UTC
+    workflow_dispatch:
+
+jobs:
+  check_date:
+    runs-on: ubuntu-latest
+    name: Check latest commit
+    outputs:
+      should_run: ${{ steps.should_run.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: print latest_commit
+        run: echo ${{ github.sha }}
+
+      - id: should_run
+        continue-on-error: true
+        name: check latest commit is less than a day
+        if: ${{ github.event_name == 'schedule' }}
+        run: test -z $(git rev-list  --after="24 hours"  ${{ github.sha }}) && echo "::set-output name=should_run::false"
+
+  linux-dist:
+    needs: check_date
+    if: ${{ needs.check_date.outputs.should_run != 'false' }}
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Install Node.js & NPM
+        uses: actions/setup-node@main
+        with:
+          node-version: '18'
+
+      - name: Install npm deps
+        run: |
+          npm install
+
+      - name: Build app
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm run dist
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: |
+            dist/ezytdl*
+            dist/latest*.yml
+  macos-dist:
+    needs: check_date
+    if: ${{ needs.check_date.outputs.should_run != 'false' }}
+    
+    runs-on: macos-latest
+
+    permissions: write-all
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Install Node.js & NPM
+        uses: actions/setup-node@main
+        with:
+          node-version: '18'
+
+      - name: Install npm deps
+        run: |
+          npm install
+
+      - name: Build app
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_LINK: ${{ secrets.MAC_CERTS }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTS_KEY }}
+        run: |
+          npm run dist
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: |
+            dist/ezytdl*
+            dist/latest*.yml
+  windows-dist:
+    needs: check_date
+    if: ${{ needs.check_date.outputs.should_run != 'false' }}
+    
+    runs-on: windows-latest
+
+    permissions: write-all
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Install Node.js & NPM
+        uses: actions/setup-node@main
+        with:
+          node-version: '18'
+
+      - name: Install npm deps
+        run: |
+          npm install
+
+      - name: Build app
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm run dist
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: |
+            dist/ezytdl*
+            dist/latest*.yml
