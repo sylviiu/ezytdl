@@ -43,6 +43,7 @@ const config = {
         "html/assets/**/*",
         "html/topjs/*",
         "html/afterload/*",
+        "html/util/*",
         "html/pagescripts/*",
         "html/scripts/*",
         "node_modules/**/*",
