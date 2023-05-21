@@ -50,7 +50,7 @@ const addProgressBar = (node, width, height) => {
             width: [`75%`, dotSize],
             left: [`0px`, `calc(100% - ${dotSize})`],
             opacity: [0.75, 0],
-            easing: `easeOutExpo`,
+            easing: `easeOutCirc`,
         })
     }
 
@@ -59,7 +59,7 @@ const addProgressBar = (node, width, height) => {
         opacity: [0, 1],
         maxHeight: [0, dotSize],
         duration: 500,
-        easing: `easeOutExpo`,
+        easing: `easeOutCirc`,
         begin: () => {
             node.appendChild(bar);
             bar.appendChild(fill);
@@ -86,7 +86,7 @@ const addProgressBar = (node, width, height) => {
                     left: `0px`,
                     width: [lastProgress, `${progress}%`],
                     duration: 350,
-                    easing: `easeOutExpo`,
+                    easing: `easeOutCirc`,
                 });
 
                 if(txt) {
@@ -112,7 +112,7 @@ const addProgressBar = (node, width, height) => {
                 left: `0px`,
                 width: [lastProgress, `100%`],
                 duration: 350,
-                easing: `easeOutExpo`,
+                easing: `easeOutCirc`,
             });
 
             anime({
@@ -120,7 +120,7 @@ const addProgressBar = (node, width, height) => {
                 opacity: [1, 0],
                 maxHeight: [dotSize, 0],
                 duration: 500,
-                easing: `easeOutExpo`,
+                easing: `easeOutCirc`,
                 complete: () => {
                     if(bar.parentNode) bar.parentNode.removeChild(bar);
                     if(fill.parentNode) fill.parentNode.removeChild(fill);
