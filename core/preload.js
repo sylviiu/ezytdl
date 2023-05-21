@@ -85,12 +85,14 @@ contextBridge.exposeInMainWorld(`update`, {
 contextBridge.exposeInMainWorld(`mainQueue`, {
     get: () => invoke(`getQueue`),
     getInfo: (url) => invoke(`getInfo`, url),
+    search: (query) => invoke(`search`, query),
     download: (obj) => send(`download`, obj),
     action: (obj) => send(`queueAction`, obj),
     openDir: (id) => send(`openDir`, id),
     deleteFiles: (id) => send(`deleteFiles`, id),
     refreshUpdates: () => send(`refreshDownloadStatuses`),
     formatStatusUpdate: (callback) => on(`formatStatusUpdate`, (_e, obj) => callback(obj)),
+    formatStatusPercent: (callback) => on(`formatStatusPercent`, (_e, obj) => callback(obj)),
     queueUpdate: (callback) => on(`queueUpdate`, (_e, obj) => callback(obj)),
 });
 
@@ -108,9 +110,19 @@ contextBridge.exposeInMainWorld(`preload`, {
 });
 
 addEventListener(`DOMContentLoaded`, async () => {
-    await addScript(`./pagescripts/${name.includes(`-`) ? name.split(`-`)[0] : name}.js`);
+    console.log(`-- ADDING TOPJS`)
+
     await addScript(`./topjs/feelLikeNativeApp.js`);
-    await addScript(`./topjs/downloadManager.js`);
+    await addScript(`./topjs/progressBar.js`);
+    await addScript(`./topjs/vars.js`);
+
+    console.log(`-- ADDING PAGESCRIPT`)
+
+    await addScript(`./pagescripts/${name.includes(`-`) ? name.split(`-`)[0] : name}.js`);
+
+    console.log(`-- ADDING AFTERLOAD`)
+    
+    await addScript(`./afterload/downloadManager.js`);
 
     const enableUpdateButton = () => {
         document.getElementById(`updateAvailable`).classList.add(`d-flex`);
