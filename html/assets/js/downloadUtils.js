@@ -26,10 +26,8 @@ function createDownloadManager(card, id) {
     
             if(m.percentNum) {
                 console.log(m.percentNum)
-                if(m.percentNum == -1) {
-                    progress.setProgress(null);
-                } else {
-                    progress.setProgress(m.percentNum);
+                progress.setProgress(m.percentNum);
+                if(m.percentNum >= 0) {
                     card.querySelector(`#fileFormat`).innerHTML = `${m.percentNum}%`;
                 }
             };
@@ -53,8 +51,6 @@ function createDownloadManager(card, id) {
     const complete = () => {
         card.querySelector(`#fileFormat`).innerHTML = `Done!`;
 
-        //btn.onclick = () => 
-
         btn.disabled = false;
 
         const btn2 = card.querySelector(`#pausePlayButton`);
@@ -71,7 +67,7 @@ function createDownloadManager(card, id) {
         if(!card.querySelector(`#speed`).classList.contains(`d-none`)) card.querySelector(`#speed`).classList.add(`d-none`);
     };
 
-    return { update, complete, status }
+    return { update, complete, status, progress }
 }
 
 const startDownload = (originalCard, opt) => {
@@ -92,9 +88,19 @@ const startDownload = (originalCard, opt) => {
         //formatDownloadButtonPosition.y -= downloadsListBtn.style.height/2;
     }
 
-    const currentPosition = originalCard.getBoundingClientRect();
+    const card = originalCard.cloneNode(true);
 
-    const card = popout(originalCard)
+    card.opacity = 1;
+    card.style.opacity = 1;
+
+    card.id += `-clone`;
+
+    const currentPosition = originalCard.getBoundingClientRect();
+    
+    //card.parentNode.removeChild(card);
+    document.body.appendChild(card);
+
+    originalCard.style.opacity = 0;
 
     const originalCardValues = removeElements(originalCard, {padding: true})
     
@@ -118,7 +124,12 @@ const startDownload = (originalCard, opt) => {
         }
     });
 
+    card.style.position = `fixed`;
+
     const newCardValues = removeElements(card, {padding: false, margin: true});
+
+    card.style.left = `${currentPosition.x}px`;
+    card.style.top = `${currentPosition.y}px`;
 
     //originalCard.opacity = 0;
     //document.body.appendChild(card);
