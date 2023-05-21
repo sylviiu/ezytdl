@@ -70,6 +70,14 @@ const sendUpdates = (proc, initialMsg) => {
     
         const str = d.toString().trim();
 
+        if(str.trim().startsWith(`ERROR: `)) {
+            sendNotification({
+                type: `error`,
+                headingText: `yt-dlp failed to download ${url}`,
+                bodyText: `${string.trim().split(`ERROR: `)[1]}`
+            })
+        }
+
         if(str.startsWith(`[download] Downloading item `) && str.includes(` of `)) {
             const num = parseInt(str.split(` of `)[0].split(` `).slice(-1)[0]);
             const total = parseInt(str.split(` of `)[1].split(` `)[0]);
@@ -231,7 +239,17 @@ module.exports = {
 
         let data = ``;
 
-        proc.stderr.on(`data`, d => console.log(d.toString().trim()))
+        proc.stderr.on(`data`, d => {
+            console.log(d.toString().trim())
+
+            if(d.toString().trim().startsWith(`ERROR: `)) {
+                sendNotification({
+                    type: `error`,
+                    headingText: `yt-dlp failed to download ${url}`,
+                    bodyText: `${d.toString().trim().split(`ERROR: `)[1]}`
+                })
+            }
+        })
 
         proc.stdout.on(`data`, d => {
             //console.log(`output`, d.toString())
@@ -392,6 +410,14 @@ module.exports = {
     
             proc.stderr.on(`data`, data => {
                 const string = data.toString();
+
+                if(string.trim().startsWith(`ERROR: `)) {
+                    sendNotification({
+                        type: `error`,
+                        headingText: `yt-dlp failed to download ${url}`,
+                        bodyText: `${string.trim().split(`ERROR: `)[1]}`
+                    })
+                }
     
                 console.log(string.trim())
             })
@@ -472,6 +498,14 @@ module.exports = {
                                 duration = time(data.trim().split(`Duration:`)[1].trim().split(`,`)[0]).units.ms;
                                 console.log(`duration: `, duration)
                             };
+
+                            if(data.trim().startsWith(`ERROR: `)) {
+                                sendNotification({
+                                    type: `error`,
+                                    headingText: `yt-dlp failed to download ${url}`,
+                                    bodyText: `${data.trim().split(`ERROR: `)[1]}`
+                                })
+                            }
         
                             if(data.includes(`time=`)) {
                                 const timestamp = time(data.trim().split(`time=`)[1].trim().split(` `)[0]).units.ms;
@@ -484,7 +518,7 @@ module.exports = {
         
                             if(data.includes(`speed=`)) speed.push(data.trim().split(`speed=`)[1].trim().split(` `)[0]);
                             
-                            if(speed) update({downloadSpeed: speed.join(` | `)})
+                            if(speed && speed.length > 0) update({downloadSpeed: speed.join(` | `)})
                         });
         
                         proc.stdout.on(`data`, data => {
