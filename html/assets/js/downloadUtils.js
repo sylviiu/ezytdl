@@ -1,11 +1,9 @@
 function createDownloadManager(card, id) {
     const btn = card.querySelector(`#formatDownload`);
 
-    const bar = card.querySelector(`#progressBar`);
-    const fill = card.querySelector(`#progressFill`);
-
-    const dotSize = Number.parseInt(fill.style.width.replace(`px`, ``));
-    const range = Number.parseInt(bar.style.width.replace(`px`, ``)) - dotSize;
+    const progress = addProgressBar(card.querySelector(`#leftContent`))
+    
+    progress.setProgress(null);
     
     const formatName = card.querySelector(`#formatName`);
     const formatSubtext = card.querySelector(`#formatSubtext`);
@@ -27,29 +25,12 @@ function createDownloadManager(card, id) {
             if(m.saveLocation) location = m.saveLocation;
     
             if(m.percentNum) {
-                if(bar.classList.contains(`d-none`)) bar.classList.remove(`d-none`);
-    
+                console.log(m.percentNum)
                 if(m.percentNum == -1) {
-                    anime.remove(fill)
-                    anime({
-                        targets: fill,
-                        width: `${dotSize}px`,
-                        duration: 350,
-                        easing: `easeOutExpo`,
-                    })
+                    progress.setProgress(null);
                 } else {
-                    const setWidth = `${dotSize + (range * m.percentNum/100)}px`;
-                    //console.log(`Downloaded ${m.percentNum} -- bar width: ${setWidth}`)
-    
+                    progress.setProgress(m.percentNum);
                     card.querySelector(`#fileFormat`).innerHTML = `${m.percentNum}%`;
-                    
-                    anime.remove(fill)
-                    anime({
-                        targets: fill,
-                        width: setWidth,
-                        duration: 350,
-                        easing: `easeOutExpo`,
-                    })
                 }
             };
     
