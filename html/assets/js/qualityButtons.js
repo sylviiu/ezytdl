@@ -33,6 +33,8 @@ const getQualityButtons = (node) => {
         return node.querySelector(`#qualityButtons`)
     } else if(node.id == `qualityButtons`) {
         return node
+    } else if(node.parentNode && node.parentNode.querySelector(`#qualityButtons`)) {
+        return node.parentNode.querySelector(`#qualityButtons`)
     } else return null;
 }
 
@@ -49,8 +51,22 @@ const addMissingNodes = (node) => {
 }
 
 const saveOptionsAnimations = {
-    fadeIn: (btn, saveOptions, btnClick) => new Promise(res => {
+    fadeIn: (btn, saveOptions, btnClick, node) => new Promise(res => {
         anime.remove(saveOptions)
+        
+        if(node && node.parentNode && node.parentNode.parentNode && node.parentNode.parentNode.querySelector(`#formatCardBG`)) {
+            const bg = node.parentNode.parentNode.querySelector(`#formatCardBG`);
+
+            anime.remove(bg);
+
+            anime({
+                targets: bg,
+                filter: `blur(5px)`,
+                opacity: [`35%`, `10%`],
+                duration: 500,
+                easing: `easeOutExpo`
+            })
+        }
 
         const prevMaxHeight = saveOptions.style.maxHeight;
         saveOptions.style.maxHeight = null;
@@ -83,8 +99,22 @@ const saveOptionsAnimations = {
             easing: `easeOutExpo`
         })
     }),
-    fadeOut: (btn, saveOptions, btnClick) => new Promise(res => {
+    fadeOut: (btn, saveOptions, btnClick, node) => new Promise(res => {
         if(saveOptions.classList.contains(`d-none`)) return res()
+        
+        if(node && node.parentNode && node.parentNode.parentNode && node.parentNode.parentNode.querySelector(`#formatCardBG`) && node.parentNode.parentNode.querySelector(`#formatCardBG`).style.filter) {
+            const bg = node.parentNode.parentNode.querySelector(`#formatCardBG`);
+
+            anime.remove(bg);
+
+            anime({
+                targets: bg,
+                filter: `blur(0px)`,
+                opacity: [`10%`, `35%`],
+                duration: 500,
+                easing: `easeOutExpo`
+            })
+        }
         
         if(btn) btn.onclick = () => {}
 
@@ -233,10 +263,10 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
     const btnClick = (i) => {
         currentSelected = i;
         refreshQualityButtonSelection();
-        saveOptionsAnimations.fadeOut(null, qualityButtonsDropdown, btnClick).then(() => {
+        saveOptionsAnimations.fadeOut(null, qualityButtonsDropdown, btnClick, node).then(() => {
             modifyQualityButtonsDropdown();
             refreshOutputExt();
-            saveOptionsAnimations.fadeIn(null, qualityButtonsDropdown, btnClick).then(() => { })
+            saveOptionsAnimations.fadeIn(null, qualityButtonsDropdown, btnClick, node).then(() => { })
         })
     }
 
