@@ -21,13 +21,24 @@ listboxParent.removeChild(document.getElementById(`listbox`));
 
 let currentInfo = null;
 
-mainQueue.formatStatusUpdate((content) => document.getElementById(`statusText`).innerHTML = content)
+mainQueue.formatStatusUpdate((content) => document.getElementById(`statusText`).innerHTML = content);
 
-const runSearch = async (url) => {
-    document.getElementById(`statusText`).innerHTML = `Fetching info...`;
+let progressObj = null;
+
+mainQueue.formatStatusPercent(val => {
+    const current = val[0];
+    const total = val[1];
+
+    if(progressObj) progressObj.setProgress((val[0]/val[1])*100, `(${current}/${total})`);
+})
+
+const runSearch = async (url, initialMsg, func) => {
+    document.getElementById(`statusText`).innerHTML = initialMsg || `Fetching info...`;
     if(document.getElementById(`statusText`).classList.contains(`d-none`)) document.getElementById(`statusText`).classList.remove(`d-none`);
 
-    console.log(`running search for ${url}`)
+    progressObj = addProgressBar(document.getElementById(`urlBox`), `80%`);
+
+    console.log(`${initialMsg || `running search for`}: ${url}`)
 
     const centerURLBox = (removeListbox, checkParse) => {
         document.body.style.overflowY = `hidden`;
@@ -58,6 +69,9 @@ const runSearch = async (url) => {
     let info = null;
 
     const parseInfo = async () => {
+        progressObj.remove();
+        progressObj = null;
+
         const listbox = listboxTemplate.cloneNode(true);
         
         if(listbox.classList.contains(`d-none`)) listbox.classList.remove(`d-none`);
@@ -89,7 +103,7 @@ const runSearch = async (url) => {
                 easing: `easeOutExpo`,
             });
 
-            listbox.querySelector(`#mediaTitle`).innerHTML = `[${info.webpage_url_domain}] ${info.title}`;
+            listbox.querySelector(`#mediaTitle`).innerHTML = `[${func == `search` ? `Search` : info.webpage_url_domain}] ${info.title}`;
 
             if(info.thumbnails && info.thumbnails.length > 0) {
                 const thumbnail = info.thumbnails[info.thumbnails.length - 1];
@@ -117,8 +131,6 @@ const runSearch = async (url) => {
             }
 
             console.log(info)
-
-            let currentSelected = null;
             
             qualityButtons({ card: listbox, node: listbox.querySelector(`#qualityButtons`), info, centerURLBox: info.entries ? centerURLBox : () => {} });
 
@@ -136,12 +148,34 @@ const runSearch = async (url) => {
 
                     card.querySelector(`#audioIcon`).classList.add(`d-none`);
                     card.querySelector(`#videoIcon`).classList.add(`d-none`);
-                    card.querySelector(`#fileIcon`).classList.remove(`d-none`);
+
+                    if(entry.webpage_url) {
+                        card.querySelector(`#linkIcon`).classList.remove(`d-none`);
+                        card.querySelector(`#nameDiv`).style.cursor = `pointer`;
+                        card.querySelector(`#nameDiv`).addEventListener(`click`, () => {
+                            location.href = entry.webpage_url
+                        })
+                    } else card.querySelector(`#fileIcon`).classList.remove(`d-none`);
 
                     if(!entry.title) entry.title = entry.webpage_url;
                     if(!entry.title) entry.title = entry.url;
 
                     card.querySelector(`#formatName`).innerHTML = entry.title;
+
+                    if(entry.uploader || entry.channel) {
+                        card.querySelector(`#formatSubtext`).innerHTML = `${entry.uploader || entry.channel}`;
+                        if(entry.released) {
+                            card.querySelector(`#formatSubtext`).innerHTML += ` | ${entry.released.string.split(`,`)[0] + ` ago`}`;
+                        }
+                        card.querySelector(`#formatSubtext`).classList.remove(`d-none`);
+                    } else if(entry.released) {
+                        card.querySelector(`#formatSubtext`).innerHTML += ` | ${entry.released.string.split(`,`)[0] + ` ago`}`;
+                        card.querySelector(`#formatSubtext`).classList.remove(`d-none`);
+                    }
+
+                    if(entry.webpage_url) {
+
+                    }
 
                     if(entry.duration) {
                         card.querySelector(`#fileFormat`).innerHTML = `${entry.duration.timestamp}`;
@@ -163,7 +197,7 @@ const runSearch = async (url) => {
 
                     innerQualityButtons.style.minWidth = `100%`;
 
-                    card.appendChild(newDiv);
+                    card.querySelector(`#innerFormatCard`).appendChild(newDiv);
 
                     const removeEntry = () => {
                         const thisIndex = info.entries.findIndex(o => (o.id || o.webpage_url || o.url) == (entry.id || entry.webpage_url || entry.url));
@@ -173,14 +207,63 @@ const runSearch = async (url) => {
                         } else console.log(`Failed to find index for ${entry.id || entry.webpage_url || entry.url}`)
                     }
 
-                    qualityButtons({ node: card, info: entry, card, removeEntry: () => removeEntry() });
+                    console.log(`innerFormatCard`, card.querySelector(`#innerFormatCard`))
+
+                    qualityButtons({ node: card.querySelector(`#innerFormatCard`), info: entry, card, removeEntry: () => removeEntry() });
 
                     card.querySelector(`#pausePlayButton`).classList.remove(`d-none`);
                     card.querySelector(`#pausePlayButton`).classList.add(`d-flex`);
                     card.querySelector(`#crossicon`).classList.remove(`d-none`);
                     card.querySelector(`#pauseicon`).classList.add(`d-none`);
 
-                    card.querySelector(`#pausePlayButton`).onclick = () => removeCardAnim(card, removeEntry)
+                    card.querySelector(`#pausePlayButton`).onclick = () => removeCardAnim(card, removeEntry);
+
+                    let visible = false;
+
+                    const onVisibility = () => {
+                        if(!visible) {
+                            visible = true;
+
+                            if(card && card.parentElement) {
+                                console.log(`card ${entry.id || entry.webpage_url || entry.url} visibility event`)
+    
+                                if(entry.thumbnails && entry.thumbnails.length > 0) {
+                                    const thumbnail = entry.thumbnails[entry.thumbnails.length - 1];
+                    
+                                    console.log(`thumbnail:`, thumbnail);
+                    
+                                    const img = new Image();
+                    
+                                    img.addEventListener(`load`, () => {
+                                        if(card && card.parentElement) {
+                                            console.log(`image loaded! setting bg...`)
+
+                                            const formatBG = card.querySelector(`#formatCardBG`)
+            
+                                            formatBG.style.backgroundImage = `url(${thumbnail.url})`;
+                    
+                                            anime.remove(formatBG)
+                    
+                                            anime({
+                                                targets: formatBG,
+                                                opacity: [0, 0.35],
+                                                duration: 1000,
+                                                easing: `easeOutQuad`
+                                            })
+                                        }
+                                    });
+                    
+                                    img.src = thumbnail.url;
+                                }
+                            }
+                        }
+                    };
+
+                    const observer = new IntersectionObserver((entries) => {
+                        if(entries[0].isIntersecting) onVisibility();
+                    }, { threshold: [0] });
+
+                    observer.observe(card);
 
                     console.log(`running conversionOptions`)
 
@@ -391,7 +474,7 @@ const runSearch = async (url) => {
 
     let parse = false;
 
-    mainQueue.getInfo(url).then(data => {
+    mainQueue[func || `getInfo`](url).then(data => {
         info = data;
 
         if(parse) {
@@ -437,7 +520,11 @@ const processURL = () => {
 
     console.log (`match`, match)
 
-    if(match) runSearch(url)
+    if(match) {
+        runSearch(url, `Fetching info...`, `getInfo`)
+    } else {
+        runSearch(url, `Running search...`, `search`)
+    }
 }
 
 button.onclick = () => processURL();
