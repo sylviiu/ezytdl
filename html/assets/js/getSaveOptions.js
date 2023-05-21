@@ -35,7 +35,7 @@ const getSaveOptions = (node, info, overrideDownloadObj) => {
         return Object.assign({}, {
             url: info.webpage_url || info.url,
             ext: convert ? null : formatConversionTextbox.value,
-            format: info.format_id,
+            format: info.format_id || info.formats ? info.formats[0].format_id : null,
             convert: convert ? convertInfo : null,
             filePath: node.querySelector(`#saveLocation`).value || null,
             info: info

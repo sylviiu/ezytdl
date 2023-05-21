@@ -73,7 +73,7 @@ const sendUpdates = (proc, initialMsg) => {
         if(str.trim().startsWith(`ERROR: `)) {
             sendNotification({
                 type: `error`,
-                headingText: `yt-dlp failed to download ${url}`,
+                headingText: `yt-dlp failed to complete ${url}`,
                 bodyText: `${string.trim().split(`ERROR: `)[1]}`
             })
         }
@@ -140,7 +140,7 @@ module.exports = {
 
         console.log(`going to path ${path}; query "${query}"`)
 
-        let args = [`ytsearch10:${query}`, `--dump-single-json`, `--quiet`, `--verbose`, `--flat-playlist`];
+        let args = [`ytsearch10:${query}`, `--dump-single-json`, `--quiet`, `--verbose`];
 
         const proc = child_process.execFile(path, args);
 
@@ -233,7 +233,9 @@ module.exports = {
         
         const { outputFilename } = require(`../getConfig`)();
 
-        const args = [`-f`, format, url, `-o`, template || outputFilename, `--get-filename`, `--quiet`];
+        const args = [url, `-o`, template || outputFilename, `--get-filename`, `--quiet`];
+
+        if(format) args.unshift(`-f`, format)
 
         const proc = child_process.execFile(path, args);
 
@@ -243,11 +245,16 @@ module.exports = {
             console.log(d.toString().trim())
 
             if(d.toString().trim().startsWith(`ERROR: `)) {
-                sendNotification({
-                    type: `error`,
-                    headingText: `yt-dlp failed to download ${url}`,
-                    bodyText: `${d.toString().trim().split(`ERROR: `)[1]}`
-                })
+                if(!format) {
+                    sendNotification({
+                        type: `error`,
+                        headingText: `failed to retrieve filename of ${url}: ${d.toString().trim()}`,
+                        bodyText: `${d.toString().trim().split(`ERROR: `)[1]}`
+                    })
+                } else {
+                    proc.kill(`SIGKILL`);
+                    return module.exports.getFilename(url, null, template).then(res)
+                }
             }
         })
 
@@ -330,11 +337,30 @@ module.exports = {
 
             const path = getPath();
 
+            let thisFormat;
+
+            if(info.is_live && (format == `bv*+ba/b` || format == `bv` || format == `ba`)) format = null;
+
+            if(info.formats) {
+                if(info.is_live && !info.formats.find(f => f.format_id == format)) {
+                    format = null;
+                    thisFormat = info.formats[0]
+                } else thisFormat = info.formats.find(f => f.format_id == format) || info.formats[0]
+            }
+
             const fullYtdlpFilename = sanitize(await module.exports.getFilename(url, format, outputFilename + `.%(ext)s`))
 
             const ytdlpSaveExt = fullYtdlpFilename.split(`.`).slice(-1)[0];
 
             let ytdlpFilename = fullYtdlpFilename.split(`.`).slice(0, -1).join(`.`);
+
+            if(!thisFormat) thisFormat = {
+                ext: ytdlpSaveExt,
+                format_id: `unknown`,
+                format_note: `unknown`,
+                format: `unknown`,
+                url
+            }
             
             filenames.push(fullYtdlpFilename)
             filenames.push(temporaryFilename)
@@ -354,8 +380,6 @@ module.exports = {
             let reasonConversionNotDone = null;
         
             killAttempt = 0;
-
-            const thisFormat = info.formats.find(f => f.format_id == format);
 
             let args = [];
 
@@ -437,7 +461,7 @@ module.exports = {
                             if(data.trim().startsWith(`ERROR: `)) {
                                 sendNotification({
                                     type: `error`,
-                                    headingText: `yt-dlp failed to download ${url}`,
+                                    headingText: `yt-dlp failed to download ${url} [2]`,
                                     bodyText: `${data.trim().split(`ERROR: `)[1]}`
                                 })
                             }
@@ -666,7 +690,7 @@ module.exports = {
                             fallbackToFFmpeg = true;
                         } else sendNotification({
                             type: `error`,
-                            headingText: `yt-dlp failed to download ${url}`,
+                            headingText: `yt-dlp failed to download ${url} [1]`,
                             bodyText: `${string.trim().split(`ERROR: `)[1]}`
                         })
                     }

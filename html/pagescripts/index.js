@@ -178,16 +178,6 @@ const runSearch = async (url, initialMsg, func) => {
 
                     //card.querySelector(`#saveOptions`).innerHTML = ``;
 
-                    const newDiv = listbox.querySelector(`#qualityButtons`).cloneNode(true);
-
-                    newDiv.style.padding = `0px`;
-                    newDiv.style.minWidth = `100%`;
-                    newDiv.style.removeProperty(`background`);
-
-                    const innerQualityButtons = newDiv.querySelector(`#innerQualityButtons`);
-
-                    innerQualityButtons.style.minWidth = `100%`;
-
                     const removeEntry = () => {
                         const thisIndex = info.entries.findIndex(o => (o.id || o.webpage_url || o.url) == (entry.id || entry.webpage_url || entry.url));
                         if(thisIndex != -1) {
@@ -209,11 +199,65 @@ const runSearch = async (url, initialMsg, func) => {
                             processURL();
                         }
                     } else {
-                        card.querySelector(`#innerFormatCard`).appendChild(newDiv);
+                        let fadeIn = () => null;
+                        let fadeOut = () => null;
 
-                        qualityButtons({ node: card.querySelector(`#innerFormatCard`), info: entry, card, removeEntry: () => removeEntry() });
+                        let visible = false;
 
-                        card.querySelector(`#formatDownload`).classList.add(`d-none`)
+                        let btnClick = () => {
+                            if(!visible) {
+                                fadeIn();
+                            } else {
+                                fadeOut();
+                            }
+
+                            visible = !visible;
+                        };
+
+                        card.querySelector(`#formatDownload`).onclick = () => btnClick();
+
+                        card.querySelector(`#formatDownload`).classList.remove(`d-none`)
+
+                        if(entry.is_live) {                            
+                            const saveOptions = listboxTemplate.querySelector(`#saveOptions`).cloneNode(true)
+        
+                            card.querySelector(`#innerFormatCard`).appendChild(saveOptions)
+    
+                            const confirmDownload = () => {
+                                saveOptionsAnimations.fadeOut(card.querySelector(`#confirmDownload`), saveOptions);
+        
+                                card.querySelector(`#confirmDownload`).disabled = true;
+        
+                                card.style.opacity = 0.5;
+        
+                                startDownload(card, getSaveOptions(card, Object.assign({}, info, { entries: null }, entry)))
+                            }
+
+                            card.querySelector(`#confirmDownload`).onclick = () => confirmDownload();
+
+                            fadeIn = () => saveOptionsAnimations.fadeIn(card.querySelector(`#formatDownload`), saveOptions, btnClick);
+                            fadeOut = () => saveOptionsAnimations.fadeOut(card.querySelector(`#formatDownload`), saveOptions, btnClick);
+                        } else {
+                            const newDiv = listbox.querySelector(`#qualityButtons`).cloneNode(true);
+        
+                            newDiv.style.padding = `0px`;
+                            newDiv.style.minWidth = `100%`;
+                            newDiv.style.removeProperty(`background`);
+        
+                            const innerQualityButtons = newDiv.querySelector(`#innerQualityButtons`);
+        
+                            innerQualityButtons.style.minWidth = `100%`;
+
+                            newDiv.classList.add(`d-none`)
+                            
+                            card.querySelector(`#innerFormatCard`).appendChild(newDiv);
+
+                            fadeIn = () => saveOptionsAnimations.fadeIn(card.querySelector(`#formatDownload`), newDiv, btnClick);
+                            fadeOut = () => saveOptionsAnimations.fadeOut(card.querySelector(`#formatDownload`), newDiv, btnClick);
+
+                            qualityButtons({ node: card.querySelector(`#innerFormatCard`), info: entry, card, removeEntry: () => removeEntry() });
+                        }
+
                         card.querySelector(`#pausePlayButton`).classList.remove(`d-none`);
                         card.querySelector(`#pausePlayButton`).classList.add(`d-flex`);
                         card.querySelector(`#pauseicon`).classList.add(`d-none`);
@@ -415,17 +459,6 @@ const runSearch = async (url, initialMsg, func) => {
                         card.style.opacity = 0.5;
 
                         console.log(format.format_id)
-
-                        /*startDownload(card, {
-                            url: url,
-                            format: format.format_id,
-                            convert: card.querySelector(`#formatConversionTextbox`).value ? {
-                                ext: card.querySelector(`#formatConversionTextbox`).value
-                            } : null,
-                            ext: null,
-                            filePath: card.querySelector(`#saveLocation`).value || null,
-                            info: Object.assign({}, info, { formats: null }),
-                        });*/
 
                         startDownload(card, getSaveOptions(card, Object.assign({}, info, format)))
                     }
