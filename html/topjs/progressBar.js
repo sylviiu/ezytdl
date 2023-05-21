@@ -64,7 +64,9 @@ const addProgressBar = (node, width, height) => {
         
             startPendingAnimation();
         }
-    })
+    });
+
+    let lastProgress = 0;
 
     return {
         setProgress: (progress, txt) => {
@@ -78,10 +80,12 @@ const addProgressBar = (node, width, height) => {
                 anime({
                     targets: fill,
                     left: `0px`,
-                    width: `${progress}%`,
+                    width: [lastProgress, `${progress}%`],
                     duration: 350,
                     easing: `easeOutExpo`,
                 });
+
+                lastProgress = progress;
 
                 if(txt) {
                     fillText.innerText = txt;
