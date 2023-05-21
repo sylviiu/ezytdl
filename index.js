@@ -23,6 +23,15 @@ if(!locked) {
     app.quit();
 } else {
     let startedLoading = false;
+    let doneLoading = false;
+
+    if(global.testrun) setTimeout(() => {
+        if(!doneLoading) {
+            console.log(`Loading took too long!`);
+            global.quitting = true;
+            process.exit(1);
+        }
+    }, 30000)
 
     app.on(`second-instance`, () => {
         console.log(`second instance!`)
