@@ -43,7 +43,8 @@ ajax.onload = async () => {
     
     await system.addScript(`./pagescripts/${htmlFile.split(`.`).slice(0, -1).join(`.`)}.js`)
     await system.addScript(`./topjs/feelLikeNativeApp.js`)
-    await system.addScript(`./topjs/downloadManager.js`)
+    await system.addScript(`./topjs/vars.js`)
+    await system.addScript(`./afterload/downloadManager.js`)
     
     console.log(`loaded scripts!`);
 
