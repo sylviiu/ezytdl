@@ -109,7 +109,7 @@ contextBridge.exposeInMainWorld(`preload`, {
     oncomplete: (cb) => script.addEventListener(`load`, cb)
 });
 
-const util = [`popout.js`, `progressBar.js`, `removeCardAnim.js`, `removeElements.js`];
+const util = [`popout.js`, `progressBar.js`, `progressCircle.js`, `removeCardAnim.js`, `removeElements.js`];
 const topjs = [`feelLikeNativeApp.js`, `vars.js`];
 const afterload = [`downloadManager.js`];
 
