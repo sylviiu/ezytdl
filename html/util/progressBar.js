@@ -78,7 +78,7 @@ const addProgressBar = (node, width, height) => {
 
             if(!allowProgressChanges) return;
 
-            if(typeof progress == `number` && progress > 0) {
+            if(typeof progress == `number` && progress >= 0 && progress <= 100) {
                 anime.remove(fill);
                 fill.style.opacity = 1;
                 anime({
