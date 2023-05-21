@@ -78,13 +78,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm run nightly
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            dist/ezytdl*
-            dist/latest*.yml
   macos-dist:
     needs: release_tag
     
@@ -112,13 +105,6 @@ jobs:
           CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTS_KEY }}
         run: |
           npm run nightly
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            dist/ezytdl*
-            dist/latest*.yml
   windows-dist:
     needs: release_tag
     
@@ -144,13 +130,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm run nightly
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            dist/ezytdl*
-            dist/latest*.yml
   release:
     needs: [linux-dist, macos-dist, windows-dist, release_tag]
     name: "Release the build"

@@ -28,13 +28,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm run dist
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            dist/ezytdl*
-            dist/latest*.yml
   macos-dist:
     runs-on: macos-latest
 
@@ -60,13 +53,6 @@ jobs:
           CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTS_KEY }}
         run: |
           npm run dist
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            dist/ezytdl*
-            dist/latest*.yml
   windows-dist:
     runs-on: windows-latest
 
@@ -90,10 +76,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm run dist
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            dist/ezytdl*
-            dist/latest*.yml
