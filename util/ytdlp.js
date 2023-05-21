@@ -27,7 +27,7 @@ refreshFFmpeg();
 
 const time = require(`../util/time`);
 
-const { updateStatus } = require(`../util/downloadManager`);
+const { updateStatus, updateStatusPercent } = require(`../util/downloadManager`);
 
 const sendNotification = require(`../core/sendNotification`);
 
@@ -53,7 +53,112 @@ const getCodec = (file) => {
     } else return null
 }
 
+const sendUpdates = (proc, initialMsg) => {
+    //downloading item {num} of {num}
+
+    console.log(`sending updates...`);
+
+    let firstUpdate = false;
+
+    let downloadingList = false;
+
+    proc.stderr.on(`data`, d => {
+        if(!firstUpdate) {
+            firstUpdate = true;
+            updateStatus(initialMsg || `Getting media info...`)
+        };
+    
+        const str = d.toString().trim();
+
+        if(str.startsWith(`[download] Downloading item `) && str.includes(` of `)) {
+            const num = parseInt(str.split(` of `)[0].split(` `).slice(-1)[0]);
+            const total = parseInt(str.split(` of `)[1].split(` `)[0]);
+
+            if(typeof num == `number` && typeof total == `number` && num > 1 && total > 1) {
+                downloadingList = true;
+                console.log(`Downloading item ${num} of ${total}...`)
+                updateStatusPercent([num, total])
+            }
+        };
+
+        if(!downloadingList) {
+            if(str.includes(`Extracting URL`)) {
+                updateStatusPercent([1, 5])
+            } else if(str.includes(`Downloading webpage`)) {
+                updateStatusPercent([2, 5])
+            } else if(str.includes(`Downloading video info webpage`)) {
+                updateStatusPercent([3, 5])
+            } else if(str.includes(`Downloading JSON metadata`)) {
+                updateStatusPercent([4, 5])
+            } else if(str.toLowerCase().includes(`format`)) {
+                updateStatusPercent([5, 5])
+            }
+        }
+
+        if(!str.startsWith(`[debug]`)) {
+            updateStatus(str.split(`]`).slice(1).join(`]`).trim())
+        }
+    })
+}
+
 module.exports = {
+    parseInfo: (d) => {
+        let totalTime = 0;
+
+        const map = e => {
+            if(e.duration) {
+                e.duration = time(e.duration*1000);
+                totalTime += e.duration.units.ms;
+            }
+
+            if(e.timestamp) {
+                e.released = time((Date.now()/60) - e.timestamp);
+            }
+
+            return e;
+        }
+
+        if(d.entries) d.entries = d.entries.map(map);
+        if(d.formats) d.formats = d.formats.map(map);
+
+        if(d.timestamp) {
+            d.released = time((Date.now()/60) - d.timestamp);
+        }
+
+        d.duration = time(totalTime)
+
+        return d
+    },
+    search: (query) => new Promise(async res => {
+        const path = getPath();
+
+        console.log(`going to path ${path}; query "${query}"`)
+
+        let args = [`ytsearch10:${query}`, `--dump-single-json`, `--quiet`, `--verbose`, `--flat-playlist`];
+
+        const proc = child_process.execFile(path, args);
+
+        let data = ``;
+
+        sendUpdates(proc, `Starting search for "${query}"`);
+
+        proc.stdout.on(`data`, d => {
+            //console.log(`output`, d.toString())
+            data += d.toString().trim();
+        });
+
+        proc.on(`error`, e => {
+            console.log(e)
+        })
+
+        proc.on(`close`, code => {
+            console.log(`search closed with code ${code}`)
+            console.log(data)
+            const d = JSON.parse(data);
+            res(module.exports.parseInfo(d))
+            //console.log(d)
+        })
+    }),
     listFormats: (url, disableFlatPlaylist) => new Promise(async res => {
         const path = getPath();
 
@@ -67,19 +172,7 @@ module.exports = {
 
         let data = ``;
 
-        let firstUpdate = false;
-
-        proc.stderr.on(`data`, d => {
-            if(!firstUpdate) {
-                firstUpdate = true;
-                updateStatus(`Getting video info...`)
-            };
-
-            const str = d.toString().trim();
-            if(!str.startsWith(`[debug]`)) {
-                updateStatus(str.split(`]`).slice(1).join(`]`).trim())
-            }
-        })
+        sendUpdates(proc, `Starting info query of "${url}"`);
 
         proc.stdout.on(`data`, d => {
             //console.log(`output`, d.toString())
@@ -96,12 +189,7 @@ module.exports = {
             const d = JSON.parse(data);
             if(d && d.formats) {
                 console.log(`formats found! resolving...`);
-                
-                if(d.duration) {
-                    d.duration = time(d.duration*1000)
-                }
-
-                res(d)
+                res(module.exports.parseInfo(d))
             } else if(d && d.entries) {
                 console.log(`entries found! adding time objects...`);
 
@@ -117,19 +205,7 @@ module.exports = {
                 if(anyNoTitle && !disableFlatPlaylist) {
                     return module.exports.listFormats(url, true).then(res)
                 } else {
-                    let totalTime = 0;
-
-                    d.entries = d.entries.map(e => {
-                        if(e.duration) {
-                            e.duration = time(e.duration*1000);
-                            totalTime += e.duration.units.ms;
-                        }
-                        return e;
-                    });
-    
-                    d.duration = time(totalTime)
-    
-                    res(d)
+                    res(module.exports.parseInfo(d))
                 }
             } else if(!disableFlatPlaylist) {
                 updateStatus(`Restarting playlist search... (there were no formats returned!!)`)

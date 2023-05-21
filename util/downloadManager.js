@@ -402,6 +402,10 @@ const updateStatus = (status) => {
     if(global.window) global.window.webContents.send(`formatStatusUpdate`, status);
 }
 
+const updateStatusPercent = (status) => {
+    if(global.window) global.window.webContents.send(`formatStatusPercent`, status);
+}
+
 const setStatusWS = (ws) => {
     if(downloadStatusWs) {
         downloadStatusWs.close();
@@ -434,6 +438,7 @@ module.exports = {
     setWS,
     queueAction,
     updateStatus,
+    updateStatusPercent,
     setStatusWS,
     queueEventEmitter,
 };
