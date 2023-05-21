@@ -29,6 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Create release tag
 
+    permissions: write-all
+
     outputs:
       release_id: ${{ steps.create_release.outputs.id }}
       upload_url: ${{ steps.create_release.outputs.upload_url }}
@@ -56,8 +58,7 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write
+    permissions: write-all
 
     steps:
       - name: Checkout repo
@@ -152,8 +153,10 @@ jobs:
             dist/latest*.yml
   release:
     needs: [linux-dist, macos-dist, windows-dist, release_tag]
-    name: "Tagged Release"
+    name: "Release the build"
     runs-on: "ubuntu-latest"
+
+    permissions: write-all
 
     steps:
     - uses: actions/checkout@v2
