@@ -74,43 +74,6 @@ function createDownloadManager(card, id) {
     return { update, complete, status }
 }
 
-const removeElements = (card, opt) => {
-    const current = {
-        width: card.offsetWidth,
-        height: card.offsetHeight,
-    };
-
-    if(opt == true) opt == {margin: true, padding: true};
-
-    const { margin, padding } = opt;
-
-    card.style.removeProperty(`max-width`);
-    card.style.removeProperty(`min-width`);
-    card.style.removeProperty(`min-height`);
-    card.style.removeProperty(`max-height`);
-
-    card.style.removeProperty(`width`);
-    card.style.removeProperty(`height`);
-
-    if(margin) {
-        card.style.removeProperty(`margin`);
-        card.style.removeProperty(`margin-top`);
-        card.style.removeProperty(`margin-left`);
-        card.style.removeProperty(`margin-right`);
-        card.style.removeProperty(`margin-bottom`);
-    }
-
-    if(padding) {
-        card.style.removeProperty(`padding`);
-        card.style.removeProperty(`padding-bottom`);
-        card.style.removeProperty(`padding-left`);
-        card.style.removeProperty(`padding-right`);
-        card.style.removeProperty(`padding-top`);
-    }
-
-    return current;
-}
-
 const startDownload = (originalCard, opt) => {
     const downloadsListBtn = document.getElementById(`downloadsList`);
     const targetPosition = downloadsListBtn.getBoundingClientRect();
@@ -129,19 +92,9 @@ const startDownload = (originalCard, opt) => {
         //formatDownloadButtonPosition.y -= downloadsListBtn.style.height/2;
     }
 
-    const card = originalCard.cloneNode(true);
-
-    card.opacity = 1;
-    card.style.opacity = 1;
-
-    card.id += `-clone`;
-
     const currentPosition = originalCard.getBoundingClientRect();
-    
-    //card.parentNode.removeChild(card);
-    document.body.appendChild(card);
 
-    originalCard.style.opacity = 0;
+    const card = popout(originalCard)
 
     const originalCardValues = removeElements(originalCard, {padding: true})
     
@@ -165,12 +118,7 @@ const startDownload = (originalCard, opt) => {
         }
     });
 
-    card.style.position = `fixed`;
-
     const newCardValues = removeElements(card, {padding: false, margin: true});
-
-    card.style.left = `${currentPosition.x}px`;
-    card.style.top = `${currentPosition.y}px`;
 
     //originalCard.opacity = 0;
     //document.body.appendChild(card);

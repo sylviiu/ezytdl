@@ -17,7 +17,7 @@ const setDefaultSaveOptValues = (node, info) => {
     } else console.log(`no formatConversionTextbox`)
 
     if(node.querySelector(`#saveLocation`)) {
-        console.log(`setting saveLocation values`)
+        //console.log(`setting saveLocation values`)
 
         conversionOptions(node, info)
 
@@ -149,7 +149,7 @@ const saveOptionsAnimations = {
 };
 
 const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, removeEntry}) => {
-    console.log(`qualityButtons`, info)
+    //console.log(`qualityButtons`, info)
 
     addMissingNodes(node);
 
@@ -277,58 +277,11 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
     const send = () => {
         node.querySelectorAll(`.btn`).forEach(btn => btn.disabled = true);
 
-        if(typeof removeEntry == `function`) removeEntry();
+        const saveOpt = getSaveOptions(card || node, info, Object.assign({}, {
+            format: qualities[currentSelected] || qualities[0],
+        }, overrideDownloadObj));
 
-        /*
-        if(info.resolution) node.querySelector(`#videoResolution`).placeholder = `Resolution (${info.resolution})`
-        if(info.vbr) node.querySelector(`#videoBitrate`).placeholder = `Bitrate (${info.vbr}k)`
-        
-        if(info.asr) node.querySelector(`#audioSampleRate`).placeholder = `Sample Rate (${info.asr/1000}k)`
-        if(info.abr) node.querySelector(`#audioBitrate`).placeholder = `Bitrate (${info.abr}k)`
-        */
-
-        let convertInfo = { ext: formatConversionTextbox.value };
-
-        let convert = false;
-
-        if(convertDownload.style.width != `49%`) {
-            convert = true;
-
-            node.querySelector(`#audioOptions`).childNodes.forEach(n => {
-                if(n && n.placeholder && n.id) convertInfo[n.id] = n.value;
-            });
-
-            node.querySelector(`#videoOptions`).childNodes.forEach(n => {
-                if(n && n.placeholder && n.id) convertInfo[n.id] = n.value;
-            });
-        };
-
-        console.log(`convert? ${convert}`, convertInfo)
-
-        if(info.entries) {
-            startDownload(card || node, {
-                entries: info.entries.map(e => {
-                    return Object.assign({}, {
-                        url: e.webpage_url || e.url,
-                        format: qualities[currentSelected] || qualities[0],
-                        ext: convert ? null : formatConversionTextbox.value,
-                        convert: convert ? convertInfo : null,
-                        filePath: node.querySelector(`#saveLocation`).value || null,
-                        info: e
-                    }, overrideDownloadObj && typeof overrideDownloadObj == `object` ? overrideDownloadObj : {})
-                }),
-                info: Object.assign({}, info, { formats: null, entries: null }),
-            });
-        } else {
-            startDownload(card || node, Object.assign({}, {
-                url: info.webpage_url || info.url,
-                format: qualities[currentSelected] || qualities[0],
-                ext: convert ? null : formatConversionTextbox.value,
-                convert: convert ? convertInfo : null,
-                filePath: node.querySelector(`#saveLocation`).value || null,
-                info: info
-            }, overrideDownloadObj && typeof overrideDownloadObj == `object` ? overrideDownloadObj : {}))
-        }
+        startDownload(card || node, saveOpt);
 
         if(centerURLBox) centerURLBox(false);
     }

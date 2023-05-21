@@ -69,19 +69,11 @@ const runSearch = async (url, initialMsg, func) => {
     let info = null;
 
     const parseInfo = async () => {
-        progressObj.remove();
-        progressObj = null;
-
         const listbox = listboxTemplate.cloneNode(true);
         
         if(listbox.classList.contains(`d-none`)) listbox.classList.remove(`d-none`);
-
-        listboxParent.appendChild(listbox);
         
         const formatList = listbox.querySelector(`#formatList`);
-        
-        input.disabled = false;
-        button.disabled = false;
 
         currentInfo = info;
         
@@ -96,13 +88,6 @@ const runSearch = async (url, initialMsg, func) => {
 
             return;
         } else {
-            anime({
-                targets: urlBox,
-                height: searchBoxHeights(),
-                duration: 1000,
-                easing: `easeOutExpo`,
-            });
-
             listbox.querySelector(`#mediaTitle`).innerHTML = `[${func == `search` ? `Search` : info.webpage_url_domain}] ${info.title}`;
 
             if(info.thumbnails && info.thumbnails.length > 0) {
@@ -134,8 +119,18 @@ const runSearch = async (url, initialMsg, func) => {
             
             qualityButtons({ card: listbox, node: listbox.querySelector(`#qualityButtons`), info, centerURLBox: info.entries ? centerURLBox : () => {} });
 
+            let parseProgress = addProgressBar(document.getElementById(`urlBox`), `80%`);
+
             if(info.entries) {
-                for (const entry of info.entries) {
+                if(info.entries.filter(e => e.entries).length == info.entries.length) {
+                    listbox.querySelector(`#qualityButtons`).classList.add(`d-none`);
+                }
+
+                for (const i in info.entries) {
+                    const entry = info.entries[i];
+
+                    parseProgress.setProgress((i/info.entries.length)*100, `Parsing entry ${i}/${info.entries.length}`);
+
                     const card = formatCard.cloneNode(true);
 
                     card.querySelector(`#formatMetaList`).classList.add(`d-none`);
@@ -173,10 +168,6 @@ const runSearch = async (url, initialMsg, func) => {
                         card.querySelector(`#formatSubtext`).classList.remove(`d-none`);
                     }
 
-                    if(entry.webpage_url) {
-
-                    }
-
                     if(entry.duration) {
                         card.querySelector(`#fileFormat`).innerHTML = `${entry.duration.timestamp}`;
                     } else {
@@ -191,13 +182,9 @@ const runSearch = async (url, initialMsg, func) => {
                     newDiv.style.minWidth = `100%`;
                     newDiv.style.removeProperty(`background`);
 
-                    card.querySelector(`#formatDownload`).classList.add(`d-none`)
-
                     const innerQualityButtons = newDiv.querySelector(`#innerQualityButtons`);
 
                     innerQualityButtons.style.minWidth = `100%`;
-
-                    card.querySelector(`#innerFormatCard`).appendChild(newDiv);
 
                     const removeEntry = () => {
                         const thisIndex = info.entries.findIndex(o => (o.id || o.webpage_url || o.url) == (entry.id || entry.webpage_url || entry.url));
@@ -207,16 +194,35 @@ const runSearch = async (url, initialMsg, func) => {
                         } else console.log(`Failed to find index for ${entry.id || entry.webpage_url || entry.url}`)
                     }
 
-                    console.log(`innerFormatCard`, card.querySelector(`#innerFormatCard`))
+                    //console.log(`innerFormatCard`, card.querySelector(`#innerFormatCard`))
 
-                    qualityButtons({ node: card.querySelector(`#innerFormatCard`), info: entry, card, removeEntry: () => removeEntry() });
+                    if(entry.entries) {
+                        card.querySelector(`#formatName`).innerHTML += ` (${entry.entries.length})`;
 
-                    card.querySelector(`#pausePlayButton`).classList.remove(`d-none`);
-                    card.querySelector(`#pausePlayButton`).classList.add(`d-flex`);
-                    card.querySelector(`#crossicon`).classList.remove(`d-none`);
-                    card.querySelector(`#pauseicon`).classList.add(`d-none`);
+                        card.querySelector(`#downloadicon`).style.transform = `rotate(270deg)`;
+                        // make arrow point right
 
-                    card.querySelector(`#pausePlayButton`).onclick = () => removeCardAnim(card, removeEntry);
+                        card.querySelector(`#formatDownload`).onclick = () => {
+                            input.value = entry.webpage_url;
+                            processURL();
+                        }
+                    } else {
+                        card.querySelector(`#innerFormatCard`).appendChild(newDiv);
+
+                        qualityButtons({ node: card.querySelector(`#innerFormatCard`), info: entry, card, removeEntry: () => removeEntry() });
+
+                        card.querySelector(`#formatDownload`).classList.add(`d-none`)
+                        card.querySelector(`#pausePlayButton`).classList.remove(`d-none`);
+                        card.querySelector(`#pausePlayButton`).classList.add(`d-flex`);
+                        card.querySelector(`#pauseicon`).classList.add(`d-none`);
+                        card.querySelector(`#crossicon`).classList.remove(`d-none`);
+    
+                        card.querySelector(`#pausePlayButton`).onclick = () => removeCardAnim(card, removeEntry);
+
+                        //console.log(`running conversionOptions`)
+    
+                        conversionOptions(card, entry)
+                    }
 
                     let visible = false;
 
@@ -265,28 +271,13 @@ const runSearch = async (url, initialMsg, func) => {
 
                     observer.observe(card);
 
-                    console.log(`running conversionOptions`)
-
-                    conversionOptions(card, entry)
-
                     formatList.appendChild(card);
 
-                    await new Promise((resolve) => setTimeout(resolve, 1));
+                    if(i % 25 == 0) await new Promise((resolve) => setTimeout(resolve, 1));
                 }
-            } else if(info.formats) {
-                /*document.getElementById(`qualityButtons`).querySelectorAll(`.btn`).forEach((btn, i) => {
-                    btn.onclick = () => {
-                        btn.disabled = true;
-                        btn.opacity = 0.5;
-                        
-                        startDownload(btn, {
-                            url: url,
-                            format: qualities[i],
-                            info: Object.assign({}, info, { formats: null }),
-                        });
-                    }
-                });*/
-                
+            };
+            
+            if(info.formats) {
                 qualityButtons({ node: listbox, info });
 
                 info.formats = info.formats.map(format => {
@@ -321,25 +312,14 @@ const runSearch = async (url, initialMsg, func) => {
                     }
                 });
 
-                if(info.formats.filter(f => f.audio).length == 0) document.getElementById(`downloadBestAudio`).classList.add(`d-none`);
-                if(info.formats.filter(f => f.video).length == 0) document.getElementById(`downloadBestVideo`).classList.add(`d-none`);
-
-                /*let qualities = [`bv*+ba/b`, `ba`, `bv`]
-
-                listbox.querySelector(`#qualityButtons`).querySelectorAll(`.btn`).forEach((btn, i) => {
-                    btn.onclick = () => {
-                        btn.disabled = true;
-                        btn.opacity = 0.5;
-                        
-                        startDownload(btn, {
-                            url: url,
-                            format: qualities[i],
-                            info: Object.assign({}, info, { formats: null }),
-                        });
-                    }
-                });*/
+                if(info.formats.filter(f => f.audio).length == 0 && listbox.querySelector(`#downloadBestAudio`)) listbox.querySelector(`#downloadBestAudio`).classList.add(`d-none`);
+                if(info.formats.filter(f => f.video).length == 0 && listbox.querySelector(`#downloadBestVideo`)) listbox.querySelector(`#downloadBestVideo`).classList.add(`d-none`);
                 
-                for (const format of info.formats) {
+                for (const i in info.formats) {
+                    const format = info.formats[i];
+
+                    parseProgress.setProgress((i/info.formats.length)*100, `Parsing format ${i}/${info.formats.length}`);
+
                     //console.log(format)
                     const formatDownloadType = format.audio && format.video ? `both` : format.audio && !format.video ? `audio` : `video`;
 
@@ -347,7 +327,7 @@ const runSearch = async (url, initialMsg, func) => {
 
                     const saveOptions = listboxTemplate.querySelector(`#saveOptions`).cloneNode(true)
 
-                    card.appendChild(saveOptions)
+                    card.querySelector(`#innerFormatCard`).appendChild(saveOptions)
 
                     const formatName = card.querySelector(`#formatName`);
                     const formatSubtext = card.querySelector(`#formatSubtext`);
@@ -398,6 +378,7 @@ const runSearch = async (url, initialMsg, func) => {
                     if(format.audio) {
                         card.querySelector(`#audioIcon`).style.opacity = `100%`;
                     } else {
+                        saveOptions.querySelector(`#audioOptions`).classList.add(`d-none`)
                         card.querySelector(`#audioIcon`).style.opacity = `35%`;
                     }
 
@@ -406,6 +387,7 @@ const runSearch = async (url, initialMsg, func) => {
                         //card.querySelector(`#formatConversionTextbox`).classList.add(`d-none`);
                     } else {
                         card.querySelector(`#videoIcon`).style.opacity = `35%`;
+                        saveOptions.querySelector(`#videoOptions`).classList.add(`d-none`)
                     }
 
                     card.querySelector(`#formatConversionTextbox`).placeholder = `${format.ext}`;
@@ -422,23 +404,17 @@ const runSearch = async (url, initialMsg, func) => {
 
                         btn.disabled = true;
 
-                        const bar = card.querySelector(`#progressBar`);
-                        const fill = card.querySelector(`#progressFill`);
-
                         if(card.querySelector(`#formatConversionTextbox`).value != config.lastMediaConversionOutputs[formatDownloadType]) {
                             let j = {};
 
                             j[formatDownloadType] = card.querySelector(`#formatConversionTextbox`).value;
                         }
 
-                        const dotSize = Number.parseInt(fill.style.width.replace(`px`, ``));
-                        const range = Number.parseInt(bar.style.width.replace(`px`, ``)) - dotSize;
-
                         card.style.opacity = 0.5;
 
                         console.log(format.format_id)
 
-                        startDownload(card, {
+                        /*startDownload(card, {
                             url: url,
                             format: format.format_id,
                             convert: card.querySelector(`#formatConversionTextbox`).value ? {
@@ -447,11 +423,18 @@ const runSearch = async (url, initialMsg, func) => {
                             ext: null,
                             filePath: card.querySelector(`#saveLocation`).value || null,
                             info: Object.assign({}, info, { formats: null }),
-                        });
+                        });*/
+
+                        startDownload(card, getSaveOptions(card, Object.assign(info, { formats: null, entries: null }), {
+                            format: format.format_id,
+                        }))
                     }
 
-                    card.querySelector(`#convertDownload`).parentElement.removeChild(card.querySelector(`#convertDownload`));
-                    card.querySelector(`#confirmDownload`).style.width = `100%`
+                    //card.querySelector(`#convertDownload`).parentElement.removeChild(card.querySelector(`#convertDownload`));
+                    //card.querySelector(`#confirmDownload`).style.width = `100%`
+
+                    conversionOptions(card, format);
+                    
                     card.querySelector(`#confirmDownload`).onclick = () => confirmDownload();
 
                     const btnClick = () => {
@@ -466,9 +449,27 @@ const runSearch = async (url, initialMsg, func) => {
 
                     formatList.appendChild(card);
 
-                    await new Promise((resolve) => setTimeout(resolve, 1));
+                    if(i % 25 == 0) await new Promise((resolve) => setTimeout(resolve, 1));
                 }
             }
+
+            anime({
+                targets: urlBox,
+                height: searchBoxHeights(),
+                duration: 1000,
+                easing: `easeOutExpo`,
+            });
+
+            listboxParent.appendChild(listbox);
+
+            progressObj.remove();
+            progressObj = null;    
+
+            parseProgress.remove();
+            parseProgress = null;
+        
+            input.disabled = false;
+            button.disabled = false;
         }
     }
 

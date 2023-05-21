@@ -6,6 +6,8 @@ const addProgressBar = (node, width, height) => {
     bar.style.width = width || `100%`;
     bar.style.height = dotSize;
 
+    bar.style.marginTop = `5px`;
+
     bar.style.background = `rgba(50, 50, 50, 0.35)`;
     bar.style.borderRadius = `100px`;
 
@@ -73,8 +75,6 @@ const addProgressBar = (node, width, height) => {
             // progress range: 0 -> 1
 
             if(typeof progress == `number` && progress) {
-                console.log(`progress = number (${progress}) / ${txt || `(no text)`}`)
-
                 anime.remove(fill);
                 fill.style.opacity = 1;
                 anime({
@@ -93,7 +93,6 @@ const addProgressBar = (node, width, height) => {
                     fillText.innerText = ``;
                 }
             } else {
-                console.log(`progress = ${typeof progress} (not number)`)
                 startPendingAnimation();
             }
         },
