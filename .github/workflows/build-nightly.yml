@@ -3,7 +3,7 @@ run-name: ${{ github.actor }} - ${{ github.event_name }} - ${{ github.sha }}
 
 on: 
     schedule:
-      - cron: '0 0 * * *' # every day at 00:00 UTC
+      - cron: '0 11 * * *' # 6am cst (i'll probably be asleep and have pushed a working change by then)
     workflow_dispatch:
 
 jobs:
@@ -21,10 +21,38 @@ jobs:
         continue-on-error: true
         name: check latest commit is less than a day
         if: ${{ github.event_name == 'schedule' }}
-        run: test -z $(git rev-list  --after="24 hours"  ${{ github.sha }}) && echo "::set-output name=should_run::false"
+        run: test -z $(git rev-list --after="24 hours"  ${{ github.sha }}) && echo "::set-output name=should_run::false"
+
+  release_tag:
+    needs: check_date
+    if: ${{ needs.check_date.outputs.should_run != 'false' }}
+    runs-on: ubuntu-latest
+    name: Create release tag
+
+    outputs:
+      release_id: ${{ steps.create_release.outputs.id }}
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Get the pre-release tag
+      id: get_tag
+      run: |
+        echo ::set-output name=tag::"$(git describe --tags --abbrev=0)-nightly.$(git rev-parse --short HEAD)"
+        echo ::set-output name=name::"[PRE-RELEASE] $(git describe --tags --abbrev=0)-nightly.$(git rev-parse --short HEAD)"
+    - name: Create pre-release draft
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+          tag_name: ${{ steps.get_tag.outputs.tag }}
+          release_name: ${{ steps.get_tag.outputs.name }}
+          draft: true
+          prerelease: true
 
   linux-dist:
-    needs: check_date
+    needs: [check_date, release_tag]
     if: ${{ needs.check_date.outputs.should_run != 'false' }}
 
     runs-on: ubuntu-latest
@@ -58,7 +86,7 @@ jobs:
             dist/ezytdl*
             dist/latest*.yml
   macos-dist:
-    needs: check_date
+    needs: [check_date, release_tag]
     if: ${{ needs.check_date.outputs.should_run != 'false' }}
     
     runs-on: macos-latest
@@ -93,7 +121,7 @@ jobs:
             dist/ezytdl*
             dist/latest*.yml
   windows-dist:
-    needs: check_date
+    needs: [check_date, release_tag]
     if: ${{ needs.check_date.outputs.should_run != 'false' }}
     
     runs-on: windows-latest
@@ -126,7 +154,7 @@ jobs:
             dist/ezytdl*
             dist/latest*.yml
   release:
-    needs: [linux-dist, macos-dist, windows-dist]
+    needs: [linux-dist, macos-dist, windows-dist, release_tag]
     name: "Tagged Release"
     runs-on: "ubuntu-latest"
 
@@ -141,4 +169,4 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        release_id: ${{ steps.get_tag.outputs.tag }}
+        release_id: ${{ needs.release_tag.outputs.release_id }}
