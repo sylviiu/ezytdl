@@ -355,6 +355,8 @@ module.exports = {
         
             killAttempt = 0;
 
+            const thisFormat = info.formats.find(f => f.format_id == format);
+
             let args = [];
 
             const runThroughFFmpeg = async (code, replaceInputArgs) => {
@@ -585,8 +587,6 @@ module.exports = {
                     }
                 }
             };
-
-            const thisFormat = info.formats.find(f => f.format_id == format);
 
             console.log(`--- DOWNLOADING FORMAT (${format}) ---\n`, thisFormat)
 
