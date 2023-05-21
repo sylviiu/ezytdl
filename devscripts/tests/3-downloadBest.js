@@ -8,6 +8,6 @@ module.exports = () => new Promise(async (res, rej) => {
         format: `bv*+ba/b`,
         ext: null,
         filePath: null,
-        info: Object.assign({}, info, { formats: null }),
+        info,
     }, () => {}).then(res).catch(rej)
 })

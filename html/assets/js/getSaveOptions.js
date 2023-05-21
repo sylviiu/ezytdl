@@ -29,12 +29,13 @@ const getSaveOptions = (node, info, overrideDownloadObj) => {
                 filePath: node.querySelector(`#saveLocation`).value || null,
                 info: e
             }, overrideDownloadObj && typeof overrideDownloadObj == `object` ? overrideDownloadObj : {})),
-            info: Object.assign({}, info, { formats: null, entries: null }),
+            info,
         }
     } else {
         return Object.assign({}, {
             url: info.webpage_url || info.url,
             ext: convert ? null : formatConversionTextbox.value,
+            format: info.format_id,
             convert: convert ? convertInfo : null,
             filePath: node.querySelector(`#saveLocation`).value || null,
             info: info

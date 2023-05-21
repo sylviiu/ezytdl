@@ -326,14 +326,18 @@ module.exports = {
         }
 
         try {
+            const { saveLocation, onlyGPUConversion, disableHWAcceleratedConversion, outputFilename } = require(`../getConfig`)();
+
             const path = getPath();
 
-            let ytdlpFilename = sanitize(await module.exports.getFilename(url, format));
+            const fullYtdlpFilename = sanitize(await module.exports.getFilename(url, format, outputFilename + `.%(ext)s`))
+
+            const ytdlpSaveExt = fullYtdlpFilename.split(`.`).slice(-1)[0];
+
+            let ytdlpFilename = fullYtdlpFilename.split(`.`).slice(0, -1).join(`.`);
             
-            filenames.push(ytdlpFilename)
+            filenames.push(fullYtdlpFilename)
             filenames.push(temporaryFilename)
-    
-            const { saveLocation, onlyGPUConversion, disableHWAcceleratedConversion } = require(`../getConfig`)();
     
             if(!ffmpegPath || !ffmpegVideoCodecs) refreshFFmpeg();
     
@@ -341,90 +345,19 @@ module.exports = {
     
             const saveTo = (filePath || saveLocation) + (require('os').platform() == `win32` ? `\\` : `/`)
 
-            updateFunc({ deleteFiles: () => purgeLeftoverFiles(saveTo) })
+            updateFunc({ deleteFiles: () => purgeLeftoverFiles(saveTo), live: info.is_live ? true : false })
     
             fs.mkdirSync(saveTo, { recursive: true, failIfExists: false });
-            
-            const args = [`-f`, format, url, `-o`, saveTo + ytdlpFilename + `.%(ext)s`, `--no-mtime`];
-    
+        
             let downloadInExt = null;
     
             let reasonConversionNotDone = null;
-    
-            if(fs.existsSync(ffmpegPath)) {
-                args.push(`--ffmpeg-location`, ffmpegPath);
-            } else {
-                if(convert && convert.ext) {
-                    ext = convert.ext
-                    convert = false;
-                    reasonConversionNotDone = `ffmpeg not installed`
-                };
-            }
-            
-            if(convert && !ext) {
-                args[4] = args[4].replace(ytdlpFilename, temporaryFilename);
-                args.splice(5, 2);
-            } else if((format == `bv*+ba/b` || format == `bv`) && ext) {
-                if(format == `bv`) {
-                    args.splice(2, 0, `-S`, `ext:${ext}`)
-                    downloadInExt = ext
-                } else {
-                    args.splice(2, 0, `-S`, `ext:${ext}:m4a`)
-                    downloadInExt = ext + `:m4a`
-                };
-            } else if(format == `ba` && ext) {
-                args.splice(2, 0, `-S`, `ext:${ext}`);
-    
-                downloadInExt = ext
-            }
-            
-            console.log(`saveTo: ` + saveTo, `\n- ` + args.join(`\n- `))
-    
-            proc = child_process.execFile(path, args);
-    
+        
             killAttempt = 0;
-    
-            update({saveLocation: saveTo, url, format, kill: () => {
-                killAttempt++
-                proc.kill(`SIGKILL`);
-            }, status: `Downloading...`})
-    
-            proc.stdout.on(`data`, data => {
-                const string = data.toString();
-    
-                //console.log(string.trim());
-    
-                if(string.includes(`Destination:`)) {
-                    update({destinationFile: string.split(`Destination:`)[1].trim()});
-                    if(!filenames.find(s => s == obj.destinationFile)) filenames.push(obj.destinationFile)
-                }
-    
-                const percent = string.includes(`%`) ? string.split(`%`)[0].split(` `).slice(-1)[0] : null;
-                if(percent) {
-                    const downloadSpeed = string.includes(`/s`) ? string.split(`/s`)[0].split(` `).slice(-1)[0] + `/s` : `-1B/s`;
-                    const eta = string.includes(`ETA`) ? string.split(`ETA`)[1].split(` `).slice(1).join(` `) : `00:00`;
-                    //console.log(percent)
-                    update({percentNum: Number(percent), downloadSpeed, eta});
-                }
-            });
-    
-            proc.stderr.on(`data`, data => {
-                const string = data.toString();
 
-                if(string.trim().startsWith(`ERROR: `)) {
-                    sendNotification({
-                        type: `error`,
-                        headingText: `yt-dlp failed to download ${url}`,
-                        bodyText: `${string.trim().split(`ERROR: `)[1]}`
-                    })
-                }
-    
-                console.log(string.trim())
-            })
-            
-            proc.on(`close`, async code => {
-                update({kill: () => {killAttempt++}});
-    
+            let args = [];
+
+            const runThroughFFmpeg = async (code, replaceInputArgs) => {
                 let previousFilename = obj.destinationFile ? `ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0] : temporaryFilename;
 
                 const fallback = (msg, deleteFile) => {
@@ -436,7 +369,9 @@ module.exports = {
                             fs.renameSync(saveTo + previousFilename, saveTo + ytdlpFilename + `.` + previousFilename.split(`.`).slice(-1)[0]);
                         }
                     } catch(e) { console.log(e) }
-                    update({failed: true, percentNum: 100, status: `Could not convert to ${`${convert.ext}`.toUpperCase()}.` + msg && typeof msg == `string` ? `\n\n${msg}` : ``, saveLocation: saveTo, destinationFile: saveTo + ytdlpFilename + `.` + previousFilename.split(`.`).slice(-1)[0], url, format});
+                    if(msg) {
+                        update({failed: true, percentNum: 100, status: msg, saveLocation: saveTo, destinationFile: saveTo + ytdlpFilename + `.` + previousFilename.split(`.`).slice(-1)[0], url, format})
+                    } else update({failed: true, percentNum: 100, status: `Could not convert to ${`${convert ? convert.ext : `--`}`.toUpperCase()}.`, saveLocation: saveTo, destinationFile: saveTo + ytdlpFilename + `.` + previousFilename.split(`.`).slice(-1)[0], url, format});
                     return res(obj)
                     //purgeLeftoverFiles(saveTo)
                 };
@@ -450,13 +385,9 @@ module.exports = {
                 filenames.push(previousFilename)
 
                 if(convert) {
-                    const savedExt = fs.readdirSync(saveTo).find(s => s.startsWith(previousFilename)).split(`.`).slice(-1)[0]
+                    ext = `.${convert.ext || (thisFormat || {}).ext}`
 
-                    console.log(`extensions`, downloadInExt, (convert || {}).ext, ext, savedExt)
-
-                    ext = `.${convert.ext}`
-
-                    const inputArgs = [`-i`, saveTo + previousFilename];
+                    const inputArgs = replaceInputArgs || [`-i`, saveTo + previousFilename];
                     const outputArgs = [saveTo + ytdlpFilename + ext];
 
                     if(convert.audioBitrate) outputArgs.unshift(`-b:a`, convert.audioBitrate);
@@ -479,11 +410,12 @@ module.exports = {
     
                         console.log(`- ` + args2.join(`\n- `))
     
-                        update({status: `Converting to ${`${ext}`.toUpperCase()} using ${name}...<br><br>- ${Object.keys(convert).map(s => `${s}: ${convert[s] || `(no conversion)`}`).join(`<br>- `)}`, percentNum: -1, eta: `--`});
+                        update({status: `${replaceInputArgs ? `Streaming & converting to` : `Converting to`} ${`${ext}`.toUpperCase()} using ${name}...<br><br>- ${Object.keys(convert).map(s => `${s}: ${convert[s] || `(no conversion)`}`).join(`<br>- `)}`, percentNum: -1, eta: `--`});
     
                         proc = child_process.execFile(ffmpegPath, [`-y`, ...args2]);
                         
                         update({kill: () => {
+                            console.log(`killing ffmpeg conversion...`)
                             killAttempt++
                             proc.kill(`SIGKILL`);
                         }})
@@ -652,7 +584,231 @@ module.exports = {
                         res(obj)
                     }
                 }
-            })
+            };
+
+            const thisFormat = info.formats.find(f => f.format_id == format);
+
+            console.log(`--- DOWNLOADING FORMAT (${format}) ---\n`, thisFormat)
+
+            if(/*thisFormat && thisFormat.protocol && thisFormat.protocol.toLowerCase().includes(`m3u8`) && fs.existsSync(ffmpegPath)*/ false) {
+            } else {
+                args = [`-f`, format, url, `-o`, saveTo + ytdlpFilename + `.%(ext)s`, `--no-mtime`];
+    
+                args.push(`--ffmpeg-location`, ``);
+        
+                if(fs.existsSync(ffmpegPath)) {
+                    //args.push(`--ffmpeg-location`, ffmpegPath);
+                } else {
+                    if(convert && convert.ext) {
+                        ext = convert.ext
+                        convert = false;
+                        reasonConversionNotDone = `ffmpeg not installed`
+                    };
+                }
+                
+                if(convert && !ext) {
+                    args[4] = args[4].replace(ytdlpFilename, temporaryFilename);
+                    //args.splice(5, 2);
+                } else if((format == `bv*+ba/b` || format == `bv`) && ext) {
+                    if(format == `bv`) {
+                        args.splice(2, 0, `-S`, `ext:${ext}`)
+                        downloadInExt = ext
+                    } else {
+                        args.splice(2, 0, `-S`, `ext:${ext}:m4a`)
+                        downloadInExt = ext + `:m4a`
+                    };
+                } else if(format == `ba` && ext) {
+                    args.splice(2, 0, `-S`, `ext:${ext}`);
+        
+                    downloadInExt = ext
+                }
+                
+                console.log(`saveTo: ` + saveTo, `\n- ` + args.join(`\n- `))
+        
+                proc = child_process.execFile(path, args);
+        
+                update({saveLocation: saveTo, url, format, kill: () => {
+                    console.log(`killing yt-dlp download...`)
+                    killAttempt++
+                    if(killAttempt > 1) {
+                        proc.kill(`SIGKILL`);
+                    } else proc.kill(`SIGINT`);
+                }, status: `Downloading...`})
+        
+                proc.stdout.on(`data`, data => {
+                    const string = data.toString();
+        
+                    console.log(string.trim());
+        
+                    if(string.includes(`Destination:`)) {
+                        update({destinationFile: string.split(`Destination:`)[1].trim()});
+                        if(!filenames.find(s => s == obj.destinationFile)) filenames.push(obj.destinationFile)
+                    }
+        
+                    const percent = string.includes(`%`) ? string.split(`%`)[0].split(` `).slice(-1)[0] : null;
+                    if(percent) {
+                        const downloadSpeed = string.includes(`/s`) ? string.split(`/s`)[0].split(` `).slice(-1)[0] + `/s` : `-1B/s`;
+                        const eta = string.includes(`ETA`) ? string.split(`ETA`)[1].split(` `).slice(1).join(` `) : `00:00`;
+                        percentNumUpdated = true;
+                        //console.log(percent)
+                        update({percentNum: Number(percent), downloadSpeed, eta});
+                    }
+                });
+
+                let fallbackToFFmpeg = false;
+        
+                proc.stderr.on(`data`, data => {
+                    const string = data.toString();
+    
+                    if(string.trim().startsWith(`ERROR: `)) {
+                        if(string.toLowerCase().includes(`ffmpeg could not be found`)) {
+                            fallbackToFFmpeg = true;
+                        } else sendNotification({
+                            type: `error`,
+                            headingText: `yt-dlp failed to download ${url}`,
+                            bodyText: `${string.trim().split(`ERROR: `)[1]}`
+                        })
+                    }
+        
+                    console.log(string.trim())
+    
+                    // FFMPEG LOGS BELOW (in case of something like a livestream)
+    
+                    let speed = [];
+    
+                    if(string.includes(`fps=`)) speed.push(string.trim().split(`fps=`)[1].trim().split(` `)[0] + `fps`);
+    
+                    if(info.is_live && string.includes(`time=`)) {
+                        speed.push(string.trim().split(`time=`)[1].trim().split(` `)[0]);
+                    } else if(string.includes(`speed=`)) {
+                        speed.push(string.trim().split(`speed=`)[1].trim().split(` `)[0]);
+                    }
+                    
+                    if(speed && speed.length > 0) update({downloadSpeed: speed.join(`<br>`)});
+                })
+                
+                proc.on(`close`, async code => {
+                    update({kill: () => {
+                        console.log(`nothing to kill...`)
+                        killAttempt++
+                    }});
+
+                    if(fallbackToFFmpeg && ffmpegPath) {
+                        if(!convert) {
+                            // download with FFmpeg instead of yt-dlp
+            
+                            args = [...(disableHWAcceleratedConversion ? [] : [`-hwaccel`, `auto`]), `-i`, thisFormat.url || url, `-movflags`, `+faststart`, `-c`, `copy`, `-y`, saveTo + ytdlpFilename + `.mkv`];
+            
+                            if(info.http_headers) {
+                                console.log(`using http headers:`, info.http_headers);
+            
+                                args.unshift(`-headers`, Object.keys(info.http_headers).map(s => `${s}: ${info.http_headers[s]}`).join(`\r\n`))
+                            }
+            
+                            console.log(`saveTo: ` + saveTo, `\n- ` + args.join(`\n- `))
+            
+                            proc = child_process.execFile(ffmpegPath, args);
+                    
+                            update({saveLocation: saveTo, url, format, kill: () => {
+                                console.log(`killing ffmpeg stream...`)
+                                killAttempt++
+                                proc.stdin.write(`q`)
+                                proc.kill(`SIGINT`);
+                            }, status: `Streaming (with FFmpeg)...`})
+            
+                            let savedTime = `00:00`
+            
+                            const log = (data) => {
+                                const string = data.toString().trim();
+            
+                                console.log(string)
+                                
+                                let speed = [];
+                
+                                if(string.includes(`fps=`)) speed.push(string.trim().split(`fps=`)[1].trim().split(` `)[0] + `fps`);
+                
+                                if(info.is_live && string.includes(`time=`)) {
+                                    const time = string.trim().split(`time=`)[1].trim().split(` `)[0];
+                                    savedTime = time;
+                                    speed.push(time);
+                                } else if(string.includes(`speed=`)) {
+                                    speed.push(string.trim().split(`speed=`)[1].trim().split(` `)[0]);
+                                }
+                                
+                                if(speed && speed.length > 0) update({downloadSpeed: speed.join(`<br>`)});
+                            }
+            
+                            proc.stderr.on(`data`, log)
+                            proc.stdout.on(`data`, log)
+                            
+                            proc.on(`close`, async code => {
+                                update({kill: () => {
+                                    console.log(`nothing to kill...`)
+                                    killAttempt++
+                                }, live: false, percentNum: 0});
+            
+                                proc = child_process.execFile(ffmpegPath, [`-i`, saveTo + ytdlpFilename + `.mkv`, `-c`, `copy`, `-y`, saveTo + ytdlpFilename + `.${ext}`]);
+            
+                                update({status: `Remuxing to ${`${ytdlpSaveExt}`.toUpperCase()}`, kill: () => {
+                                    killAttempt++
+                                    //proc.stdin.write(`q`)
+                                    proc.kill(`SIGINT`);
+            
+                                    // dont auto kill this process, because if the user cancelled the last one, chances are it was a 24/7 livestream.
+                                }});
+            
+                                const updateTime = (d) => {
+                                    const string = d.toString().trim();
+            
+                                    if(string.includes(`time=`)) {
+                                        const current = time(string.trim().split(`time=`)[1].trim().split(` `)[0]).units.ms;
+                                        const total = time(savedTime).units.ms;
+            
+                                        update({percentNum: current/total})
+                                    }
+                                    
+                                    let speed = [];
+            
+                                    if(string.includes(`speed=`))  speed.push(string.trim().split(`speed=`)[1].trim().split(` `)[0]);
+                                    if(string.includes(`fps=`)) speed.push(string.trim().split(`fps=`)[1].trim().split(` `)[0] + `fps`);
+                                    
+                                    if(speed && speed.length > 0) update({downloadSpeed: speed.join(`<br>`)});
+                                }
+            
+                                proc.stderr.on(`data`, updateTime)
+                                proc.stdout.on(`data`, updateTime)
+            
+                                proc.on(`close`, async code => {
+                                    update({kill: () => {
+                                        console.log(`nothing to kill...`)
+                                        killAttempt++
+                                    }});
+    
+                                    if(convert) {
+                                        runThroughFFmpeg(code);
+                                    } else {
+                                        if(fs.existsSync(saveTo + ytdlpFilename + `.mkv`)) fs.unlinkSync(saveTo + ytdlpFilename + `.mkv`);
+                                        update({code, saveLocation, url, format, status: `Done!`})
+                                        res(obj)
+                                    }
+                                })
+                            })
+                        } else {
+                            let ffmpegInputArgs = [`-i`, thisFormat.url || url];
+    
+                            if(info.http_headers) {
+                                console.log(`using http headers:`, info.http_headers);
+            
+                                ffmpegInputArgs.unshift(`-headers`, Object.keys(info.http_headers).map(s => `${s}: ${info.http_headers[s]}`).join(`\r\n`))
+                            }
+    
+                            killAttempt = 0;
+    
+                            runThroughFFmpeg(code, ffmpegInputArgs);
+                        }
+                    } else runThroughFFmpeg(code);
+                })
+            }
         } catch(e) {
             console.error(e);
             sendNotification({

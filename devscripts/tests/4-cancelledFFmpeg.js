@@ -14,7 +14,7 @@ module.exports = () => new Promise(async (res, rej) => {
         format: `bv*+ba/b`,
         ext: `mp4`,
         filePath: null,
-        info: Object.assign({}, info, { formats: null }),
+        info,
     }, (obj) => {
         if(obj.overall) obj = obj.overall;
         if(obj.latest) obj = obj.latest;

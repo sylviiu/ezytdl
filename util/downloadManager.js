@@ -244,7 +244,7 @@ const createDownloadObject = (opt, rawUpdateFunc) => {
                 if(!obj.ytdlpProc && proc) obj.ytdlpProc = proc;
                 if(!obj.killFunc && obj.status && obj.status.overall && obj.status.overall.kill) obj.killFunc = () => obj.status.overall.kill();
 
-                if(obj.killed) {
+                /*if(obj.killed) {
                     if(typeof obj.killed != `number`) obj.killed = 1;
                     obj.killed++;
 
@@ -266,7 +266,7 @@ const createDownloadObject = (opt, rawUpdateFunc) => {
                         obj.ytdlpProc.kill();
                         console.log(`Killed with external kill func`)
                     } catch(e) { console.log(`Failed external kill func: ${e}`) }
-                }
+                }*/
 
                 //console.log(`createDownload / QUEUE: ${update.percentNum}% | ${update.destinationFile} | ${update.downloadSpeed} | ${update.eta}`);
                 obj.updateFunc(update);
@@ -322,10 +322,13 @@ const createDownloadObject = (opt, rawUpdateFunc) => {
             if(obj.status && obj.status.overall && obj.status.overall.kill) {
                 try {
                     obj.status.overall.kill();
-                    console.log(`Killed killFunc of ${id}`);
+                    console.log(`Killed killFunc [1] of ${id}`);
                 } catch(e) {
-                    console.log(`Failed to kill killFunc: ${e}`)
+                    console.log(`Failed to kill [1] killFunc: ${e}`)
                 }
+            } else if(obj.killFunc) {
+                obj.killFunc();
+                console.log(`Killed killFunc [2] of ${id}`);
             } else {
                 console.log(`No killFunc yet for ${id}...`)
             }

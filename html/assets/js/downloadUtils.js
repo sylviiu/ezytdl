@@ -10,8 +10,10 @@ function createDownloadManager(card, id) {
 
     formatSubtext.innerHTML = `Starting...`;
     if(formatSubtext.classList.contains(`d-none`)) formatSubtext.classList.remove(`d-none`);
+
+    const fileFormat = card.querySelector(`#fileFormat`)
     
-    card.querySelector(`#fileFormat`).innerHTML = `0%`;
+    fileFormat.innerHTML = `0%`;
 
     let location;
     let destinationFile;
@@ -23,12 +25,18 @@ function createDownloadManager(card, id) {
             for(key of Object.keys(m)) status[key] = m[key];
 
             if(m.saveLocation) location = m.saveLocation;
-    
-            if(m.percentNum) {
+
+            if(status.live) {
+                progress.setProgress(-1);
+                fileFormat.innerHTML = `LIVE`;
+            } else if(m.percentNum) {
                 console.log(m.percentNum)
                 progress.setProgress(m.percentNum);
                 if(m.percentNum >= 0) {
-                    card.querySelector(`#fileFormat`).innerHTML = `${m.percentNum}%`;
+                    if(fileFormat.classList.contains(`d-none`)) fileFormat.classList.remove(`d-none`);
+                    fileFormat.innerHTML = `${m.percentNum}%`;
+                } else {
+                    if(!fileFormat.classList.contains(`d-none`)) fileFormat.classList.add(`d-none`);
                 }
             };
     
@@ -49,7 +57,7 @@ function createDownloadManager(card, id) {
     };
 
     const complete = () => {
-        card.querySelector(`#fileFormat`).innerHTML = `Done!`;
+        fileFormat.innerHTML = `Done!`;
 
         btn.disabled = false;
 

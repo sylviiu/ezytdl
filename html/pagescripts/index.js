@@ -122,7 +122,7 @@ const runSearch = async (url, initialMsg, func) => {
             let parseProgress = addProgressBar(document.getElementById(`urlBox`), `80%`);
 
             if(info.entries) {
-                if(info.entries.filter(e => e.entries).length == info.entries.length || info.entries.length == 0) {
+                if(info.entries.filter(e => e.entries).length == info.entries.length || info.entries.length == 0 || info.is_live) {
                     listbox.querySelector(`#qualityButtons`).classList.add(`d-none`);
                 }
 
@@ -425,9 +425,7 @@ const runSearch = async (url, initialMsg, func) => {
                             info: Object.assign({}, info, { formats: null }),
                         });*/
 
-                        startDownload(card, getSaveOptions(card, Object.assign(info, { formats: null, entries: null }), {
-                            format: format.format_id,
-                        }))
+                        startDownload(card, getSaveOptions(card, info))
                     }
 
                     //card.querySelector(`#convertDownload`).parentElement.removeChild(card.querySelector(`#convertDownload`));

@@ -14,7 +14,7 @@ module.exports = () => new Promise(async (res, rej) => {
         format: `bv*+ba/b`,
         ext: null,
         filePath: null,
-        info: Object.assign({}, info, { formats: null }),
+        info,
     }, (obj) => {
         if(obj.latest) obj = obj.latest;
         if(obj.kill) killFunc = obj.kill;
