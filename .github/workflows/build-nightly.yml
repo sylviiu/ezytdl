@@ -52,8 +52,7 @@ jobs:
           prerelease: true
 
   linux-dist:
-    needs: [check_date, release_tag]
-    if: ${{ needs.check_date.outputs.should_run != 'false' }}
+    needs: release_tag
 
     runs-on: ubuntu-latest
 
@@ -86,8 +85,7 @@ jobs:
             dist/ezytdl*
             dist/latest*.yml
   macos-dist:
-    needs: [check_date, release_tag]
-    if: ${{ needs.check_date.outputs.should_run != 'false' }}
+    needs: release_tag
     
     runs-on: macos-latest
 
@@ -121,8 +119,7 @@ jobs:
             dist/ezytdl*
             dist/latest*.yml
   windows-dist:
-    needs: [check_date, release_tag]
-    if: ${{ needs.check_date.outputs.should_run != 'false' }}
+    needs: release_tag
     
     runs-on: windows-latest
 
