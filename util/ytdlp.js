@@ -43,11 +43,11 @@ const getCodec = (file) => {
             } else return null;
         } catch(e) {
             console.log(e);
-            sendNotification({
+            /*sendNotification({
                 headingText: `Error!`,
                 bodyText: `An error occured while trying to get the codec of a file! The download may be affected\n\nPath: ${file}\n\nError: ${e.toString()}`,
                 type: `error`
-            });
+            });*/
             return null;
         }
     } else return null
@@ -419,7 +419,8 @@ module.exports = {
                         update({kill: () => {
                             console.log(`killing ffmpeg conversion...`)
                             killAttempt++
-                            proc.kill(`SIGKILL`);
+                            proc.stdin.write(`q`)
+                            //proc.kill(`SIGINT`);
                         }})
         
                         let duration = null;
@@ -713,7 +714,7 @@ module.exports = {
                                 console.log(`killing ffmpeg stream...`)
                                 killAttempt++
                                 proc.stdin.write(`q`)
-                                proc.kill(`SIGINT`);
+                                //proc.kill(`SIGINT`);
                             }, status: `Streaming (with FFmpeg)...`})
             
                             let savedTime = `00:00`
