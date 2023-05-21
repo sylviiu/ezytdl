@@ -121,6 +121,8 @@ if(process.argv.find(s => s == `publish`)) {
     config.extraMetadata.version = `${pkg.version}-nightly.${commitHash}`;
 
     config.productName += `-nightly`;
+
+    config.appId += `nightly`;
     
     config.publish = {
         "provider": "github",
