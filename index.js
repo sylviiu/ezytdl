@@ -25,7 +25,7 @@ if(!locked) {
     let startedLoading = false;
     let doneLoading = false;
 
-    if(global.testrun) setTimeout(() => {
+    setTimeout(() => {
         if(!doneLoading) {
             console.log(`Loading took too long!`);
             global.quitting = true;
