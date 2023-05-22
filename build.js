@@ -17,8 +17,8 @@ const config = {
     "win": {
         "icon": "res/packageIcons/icon-512x512.ico",
         "target": [
-            "portable",
-            "nsis"
+            "nsis",
+            "zip",
         ]
     },
     "linux": {
@@ -90,6 +90,7 @@ const config = {
     "extraMetadata": {
         buildDate: Date.now(),
         commitHash,
+        fullCommitHash: child_process.execSync(`git rev-parse HEAD`).toString().trim(),
     },
 };
 
