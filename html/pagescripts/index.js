@@ -188,6 +188,13 @@ const runSearch = async (url, initialMsg, func) => {
 
                     //console.log(`innerFormatCard`, card.querySelector(`#innerFormatCard`))
 
+                    card.querySelector(`#pausePlayButton`).classList.remove(`d-none`);
+                    card.querySelector(`#pausePlayButton`).classList.add(`d-flex`);
+                    card.querySelector(`#pauseicon`).classList.add(`d-none`);
+                    card.querySelector(`#crossicon`).classList.remove(`d-none`);
+
+                    card.querySelector(`#pausePlayButton`).onclick = () => removeCardAnim(card, removeEntry);
+
                     const nested = (entry.entries || func == `search`) ? true : false;
 
                     if(nested) {
@@ -259,13 +266,6 @@ const runSearch = async (url, initialMsg, func) => {
 
                             qualityButtons({ node: card.querySelector(`#innerFormatCard`), info: entry, card, removeEntry: () => removeEntry() });
                         }
-
-                        card.querySelector(`#pausePlayButton`).classList.remove(`d-none`);
-                        card.querySelector(`#pausePlayButton`).classList.add(`d-flex`);
-                        card.querySelector(`#pauseicon`).classList.add(`d-none`);
-                        card.querySelector(`#crossicon`).classList.remove(`d-none`);
-    
-                        card.querySelector(`#pausePlayButton`).onclick = () => removeCardAnim(card, removeEntry);
 
                         //console.log(`running conversionOptions`)
     
