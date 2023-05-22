@@ -114,7 +114,19 @@ if(process.argv.find(s => s == `test`)) {
 
             console.log(`Spawning ${path} at cwd ${cwd}`);
 
-            const proc = child_process.spawn(path, [`--testrun`], { stdio: "inherit", cwd });
+            const proc = child_process.spawn(path, [`--testrun`], { cwd, detached: true });
+
+            let passed = false;
+
+            proc.stdout.on(`data`, data => {
+                const str = data.toString().trim();
+                console.log(str);
+
+                if(str.includes(`TESTRUN PASSED.`)) {
+                    console.log(`Passed testrun!`);
+                    passed = true;
+                }
+            })
 
             proc.on(`error`, (err) => {
                 console.log(`Testrun errored with ${err}`);
@@ -122,8 +134,9 @@ if(process.argv.find(s => s == `test`)) {
             })
 
             proc.on(`close`, (code) => {
-                console.log(`Testrun closed with code ${code}`);
-                process.exit(0);
+                const exitWithCode = passed ? 0 : 1
+                console.log(`Testrun closed with code ${code}; exiting with code ${exitWithCode}`);
+                process.exit(exitWithCode);
             });
         }
     }

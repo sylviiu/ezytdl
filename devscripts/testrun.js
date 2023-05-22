@@ -71,6 +71,7 @@ module.exports = async (startTime) => {
     if(passed != total) {
         process.exit(1);
     } else {
+        console.log(`TESTRUN PASSED.`)
         require(`child_process`).execSync(`echo ezytdlpass=true >> $GITHUB_ENV`)
         global.quitting = true;
         require(`electron`).app.quit();

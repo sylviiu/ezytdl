@@ -31,12 +31,5 @@ jobs:
           npm run store
       
       - name: testrun compiled build
-        continue-on-error: true
         run: |
           npm run test
-          echo " --- COMPLETED TESTRUN, BELOW IS THE RESULT ---"
-          echo $ezytdlpass
-
-        if: ${{ env.ezytdlpass }} != 'true'
-      - name: Test run did not succeed. Exiting with error code 1
-        run: exit 1
