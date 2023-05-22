@@ -40,8 +40,8 @@ jobs:
         run: |
           npm run test
           echo " --- COMPLETED TESTRUN, BELOW IS THE RESULT ---"
-          echo $TESTS_PASSED
+          echo $ezytdlpass
 
-      - name: fail if "TESTS_PASSED" not true
-        if: ${{ env.TESTS_PASSED }} != 'true'
+        if: ${{ env.ezytdlpass }} != 'true'
+      - name: Test run did not succeed. Exiting with error code 1
         run: exit 1

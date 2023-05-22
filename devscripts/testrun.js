@@ -72,9 +72,10 @@ module.exports = async (startTime) => {
         process.exit(1);
     } else {
         if(process.env["GITHUB_ENV"]) {
-            console.log(`GITHUB_ENV FOUND, APPENDING "TESTS_PASSED=true"`)
-            require(`fs`).appendFileSync(process.env["GITHUB_ENV"], `\nTESTS_PASSED=true\n`)
-        } else console.log(`GITHUB_ENV NOT FOUND, NOT APPENDING "TESTS_PASSED=true"`)
+            console.log(`GITHUB_ENV FOUND (${GITHUB_ENV}), APPENDING "ezytdlpass=true"`)
+            //require(`fs`).appendFileSync(process.env["GITHUB_ENV"], `\nezytdlpass=true\n`)
+            require(`child_process`).execSync(`echo ezytdlpass=true >> $GITHUB_ENV`)
+        } else console.log(`GITHUB_ENV NOT FOUND, NOT APPENDING "ezytdlpass=true"`)
         global.quitting = true;
         require(`electron`).app.quit();
     }
