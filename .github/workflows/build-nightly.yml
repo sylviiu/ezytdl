@@ -20,7 +20,10 @@ jobs:
       - id: should_run
         continue-on-error: true
         name: check latest commit is less than a day
-        run: echo "should_run=$(if (( $(git rev-list $(git describe --tags --abbrev=0)..HEAD --count) > 0 )); then echo "true"; else echo "false"; fi)" >> "$GITHUB_ENV"
+        run: |
+          commits_since_last_tag=$(git rev-list $(git describe --tags --abbrev=0)..HEAD --count)
+          echo "$commits_since_last_tag commits since last tag"
+          echo "should_run=$(if (( $commits_since_last_tag > 0 )); then echo "true"; else echo "false"; fi)" >> "$GITHUB_ENV"
 
   release_info:
     needs: check_date
