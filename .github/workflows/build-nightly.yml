@@ -19,6 +19,8 @@ jobs:
         
       - name: Checkout repo
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - id: should_run
         continue-on-error: true
