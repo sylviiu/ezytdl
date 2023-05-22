@@ -188,14 +188,16 @@ const runSearch = async (url, initialMsg, func) => {
 
                     //console.log(`innerFormatCard`, card.querySelector(`#innerFormatCard`))
 
-                    if(entry.entries) {
-                        card.querySelector(`#formatName`).innerHTML += ` (${entry.entries.length})`;
+                    const nested = (entry.entries || func == `search`) ? true : false;
+
+                    if(nested) {
+                        if(entry.entries) card.querySelector(`#formatName`).innerHTML += ` (${entry.entries.length})`;
 
                         card.querySelector(`#downloadicon`).style.transform = `rotate(270deg)`;
                         // make arrow point right
 
                         card.querySelector(`#formatDownload`).onclick = () => {
-                            input.value = entry.webpage_url;
+                            input.value = entry.webpage_url || entry.url;
                             processURL();
                         }
                     } else {

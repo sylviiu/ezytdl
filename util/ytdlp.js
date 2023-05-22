@@ -140,7 +140,7 @@ module.exports = {
 
         console.log(`going to path ${path}; query "${query}"`)
 
-        let args = [`ytsearch10:${query}`, `--dump-single-json`, `--quiet`, `--verbose`];
+        let args = [`ytsearch10:${query}`, `--dump-single-json`, `--quiet`, `--verbose`, `--flat-playlist`];
 
         const proc = child_process.execFile(path, args);
 
