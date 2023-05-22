@@ -39,24 +39,30 @@ jobs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout repo
+        uses: actions/checkout@v2
       - name: Get the pre-release tag
         id: get_tag
         run: |
           echo "TAG_NAME=$(node -e "console.log(require('./package.json').version)")-nightly.$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
           echo "RELEASE_NAME=[NIGHTLY] $(node -e "console.log(require('./package.json').version)")-nightly.$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
-          echo "$(git log --pretty=oneline $(git rev-list -n 1 $(git describe --tags --abbrev=0))...$(git rev-parse HEAD))" > body.txt
+
+          node devscripts/generateReleaseNotes.js nightly
+
+          echo "BODY_PATH=$(echo "$(pwd)/release-notes.md")" >> "$GITHUB_ENV"
       - name: Create pre-release draft
         id: create_release
-        uses: shogo82148/actions-create-release@v1
+        uses: ncipollo/release-action
         with:
-          tag_name: ${{ env.TAG_NAME }}
-          release_name: ${{ env.RELEASE_NAME }}
-          commitish: ${{ github.sha }}
+          tag: ${{ env.TAG_NAME }}
+          name: ${{ env.RELEASE_NAME }}
+          commit: ${{ github.sha }}
           draft: true
           prerelease: true
-          make_latest: false
-          body_path: body.txt
+          makeLatest: false
+          bodyFile: ${{ env.BODY_PATH }}
+          omitBody: false
+          omitBodyDuringUpdate: true
 
   linux-dist:
     needs: release_info
