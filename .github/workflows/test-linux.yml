@@ -42,6 +42,8 @@ jobs:
         continue-on-error: true
         run: |
           npm run test
+          echo " --- COMPLETED TESTRUN, BELOW IS THE RESULT ---"
+          echo $TESTS_PASSED
 
       - name: fail if "TESTS_PASSED" not true
         if: ${{ env.TESTS_PASSED }} != 'true'
