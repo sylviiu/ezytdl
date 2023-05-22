@@ -55,7 +55,7 @@ jobs:
           echo "BODY_PATH=$(echo "$(pwd)/release-notes.md")" >> "$GITHUB_ENV"
       - name: Create pre-release draft
         id: create_release
-        uses: ncipollo/release-action
+        uses: ncipollo/release-action@v1
         with:
           tag: ${{ env.TAG_NAME }}
           name: ${{ env.RELEASE_NAME }}
