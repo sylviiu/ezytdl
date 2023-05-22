@@ -73,7 +73,7 @@ module.exports = async (startTime) => {
     } else {
         if(process.env["GITHUB_ENV"]) {
             console.log(`GITHUB_ENV FOUND, APPENDING "TESTS_PASSED=true"`)
-            require(`fs`).appendFileSync(process.env["GITHUB_ENV"], `TESTS_PASSED=true\n`)
+            require(`fs`).appendFileSync(process.env["GITHUB_ENV"], `\nTESTS_PASSED=true\n`)
         } else console.log(`GITHUB_ENV NOT FOUND, NOT APPENDING "TESTS_PASSED=true"`)
         global.quitting = true;
         require(`electron`).app.quit();
