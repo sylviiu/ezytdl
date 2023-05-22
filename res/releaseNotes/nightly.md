@@ -1,4 +1,4 @@
-<h1 align="center">
+<h1 align="left">
     <img src="https://raw.githubusercontent.com/sylviiu/ezytdl/0d3b465f74edb3c94887fe137ac66826fc1bfc4f/buildResources/packageIcons/icon-256x256.png" width="64px"/><br>
     This is a nightly build.
 </h1>

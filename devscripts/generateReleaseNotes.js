@@ -24,7 +24,7 @@ if(process.argv.find(s => s == `nightly`)) {
         const dateStr = `${daysOfTheWeek[date.getUTCDay()]}, ${date.getUTCDate()} ${months[date.getUTCMonth()]}, ${date.getUTCFullYear()} @ ${hour}:${min}:${sec} UTC`
         //console.log(dateStr)
     
-        const parsed = `- ${author}: ${hashLink} / ${dateStr}\n> ${s.split(`\n`).slice(4).map(s => s.trim()).join(`\n> `)}\n`;
+        const parsed = `> - ${author}: ${hashLink} / ${dateStr}\n> \n> ${s.split(`\n`).slice(4).map(s => s.trim()).join(`\n> `)}\n`;
     
         return parsed;
     });
