@@ -32,10 +32,12 @@ jobs:
       - name: Run uncompressed (store) build
         run: |
           npm run store
+      
+      - name: testrun compiled build
+        continue-on-error: true
+        run: |
+          npm run test
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            dist/ezytdl*
-            dist/latest*.yml
+      - name: fail if "TESTS_PASSED" not true
+        if: ${{ env.TESTS_PASSED }} != 'true'
+        run: exit 1

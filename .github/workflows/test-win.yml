@@ -26,10 +26,15 @@ jobs:
         run: |
           npm install
 
-      - name: Test from source
-        run: |
-          npm start -- --testrun
-
       - name: Run uncompressed (store) build
         run: |
           npm run store
+      
+      - name: testrun compiled build
+        continue-on-error: true
+        run: |
+          npm run test
+
+      - name: fail if "TESTS_PASSED" not true
+        if: ${{ env.TESTS_PASSED }} != 'true'
+        run: exit 1
