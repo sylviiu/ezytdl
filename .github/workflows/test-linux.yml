@@ -25,6 +25,11 @@ jobs:
         with:
           node-version: "18"
 
+      - name: Install libvips
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvips-dev libvips-tools libvips
+
       - name: Install npm deps
         run: |
           npm install
@@ -35,5 +40,4 @@ jobs:
       
       - name: testrun compiled build
         run: |
-          export PATH=$PATH:$(find ~+ -type f -name "libvips-cpp.so*" | sed s:/[^/]*$::)
           npm run test
