@@ -1,11 +1,11 @@
 const svgns = `http://www.w3.org/2000/svg`;
 
-const addProgressCircle = (node, width) => {
+const addProgressCircle = (node, width, showBackground) => {
     const nodeSize = Math.floor(node.getBoundingClientRect().width, node.getBoundingClientRect().height);
 
-    const dotSize = width || (nodeSize/7 + `px`);
+    const dotSizeNum = parseInt(width || (nodeSize/7));
 
-    const dotSizeNum = parseInt(dotSize);
+    const dotSize = dotSizeNum + `px`;
 
     console.log(nodeSize, dotSize, dotSizeNum);
 
@@ -28,7 +28,7 @@ const addProgressCircle = (node, width) => {
     circle.setAttribute(`cy`, (nodeSize / 2));
     circle.setAttribute(`r`, (nodeSize / 2)-(dotSizeNum / 2));
     circle.style.fill = `transparent`;
-    circle.style.stroke = `rgba(255, 255, 255, 0.25)`;
+    circle.style.stroke = `rgba(255, 255, 255, ${showBackground ? `0.25` : `0`})`;
     circle.style.strokeWidth = dotSize;
 
     svg.appendChild(circle);
@@ -48,6 +48,7 @@ const addProgressCircle = (node, width) => {
     circleFG.style.stroke = `rgba(255, 255, 255, 0.75)`;
     circleFG.style.strokeWidth = dotSize;
     circleFG.style.strokeLinecap = `round`;
+    circleFG.style.strokeDashoffset = fullCircle;
     
     svg.appendChild(circleFG);
         
@@ -60,6 +61,7 @@ const addProgressCircle = (node, width) => {
             targets: circleFG,
             loop: true,
             duration: 1500,
+            opacity: [1, 0],
             strokeDashoffset: [fullCircle, 0],
             easing: `easeOutCirc`,
         })
@@ -73,29 +75,38 @@ const addProgressCircle = (node, width) => {
         easing: `easeOutCirc`,
         begin: () => {
             node.appendChild(svg);
-        
-            startPendingAnimation(true);
         }
     });
 
-    let lastProgress = 0;
+    startPendingAnimation(true);
+
+    let lastProgress = 1;
 
     let allowProgressChanges = true;
 
     return {
+        node,
         setProgress: (progress) => {
-            // progress range: 0 -> 1
-
             if(!allowProgressChanges) return;
+
+            if(!svg.parentElement) node.appendChild(svg);
+
+            if(progress < 0) progress = 0;
+
+            if(progress > 100) progress = null;
 
             if(typeof progress == `number`) progress = (100 - (progress))/100
 
-            console.log(progress)
+            console.log(`parsed new circle progress num`, progress)
 
-            if(typeof progress == `number` && progress >= 0 && progress <= 100) {
+            if(typeof progress == `number` && progress >= 0 && progress <= 1) {
                 anime.remove(circle)
                 anime.remove(circleFG)
                 anime.remove(svg)
+                circleFG.style.opacity = 1;
+                circle.style.opacity = 1;
+                circleFG.style.strokeWidth = dotSize;
+                circle.style.strokeWidth = dotSize;
                 anime({
                     targets: circleFG,
                     strokeDashoffset: [fullCircle * lastProgress, fullCircle * progress],

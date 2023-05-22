@@ -37,6 +37,8 @@ const addProgressBar = (node, width, height) => {
     fillText.innerText = ``;
 
     fill.appendChild(fillText);
+
+    bar.appendChild(fill);
         
     const startPendingAnimation = () => {
         anime.remove(fill)
@@ -62,7 +64,6 @@ const addProgressBar = (node, width, height) => {
         easing: `easeOutCirc`,
         begin: () => {
             node.appendChild(bar);
-            bar.appendChild(fill);
         
             startPendingAnimation();
         }
@@ -73,10 +74,11 @@ const addProgressBar = (node, width, height) => {
     let allowProgressChanges = true;
 
     return {
+        node,
         setProgress: (progress, txt) => {
-            // progress range: 0 -> 1
-
             if(!allowProgressChanges) return;
+
+            if(!bar.parentElement) node.appendChild(bar);
 
             if(typeof progress == `number` && progress >= 0 && progress <= 100) {
                 anime.remove(fill);

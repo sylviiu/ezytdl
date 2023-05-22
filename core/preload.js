@@ -94,6 +94,7 @@ contextBridge.exposeInMainWorld(`mainQueue`, {
     formatStatusUpdate: (callback) => on(`formatStatusUpdate`, (_e, obj) => callback(obj)),
     formatStatusPercent: (callback) => on(`formatStatusPercent`, (_e, obj) => callback(obj)),
     queueUpdate: (callback) => on(`queueUpdate`, (_e, obj) => callback(obj)),
+    queueProgress: (callback) => on(`queueProgress`, (_e, num) => callback(num)),
 });
 
 contextBridge.exposeInMainWorld(`changelog`, {

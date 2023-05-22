@@ -2,7 +2,7 @@ const idGen = require(`./idGen`);
 
 const platform = process.platform;
 
-const { app } = require(`electron`);
+const { app, ipcMain } = require(`electron`);
 
 const queue = {
     complete: [],
@@ -59,6 +59,8 @@ const updateAppBadge = () => {
     }
 }
 
+let lastProgress = null;
+
 const updateProgressBar = () => {
     let value = 2;
 
@@ -86,7 +88,13 @@ const updateProgressBar = () => {
         value = progress;
     };
 
-    if(global.window) global.window.setProgressBar(value);
+    if(value != lastProgress) {
+        lastProgress = value;
+        if(global.window) {
+            global.window.setProgressBar(value);
+            global.window.webContents.send(`queueProgress`, value*100);
+        }
+    }
 };
 
 const sendUpdate = (sendObj) => {

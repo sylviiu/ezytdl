@@ -1,11 +1,21 @@
 var downloadManagerMainQueueRegistered = false;
 
+var circleProgress = null;
+
 var initDownloadManager = () => {
     console.log(`initDownloadManager / ${downloadManagerMainQueueRegistered}`)
 
     if(document.getElementById('downloadsList') && document.getElementById('downloadsIcon') && !downloadManagerMainQueueRegistered) {
         const downloadsList = document.getElementById('downloadsList');
         const downloadsIcon = document.getElementById('downloadsIcon').cloneNode(true);
+        const p = document.createElement(`p`);
+
+        p.id = `downloadsListText`
+        p.style.margin = `0px`;
+
+        if(!circleProgress) circleProgress = addProgressCircle(document.getElementById('downloadsList'), null, false);
+        
+        circleProgress.setProgress(0);
         
         mainQueue.queueUpdate((m) => {
             if(m.type == `queue`) {
@@ -17,19 +27,36 @@ var initDownloadManager = () => {
                     if(downloadsList.querySelector(`#downloadsIcon`)) {
                         downloadsList.removeChild(downloadsList.querySelector(`#downloadsIcon`))
                     };
+
+                    if(!downloadsList.querySelector(`#downloadsListText`)) downloadsList.appendChild(p);
             
-                    downloadsList.innerHTML = `${queueLength}`
+                    p.innerHTML = `${queueLength}`;
                 } else {
-                    downloadsList.innerHTML = ``;
+                    p.innerHTML = ``;
                     
                     if(!downloadsList.querySelector(`#downloadsIcon`)) {
                         downloadsList.appendChild(downloadsIcon)
                     };
+
+                    if(downloadsList.querySelector(`#downloadsListText`)) downloadsList.removeChild(p);
                 };
+
+                if(queueLength + m.data.complete.length == 0) {
+                    circleProgress.setProgress(0);
+                }
             }
         });
 
         downloadManagerMainQueueRegistered = true;
+
+        mainQueue.queueProgress((num) => {
+            console.log(`queueProgress: ${num}`)
+            if(num > 100) {
+                circleProgress.setProgress(null);
+            } else if(num >= 0) {
+                circleProgress.setProgress(num);
+            }
+        })
         
         if(document.body.querySelector(`#urlBox`)) {
             const downloadsQueue = formatListTemplate.cloneNode(true);
