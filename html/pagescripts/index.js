@@ -4,6 +4,8 @@ const searchBoxHeights = () => [`${window.innerHeight - 80}px`, `225px`]
 
 const urlBox = document.getElementById(`urlBox`);
 
+const innerUrlBox = document.getElementById(`innerUrlBox`);
+
 const background = document.getElementById(`background`);
 
 const input = document.getElementById(`urlInput`);
@@ -230,10 +232,10 @@ const runSearch = async (url, initialMsg, func) => {
                                 duration: 400,
                                 complete: () => {
                                     console.log(`throwing node`)
-                                    throwNode(newCard, input, () => {
+                                    throwNode(newCard, innerUrlBox, () => {
                                         input.value = entry.webpage_url || entry.url;
                                         runSearch(input.value, `Fetching info...`, `getInfo`)
-                                    }, true)
+                                    }, true, true)
                                 }
                             })
                         }

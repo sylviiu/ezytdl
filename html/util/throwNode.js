@@ -1,4 +1,4 @@
-const throwNode = (originalCard, target, beforeCloneFunc, noClone) => {
+const throwNode = (originalCard, target, beforeCloneFunc, noClone, noCloneTarget) => {
     const targetPosition = target.getBoundingClientRect();
 
     console.log(`throwNode target pos`, targetPosition)
@@ -145,43 +145,55 @@ const throwNode = (originalCard, target, beforeCloneFunc, noClone) => {
                 card.opacity = 0;
                 if(card.parentNode) card.parentNode.removeChild(card);
 
-                const copy = target.cloneNode(true);
-
-                const c2 = copy.cloneNode(true);
-
-                //const newTarget = removeElements(c2, {padding: false, margin: true});
+                const copy = noCloneTarget ? target : target.cloneNode(true);
                 
-                target.style.opacity = 0;
-
-                copy.onclick = () => target.click();
+                if(!noCloneTarget) {
+                    target.style.opacity = 0;
+                    copy.onclick = () => target.click();
+                }
 
                 const newTarget = target.getBoundingClientRect()
 
                 //newTarget.x -= 6
 
-                copy.style.position = `fixed`;
-                copy.style.left = `${newTarget.x}px`;
-                copy.style.top = `${newTarget.y}px`;
-
-                copy.style.width = newTarget.width + `px`;
-                copy.style.maxWidth = newTarget.width + `px`;
-                copy.style.height = newTarget.height + `px`;
-                copy.style.maxHeight = newTarget.height + `px`;
-
-                document.body.appendChild(copy);
-
-                anime({
-                    targets: copy,
-                    filter: [`invert(1)`, `invert(0)`],
-                    top: [((newTarget.y - formatDownloadButtonPosition.y)/15) + newTarget.y, newTarget.y],
-                    left: [((newTarget.x - currentX)/15) + newTarget.x, newTarget.x],
-                    duration: 400,
-                    easing: `easeOutCirc`,
-                    complete: () => {
-                        document.body.removeChild(copy);
-                        target.style.opacity = 1;
-                    }
-                })
+                if(noCloneTarget) {
+                    copy.style.position = `relative`;
+                    copy.style.left = `0px`;
+                    copy.style.top = `0px`;
+    
+                    anime({
+                        targets: copy,
+                        filter: [`invert(1)`, `invert(0)`],
+                        top: [((newTarget.y - formatDownloadButtonPosition.y)/15), 0],
+                        left: [((newTarget.x - currentX)/15), 0],
+                        duration: 400,
+                        easing: `easeOutCirc`,
+                    })
+                } else {
+                    copy.style.position = `fixed`;
+                    copy.style.left = `${newTarget.x}px`;
+                    copy.style.top = `${newTarget.y}px`;
+    
+                    copy.style.width = newTarget.width + `px`;
+                    copy.style.maxWidth = newTarget.width + `px`;
+                    copy.style.height = newTarget.height + `px`;
+                    copy.style.maxHeight = newTarget.height + `px`;
+    
+                    document.body.appendChild(copy);
+    
+                    anime({
+                        targets: copy,
+                        filter: [`invert(1)`, `invert(0)`],
+                        top: [((newTarget.y - formatDownloadButtonPosition.y)/15) + newTarget.y, newTarget.y],
+                        left: [((newTarget.x - currentX)/15) + newTarget.x, newTarget.x],
+                        duration: 400,
+                        easing: `easeOutCirc`,
+                        complete: () => {
+                            document.body.removeChild(copy);
+                            target.style.opacity = 1;
+                        }
+                    })
+                }
             }
         });
     }, noClone ? 0 : 350);
