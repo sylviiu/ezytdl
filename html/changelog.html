@@ -20,9 +20,9 @@
 
 <body style="background: rgb(10,10,10);width: 100vw;height: 100vh;font-family: Alata, sans-serif;overflow-x: hidden;">
     <div class="d-flex flex-column justify-content-start align-items-start" style="height: calc(100% - 80px);width: 100vw;padding: 40px 60px;padding-top: 120px;max-width: 100vw;">
-        <div class="d-flex justify-content-center align-items-end">
+        <div class="d-flex flex-column justify-content-center align-items-start">
             <h1 id="heading" style="color: rgb(255,255,255);text-align: left;">Changelog</h1>
-            <h6 class="d-none" id="released" style="color: rgba(255,255,255,0.35);text-align: left;margin-left: 12px;margin-bottom: 13px;">released</h6>
+            <h6 class="d-none" id="released" style="color: rgba(255,255,255,0.35);text-align: left;margin-bottom: 13px;">released</h6>
         </div><a class="btn btn-primary" role="button" id="githubReleaseButton" style="background: rgb(255,255,255);border-style: none;border-radius: 100px;height: 36px;margin-bottom: 30px;color: rgb(0,0,0);margin-top: 10px;" href="https://github.com/sylviiu/ezytdl"><i class="fab fa-github" style="margin-right: 6px;"></i>View on GitHub</a>
         <h6 class="d-none" id="content" style="color: rgb(255,255,255);margin-bottom: 30px;text-align: left;">v0.0.0 changelog</h6><a class="btn btn-primary justify-content-center align-items-center" role="button" id="homeButton" style="border-width: 0px;border-radius: 100px;background: rgb(42,42,42);padding: 10px 20px;margin-bottom: 40px;" href="index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-32 0 512 512" width="1em" height="1em" fill="currentColor" style="font-size: 26px;">
                 <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
@@ -52,68 +52,7 @@
                         <path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"></path>
                     </svg></button></div>
         </div>
-    </div><script>
-    const heading = document.getElementById(`heading`);
-    const released = document.getElementById(`released`);
-    const contentBody = document.getElementById(`content`);
-
-    const converter = new showdown.Converter({ parseImgDimensions: true });
-
-    changelog.get().then(content => {
-        console.log(content)
-
-        const updateReleasedTime = () => {
-            const d = new Date(content.released);
-
-            const timeSinceReleased = new Date(Date.now() - d.getTime());
-
-            const months = timeSinceReleased.getUTCMonth();
-            const days = timeSinceReleased.getUTCDate() - 1;
-            const hours = timeSinceReleased.getUTCHours();
-            const minutes = timeSinceReleased.getUTCMinutes();
-
-            const arr = []
-
-            if(months > 0) arr.push(`${months} month${months > 1 ? `s` : ``}`)
-            if(days > 0) arr.push(`${days} day${days > 1 ? `s` : ``}`)
-            if(hours > 0) arr.push(`${hours} hour${hours > 1 ? `s` : ``}`)
-            if(minutes > 0 || arr.length == 0) arr.push(`${minutes} minute${minutes > 1 ? `s` : ``}`)
-
-            if(arr.length > 1) {
-                released.innerHTML = `released ${arr.slice(0, -1).join(`, `)} and ${arr.slice(-1)} ago`;
-            } else {
-                released.innerHTML = `released ${arr[0]} ago`;
-            }
-        }
-
-        heading.innerHTML = `v${content.version} changelog`;
-
-        let b = content.body.split(`\n`);
-
-        for (i in b) {
-            let str = b[i];
-
-            if(str.startsWith(`![`) && str.includes(`[`) && str.includes(`]`) && str.includes(`(`) && str.includes(`)`)) {
-                b[i] = str.split(`)`).slice(0, -1).join(`)`) + ` =90%x*)` + str.split(`)`).slice(-1)[0]
-            }
-        };
-
-        if(content.url) {
-            document.getElementById(`githubReleaseButton`).href = content.url
-        } else {
-            document.getElementById(`githubReleaseButton`).opacity = 0.5;
-            document.getElementById(`githubReleaseButton`).disabled = true;
-        }
-
-        contentBody.innerHTML = converter.makeHtml(b.join(`\n`))
-
-        setInterval(updateReleasedTime, 1000); updateReleasedTime();
-
-        heading.classList.remove(`d-none`);
-        released.classList.remove(`d-none`);
-        contentBody.classList.remove(`d-none`);
-    })
-</script>
+    </div>
     <script src="assets/bootstrap/js/bootstrap.min.js"></script>
     <script src="assets/js/0-idGen.js"></script>
     <script src="assets/js/1-notificationHandler.js"></script>
