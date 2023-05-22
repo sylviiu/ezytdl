@@ -5,6 +5,8 @@ const which = require('which')
 // previous store: electron-builder -c ./package-build-store.json -p never
 // previous dist: electron-builder -c ./package-build.json -p always
 
+const commitHash = child_process.execSync(`git rev-parse --short HEAD`).toString().trim();
+
 const config = {
     "appId": "dev.sylviiu.ezytdl",
     "productName": "ezytdl",
@@ -85,10 +87,11 @@ const config = {
         "devscripts/*/*.js",
         "checks/*.js"
     ],
-    "extraMetadata": {},
+    "extraMetadata": {
+        buildDate: Date.now(),
+        commitHash,
+    },
 };
-
-const commitHash = child_process.execSync(`git rev-parse --short HEAD`).toString().trim();
 
 const pkg = JSON.parse(fs.readFileSync(`./package.json`).toString());
 

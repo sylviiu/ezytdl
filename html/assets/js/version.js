@@ -3,6 +3,7 @@ const getVersion = () => {
         version.get().then(v => {
             if(isNaN(Number(v[0]))) {
                 document.getElementById(`version`).innerHTML = v
+                document.getElementById(`version`).style.fontSize = `0.8rem`
             } else document.getElementById(`version`).innerHTML = `v` + v
         })
     }

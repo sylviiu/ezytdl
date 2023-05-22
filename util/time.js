@@ -441,7 +441,7 @@ let timestampStringToNum = function (ts) {
      return string;
  };
  
- util.time = (content) => {
+ util.time = (content, shorten) => {
      let returnObject = {
          timestamp: `--:--`,
          string: ``,
@@ -461,25 +461,25 @@ let timestampStringToNum = function (ts) {
          if(content.includes(`:`)) {
              returnObject.units = convertMS(timestampStringToNum(content));
              returnObject.timestamp = timestampConvert(returnObject.units);
-             returnObject.string = timeConvert(returnObject.units, false, 3);
+             returnObject.string = timeConvert(returnObject.units, shorten ? true : false, 3);
              return returnObject;
          } else if(Number(content)) {
              returnObject.units = convertMS(Number(content))
              returnObject.timestamp = timestampConvert(returnObject.units);
-             returnObject.string = timeConvert(returnObject.units, false, 3);
+             returnObject.string = timeConvert(returnObject.units, shorten ? true : false, 3);
              return returnObject;
          } else return returnObject;
      } else if(typeof content == `number`) {
          returnObject.units = convertMS(content);
          returnObject.timestamp = timestampConvert(returnObject.units);
-         returnObject.string = timeConvert(returnObject.units, false, 3);
+         returnObject.string = timeConvert(returnObject.units, shorten ? true : false, 3);
          return returnObject;
      } else if(typeof content == `object`) {
          try {
              if(JSON.stringify(Object.keys(content).sort()) === JSON.stringify(Object.keys(returnObject.units).sort())) {
                  returnObject.units = content;
                  returnObject.timestamp = timestampConvert(returnObject.units);
-                 returnObject.string = timeConvert(returnObject.units, false, 3);
+                 returnObject.string = timeConvert(returnObject.units, shorten ? true : false, 3);
                  return returnObject;
              } else return returnObject
          } catch(e) {return returnObject;}
