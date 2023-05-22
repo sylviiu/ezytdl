@@ -99,7 +99,12 @@ module.exports = async (manual) => {
         autoUpdater.allowPrerelease = true;
     }
 
-    if(!global.updateAvailable || manual) {
+    if(!autoUpdater.isUpdaterActive() && manual) {
+        sendNotification({
+            headingText: `Build is not updatable!`,
+            bodyText: `This build is not updatable. Please download an auto-updatable build from the releases page.`,
+        })
+    } else if(!global.updateAvailable || manual) {
         autoUpdater.checkForUpdates();
     }
 };
