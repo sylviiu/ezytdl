@@ -4,7 +4,7 @@ module.exports = () => new Promise(async res => {
     console.log(`Initializing...`);
 
     //const initScripts = require('fs').readdirSync(`./init/`);
-    const initScripts = [`0-logsEnabled.js`, `appLabels.js`, `checkForUpdates.js`, `createTray.js`, `determineGPUDecode.js`, `dockActivate.js`, `statusIcons.js`, `ytdlpDownloaded.js`]
+    const initScripts = [`0-logsEnabled.js`, `appLabels.js`, `checkForUpdates.js`, `createTray.js`, `darwin.js`, `determineGPUDecode.js`, `statusIcons.js`, `ytdlpDownloaded.js`]
 
     console.log(`Scripts: ${initScripts.join(`, `)}`)
 
