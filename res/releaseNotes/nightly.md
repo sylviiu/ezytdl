@@ -1,6 +1,6 @@
 <h1 align="left">
-    <img src="https://raw.githubusercontent.com/sylviiu/ezytdl/0d3b465f74edb3c94887fe137ac66826fc1bfc4f/buildResources/packageIcons/icon-256x256.png" width="64px"/><br>
-    This is a nightly build.
+    <img src="https://raw.githubusercontent.com/sylviiu/ezytdl/main/res/img/heading.png" height="86px"/><br>
+    <strong>This is a nightly build.</strong>
 </h1>
 
 ## These builds are not guaranteed to be functional. These are designated builds to test new features before they become an official release!
