@@ -224,7 +224,7 @@ const runSearch = async (url, initialMsg, func) => {
 
                             anime({
                                 targets: newCard,
-                                top: `150px`,
+                                top: `90px`,
                                 easing: `easeOutCirc`,
                                 borderRadius: `${Math.floor(bounding.height, bounding.width)/2}px`,
                                 duration: 400,

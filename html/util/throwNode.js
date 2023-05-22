@@ -85,11 +85,16 @@ const throwNode = (originalCard, target, beforeCloneFunc, noClone) => {
         easing: `easeOutCirc`,
     });
 
+    const borderRadius = Math.floor(targetPosition.width, targetPosition.height)/2
+
     const widthHeightTransformObj = {
         targets: card,
         opacity: [1, 1],
         background: `rgb(255,255,255)`,
-        borderRadius: Math.floor(targetPosition.width, targetPosition.height)/2,
+        borderRadiusTopLeft: target.style.borderRadiusTopLeft || borderRadius,
+        borderRadiusTopRight: target.style.borderRadiusTopRight || borderRadius,
+        borderRadiusBottomLeft: target.style.borderRadiusBottomLeft || borderRadius,
+        borderRadiusBottomRight: target.style.borderRadiusBottomRight || borderRadius,
         //left: `${formatDownloadButtonPosition.x}px`,
         //top: `${formatDownloadButtonPosition.y}px`,
         duration: 800,
@@ -97,10 +102,12 @@ const throwNode = (originalCard, target, beforeCloneFunc, noClone) => {
     };
 
     widthHeightTransformObj.minWidth = [formatDownloadButtonPosition.width, targetPosition.width];
+    widthHeightTransformObj.width = [formatDownloadButtonPosition.width, targetPosition.width];
     //widthHeightTransformObj.minWidth = [target.offsetWidth, target.style.width];
     widthHeightTransformObj.maxWidth = [formatDownloadButtonPosition.width, targetPosition.width];
 
     widthHeightTransformObj.minHeight = [formatDownloadButtonPosition.height, targetPosition.height];
+    widthHeightTransformObj.height = [formatDownloadButtonPosition.height, targetPosition.height];
     //widthHeightTransformObj.minHeight = [target.offsetHeight, target.style.height];
     widthHeightTransformObj.maxHeight = [formatDownloadButtonPosition.height, targetPosition.height];
 
