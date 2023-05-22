@@ -40,7 +40,7 @@ const runSearch = async (url, initialMsg, func) => {
 
     console.log(`${initialMsg || `running search for`}: ${url}`)
 
-    const centerURLBox = (removeListbox, checkParse) => {
+    const centerURLBox = (removeListbox, checkParse, duration) => {
         document.body.style.overflowY = `hidden`;
 
         window.scrollTo(0, 0);
@@ -48,8 +48,8 @@ const runSearch = async (url, initialMsg, func) => {
         anime({
             targets: urlBox,
             height: searchBoxHeights().reverse(),
-            duration: 600,
-            easing: `easeOutExpo`,
+            duration: duration || 600,
+            easing: `easeOutCirc`,
             complete: () => {
                 if(document.getElementById(`listbox`)) listboxParent.removeChild(document.getElementById(`listbox`));
 
@@ -204,8 +204,38 @@ const runSearch = async (url, initialMsg, func) => {
                         // make arrow point right
 
                         card.querySelector(`#formatDownload`).onclick = () => {
-                            input.value = entry.webpage_url || entry.url;
-                            processURL();
+                            input.disabled = false;
+                            button.disabled = false;
+
+                            const newCard = popout(card);
+
+                            const bounding = card.getBoundingClientRect();
+
+                            centerURLBox(null, null, 800);
+
+                            window.scrollTo(0, 0);
+
+                            anime({
+                                targets: [newCard.querySelector(`#formatCardBG`), newCard.querySelector(`#innerFormatCard`)],
+                                easing: `easeOutCirc`,
+                                borderRadius: `${Math.floor(bounding.height, bounding.width)/2}px`,
+                                duration: 500,
+                            })
+
+                            anime({
+                                targets: newCard,
+                                top: `150px`,
+                                easing: `easeOutCirc`,
+                                borderRadius: `${Math.floor(bounding.height, bounding.width)/2}px`,
+                                duration: 400,
+                                complete: () => {
+                                    console.log(`throwing node`)
+                                    throwNode(newCard, input, () => {
+                                        input.value = entry.webpage_url || entry.url;
+                                        runSearch(input.value, `Fetching info...`, `getInfo`)
+                                    }, true)
+                                }
+                            })
                         }
                     } else {
                         let fadeIn = () => null;
