@@ -3,3 +3,4 @@ dist/
 keys.json
 .DS_Store
 build.json
+release-notes.md
