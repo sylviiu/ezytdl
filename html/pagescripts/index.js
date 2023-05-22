@@ -146,11 +146,11 @@ const runSearch = async (url, initialMsg, func) => {
                     card.querySelector(`#audioIcon`).classList.add(`d-none`);
                     card.querySelector(`#videoIcon`).classList.add(`d-none`);
 
-                    if(entry.webpage_url) {
+                    if(entry.webpage_url || entry.url) {
                         card.querySelector(`#linkIcon`).classList.remove(`d-none`);
                         card.querySelector(`#nameDiv`).style.cursor = `pointer`;
                         card.querySelector(`#nameDiv`).addEventListener(`click`, () => {
-                            location.href = entry.webpage_url
+                            location.href = entry.webpage_url || entry.url
                         })
                     } else card.querySelector(`#fileIcon`).classList.remove(`d-none`);
 
@@ -512,7 +512,10 @@ const runSearch = async (url, initialMsg, func) => {
 
     let parse = false;
 
-    mainQueue[func || `getInfo`](url).then(data => {
+    mainQueue[func || `getInfo`]({
+        query: url,
+        count: parseInt(resultsCountInput.value) || 10
+    }).then(data => {
         info = data;
 
         if(parse) {
@@ -547,27 +550,70 @@ const runSearch = async (url, initialMsg, func) => {
     }
 }
 
+const genericUrlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/;
+
 const processURL = () => {
     const url = input.value;
 
-    console.log (`clicc`, url)
-
-    const genericUrlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/;
-
-    const match = url.match(genericUrlRegex);
-
-    console.log (`match`, match)
-
-    if(match) {
-        runSearch(url, `Fetching info...`, `getInfo`)
-    } else {
-        runSearch(url, `Running search...`, `search`)
+    if(url.length > 0) {
+        console.log (`clicc`, url)
+    
+        const match = url.match(genericUrlRegex);
+    
+        console.log (`match`, match)
+    
+        if(match) {
+            runSearch(url, `Fetching info...`, `getInfo`)
+        } else {
+            runSearch(url, `Running search...`, `search`)
+        }
     }
 }
 
 button.onclick = () => processURL();
 
+const resultsCountInput = document.getElementById(`resultsCountInput`);
+
+let resultCountShowing = false;
+
+const resultCount = {
+    show: () => {
+        if(resultCountShowing) return;
+        resultCountShowing = true;
+        console.log(`showing results count`)
+        anime.remove(resultsCountInput);
+        anime({
+            targets: resultsCountInput,
+            width: `10%`,
+            duration: 500,
+            easing: `easeOutExpo`
+        });
+    },
+    hide: () => {
+        if(!resultCountShowing) return;
+        resultCountShowing = false;
+        console.log(`hiding results count`)
+        anime.remove(resultsCountInput);
+        resultsCountInput.style.width = `0%`;
+        resultsCountInput.value = ``;
+    }
+}
+
+input.addEventListener(`input`, () => {
+    if(input.value.match(genericUrlRegex)) {
+        console.log(`matches url`)
+        resultCount.hide();
+    } else {
+        console.log(`does not match url`)
+        resultCount.show();
+    }
+});
+
 input.addEventListener(`keyup`, (e) => {
+    if(e.key == `Enter` || e.keyCode == 13) processURL();
+});
+
+resultsCountInput.addEventListener(`keyup`, (e) => {
     if(e.key == `Enter` || e.keyCode == 13) processURL();
 });
 

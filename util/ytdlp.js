@@ -135,12 +135,14 @@ module.exports = {
 
         return d
     },
-    search: (query) => new Promise(async res => {
+    search: ({query, count}) => new Promise(async res => {
         const path = getPath();
 
-        console.log(`going to path ${path}; query "${query}"`)
+        if(!count) count = 10;
 
-        let args = [`ytsearch10:${query}`, `--dump-single-json`, `--quiet`, `--verbose`, `--flat-playlist`];
+        console.log(`going to path ${path}; query "${query}"; count: ${count}`)
+
+        let args = [`ytsearch${count}:${query}`, `--dump-single-json`, `--quiet`, `--verbose`, `--flat-playlist`];
 
         const proc = child_process.execFile(path, args);
 
@@ -165,7 +167,9 @@ module.exports = {
             //console.log(d)
         })
     }),
-    listFormats: (url, disableFlatPlaylist) => new Promise(async res => {
+    listFormats: ({query}, disableFlatPlaylist) => new Promise(async res => {
+        let url = query;
+
         const path = getPath();
 
         console.log(`going to path ${path}; url "${url}"`)
@@ -209,14 +213,14 @@ module.exports = {
                 };
 
                 if(anyNoTitle && !disableFlatPlaylist) {
-                    return module.exports.listFormats(url, true).then(res)
+                    return module.exports.listFormats({url}, true).then(res)
                 } else {
                     res(module.exports.parseInfo(d))
                 }
             } else if(!disableFlatPlaylist) {
                 updateStatus(`Restarting playlist search... (there were no formats returned!!)`)
                 console.log(`no formats found! starting over...`);
-                return module.exports.listFormats(url, true).then(res)
+                return module.exports.listFormats({url}, true).then(res)
             } else {
                 sendNotification({
                     type: `error`,
