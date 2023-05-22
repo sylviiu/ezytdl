@@ -17,8 +17,7 @@ const config = {
     "win": {
         "icon": "res/packageIcons/icon-512x512.ico",
         "target": [
-            "nsis",
-            "zip",
+            "nsis"
         ]
     },
     "linux": {
