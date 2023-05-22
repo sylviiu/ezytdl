@@ -93,51 +93,59 @@ const commitHash = child_process.execSync(`git rev-parse --short HEAD`).toString
 const pkg = JSON.parse(fs.readFileSync(`./package.json`).toString());
 
 if(process.argv.find(s => s == `test`)) {
-    const folder = fs.readdirSync(`./dist`).find(s => s.endsWith(`-unpacked`) && fs.existsSync(`./dist/` + s + `/`));
+    const spawnProc = (path, cwd) => {
+        console.log(`Spawning ${path} at cwd ${cwd}`);
 
-    if(!folder) {
-        console.log(`No unpacked folder found!`);
-        process.exit(1);
+        const proc = child_process.spawn(path, [`--testrun`], { cwd, detached: true });
+
+        let passed = false;
+
+        proc.stdout.on(`data`, data => {
+            const str = data.toString().trim();
+            console.log(str);
+
+            if(str.includes(`TESTRUN PASSED.`)) {
+                console.log(`Passed testrun!`);
+                passed = true;
+            }
+        })
+
+        proc.on(`error`, (err) => {
+            console.log(`Testrun errored with ${err}`);
+            process.exit(1);
+        })
+
+        proc.on(`close`, (code) => {
+            const exitWithCode = passed ? 0 : 1
+            console.log(`Testrun closed with code ${code}; exiting with code ${exitWithCode}`);
+            process.exit(exitWithCode);
+        });
+    }
+
+    if(process.platform == `darwin`) {
+        spawnProc(path.join(__dirname, `dist`, `ezytdl.app`, `Contents`, `MacOS`, `ezytdl`), path.join(__dirname, `dist`))
     } else {
-        console.log(`Found unpacked folder ${folder}!`);
-
-        const file = fs.readdirSync(`./dist/${folder}/`).find(s => s.startsWith(`ezytdl`));
-
-        if(!file) {
-            console.log(`No file found!`);
+        const folder = fs.readdirSync(`./dist`).find(s => s.endsWith(`-unpacked`) && fs.existsSync(`./dist/` + s + `/`));
+    
+        if(!folder) {
+            console.log(`No unpacked folder found!`);
             process.exit(1);
         } else {
-            console.log(`Found file ${file}!`);
-
-            const cwd = require(`path`).join(__dirname, `dist`, folder)
-            const path = require(`path`).join(cwd, file);
-
-            console.log(`Spawning ${path} at cwd ${cwd}`);
-
-            const proc = child_process.spawn(path, [`--testrun`], { cwd, detached: true });
-
-            let passed = false;
-
-            proc.stdout.on(`data`, data => {
-                const str = data.toString().trim();
-                console.log(str);
-
-                if(str.includes(`TESTRUN PASSED.`)) {
-                    console.log(`Passed testrun!`);
-                    passed = true;
-                }
-            })
-
-            proc.on(`error`, (err) => {
-                console.log(`Testrun errored with ${err}`);
+            console.log(`Found unpacked folder ${folder}!`);
+    
+            const file = fs.readdirSync(`./dist/${folder}/`).find(s => s.startsWith(`ezytdl`));
+    
+            if(!file) {
+                console.log(`No file found!`);
                 process.exit(1);
-            })
-
-            proc.on(`close`, (code) => {
-                const exitWithCode = passed ? 0 : 1
-                console.log(`Testrun closed with code ${code}; exiting with code ${exitWithCode}`);
-                process.exit(exitWithCode);
-            });
+            } else {
+                console.log(`Found file ${file}!`);
+    
+                const cwd = require(`path`).join(__dirname, `dist`, folder)
+                const path = require(`path`).join(cwd, file);
+    
+                spawnProc(path, cwd)
+            }
         }
     }
 } else {
