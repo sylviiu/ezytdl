@@ -550,28 +550,6 @@ const runSearch = async (url, initialMsg, func) => {
     }
 }
 
-const genericUrlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/;
-
-const processURL = () => {
-    const url = input.value;
-
-    if(url.length > 0) {
-        console.log (`clicc`, url)
-    
-        const match = url.match(genericUrlRegex);
-    
-        console.log (`match`, match)
-    
-        if(match) {
-            runSearch(url, `Fetching info...`, `getInfo`)
-        } else {
-            runSearch(url, `Running search...`, `search`)
-        }
-    }
-}
-
-button.onclick = () => processURL();
-
 const resultsCountInput = document.getElementById(`resultsCountInput`);
 
 let resultCountShowing = false;
@@ -598,6 +576,30 @@ const resultCount = {
         resultsCountInput.value = ``;
     }
 }
+
+const genericUrlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/;
+
+const processURL = () => {
+    const url = input.value;
+
+    if(url.length > 0) {
+        resultCount.hide();
+        
+        console.log (`clicc`, url)
+    
+        const match = url.match(genericUrlRegex);
+    
+        console.log (`match`, match)
+    
+        if(match) {
+            runSearch(url, `Fetching info...`, `getInfo`)
+        } else {
+            runSearch(url, `Running search...`, `search`)
+        }
+    }
+}
+
+button.onclick = () => processURL();
 
 input.addEventListener(`input`, () => {
     if(input.value.match(genericUrlRegex)) {
