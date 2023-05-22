@@ -1,10 +1,10 @@
 name: ezytdl nightly distributable build
 run-name: ${{ github.actor }} - ${{ github.event_name }} - ${{ github.sha }}
 
-on: 
-    schedule:
-      - cron: '0 11 * * *' # 6am cst (i'll probably be asleep and have pushed a working change by then)
-    workflow_dispatch:
+on:
+  schedule:
+    - cron: "0 11 * * *" # 6am cst (i'll probably be asleep and have pushed a working change by then)
+  workflow_dispatch:
 
 jobs:
   check_date:
@@ -13,10 +13,6 @@ jobs:
     outputs:
       should_run: ${{ env.should_run }}
     steps:
-      - uses: actions/checkout@v2
-      - name: print latest_commit
-        run: echo ${{ github.sha }}
-        
       - name: Checkout repo
         uses: actions/checkout@v2
         with:
@@ -43,17 +39,17 @@ jobs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Get the pre-release tag
-      id: get_tag
-      run: |
-        echo "TAG_NAME=$(node -e "console.log(require('./package.json').version)")-nightly.$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
-        echo "RELEASE_NAME=[NIGHTLY] $(node -e "console.log(require('./package.json').version)")-nightly.$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
-        echo "$(git log --pretty=oneline $(git rev-list -n 1 $(git describe --tags --abbrev=0))...$(git rev-parse HEAD))" > body.txt
-    - name: Create pre-release draft
-      id: create_release
-      uses: shogo82148/actions-create-release@v1
-      with:
+      - uses: actions/checkout@v2
+      - name: Get the pre-release tag
+        id: get_tag
+        run: |
+          echo "TAG_NAME=$(node -e "console.log(require('./package.json').version)")-nightly.$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+          echo "RELEASE_NAME=[NIGHTLY] $(node -e "console.log(require('./package.json').version)")-nightly.$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+          echo "$(git log --pretty=oneline $(git rev-list -n 1 $(git describe --tags --abbrev=0))...$(git rev-parse HEAD))" > body.txt
+      - name: Create pre-release draft
+        id: create_release
+        uses: shogo82148/actions-create-release@v1
+        with:
           tag_name: ${{ env.TAG_NAME }}
           release_name: ${{ env.RELEASE_NAME }}
           commitish: ${{ github.sha }}
@@ -76,7 +72,7 @@ jobs:
       - name: Install Node.js & NPM
         uses: actions/setup-node@main
         with:
-          node-version: '18'
+          node-version: "18"
 
       - name: Install npm deps
         run: |
@@ -89,7 +85,7 @@ jobs:
           npm run nightly
   macos-dist:
     needs: release_info
-    
+
     runs-on: macos-latest
 
     permissions: write-all
@@ -101,7 +97,7 @@ jobs:
       - name: Install Node.js & NPM
         uses: actions/setup-node@main
         with:
-          node-version: '18'
+          node-version: "18"
 
       - name: Install npm deps
         run: |
@@ -116,7 +112,7 @@ jobs:
           npm run nightly
   windows-dist:
     needs: release_info
-    
+
     runs-on: windows-latest
 
     permissions: write-all
@@ -128,7 +124,7 @@ jobs:
       - name: Install Node.js & NPM
         uses: actions/setup-node@main
         with:
-          node-version: '18'
+          node-version: "18"
 
       - name: Install npm deps
         run: |
@@ -147,8 +143,15 @@ jobs:
     permissions: write-all
 
     steps:
-    - uses: eregon/publish-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        release_id: ${{ needs.release_info.outputs.release_id }}
+      - uses: eregon/publish-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_id: ${{ needs.release_info.outputs.release_id }}
+      - uses: dev-drprasad/delete-older-releases@v0.2.1
+        with:
+          keep_latest: 3
+          delete_tags: true
+          delete_tag_pattern: nightly
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
