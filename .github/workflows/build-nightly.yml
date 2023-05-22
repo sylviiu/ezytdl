@@ -16,10 +16,13 @@ jobs:
       - uses: actions/checkout@v2
       - name: print latest_commit
         run: echo ${{ github.sha }}
+        
+      - name: Checkout repo
+        uses: actions/checkout@v2
 
       - id: should_run
         continue-on-error: true
-        name: check latest commit is less than a day
+        name: check if there have been more than 0 commits since last tag
         run: |
           commits_since_last_tag=$(git rev-list $(git describe --tags --abbrev=0)..HEAD --count)
           echo "$commits_since_last_tag commits since last tag"
