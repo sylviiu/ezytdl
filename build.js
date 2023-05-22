@@ -123,7 +123,7 @@ if(process.argv.find(s => s == `test`)) {
     }
 
     if(process.platform == `darwin`) {
-        spawnProc(require(`path`).join(__dirname, `dist`, `ezytdl.app`, `Contents`, `MacOS`, `ezytdl`), require(`path`).join(__dirname, `dist`))
+        spawnProc(require(`path`).join(__dirname, `dist`, `mac`, `ezytdl.app`, `Contents`, `MacOS`, `ezytdl`), require(`path`).join(__dirname, `dist`))
     } else {
         const folder = fs.readdirSync(`./dist`).find(s => s.endsWith(`-unpacked`) && fs.existsSync(`./dist/` + s + `/`));
     
