@@ -23,7 +23,7 @@ jobs:
       - name: install deps
         run: |
           sudo apt update -y
-          sudo apt install -y libvips42
+          sudo apt install -y libvips
 
       - name: Install Node.js & NPM
         uses: actions/setup-node@main
