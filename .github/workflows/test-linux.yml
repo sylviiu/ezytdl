@@ -34,10 +34,15 @@ jobs:
         run: |
           npm install
 
-      - name: Run uncompressed (store) build
+      #- name: Run uncompressed (store) build
+      #  run: |
+      #    npm run store
+      #
+      #- name: testrun compiled build
+      #  run: |
+      #    npm run test
+      # this doesn't work because libvips wants to be funny on ubuntu. just run from source.
+
+      - name: Run from source
         run: |
-          npm run store
-      
-      - name: testrun compiled build
-        run: |
-          npm run test
+          npm run test -- --from-source

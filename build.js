@@ -92,118 +92,126 @@ const commitHash = child_process.execSync(`git rev-parse --short HEAD`).toString
 
 const pkg = JSON.parse(fs.readFileSync(`./package.json`).toString());
 
-if(process.argv.find(s => s == `test`)) {
-    const spawnProc = (path, cwd) => {
-        console.log(`Spawning ${path} at cwd ${cwd}`);
+which(`npm`).then(npm => {
+    if(process.argv.find(s => s == `test`)) {
+        const spawnProc = (path, cwd) => {
+            const spawnPath = path == `npm` ? npm : path;
 
-        const proc = child_process.spawn(path, [`--testrun`], { cwd, detached: true });
-
-        let passed = false;
-
-        proc.stdout.on(`data`, data => {
-            const str = data.toString().trim();
-            console.log(str);
-
-            if(str.includes(`TESTRUN PASSED.`)) {
-                console.log(`Passed testrun!`);
-                passed = true;
+            console.log(`Spawning ${spawnPath} at cwd ${cwd}`);
+    
+            const proc = child_process.spawn(spawnPath, path == `npm` ? [`start`, `--`, `--testrun`] : [`--testrun`], { cwd });
+    
+            let passed = false;
+    
+            const data = data => {
+                const str = data.toString().trim();
+                console.log(str);
+    
+                if(str.includes(`TESTRUN PASSED.`)) {
+                    console.log(`Passed testrun!`);
+                    passed = true;
+                }
             }
-        })
-
-        proc.on(`error`, (err) => {
-            console.log(`Testrun errored with ${err}`);
-            process.exit(1);
-        })
-
-        proc.on(`close`, (code) => {
-            const exitWithCode = passed ? 0 : 1
-            console.log(`Testrun closed with code ${code}; exiting with code ${exitWithCode}`);
-            process.exit(exitWithCode);
-        });
-    }
-
-    if(process.platform == `darwin`) {
-        spawnProc(require(`path`).join(__dirname, `dist`, `mac`, `ezytdl.app`, `Contents`, `MacOS`, `ezytdl`), require(`path`).join(__dirname, `dist`))
-    } else {
-        const folder = fs.readdirSync(`./dist`).find(s => s.endsWith(`-unpacked`) && fs.existsSync(`./dist/` + s + `/`));
     
-        if(!folder) {
-            console.log(`No unpacked folder found!`);
-            process.exit(1);
+            proc.stdout.on(`data`, data);
+            proc.stderr.on(`data`, data);
+    
+            proc.on(`error`, (err) => {
+                console.log(`Testrun errored with ${err}`);
+                process.exit(1);
+            })
+    
+            proc.on(`close`, (code) => {
+                const exitWithCode = passed ? 0 : 1
+                console.log(`Testrun closed with code ${code}; exiting with code ${exitWithCode}`);
+                process.exit(exitWithCode);
+            });
+        }
+    
+        if(process.argv.find(s => s == `--from-source`)) {
+            console.log(`Running from source...`)
+            spawnProc(`npm`, __dirname)
+        } else if(process.platform == `darwin`) {
+            spawnProc(require(`path`).join(__dirname, `dist`, `mac`, `ezytdl.app`, `Contents`, `MacOS`, `ezytdl`), require(`path`).join(__dirname, `dist`))
         } else {
-            console.log(`Found unpacked folder ${folder}!`);
-    
-            const file = fs.readdirSync(`./dist/${folder}/`).find(s => s.startsWith(`ezytdl`));
-    
-            if(!file) {
-                console.log(`No file found!`);
+            const folder = fs.readdirSync(`./dist`).find(s => s.endsWith(`-unpacked`) && fs.existsSync(`./dist/` + s + `/`));
+        
+            if(!folder) {
+                console.log(`No unpacked folder found!`);
                 process.exit(1);
             } else {
-                console.log(`Found file ${file}!`);
-    
-                const cwd = require(`path`).join(__dirname, `dist`, folder)
-                const path = require(`path`).join(cwd, file);
-    
-                spawnProc(path, cwd)
+                console.log(`Found unpacked folder ${folder}!`);
+        
+                const file = fs.readdirSync(`./dist/${folder}/`).find(s => s.startsWith(`ezytdl`));
+        
+                if(!file) {
+                    console.log(`No file found!`);
+                    process.exit(1);
+                } else {
+                    console.log(`Found file ${file}!`);
+        
+                    const cwd = require(`path`).join(__dirname, `dist`, folder)
+                    const path = require(`path`).join(cwd, file);
+        
+                    spawnProc(path, cwd)
+                }
             }
         }
-    }
-} else {
-    console.log(`Building for ${process.platform}... (${process.env["CSC_LINK"] && process.env["CSC_KEY_PASSWORD"] ? "SIGNED" : "UNSIGNED"})`);
-    
-    if(process.argv.find(s => s == `store`)) {
-        console.log(`Using store compression...`);
-        config.compression = "store";
     } else {
-        console.log(`Using maximum compression...`);
-        config.compression = "maximum";
-    }
-    
-    if(process.argv.find(s => s == `noasar`)) {
-        console.log(`Disabling asar...`);
-        config.asar = false;
-    }
-    
-    if(process.argv.find(s => s == `publish`)) {
-        console.log(`Publishing...`);
-        config.publish = {
-            "provider": "github",
-            "owner": "sylviiu",
-            "repo": "ezytdl",
-            "vPrefixedTagName": false,
-            "releaseType": "draft"
-        };
-    } else if(process.argv.find(s => s == `nightly`)) {
-        console.log(`Using nightly build...`);
-    
-        config.extraMetadata.version = `${pkg.version}-nightly.${commitHash}`;
-    
-        config.productName += `-nightly`;
-    
-        config.appId += `nightly`;
+        console.log(`Building for ${process.platform}... (${process.env["CSC_LINK"] && process.env["CSC_KEY_PASSWORD"] ? "SIGNED" : "UNSIGNED"})`);
         
-        config.publish = {
-            "provider": "github",
-            "owner": "sylviiu",
-            "repo": "ezytdl",
-            "vPrefixedTagName": false,
-            "releaseType": "draft"
-        };
-    }
-    
-    fs.writeFileSync(`./build.json`, JSON.stringify(config, null, 4));
-    
-    console.log(`Wrote config!`);
-    
-    which(`npm`).then(path => {
-        console.log(`Spawning npm at ${path}`);
-    
-        const proc = child_process.spawn(path, [`run`, `electron-builder`, `--`, `-c`, `./build.json`, ...(config.publish ? [`-p`, `always`] : [])], { stdio: "inherit" });
+        if(process.argv.find(s => s == `store`)) {
+            console.log(`Using store compression...`);
+            config.compression = "store";
+        } else {
+            console.log(`Using maximum compression...`);
+            config.compression = "maximum";
+        }
+        
+        if(process.argv.find(s => s == `noasar`)) {
+            console.log(`Disabling asar...`);
+            config.asar = false;
+        }
+        
+        if(process.argv.find(s => s == `publish`)) {
+            console.log(`Publishing...`);
+            config.publish = {
+                "provider": "github",
+                "owner": "sylviiu",
+                "repo": "ezytdl",
+                "vPrefixedTagName": false,
+                "releaseType": "draft"
+            };
+        } else if(process.argv.find(s => s == `nightly`)) {
+            console.log(`Using nightly build...`);
+        
+            config.extraMetadata.version = `${pkg.version}-nightly.${commitHash}`;
+        
+            config.productName += `-nightly`;
+        
+            config.appId += `nightly`;
+            
+            config.publish = {
+                "provider": "github",
+                "owner": "sylviiu",
+                "repo": "ezytdl",
+                "vPrefixedTagName": false,
+                "releaseType": "draft"
+            };
+        }
+        
+        fs.writeFileSync(`./build.json`, JSON.stringify(config, null, 4));
+        
+        console.log(`Wrote config!`);
+        
+        console.log(`Spawning npm at ${npm}`);
+        
+        const proc = child_process.spawn(npm, [`run`, `electron-builder`, `--`, `-c`, `./build.json`, ...(config.publish ? [`-p`, `always`] : [])], { stdio: "inherit" });
         
         proc.on(`close`, (code) => {
             console.log(`Build closed with code ${code}`);
         
             if(fs.existsSync(`./build.json`)) fs.unlinkSync(`./build.json`);
         })
-    })
-}
+    }
+})
