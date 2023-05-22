@@ -1,5 +1,3 @@
-global.tests = {};
-
 module.exports = () => new Promise(async (res, rej) => {
     const info = global.tests[`getInfo`];
 
@@ -14,7 +12,7 @@ module.exports = () => new Promise(async (res, rej) => {
         format: `bv*+ba/b`,
         ext: null,
         filePath: null,
-        info,
+        info: global.tests[`getInfo`],
     }, (obj) => {
         if(obj.latest) obj = obj.latest;
         if(obj.kill) killFunc = obj.kill;
