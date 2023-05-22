@@ -95,8 +95,8 @@ const config = {
 
 const pkg = JSON.parse(fs.readFileSync(`./package.json`).toString());
 
-which(`npm`).then(npm => {
-    if(process.argv.find(s => s == `test`)) {
+which(`npm`).then(async npm => {
+    if(process.argv.find(s => s == `test`)) {        
         const spawnProc = (path, cwd) => {
             const spawnPath = path == `npm` ? npm : path;
 
@@ -134,29 +134,35 @@ which(`npm`).then(npm => {
         if(process.argv.find(s => s == `--from-source`)) {
             console.log(`Running from source...`)
             spawnProc(`npm`, __dirname)
-        } else if(process.platform == `darwin`) {
-            spawnProc(require(`path`).join(__dirname, `dist`, `mac`, `ezytdl.app`, `Contents`, `MacOS`, `ezytdl`), require(`path`).join(__dirname, `dist`))
         } else {
-            const folder = fs.readdirSync(`./dist`).find(s => s.endsWith(`-unpacked`) && fs.existsSync(`./dist/` + s + `/`));
-        
-            if(!folder) {
-                console.log(`No unpacked folder found!`);
-                process.exit(1);
+            console.log(`packing...`)
+            child_process.execFileSync(await which(`node`), [`build`, `pack`], { stdio: "inherit" });
+            console.log(`packed!`);
+
+            if(process.platform == `darwin`) {
+                spawnProc(require(`path`).join(__dirname, `dist`, `mac`, `ezytdl.app`, `Contents`, `MacOS`, `ezytdl`), require(`path`).join(__dirname, `dist`))
             } else {
-                console.log(`Found unpacked folder ${folder}!`);
-        
-                const file = fs.readdirSync(`./dist/${folder}/`).find(s => s.startsWith(`ezytdl`));
-        
-                if(!file) {
-                    console.log(`No file found!`);
+                const folder = fs.readdirSync(`./dist`).find(s => s.endsWith(`-unpacked`) && fs.existsSync(`./dist/` + s + `/`));
+            
+                if(!folder) {
+                    console.log(`No unpacked folder found!`);
                     process.exit(1);
                 } else {
-                    console.log(`Found file ${file}!`);
-        
-                    const cwd = require(`path`).join(__dirname, `dist`, folder)
-                    const path = require(`path`).join(cwd, file);
-        
-                    spawnProc(path, cwd)
+                    console.log(`Found unpacked folder ${folder}!`);
+            
+                    const file = fs.readdirSync(`./dist/${folder}/`).find(s => s.startsWith(`ezytdl`));
+            
+                    if(!file) {
+                        console.log(`No file found!`);
+                        process.exit(1);
+                    } else {
+                        console.log(`Found file ${file}!`);
+            
+                        const cwd = require(`path`).join(__dirname, `dist`, folder)
+                        const path = require(`path`).join(cwd, file);
+            
+                        spawnProc(path, cwd)
+                    }
                 }
             }
         }
@@ -209,7 +215,7 @@ which(`npm`).then(npm => {
         
         console.log(`Spawning npm at ${npm}`);
         
-        const proc = child_process.spawn(npm, [`run`, `electron-builder`, `--`, `-c`, `./build.json`, ...(config.publish ? [`-p`, `always`] : [])], { stdio: "inherit" });
+        const proc = child_process.spawn(npm, [`run`, `electron-builder`, `--`, `-c`, `./build.json`, ...(process.argv.find(s => s == `pack`) ? [`--dir`] : []), ...(config.publish ? [`-p`, `always`] : [`-p`, `never`])], { stdio: "inherit" });
         
         proc.on(`close`, (code) => {
             console.log(`Build closed with code ${code}`);

@@ -25,10 +25,6 @@ jobs:
       - name: Install npm deps
         run: |
           npm install
-
-      - name: Run uncompressed (store) build
-        run: |
-          npm run store
       
       - name: testrun compiled build
         run: |
