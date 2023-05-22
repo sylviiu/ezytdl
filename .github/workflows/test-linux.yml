@@ -20,11 +20,6 @@ jobs:
       - name: Setup headless display
         uses: pyvista/setup-headless-display-action@v1
 
-      - name: install deps
-        run: |
-          sudo apt update -y
-          sudo apt install -y libvips
-
       - name: Install Node.js & NPM
         uses: actions/setup-node@main
         with:
@@ -40,4 +35,5 @@ jobs:
       
       - name: testrun compiled build
         run: |
+          export PATH=$PATH:$(find ~+ -type f -name "libvips-cpp.so*" | sed s:/[^/]*$::)
           npm run test
