@@ -3,3 +3,4 @@ if(typeof config == `undefined`) {
 }
 
 configuration.get().then(newConf => { config = newConf });
+configuration.hook(newConf => { config = newConf });

@@ -68,29 +68,40 @@ ajax.onload = async () => {
     const navigationBar = document.body.querySelector(`#navigationBar`);
     const everythingElse = document.body.querySelectorAll(`body > div:not(#navigationBar)`);
 
-    anime({
-        targets: navigationBar,
-        top: [`0px`, navigationBar.style.top],
-        duration: 1500,
-        begin: () => {
-            document.body.style.opacity = 1;
-        },
-        easing: `easeOutExpo`,
-    });
-    
-    everythingElse.forEach(element => anime({
-        targets: element,
-        //scale: [0, 1],
-        marginTop: [`500vh`, element.style.marginTop || `0px`],
-        duration: 2500,
-        easing: `easeOutExpo`,
-        begin: () => {
-            document.body.style.opacity = 1;
-        },
-        complete: () => {
-            console.log(`done`)
-        }
-    }));
+    if(config.disableAnimations) {
+        document.body.style.opacity = 1;
+    } else if(config.reduceAnimations) {
+        anime({
+            targets: document.body,
+            opacity: [0, 1],
+            duration: 1500,
+            easing: `easeOutExpo`,
+        })
+    } else {
+        anime({
+            targets: navigationBar,
+            top: [`0px`, navigationBar.style.top],
+            duration: 1500,
+            begin: () => {
+                document.body.style.opacity = 1;
+            },
+            easing: `easeOutExpo`,
+        });
+        
+        everythingElse.forEach(element => anime({
+            targets: element,
+            //scale: [0, 1],
+            marginTop: [`500vh`, element.style.marginTop || `0px`],
+            duration: 2500,
+            easing: `easeOutExpo`,
+            begin: () => {
+                document.body.style.opacity = 1;
+            },
+            complete: () => {
+                console.log(`done`)
+            }
+        }));
+    }
 };
 
 ajax.send();

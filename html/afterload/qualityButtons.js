@@ -59,13 +59,22 @@ const saveOptionsAnimations = {
 
             anime.remove(bg);
 
-            anime({
-                targets: bg,
-                filter: `blur(5px)`,
-                opacity: [`35%`, `10%`],
-                duration: 500,
-                easing: `easeOutExpo`
-            })
+            if(!config.reduceAnimations && !config.disableAnimations) {
+                anime({
+                    targets: bg,
+                    filter: `blur(5px)`,
+                    opacity: [`35%`, `10%`],
+                    duration: 500,
+                    easing: `easeOutExpo`
+                })
+            } else {
+                anime({
+                    targets: bg,
+                    opacity: [`35%`, `10%`],
+                    duration: 500,
+                    easing: `easeOutExpo`
+                })
+            }
         }
 
         const prevMaxHeight = saveOptions.style.maxHeight;
@@ -79,19 +88,36 @@ const saveOptionsAnimations = {
         if(btn) btn.onclick = () => {}
         saveOptions.classList.remove(`d-none`);
         saveOptions.classList.add(`d-flex`);
-        anime({
-            targets: saveOptions,
-            maxHeight: [`0px`, height],
-            opacity: [`0%`, `100%`],
-            marginTop: [`0px`, `8px`],
-            duration: 500,
-            easing: `easeOutExpo`,
-            complete: () => {
-                saveOptions.style.maxHeight = null;
-                if(btn) btn.onclick = () => btnClick();
-                res();
-            }
-        });
+        if(config.reduceAnimations) {
+            saveOptions.style.maxHeight = height + `px`;
+            saveOptions.style.marginTop = `8px`;
+            anime({
+                targets: saveOptions,
+                opacity: [`0%`, `100%`],
+                duration: 500,
+                easing: `easeOutExpo`,
+                complete: () => {
+                    saveOptions.style.maxHeight = null;
+                    if(btn) btn.onclick = () => btnClick();
+                    res();
+                }
+            });
+        } else {
+            anime({
+                targets: saveOptions,
+                maxHeight: [`0px`, height],
+                opacity: [`0%`, `100%`],
+                marginTop: [`0px`, `8px`],
+                duration: 500,
+                easing: `easeOutExpo`,
+                complete: () => {
+                    saveOptions.style.maxHeight = null;
+                    if(btn) btn.onclick = () => btnClick();
+                    res();
+                }
+            });
+        }
+
         if(btn) anime({
             targets: btn.querySelector(`#downloadicon`),
             rotate: [`0deg`, `180deg`],
@@ -107,13 +133,22 @@ const saveOptionsAnimations = {
 
             anime.remove(bg);
 
-            anime({
-                targets: bg,
-                filter: `blur(0px)`,
-                opacity: [`10%`, `35%`],
-                duration: 500,
-                easing: `easeOutExpo`
-            })
+            if(!config.reduceAnimations && !config.disableAnimations) {
+                anime({
+                    targets: bg,
+                    filter: `blur(0px)`,
+                    opacity: [`10%`, `35%`],
+                    duration: 500,
+                    easing: `easeOutExpo`
+                })
+            } else {
+                anime({
+                    targets: bg,
+                    opacity: [`10%`, `35%`],
+                    duration: 500,
+                    easing: `easeOutExpo`
+                })
+            }
         }
         
         if(btn) btn.onclick = () => {}
@@ -124,20 +159,38 @@ const saveOptionsAnimations = {
             return res()
         } else {
             const { height } = saveOptions.getBoundingClientRect();
-            anime({
-                targets: saveOptions,
-                maxHeight: [height, `0px`],
-                opacity: `0%`,
-                marginTop: `0px`,
-                duration: 500,
-                easing: `easeOutExpo`,
-                complete: () => {
-                    saveOptions.classList.remove(`d-flex`);
-                    saveOptions.classList.add(`d-none`);
-                    if(btn) btn.onclick = () => btnClick();
-                    res();
-                }
-            })
+            if(config.reduceAnimations) {
+                saveOptions.style.maxHeight = height + `px`;
+                anime({
+                    targets: saveOptions,
+                    opacity: [`100%`, `0%`],
+                    duration: 500,
+                    easing: `easeOutExpo`,
+                    complete: () => {
+                        saveOptions.style.marginTop = `0px`;
+                        saveOptions.classList.remove(`d-flex`);
+                        saveOptions.classList.add(`d-none`);
+                        if(btn) btn.onclick = () => btnClick();
+                        res();
+                    }
+                })
+            } else {
+                anime({
+                    targets: saveOptions,
+                    maxHeight: [height, `0px`],
+                    opacity: [`100%`, `0%`],
+                    marginTop: `0px`,
+                    duration: 500,
+                    easing: `easeOutExpo`,
+                    complete: () => {
+                        saveOptions.classList.remove(`d-flex`);
+                        saveOptions.classList.add(`d-none`);
+                        if(btn) btn.onclick = () => btnClick();
+                        res();
+                    }
+                })
+            }
+
             if(btn) anime({
                 targets: btn.querySelector(`#downloadicon`),
                 rotate: [`180deg`, `0deg`],

@@ -28,16 +28,30 @@ const conversionOptions = (node, info) => {
 
         node.querySelector(`#conversionDiv`).appendChild(formattxtbox);
 
-        anime({
-            targets: ffmpegOptions,
-            maxHeight: [`0px`, ffmpegBoundingClientRect.height + `px`],
-            opacity: [`0%`, `100%`],
-            duration: 500,
-            easing: `easeOutExpo`,
-            complete: () => {
-                ffmpegOptions.style.maxHeight = ``;
-            }
-        });
+        if(config.reduceAnimations) {
+            ffmpegOptions.style.maxHeight = ffmpegBoundingClientRect.height + `px`;
+            anime({
+                targets: ffmpegOptions,
+                opacity: [`0%`, `100%`],
+                duration: 500,
+                easing: `easeOutExpo`,
+                complete: () => {
+                    ffmpegOptions.style.maxHeight = ``;
+                }
+            });
+        } else {
+            anime({
+                targets: ffmpegOptions,
+                maxHeight: [`0px`, ffmpegBoundingClientRect.height + `px`],
+                opacity: [`0%`, `100%`],
+                duration: 500,
+                easing: `easeOutExpo`,
+                complete: () => {
+                    ffmpegOptions.style.maxHeight = ``;
+                }
+            });
+        }
+
         anime({
             targets: node.querySelector(`#convertDownload`),
             width: [`49%`, `0%`],

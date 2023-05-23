@@ -67,9 +67,22 @@ contextBridge.exposeInMainWorld(`version`, {
     openUpdatePage: () => send(`openUpdatePage`)
 });
 
+const configHooks = [];
+
 contextBridge.exposeInMainWorld(`configuration`, {
-    get: () => invoke(`getConfig`),
-    set: (newObj) => invoke(`setConfig`, newObj),
+    get: () => new Promise(async res => {
+        invoke(`getConfig`).then(data => {
+            configHooks.forEach(cb => cb(data));
+            res(data);
+        })
+    }),
+    set: (newObj) => new Promise(async res => {
+        invoke(`setConfig`, newObj).then(data => {
+            configHooks.forEach(cb => cb(data));
+            res(data);
+        })
+    }),
+    hook: (cb) => configHooks.push(cb)
 });
 
 contextBridge.exposeInMainWorld(`notifications`, {

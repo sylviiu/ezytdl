@@ -5,8 +5,6 @@ document.getElementById(`settingsBox`).querySelector(`#options`).childNodes.forE
 const settingsBox = document.getElementById(`settingsBox`).cloneNode(true);
 document.getElementById(`settingsBox`).parentNode.removeChild(document.getElementById(`settingsBox`));
 
-const configRequest = new XMLHttpRequest();
-
 const addFilenameFunctionality = () => {
     const fileNameInput = document.getElementById(`outputFilename`).querySelector(`#string`);
     document.getElementById(`fileNameOptions`).querySelectorAll(`.btn`).forEach((button) => button.onclick = () => {

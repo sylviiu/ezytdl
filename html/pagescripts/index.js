@@ -57,25 +57,41 @@ const runSearch = async (url, initialMsg, func) => {
 
         window.scrollTo(0, 0);
 
-        anime({
-            targets: urlBox,
-            height: searchBoxHeights().reverse(),
-            duration: duration || 600,
-            easing: `easeOutCirc`,
-            complete: () => {
-                if(document.getElementById(`listbox`)) listboxParent.removeChild(document.getElementById(`listbox`));
+        if(config.reduceAnimations) {
+            urlBox.style.height = searchBoxHeights()[0];
 
-                urlBox.style.height = `calc(100vh - 80px)`
-                
-                if(checkParse) {
-                    if(parse) {
-                        parseInfo();
-                    } else {
-                        parse = true;
+            if(removeListbox && document.getElementById(`listbox`)) {
+                anime({
+                    targets: document.getElementById(`listbox`),
+                    opacity: [1, 0],
+                    duration: duration || 600,
+                    easing: `easeOutCirc`,
+                    complete: () => {
+                        if(document.getElementById(`listbox`)) listboxParent.removeChild(document.getElementById(`listbox`));
+                    }
+                })
+            }
+        } else {
+            anime({
+                targets: urlBox,
+                height: searchBoxHeights().reverse(),
+                duration: duration || 600,
+                easing: `easeOutCirc`,
+                complete: () => {
+                    if(document.getElementById(`listbox`)) listboxParent.removeChild(document.getElementById(`listbox`));
+    
+                    urlBox.style.height = `calc(100vh - 80px)`
+                    
+                    if(checkParse) {
+                        if(parse) {
+                            parseInfo();
+                        } else {
+                            parse = true;
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
     let info = null;
@@ -221,36 +237,41 @@ const runSearch = async (url, initialMsg, func) => {
                         card.querySelector(`#formatDownload`).onclick = () => {
                             input.disabled = false;
                             button.disabled = false;
+                            
+                            if(config.disableAnimations) {
+                                input.value = entry.webpage_url || entry.url;
+                                runSearch(input.value, `Fetching info...`, `getInfo`)
+                            } else {
+                                const newCard = popout(card);
+    
+                                const bounding = card.getBoundingClientRect();
 
-                            const newCard = popout(card);
-
-                            const bounding = card.getBoundingClientRect();
-
-                            centerURLBox(null, null, 800);
-
-                            window.scrollTo(0, 0);
-
-                            anime({
-                                targets: [newCard.querySelector(`#formatCardBG`), newCard.querySelector(`#innerFormatCard`)],
-                                easing: `easeOutCirc`,
-                                borderRadius: `${Math.floor(bounding.height, bounding.width)/2}px`,
-                                duration: 500,
-                            })
-
-                            anime({
-                                targets: newCard,
-                                top: `90px`,
-                                easing: `easeOutCirc`,
-                                borderRadius: `${Math.floor(bounding.height, bounding.width)/2}px`,
-                                duration: 400,
-                                complete: () => {
-                                    console.log(`throwing node`)
-                                    throwNode(newCard, innerUrlBox, () => {
-                                        input.value = entry.webpage_url || entry.url;
-                                        runSearch(input.value, `Fetching info...`, `getInfo`)
-                                    }, true, true)
-                                }
-                            })
+                                centerURLBox(null, null, 800);
+    
+                                window.scrollTo(0, 0);
+                                
+                                anime({
+                                    targets: [newCard.querySelector(`#formatCardBG`), newCard.querySelector(`#innerFormatCard`)],
+                                    easing: `easeOutCirc`,
+                                    borderRadius: `${Math.floor(bounding.height, bounding.width)/2}px`,
+                                    duration: 500,
+                                })
+    
+                                anime({
+                                    targets: newCard,
+                                    top: `90px`,
+                                    easing: `easeOutCirc`,
+                                    borderRadius: `${Math.floor(bounding.height, bounding.width)/2}px`,
+                                    duration: 400,
+                                    complete: () => {
+                                        console.log(`throwing node`)
+                                        throwNode(newCard, innerUrlBox, () => {
+                                            input.value = entry.webpage_url || entry.url;
+                                            runSearch(input.value, `Fetching info...`, `getInfo`)
+                                        }, true, true)
+                                    }
+                                })
+                            }
                         }
                     } else {
                         let fadeIn = () => null;
@@ -571,6 +592,8 @@ const runSearch = async (url, initialMsg, func) => {
     mainQueue[func || `getInfo`](opt).then(data => {
         info = data;
 
+        console.log(`info received`)
+
         if(parse) {
             parseInfo();
         } else {
@@ -594,7 +617,14 @@ const runSearch = async (url, initialMsg, func) => {
             targets: background,
             opacity: [0.15, 0],
             duration: 500,
-            easing: `easeOutExpo`
+            easing: `easeOutExpo`,
+            complete: () => {
+                if(parse) {
+                    parseInfo();
+                } else {
+                    parse = true;
+                }
+            }
         })
     } else if(parse) {
         parseInfo();

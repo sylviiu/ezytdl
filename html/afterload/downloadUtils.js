@@ -79,167 +79,174 @@ function createDownloadManager(card, id) {
 }
 
 const startDownload = (originalCard, opt) => {
-    const downloadsListBtn = document.getElementById(`downloadsList`);
-    const targetPosition = downloadsListBtn.getBoundingClientRect();
-
-    let formatDownloadButtonPosition
-
-    if(originalCard.querySelector(`#formatDownload`)) {
-        formatDownloadButtonPosition = originalCard.querySelector(`#formatDownload`).getBoundingClientRect();
-    } else {
-        formatDownloadButtonPosition = originalCard.getBoundingClientRect();
-
-        //formatDownloadButtonPosition.x += formatDownloadButtonPosition.width/2;
-        //formatDownloadButtonPosition.y += formatDownloadButtonPosition.height/2;
-
-        //formatDownloadButtonPosition.x += downloadsListBtn.style.width/2;
-        //formatDownloadButtonPosition.y -= downloadsListBtn.style.height/2;
-    }
-
-    const card = originalCard.cloneNode(true);
-
-    card.opacity = 1;
-    card.style.opacity = 1;
-
-    card.id += `-clone`;
-
-    const currentPosition = originalCard.getBoundingClientRect();
-    
-    //card.parentNode.removeChild(card);
-    document.body.appendChild(card);
-
-    originalCard.style.opacity = 0;
-
-    const originalCardValues = removeElements(originalCard, {padding: true})
-    
-    anime({
-        targets: originalCard,
-        minHeight: [originalCardValues.height, 0],
-        maxHeight: [originalCardValues.height, 0],
-        height: [originalCardValues.height, 0],
-        minWidth: [originalCardValues.width, 0],
-        maxWidth: [originalCardValues.width, 0],
-        width: [originalCardValues.width, 0],
-        marginBottom: 0,
-        marginTop: 0,
-        marginLeft: 0,
-        marginRight: 0,
-        margin: 0,
-        duration: 1400,
-        easing: `easeInOutExpo`,
-        complete: () => {
-            if(originalCard.parentNode) originalCard.parentNode.removeChild(originalCard);
-        }
-    });
-
-    card.style.position = `fixed`;
-
-    const newCardValues = removeElements(card, {padding: false, margin: true});
-
-    card.style.left = `${currentPosition.x}px`;
-    card.style.top = `${currentPosition.y}px`;
-
-    //originalCard.opacity = 0;
-    //document.body.appendChild(card);
-
-    anime({
-        targets: card.children,
-        opacity: 0,
-        duration: 500,
-        easing: `easeOutExpo`,
-    });
-
-    const widthHeightTransformObj = {
-        targets: card,
-        opacity: [1, 1],
-        background: `rgb(255,255,255)`,
-        borderRadius: targetPosition.width/2,
-        //left: `${formatDownloadButtonPosition.x}px`,
-        //top: `${formatDownloadButtonPosition.y}px`,
-        duration: 800,
-        easing: `easeInExpo`,
-    };
-
-    widthHeightTransformObj.minWidth = [originalCardValues.width, downloadsListBtn.style.width];
-    //widthHeightTransformObj.minWidth = [downloadsListBtn.offsetWidth, downloadsListBtn.style.width];
-    widthHeightTransformObj.maxWidth = [originalCardValues.width, downloadsListBtn.style.width];
-
-    widthHeightTransformObj.minHeight = [originalCardValues.height, downloadsListBtn.style.height];
-    //widthHeightTransformObj.minHeight = [downloadsListBtn.offsetHeight, downloadsListBtn.style.height];
-    widthHeightTransformObj.maxHeight = [originalCardValues.height, downloadsListBtn.style.height];
-
-    console.log(widthHeightTransformObj)
-    anime(widthHeightTransformObj)
-    
-    anime({
-        targets: card,
-        left: `${targetPosition.x}px`,
-        //top: `${targetPosition.y}px`,
-        duration: 850,
-        easing: `easeInQuad`,
-    });
-
-    setTimeout(() => mainQueue.download(opt), 780);
-    
-    setTimeout(() => {
-        let currentX = card.getBoundingClientRect().x;
-
-        setTimeout(() => {
-            currentX = card.getBoundingClientRect().x;
-        }, 450);
-
-        const targetPosition = downloadsListBtn.getBoundingClientRect();
-
-        console.log(currentPosition, targetPosition);
-
+    if(config.reduceAnimations) {
+        mainQueue.download(opt);
         anime({
-            targets: card,
-            //left: `${targetPosition.x}px`,
-            top: `${targetPosition.y}px`,
+            targets: originalCard.children || originalCard,
+            opacity: 0,
             duration: 500,
-            easing: `easeInExpo`,
+            easing: `easeOutExpo`,
             complete: () => {
-                /*if(downloadsWs) {
-                    console.log(`found downloads websocket!`)
+                if(originalCard.parentNode) originalCard.parentNode.removeChild(originalCard);
+            }
+        })
+    } else if(config.disableAnimations) {
+        mainQueue.download(opt);
+        if(originalCard.parentNode) originalCard.parentNode.removeChild(originalCard);
+    } else {
+        const downloadsListBtn = document.getElementById(`downloadsList`);
+        const targetPosition = downloadsListBtn.getBoundingClientRect();
+    
+        let formatDownloadButtonPosition
+    
+        if(originalCard.querySelector(`#formatDownload`)) {
+            formatDownloadButtonPosition = originalCard.querySelector(`#formatDownload`).getBoundingClientRect();
+        } else {
+            formatDownloadButtonPosition = originalCard.getBoundingClientRect();
+    
+            //formatDownloadButtonPosition.x += formatDownloadButtonPosition.width/2;
+            //formatDownloadButtonPosition.y += formatDownloadButtonPosition.height/2;
+    
+            //formatDownloadButtonPosition.x += downloadsListBtn.style.width/2;
+            //formatDownloadButtonPosition.y -= downloadsListBtn.style.height/2;
+        }
+    
+        const card = originalCard.cloneNode(true);
+    
+        card.opacity = 1;
+        card.style.opacity = 1;
+    
+        card.id += `-clone`;
+    
+        const currentPosition = originalCard.getBoundingClientRect();
         
-                    downloadsWs.send(JSON.stringify({
-                        action: `download`,
-                        data: opt,
-                    }));
-                } else console.log(`no downloads websocket found!`)*/
-
-                card.opacity = 0;
-                if(card.parentNode) card.parentNode.removeChild(card);
-
-                const copy = downloadsListBtn.cloneNode(true);
-                
-                downloadsListBtn.style.opacity = 0;
-
-                copy.onclick = () => downloadsListBtn.click();
-
-                const newTarget = downloadsListBtn.getBoundingClientRect()
-
-                newTarget.x -= 6
-
-                copy.style.position = `fixed`;
-                copy.style.left = `${newTarget.x}px`;
-                copy.style.top = `${newTarget.y}px`;
-
-                document.body.appendChild(copy);
-
-                anime({
-                    targets: copy,
-                    filter: [`invert(1)`, `invert(0)`],
-                    top: [((newTarget.y - formatDownloadButtonPosition.y)/15) + newTarget.y, newTarget.y],
-                    left: [((newTarget.x - currentX)/15) + newTarget.x, newTarget.x],
-                    duration: 400,
-                    easing: `easeOutExpo`,
-                    complete: () => {
-                        document.body.removeChild(copy);
-                        downloadsListBtn.style.opacity = 1;
-                    }
-                })
+        //card.parentNode.removeChild(card);
+        document.body.appendChild(card);
+    
+        originalCard.style.opacity = 0;
+    
+        const originalCardValues = removeElements(originalCard, {padding: true})
+        
+        anime({
+            targets: originalCard,
+            minHeight: [originalCardValues.height, 0],
+            maxHeight: [originalCardValues.height, 0],
+            height: [originalCardValues.height, 0],
+            minWidth: [originalCardValues.width, 0],
+            maxWidth: [originalCardValues.width, 0],
+            width: [originalCardValues.width, 0],
+            marginBottom: 0,
+            marginTop: 0,
+            marginLeft: 0,
+            marginRight: 0,
+            margin: 0,
+            duration: 1400,
+            easing: `easeInOutExpo`,
+            complete: () => {
+                if(originalCard.parentNode) originalCard.parentNode.removeChild(originalCard);
             }
         });
-    }, 350);
+    
+        card.style.position = `fixed`;
+    
+        const newCardValues = removeElements(card, {padding: false, margin: true});
+    
+        card.style.left = `${currentPosition.x}px`;
+        card.style.top = `${currentPosition.y}px`;
+    
+        //originalCard.opacity = 0;
+        //document.body.appendChild(card);
+    
+        anime({
+            targets: card.children,
+            opacity: 0,
+            duration: 500,
+            easing: `easeOutExpo`,
+        });
+    
+        const widthHeightTransformObj = {
+            targets: card,
+            opacity: [1, 1],
+            background: `rgb(255,255,255)`,
+            borderRadius: targetPosition.width/2,
+            //left: `${formatDownloadButtonPosition.x}px`,
+            //top: `${formatDownloadButtonPosition.y}px`,
+            duration: 800,
+            easing: `easeInExpo`,
+        };
+    
+        widthHeightTransformObj.minWidth = [originalCardValues.width, downloadsListBtn.style.width];
+        //widthHeightTransformObj.minWidth = [downloadsListBtn.offsetWidth, downloadsListBtn.style.width];
+        widthHeightTransformObj.maxWidth = [originalCardValues.width, downloadsListBtn.style.width];
+    
+        widthHeightTransformObj.minHeight = [originalCardValues.height, downloadsListBtn.style.height];
+        //widthHeightTransformObj.minHeight = [downloadsListBtn.offsetHeight, downloadsListBtn.style.height];
+        widthHeightTransformObj.maxHeight = [originalCardValues.height, downloadsListBtn.style.height];
+    
+        console.log(widthHeightTransformObj)
+        anime(widthHeightTransformObj)
+        
+        anime({
+            targets: card,
+            left: `${targetPosition.x}px`,
+            //top: `${targetPosition.y}px`,
+            duration: 850,
+            easing: `easeInQuad`,
+        });
+    
+        setTimeout(() => mainQueue.download(opt), 780);
+        
+        setTimeout(() => {
+            let currentX = card.getBoundingClientRect().x;
+    
+            setTimeout(() => {
+                currentX = card.getBoundingClientRect().x;
+            }, 450);
+    
+            const targetPosition = downloadsListBtn.getBoundingClientRect();
+    
+            console.log(currentPosition, targetPosition);
+    
+            anime({
+                targets: card,
+                //left: `${targetPosition.x}px`,
+                top: `${targetPosition.y}px`,
+                duration: 500,
+                easing: `easeInExpo`,
+                complete: () => {
+                    card.opacity = 0;
+                    if(card.parentNode) card.parentNode.removeChild(card);
+    
+                    const copy = downloadsListBtn.cloneNode(true);
+                    
+                    downloadsListBtn.style.opacity = 0;
+    
+                    copy.onclick = () => downloadsListBtn.click();
+    
+                    const newTarget = downloadsListBtn.getBoundingClientRect()
+    
+                    newTarget.x -= 6
+    
+                    copy.style.position = `fixed`;
+                    copy.style.left = `${newTarget.x}px`;
+                    copy.style.top = `${newTarget.y}px`;
+    
+                    document.body.appendChild(copy);
+    
+                    anime({
+                        targets: copy,
+                        filter: [`invert(1)`, `invert(0)`],
+                        top: [((newTarget.y - formatDownloadButtonPosition.y)/15) + newTarget.y, newTarget.y],
+                        left: [((newTarget.x - currentX)/15) + newTarget.x, newTarget.x],
+                        duration: 400,
+                        easing: `easeOutExpo`,
+                        complete: () => {
+                            document.body.removeChild(copy);
+                            downloadsListBtn.style.opacity = 1;
+                        }
+                    })
+                }
+            });
+        }, 350);
+    }
 }
