@@ -25,65 +25,87 @@ if(!locked) {
     let startedLoading = false;
     let doneLoading = false;
 
-    setTimeout(() => {
-        if(!doneLoading) {
-            console.log(`Loading took too long!`);
-            global.quitting = true;
-            process.exit(1);
-        }
-    }, 30000)
-
-    app.on(`second-instance`, () => {
-        console.log(`second instance!`)
-        require(`./core/bringToFront`)()
-    });
+    const start = () => {
+        setTimeout(() => {
+            if(!doneLoading) {
+                console.log(`Loading took too long!`);
+                global.quitting = true;
+                process.exit(1);
+            }
+        }, 30000)
     
-    require(`./core/depcheck`)().then(() => {
-        console.log(`Took [${Date.now() - startTime}ms] to finish depcheck`);
-
-        const start = async () => {
-            console.log(`Took [${Date.now() - startTime}ms] to finish app.whenReady`);
-
-            const createWindow = require(`./core/window`)
+        app.on(`second-instance`, () => {
+            console.log(`second instance!`)
+            require(`./core/bringToFront`)()
+        });
         
-            const window = createWindow();
+        require(`./core/depcheck`)().then(() => {
+            console.log(`Took [${Date.now() - startTime}ms] to finish depcheck`);
+    
+            const start = async () => {
+                console.log(`Took [${Date.now() - startTime}ms] to finish app.whenReady`);
+    
+                const createWindow = require(`./core/window`)
             
-            ipcMain.handle(`loading`, () => new Promise(async res => {
-                console.log(`[${Date.now() - startTime}ms] Loading requested!`);
-
-                if(startedLoading) return;
-                startedLoading = true;
-
-                const init = await require(`./init`)();
-
-                console.log(`Took [${Date.now() - startTime}ms] to finish init!`);
-        
-                let redirect = `index.html`
-                if(!init.ytdlpDownloaded && !global.testrun) redirect = `updating.html`;
-        
-                doneLoading = redirect;
-                res(redirect);
-                loadingPromise = null;
-                console.log(`[${Date.now() - startTime}ms] to finish loading app!`);
-
-                if(global.testrun) {
-                    console.log(`[${Date.now() - startTime}ms] Waiting a few seconds before starting testrun...`);
+                const window = createWindow();
+                
+                ipcMain.handle(`loading`, () => new Promise(async res => {
+                    console.log(`[${Date.now() - startTime}ms] Loading requested!`);
     
-                    setTimeout(() => {
-                        console.log(`[${Date.now() - startTime}ms] Starting testrun...`)
-                        require(`./devscripts/testrun`)(startTime);
-                    }, 2500)
-                } else {
-                    if(!app.isPackaged) window.webContents.openDevTools();
-                    console.log(`complete`)
-                }
-            }));
+                    if(startedLoading) return;
+                    startedLoading = true;
+    
+                    const init = await require(`./init`)();
+    
+                    console.log(`Took [${Date.now() - startTime}ms] to finish init!`);
+            
+                    let redirect = `index.html`
+                    if(!init.ytdlpDownloaded && !global.testrun) redirect = `updating.html`;
+            
+                    doneLoading = redirect;
+                    res(redirect);
+                    loadingPromise = null;
+                    console.log(`[${Date.now() - startTime}ms] to finish loading app!`);
+    
+                    if(global.testrun) {
+                        console.log(`[${Date.now() - startTime}ms] Waiting a few seconds before starting testrun...`);
         
-            window.loadFile(`./html/loading.html`);
+                        setTimeout(() => {
+                            console.log(`[${Date.now() - startTime}ms] Starting testrun...`)
+                            require(`./devscripts/testrun`)(startTime);
+                        }, 2500)
+                    } else {
+                        if(!app.isPackaged) window.webContents.openDevTools();
+                        console.log(`complete`)
+                    }
+                }));
+            
+                window.loadFile(`./html/loading.html`);
+            };
+    
+            if(!app.isReady()) {
+                app.whenReady().then(start)
+            } else start();
+        });
+    }
+
+    const runBuildScripts = () => new Promise(async res => {
+        const fs = require('fs')
+
+        const buildScripts = fs.readdirSync(`./buildscripts`).filter(f => f.endsWith(`.js`));
+
+        console.log(`Running build ${buildScripts.length} scripts...`);
+
+        for(const script of buildScripts) {
+            console.log(`Running build script ${script}...`);
+            await require(`./buildscripts/${script}`)();
+            console.log(`Completed build script ${script}!`);
         };
 
-        if(!app.isReady()) {
-            app.whenReady().then(start)
-        } else start();
-    });
+        res();
+    })
+    
+    if(!app.isPackaged) {
+        runBuildScripts().then(start);
+    } else start()
 };

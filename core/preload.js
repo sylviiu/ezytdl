@@ -110,26 +110,26 @@ contextBridge.exposeInMainWorld(`preload`, {
     oncomplete: (cb) => script.addEventListener(`load`, cb)
 });
 
-const util = [`popout.js`, `throwNode.js`, `progressBar.js`, `progressCircle.js`, `removeCardAnim.js`, `removeElements.js`];
-const topjs = [`feelLikeNativeApp.js`, `vars.js`];
-const afterload = [`downloadManager.js`];
+const assets = require(`./build-assets.json`);
+const pageScripts = assets.pagescripts
+delete assets.pagescripts
 
 addEventListener(`DOMContentLoaded`, async () => {
-    console.log(`-- ADDING UTIL`)
+    console.log(assets)
 
-    for(const script of util) await addScript(`./util/${script}`);
-
-    console.log(`-- ADDING TOPJS`)
-
-    for(const script of topjs) await addScript(`./topjs/${script}`);
+    for(key of Object.keys(assets)) await new Promise(async res => {
+        console.log(`-- ADDING ${key.toUpperCase()}`)
+        const start = Date.now();
+        await Promise.all(assets[key].map(path => addScript(`./${key}/${path}`)));
+        res();
+        console.log(`Took ${Date.now() - start}ms to add ${key.toUpperCase()}`)
+    })
 
     console.log(`-- ADDING PAGESCRIPT`)
 
     await addScript(`./pagescripts/${name.includes(`-`) ? name.split(`-`)[0] : name}.js`);
 
-    console.log(`-- ADDING AFTERLOAD`)
-
-    for(const script of afterload) await addScript(`./afterload/${script}`);
+    console.log(`Scripts added!`);
 
     const enableUpdateButton = () => {
         document.getElementById(`updateAvailable`).classList.add(`d-flex`);

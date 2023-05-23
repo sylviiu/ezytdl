@@ -53,11 +53,11 @@ module.exports = (notDefault, overrideArgs) => {
         backgroundColor: `rgb(10,10,10)`,
         darkTheme: true,
         webPreferences: {
-            nodeIntegration: false,
+            nodeIntegration: true,
             nodeIntegrationInWorker: false,
             contextIsolation: true,
             devTools: true,
-            sandbox: true,
+            sandbox: false,
             scrollBounce: true,
             backgroundThrottling: false,
             preload: path.join(__dirname, `preload.js`)

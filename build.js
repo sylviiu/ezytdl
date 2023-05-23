@@ -215,6 +215,16 @@ which(`npm`).then(async npm => {
         fs.writeFileSync(`./build.json`, JSON.stringify(config, null, 4));
         
         console.log(`Wrote config!`);
+
+        const buildScripts = fs.readdirSync(`./buildscripts`).filter(f => f.endsWith(`.js`));
+
+        console.log(`Running build ${buildScripts.length} scripts...`);
+
+        for(const script of buildScripts) {
+            console.log(`Running build script ${script}...`);
+            await require(`./buildscripts/${script}`)();
+            console.log(`Completed build script ${script}!`);
+        }
         
         console.log(`Spawning npm at ${npm}`);
         
