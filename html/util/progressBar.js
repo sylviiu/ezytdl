@@ -1,4 +1,6 @@
 const addProgressBar = (node, width, height) => {
+    let animeFunc = (rawAnimeFunc || anime)
+
     const dotSize = height || `10px`;
 
     const bar = document.createElement(`div`);
@@ -41,11 +43,11 @@ const addProgressBar = (node, width, height) => {
     bar.appendChild(fill);
         
     const startPendingAnimation = () => {
-        anime.remove(fill)
+        animeFunc.remove(fill)
         
         fill.style.width = dotSize;
 
-        anime({
+        animeFunc({
             targets: fill,
             loop: true,
             duration: 1500,
@@ -56,7 +58,7 @@ const addProgressBar = (node, width, height) => {
         })
     }
 
-    anime({
+    animeFunc({
         targets: bar,
         opacity: [0, 1],
         maxHeight: [0, dotSize],
@@ -81,9 +83,9 @@ const addProgressBar = (node, width, height) => {
             if(!bar.parentElement) node.appendChild(bar);
 
             if(typeof progress == `number` && progress >= 0 && progress <= 100) {
-                anime.remove(fill);
+                animeFunc.remove(fill);
                 fill.style.opacity = 1;
-                anime({
+                animeFunc({
                     targets: fill,
                     left: `0px`,
                     width: [lastProgress, `${progress}%`],
@@ -107,9 +109,9 @@ const addProgressBar = (node, width, height) => {
 
             allowProgressChanges = false;
 
-            anime.remove(fill);
+            animeFunc.remove(fill);
             
-            anime({
+            animeFunc({
                 targets: fill,
                 left: `0px`,
                 width: [lastProgress, `100%`],
@@ -117,7 +119,7 @@ const addProgressBar = (node, width, height) => {
                 easing: `easeOutCirc`,
             });
 
-            anime({
+            animeFunc({
                 targets: bar,
                 opacity: [1, 0],
                 maxHeight: [dotSize, 0],

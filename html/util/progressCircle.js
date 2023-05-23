@@ -1,6 +1,8 @@
 const svgns = `http://www.w3.org/2000/svg`;
 
 const addProgressCircle = (node, width, showBackground) => {
+    let animeFunc = (rawAnimeFunc || anime)
+
     const nodeSize = Math.floor(node.getBoundingClientRect().width, node.getBoundingClientRect().height);
 
     const dotSizeNum = parseInt(width || (nodeSize/7));
@@ -53,11 +55,11 @@ const addProgressCircle = (node, width, showBackground) => {
     svg.appendChild(circleFG);
         
     const startPendingAnimation = (noClearAnim) => {
-        if(!noClearAnim) anime.remove(circle)
-        if(!noClearAnim) anime.remove(circleFG)
-        if(!noClearAnim) anime.remove(svg)
+        if(!noClearAnim) animeFunc.remove(circle)
+        if(!noClearAnim) animeFunc.remove(circleFG)
+        if(!noClearAnim) animeFunc.remove(svg)
 
-        anime({
+        animeFunc({
             targets: circleFG,
             loop: true,
             duration: 1500,
@@ -67,7 +69,7 @@ const addProgressCircle = (node, width, showBackground) => {
         })
     }
 
-    anime({
+    animeFunc({
         targets: [circle, circleFG],
         strokeWidth: [0, dotSize],
         opacity: [0, 1],
@@ -100,14 +102,14 @@ const addProgressCircle = (node, width, showBackground) => {
             console.log(`parsed new circle progress num`, progress)
 
             if(typeof progress == `number` && progress >= 0 && progress <= 1) {
-                anime.remove(circle)
-                anime.remove(circleFG)
-                anime.remove(svg)
+                animeFunc.remove(circle)
+                animeFunc.remove(circleFG)
+                animeFunc.remove(svg)
                 circleFG.style.opacity = 1;
                 circle.style.opacity = 1;
                 circleFG.style.strokeWidth = dotSize;
                 circle.style.strokeWidth = dotSize;
-                anime({
+                animeFunc({
                     targets: circleFG,
                     strokeDashoffset: [fullCircle * lastProgress, fullCircle * progress],
                     duration: 350,
@@ -124,11 +126,11 @@ const addProgressCircle = (node, width, showBackground) => {
 
             allowProgressChanges = false;
 
-            anime.remove(circle)
-            anime.remove(circleFG)
-            anime.remove(svg)
+            animeFunc.remove(circle)
+            animeFunc.remove(circleFG)
+            animeFunc.remove(svg)
             
-            anime({
+            animeFunc({
                 targets: [circle, circleFG],
                 strokeWidth: [dotSize, 0],
                 duration: 350,
