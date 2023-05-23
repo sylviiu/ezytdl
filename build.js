@@ -31,7 +31,10 @@ const config = {
     "mac": {
         "icon": "res/packageIcons/icon.icns",
         "category": "public.app-category.utilities",
-        "target": [ "dmg" ]
+        "target": [
+            "dmg",
+            "zip",
+        ]
     },
     "asar": true,
     "asarUnpack": [
