@@ -23,6 +23,8 @@ listboxTemplate.querySelector(`#formatCard`).parentElement.removeChild(listboxTe
 
 listboxParent.removeChild(document.getElementById(`listbox`));
 
+let changesMadeToInput = true;
+
 let currentInfo = null;
 
 mainQueue.formatStatusUpdate((content) => document.getElementById(`statusText`).innerHTML = content);
@@ -38,6 +40,8 @@ mainQueue.formatStatusPercent(val => {
 
 let selectedSearch = null;
 
+let resultsVisible = false;
+
 const runSearch = async (url, initialMsg, func) => {
     document.getElementById(`statusText`).innerHTML = initialMsg || `Fetching info...`;
     if(document.getElementById(`statusText`).classList.contains(`d-none`)) document.getElementById(`statusText`).classList.remove(`d-none`);
@@ -47,6 +51,8 @@ const runSearch = async (url, initialMsg, func) => {
     console.log(`${initialMsg || `running search for`}: ${url}`)
 
     const centerURLBox = (removeListbox, checkParse, duration) => {
+        resultsVisible = false;
+
         document.body.style.overflowY = `hidden`;
 
         window.scrollTo(0, 0);
@@ -75,6 +81,9 @@ const runSearch = async (url, initialMsg, func) => {
     let info = null;
 
     const parseInfo = async () => {
+        resultsVisible = true;
+        changesMadeToInput = false;
+
         const listbox = listboxTemplate.cloneNode(true);
         
         if(listbox.classList.contains(`d-none`)) listbox.classList.remove(`d-none`);
@@ -633,7 +642,7 @@ const deselectAllSearchBtns = () => innerSearchSelectionBox.childNodes.forEach(c
     }
 })
 
-let selectonBoxShowing = true;
+let selectonBoxShowing = false;
 
 const selectionBoxHeight = searchSelectionBox.getBoundingClientRect().height;
 const selectonBoxMargin = searchSelectionBox.style.marginTop;
@@ -677,10 +686,11 @@ const selectionBox = {
     }
 }
 
-selectionBox.hide(true);
+//selectionBox.hide(true);
 deselectAllSearchBtns();
 
 const setCurrentSearch = (btn) => {
+    changesMadeToInput = true;
     console.log(`current search: ${selectedSearch}, new id: ${btn.id}`)
     if(btn.id == selectedSearch) return;
     console.log(`changing`)
@@ -719,7 +729,7 @@ const processURL = () => {
 button.onclick = () => processURL();
 
 const refreshSelectionBox = () => {
-    if(input.value.match(genericUrlRegex)) {
+    if(input.value.match(genericUrlRegex) && input.value.length > 0) {
         console.log(`matches url`)
         selectionBox.hide();
     } else {
@@ -728,8 +738,12 @@ const refreshSelectionBox = () => {
     }
 }
 
-input.addEventListener(`input`, refreshSelectionBox);
-input.addEventListener(`click`, refreshSelectionBox)
+input.addEventListener(`input`, () => {
+    changesMadeToInput = true;
+    refreshSelectionBox();
+});
+input.addEventListener(`click`, refreshSelectionBox);
+input.addEventListener(`blur`, () => setTimeout(() => !changesMadeToInput ? selectionBox.hide() : null, 100));
 
 input.addEventListener(`keyup`, (e) => {
     if(e.key == `Enter` || e.keyCode == 13) processURL();
