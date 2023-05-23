@@ -111,23 +111,21 @@ contextBridge.exposeInMainWorld(`preload`, {
 });
 
 const assets = require(`./build-assets.json`);
-const pageScripts = assets.pagescripts
-delete assets.pagescripts
 
 addEventListener(`DOMContentLoaded`, async () => {
     console.log(assets)
 
-    for(key of Object.keys(assets)) await new Promise(async res => {
-        console.log(`-- ADDING ${key.toUpperCase()}`)
-        const start = Date.now();
-        await Promise.all(assets[key].map(path => addScript(`./${key}/${path}`)));
-        res();
-        console.log(`Took ${Date.now() - start}ms to add ${key.toUpperCase()}`)
-    })
+    console.log(`-- ADDING UTIL`);
+    await Promise.all(assets.util.map(path => addScript(`./util/${path}`)));
+
+    console.log(`-- ADDING TOPJS`);
+    await Promise.all(assets.topjs.map(path => addScript(`./topjs/${path}`)));
 
     console.log(`-- ADDING PAGESCRIPT`)
-
     await addScript(`./pagescripts/${name.includes(`-`) ? name.split(`-`)[0] : name}.js`);
+
+    console.log(`-- ADDING AFTERLOAD`)
+    await Promise.all(assets.afterload.map(path => addScript(`./afterload/${path}`)));
 
     console.log(`Scripts added!`);
 
