@@ -62,7 +62,15 @@ const sendUpdates = (proc, initialMsg) => {
 
     let downloadingList = false;
 
+    let string = ``;
+
+    proc.stdout.on(`data`, d => {
+        string += d.toString().trim()
+    })
+
     proc.stderr.on(`data`, d => {
+        string += d.toString().trim()
+
         if(!firstUpdate) {
             firstUpdate = true;
             updateStatus(initialMsg || `Getting media info...`)
@@ -73,7 +81,7 @@ const sendUpdates = (proc, initialMsg) => {
         if(str.trim().startsWith(`ERROR: `)) {
             sendNotification({
                 type: `error`,
-                headingText: `yt-dlp failed to complete ${url}`,
+                headingText: `yt-dlp failed to complete [sendUpdates]`,
                 bodyText: `${string.trim().split(`ERROR: `)[1]}`
             })
         }
@@ -135,14 +143,22 @@ module.exports = {
 
         return d
     },
-    search: ({query, count}) => new Promise(async res => {
+    search: ({query, count, from}) => new Promise(async res => {
         const path = getPath();
 
         if(!count) count = 10;
 
         console.log(`going to path ${path}; query "${query}"; count: ${count}`)
 
-        let args = [`ytsearch${count}:${query}`, `--dump-single-json`, `--quiet`, `--verbose`, `--flat-playlist`];
+        let args = [`--dump-single-json`, `--quiet`, `--verbose`, `--flat-playlist`, `--playlist-end`, `${count}`];
+
+        if(from == `soundcloud`) {
+            args.unshift(`scsearch${count}:${query}`)
+        } else {
+            args.unshift(`ytsearch${count}:${query}`)
+        }
+
+        console.log(`search args: "${args.map(s => s.includes(` `) ? `'${s}'` : s).join(` `)}"`)
 
         const proc = child_process.execFile(path, args);
 
@@ -163,6 +179,7 @@ module.exports = {
             console.log(`search closed with code ${code}`)
             console.log(data)
             const d = JSON.parse(data);
+            //if(d.entries.filter(o => !o.title).length != d.entries.length) d.entries = d.entries.filter(o => o.title);
             res(module.exports.parseInfo(d))
             //console.log(d)
         })
