@@ -1,7 +1,12 @@
 name: windows build
 run-name: ${{ github.actor }} - ${{ github.event_name }} - ${{ github.sha }}
 
-on: [push, pull_request, workflow_dispatch]
+on: 
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   win:
