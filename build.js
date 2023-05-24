@@ -70,6 +70,7 @@ const config = {
         "package.json",
         "index.js",
         "init.js",
+        "build-init.json",
         "init/*.js",
         "server.js",
         "getConfig.js",
