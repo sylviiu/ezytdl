@@ -51,7 +51,8 @@ contextBridge.exposeInMainWorld(`windowControls`, {
 
 contextBridge.exposeInMainWorld(`system`, {
     loading: () => invoke(`loading`),
-    addScript
+    addScript,
+    colors: () => invoke(`systemColors`)
 })
 
 contextBridge.exposeInMainWorld(`dialog`, {

@@ -4,3 +4,9 @@ if(typeof config == `undefined`) {
 
 configuration.get().then(newConf => { config = newConf });
 configuration.hook(newConf => { config = newConf });
+
+if(typeof systemColors == `undefined`) {
+    let systemColors = {};
+}
+
+system.colors().then(newColors => { systemColors = newColors });

@@ -23,6 +23,61 @@ listboxTemplate.querySelector(`#formatCard`).parentElement.removeChild(listboxTe
 
 listboxParent.removeChild(document.getElementById(`listbox`));
 
+const waves = generateWaves();
+
+waves.style.opacity = 0;
+
+document.body.insertBefore(waves, document.body.firstChild);
+
+const wavesHeight = waves.getBoundingClientRect().height;
+
+console.log(`wavesHeight`, wavesHeight)
+
+waves.style.bottom = wavesHeight * -1;
+
+const wavesAnims = {
+    fadeIn: () => {
+        anime.remove(waves)
+
+        anime({
+            targets: waves,
+            opacity: 1,
+            bottom: [wavesHeight/5 * -1, 0],
+            duration: 1000,
+            easing: `easeOutCirc`
+        })
+
+        anime.remove(document.body)
+
+        anime({
+            targets: document.body,
+            backgroundColor: `rgb(${systemColors.r/10}, ${systemColors.g/10}, ${systemColors.b/10})`,
+            duration: 1000,
+            easing: `easeInCirc`
+        })
+    },
+    fadeOut: () => {
+        anime.remove(waves)
+
+        anime({
+            targets: waves,
+            opacity: 0,
+            bottom: wavesHeight/5 * -1,
+            duration: 1000,
+            easing: `easeOutCirc`
+        })
+
+        anime.remove(document.body)
+
+        anime({
+            targets: document.body,
+            backgroundColor: `rgb(10,10,10)`,
+            duration: 1000,
+            easing: `easeOutCirc`
+        })
+    }
+}
+
 let changesMadeToInput = true;
 
 let currentInfo = null;
@@ -56,6 +111,8 @@ const runSearch = async (url, initialMsg, func) => {
         document.body.style.overflowY = `hidden`;
 
         window.scrollTo(0, 0);
+
+        wavesAnims.fadeIn();
 
         if(config.reduceAnimations) {
             urlBox.style.height = searchBoxHeights()[0];
@@ -556,6 +613,8 @@ const runSearch = async (url, initialMsg, func) => {
                 }
             }
 
+            wavesAnims.fadeOut();
+
             anime({
                 targets: urlBox,
                 height: searchBoxHeights(),
@@ -648,13 +707,11 @@ const setSearchBtn = (btn, enabled, noAnim) => {
             easing: `easeOutExpo`
         })
     } else {
-        btn.style.backgroundColor = `rgb(35,35,35,0.85)`;
+        btn.style.backgroundColor = `rgb(255,255,255,0.05)`;
         btn.style.color = `rgb(255,255,255)`;
         anime({
             targets: btn,
-            backgroundColor: `rgb(35,35,35,0.85)`,
             scale: 1,
-            color: `rgb(255,255,255)`,
             duration: duration,
             easing: `easeOutExpo`
         })
@@ -782,5 +839,7 @@ input.addEventListener(`keyup`, (e) => {
 resultsCountInput.addEventListener(`keyup`, (e) => {
     if(e.key == `Enter` || e.keyCode == 13) processURL();
 });
+
+setTimeout(() => wavesAnims.fadeIn(), 50)
 
 changelog.check();
