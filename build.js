@@ -33,7 +33,6 @@ const config = {
         "category": "public.app-category.utilities",
         "target": [
             "dmg",
-            "zip",
         ]
     },
     "asar": true,
