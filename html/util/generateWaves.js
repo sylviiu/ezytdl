@@ -29,7 +29,7 @@ const generateWaves = (color) => {
     parentDiv.classList.add(`justify-content-center`)
     parentDiv.classList.add(`align-items-end`)
     parentDiv.style.width = `100vw`;
-    parentDiv.style.height = `100%`;
+    //parentDiv.style.height = `100%`;
     parentDiv.style.position = `absolute`;
     parentDiv.style.bottom = `0`;
     parentDiv.style.left = `0`;

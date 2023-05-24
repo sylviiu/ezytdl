@@ -40,6 +40,10 @@ const on = (...args) => {
     return ipcRenderer.on(...args);
 }
 
+let systemColors = { r: 255, g: 255, b: 255 };
+
+invoke(`systemColors`).then(c => { systemColors = c; })
+
 on(`updateAvailable`, () => updateAvailable = true)
 
 contextBridge.exposeInMainWorld(`windowControls`, {
@@ -52,7 +56,7 @@ contextBridge.exposeInMainWorld(`windowControls`, {
 contextBridge.exposeInMainWorld(`system`, {
     loading: () => invoke(`loading`),
     addScript,
-    colors: () => invoke(`systemColors`)
+    colors: () => systemColors
 })
 
 contextBridge.exposeInMainWorld(`dialog`, {
