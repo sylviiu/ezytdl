@@ -1,0 +1,1 @@
+module.exports = () => require(`../checks/ytdlpIsDownloaded`)(true)

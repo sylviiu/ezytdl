@@ -15,7 +15,6 @@
   },
   "scripts": {
     "start": "electron .",
-    "s": "node build start --from-source",
     "electron-builder": "electron-builder",
     "store": "node build store",
     "test": "node build test",
