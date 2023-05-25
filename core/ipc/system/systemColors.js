@@ -4,6 +4,6 @@ module.exports = {
         const { systemPreferences } = require('electron');
         const hexToRGB = require(`../../../util/hexToRGB`);
     
-        return hexToRGB(systemPreferences.getAccentColor() || `b981fe`); // secondary was picked from image
+        return hexToRGB(typeof systemPreferences.getAccentColor == `function` ? systemPreferences.getAccentColor() : `b981fe`); // secondary was picked from image
     }
 }
