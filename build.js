@@ -99,51 +99,47 @@ const config = {
 const pkg = JSON.parse(fs.readFileSync(`./package.json`).toString());
 
 which(`npm`).then(async npm => {
-    if(process.argv.find(s => s == `test`)) {        
-        const spawnProc = (path, cwd) => {
-            const spawnPath = path == `npm` ? npm : path;
+    const spawnProc = (path, cwd, testrun) => {
+        const spawnPath = path == `npm` ? npm : path;
 
-            console.log(`Spawning ${spawnPath} at cwd ${cwd}`);
-    
-            const proc = child_process.spawn(spawnPath, path == `npm` ? [`start`, `--`, `--testrun`] : [`--testrun`], { cwd });
-    
-            let passed = false;
-    
-            const data = data => {
-                const str = data.toString().trim();
-                console.log(str);
-    
-                if(str.includes(`TESTRUN PASSED.`)) {
-                    console.log(`Passed testrun!`);
-                    passed = true;
-                }
+        console.log(`Spawning ${spawnPath} at cwd ${cwd}`);
+
+        const proc = child_process.spawn(spawnPath, path == `npm` ? [`run`, `s`, `--`, ...(testrun ? [`--testrun`] : [])] : [...(testrun ? [`--testrun`] : [])], { cwd });
+
+        let passed = false;
+
+        const data = data => {
+            const str = data.toString().trim();
+            console.log(str);
+
+            if(str.includes(`TESTRUN PASSED.`)) {
+                console.log(`Passed testrun!`);
+                passed = true;
             }
-    
-            proc.stdout.on(`data`, data);
-            proc.stderr.on(`data`, data);
-    
-            proc.on(`error`, (err) => {
-                console.log(`Testrun errored with ${err}`);
-                process.exit(1);
-            })
-    
-            proc.on(`close`, (code) => {
-                const exitWithCode = passed ? 0 : 1
-                console.log(`Testrun closed with code ${code}; exiting with code ${exitWithCode}`);
-                process.exit(exitWithCode);
-            });
         }
-    
+
+        proc.stdout.on(`data`, data);
+        proc.stderr.on(`data`, data);
+
+        proc.on(`error`, (err) => {
+            console.log(`Testrun errored with ${err}`);
+            process.exit(1);
+        })
+
+        proc.on(`close`, (code) => {
+            const exitWithCode = passed ? 0 : 1
+            console.log(`Testrun closed with code ${code}; exiting with code ${exitWithCode}`);
+            process.exit(exitWithCode);
+        });
+    }
+
+    const start = async (testrun) => {
         if(process.argv.find(s => s == `--from-source`)) {
             console.log(`Running from source...`)
-            spawnProc(`npm`, __dirname)
+            spawnProc(`npm`, __dirname, testrun)
         } else {
-            console.log(`packing...`)
-            child_process.execFileSync(await which(`node`), [`build`, `pack`], { stdio: "inherit" });
-            console.log(`packed!`);
-
             if(process.platform == `darwin`) {
-                spawnProc(require(`path`).join(__dirname, `dist`, `mac`, `ezytdl.app`, `Contents`, `MacOS`, `ezytdl`), require(`path`).join(__dirname, `dist`))
+                spawnProc(require(`path`).join(__dirname, `dist`, `mac`, `ezytdl.app`, `Contents`, `MacOS`, `ezytdl`), require(`path`).join(__dirname, `dist`), testrun)
             } else {
                 const folder = fs.readdirSync(`./dist`).find(s => s.endsWith(`-unpacked`) && fs.existsSync(`./dist/` + s + `/`));
             
@@ -164,11 +160,31 @@ which(`npm`).then(async npm => {
                         const cwd = require(`path`).join(__dirname, `dist`, folder)
                         const path = require(`path`).join(cwd, file);
             
-                        spawnProc(path, cwd)
+                        spawnProc(path, cwd, testrun)
                     }
                 }
             }
         }
+    };
+
+    const build = () => new Promise(async res => {
+        if(process.argv.find(s => s == `--from-source`)) {
+            console.log(`packing (not building)...`)
+            child_process.execFileSync(await which(`node`), [`build`, `nopack`], { stdio: "inherit" });
+            console.log(`packed!`);
+            res();
+        } else if(process.argv.find(s => s == `--testrun`)) {
+            console.log(`packing...`)
+            child_process.execFileSync(await which(`node`), [`build`, `pack`], { stdio: "inherit" });
+            console.log(`packed!`);
+            res();
+        }
+    })
+
+    if(process.argv.find(s => s == `start`)) {
+        build().then(() => start(false))
+    } else if(process.argv.find(s => s == `test`)) {
+        build().then(() => start(true))
     } else {
         console.log(`Building for ${process.platform}... (${process.env["CSC_LINK"] && process.env["CSC_KEY_PASSWORD"] ? "SIGNED" : "UNSIGNED"})`);
         
@@ -211,11 +227,7 @@ which(`npm`).then(async npm => {
                 "releaseType": "draft"
             };
         }
-        
-        fs.writeFileSync(`./build.json`, JSON.stringify(config, null, 4));
-        
-        console.log(`Wrote config!`);
-
+    
         const buildScripts = fs.readdirSync(`./buildscripts`).filter(f => f.endsWith(`.js`));
 
         console.log(`Running build ${buildScripts.length} scripts...`);
@@ -225,15 +237,24 @@ which(`npm`).then(async npm => {
             await require(`./buildscripts/${script}`)();
             console.log(`Completed build script ${script}!`);
         }
-        
-        console.log(`Spawning npm at ${npm}`);
-        
-        const proc = child_process.spawn(npm, [`run`, `electron-builder`, `--`, `-c`, `./build.json`, ...(process.argv.find(s => s == `pack`) ? [`--dir`] : []), ...(config.publish ? [`-p`, `always`] : [`-p`, `never`])], { stdio: "inherit" });
-        
-        proc.on(`close`, (code) => {
-            console.log(`Build closed with code ${code}`);
-        
-            if(fs.existsSync(`./build.json`)) fs.unlinkSync(`./build.json`);
-        })
+
+        if(!process.argv.find(s => s == `nopack`)) {
+            fs.writeFileSync(`./build.json`, JSON.stringify(config, null, 4));
+            
+            console.log(`Wrote config!`);
+            
+            console.log(`Spawning npm at ${npm}`);
+            
+            const proc = child_process.spawn(npm, [`run`, `electron-builder`, `--`, `-c`, `./build.json`, ...(process.argv.find(s => s == `pack`) ? [`--dir`] : []), ...(config.publish ? [`-p`, `always`] : [`-p`, `never`])], { stdio: "inherit" });
+            
+            proc.on(`close`, (code) => {
+                console.log(`Build closed with code ${code}`);
+            
+                if(fs.existsSync(`./build.json`)) fs.unlinkSync(`./build.json`);
+            })
+        } else {
+            console.log(`Not packing (nopack arg sent)`);
+            process.exit(0);
+        }
     }
 })

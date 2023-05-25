@@ -1,17 +1,13 @@
 document.querySelectorAll(`.btn`).forEach(btn => {
     btn.disabled = true;
     btn.style.opacity = 0.5;
-})
+});
 
-const bar = document.getElementById(`progressBar`);
-const fill = document.getElementById(`progressFill`);
+const progressBar = addProgressBar(document.getElementById(`div`), `315px`, `20px`);
 
 const heading = document.getElementById(`heading`);
 
 const homeButton = document.getElementById(`homeButton`);
-
-const dotSize = Number.parseInt(fill.style.width.replace(`px`, ``));
-const range = Number.parseInt(bar.style.width.replace(`px`, ``)) - dotSize;
 
 const percentageText = document.getElementById(`percentageText`);
 
@@ -27,16 +23,22 @@ update.event((m) => {
         if(m.message) {
             heading.innerHTML = m.message
         }
-        
-        const percent = `${Math.round(m.progress * 100)}%`
 
-        percentageText.innerHTML = m.version + ` / ` + percent;
+        percentageText.innerHTML = ``;
 
-        const setWidth = `${dotSize + (range * m.progress)}px`;
+        if(m.progress) {
+            progressBar.setProgress(m.progress * 100);
+        };
 
-        console.log(`Downloaded ${percent} -- bar width: ${setWidth}`)
+        if(m.progress && m.progress > 0) {
+            if(!percentageText.innerHTML) percentageText.innerHTML += `${Math.round(m.progress * 100)}%`;
+        };
 
-        fill.style.width = setWidth
+        if(m.version) {
+            if(!percentageText.innerHTML) {
+                percentageText.innerHTML += m.version;
+            } else percentageText.innerHTML += ` / ` + m.version;
+        }
     }
 });
 

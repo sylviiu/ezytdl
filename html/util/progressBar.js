@@ -1,5 +1,5 @@
 const addProgressBar = (node, width, height) => {
-    let animeFunc = (rawAnimeFunc || anime)
+    let animeFunc = (typeof rawAnimeFunc == `function` ? rawAnimeFunc : anime)
 
     const dotSize = height || `10px`;
 

@@ -15,7 +15,8 @@
     "which": "^3.0.1"
   },
   "scripts": {
-    "start": "electron .",
+    "start": "node build start --from-source",
+    "s": "electron .",
     "electron-builder": "electron-builder",
     "store": "node build store",
     "test": "node build test",
