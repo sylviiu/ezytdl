@@ -75,10 +75,11 @@ if(!locked) {
                             require(`./devscripts/testrun`)(startTime);
                         }, 2500)
                     } else {
-                        if(!app.isPackaged) window.webContents.openDevTools();
                         console.log(`complete`)
                     }
                 }));
+                if(!app.isPackaged) window.webContents.openDevTools();
+                
             
                 window.loadFile(`./html/loading.html`);
             };

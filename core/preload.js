@@ -1,18 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
-
-const addScript = (path) => new Promise(res => {
-    const script = document.createElement(`script`);
-
-    script.setAttribute(`src`, path);
-    script.setAttribute(`async`, false);
-
-    document.head.appendChild(script);
-
-    script.addEventListener(`load`, () => {
-        console.log(`loaded script ${path}`)
-        res()
-    });
-})
+const fs = require('fs')
 
 console.log(`preload :D`);
 
@@ -39,6 +26,48 @@ const on = (...args) => {
     console.log(`on`, ...args);
     return ipcRenderer.on(...args);
 }
+
+const getPath = (...data) => invoke(`getPath`, ...data)
+
+const addScript = (path, type) => new Promise(async res => {
+    const script = document.createElement(`script`);
+
+    if(type == `lib`) {
+        let usePath = null;
+        const checkDir = (p) => {
+            if(p) {
+                const dir = fs.readdirSync(p);
+                if(dir.find(s => s.endsWith(`.min.js`))) {
+                    usePath = require(`path`).join(p, dir.find(s => s.endsWith(`.min.js`)))
+                }
+            }
+        };
+
+        const checkDirs = [`lib`, `src`, `dist`]
+
+        for (const dir of checkDirs) {
+            const thisPath = await getPath(`node_modules/${path}/${dir}`);
+            checkDir(thisPath);
+            if(usePath) break;
+        }
+
+        path = usePath;
+    }
+
+    console.log(`path: ${path}`)
+
+    if(!path) return null;
+
+    script.setAttribute(`src`, path);
+    script.setAttribute(`async`, false);
+
+    document.head.appendChild(script);
+
+    script.addEventListener(`load`, () => {
+        console.log(`loaded script ${path}`)
+        res()
+    });
+})
 
 let systemColors = { r: 255, g: 255, b: 255 };
 
@@ -128,10 +157,14 @@ contextBridge.exposeInMainWorld(`preload`, {
     oncomplete: (cb) => script.addEventListener(`load`, cb)
 });
 
+const libs = [`animejs`, `showdown`, `color-scheme`]
 const assets = require(`./build-assets.json`);
 
 addEventListener(`DOMContentLoaded`, async () => {
-    console.log(assets)
+    console.log(assets);
+
+    console.log(`-- ADDING LIBS`)
+    await Promise.all(libs.map(name => addScript(`${name}`, `lib`)));
 
     console.log(`-- ADDING UTIL`);
     await Promise.all(assets.util.map(path => addScript(`./util/${path}`)));
