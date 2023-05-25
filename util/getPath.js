@@ -2,7 +2,7 @@ const electronPath = require('electron').app.getAppPath();
 const fs = require('fs');
 const path = require('path');
 
-module.exports = (filePath) => {
+module.exports = (filePath, allowNull) => {
     const splitPath = filePath.split(`/`);
 
     if(splitPath[0] == `.`) splitPath.shift()
@@ -18,5 +18,9 @@ module.exports = (filePath) => {
         return originalPath
     } else if(fs.existsSync(relativePath)) {
         return relativePath
-    } else throw new Error(`File doesn't exist in any of the following:\n\nOriginal path: ${filePath}\n\n- ${originalPath}\n- ${unpackedPath}\n- ${relativePath}`);
+    } else {
+        if(allowNull) {
+            return null
+        } else throw new Error(`File doesn't exist in any of the following:\n\nOriginal path: ${filePath}\n\n- ${originalPath}\n- ${unpackedPath}\n- ${relativePath}`);
+    }
 }
