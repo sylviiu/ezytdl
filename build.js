@@ -89,6 +89,9 @@ const config = {
         "devscripts/*/*.js",
         "checks/*.js"
     ],
+    "extraResources": [
+        "ytdlp"
+    ],
     "extraMetadata": {
         buildDate: Date.now(),
         commitHash,
