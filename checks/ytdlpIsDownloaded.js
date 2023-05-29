@@ -8,16 +8,22 @@ module.exports = (doNotCheckForUpdates) => new Promise(async res => {
     
     const { pythonPath, pyenvPath, bindir } = require(`../util/filenames/python`);
 
-    if(pythonPath) {
+    if(global.useBridge && pythonPath) {
         console.log(`using python distributions!`)
-        console.log(`pyenvPath: ${pyenvPath}\nbindir: ${bindir}`)
+        console.log(`pythonPath: ${pythonPath}\npyenvPath: ${pyenvPath}\nbindir: ${bindir}`)
 
         if(!fs.existsSync(bindir)) {
             console.log(`DOES NOT EXIST.`)
             return res(false)
         } else {
-            console.log(`EXISTS.`)
-            return res(true)
+            console.log(`EXISTS.`);
+            if(!global.createdBridge) {
+                console.log(`creating bridge`)
+                require(`../util/pythonBridge`).create().then(() => {
+                    console.log(`bridge created`)
+                    return res(true)
+                })
+            } else return res(true)
         }
     } else {
         console.log(`falling back to binary distribution`)

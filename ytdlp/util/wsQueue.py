@@ -1,27 +1,26 @@
 import asyncio
+from eventemitter import EventEmitter, EventIterable
 
 class asyncWebsocketMessageQueue:
+    emitter = EventEmitter()
+
     def __init__(self, ws, ctx):
         self.ws = ws
-        self.queue = asyncio.Queue()
         self._task = asyncio.create_task(self._run())
         
         def put(msg):
-            print("put called: " + msg)
-            self.queue.put_nowait(msg)
-        
-        self.put = put
+            #print("put called: " + msg)
+            self.emitter.emit('put', msg)
         
         ctx['send'] = put
 
     async def _run(self):
-        while True:
-            print("Awaiting queue...")
-            message = await self.queue.get()
-            print("sending ws msg: " + message)
+        print("Starting ws queue...")
+
+        async for message in EventIterable(self.emitter, 'put'):
+            #print("sending ws msg: " + message)
             await self.ws.send(message)
-            print("sent ws msg: " + message)
-            await asyncio.sleep(0)
+            #print("sent ws msg: " + message)
 
     async def close(self):
         await self.queue.join()

@@ -77,7 +77,8 @@ module.exports = async () => new Promise(async res => {
 
             const cmds = [
                 [`install`, `-U`, `yt-dlp`],
-                [`install`, `-U`, `websockets`],
+                [`install`, `-U`, `websocket-server`],
+                [`install`, `-U`, `eventemitter`],
             ];
 
             for(const i in cmds) {
@@ -101,7 +102,7 @@ module.exports = async () => new Promise(async res => {
 
         ws.send({message: `Creating bridge...`, progress: 0.8});
 
-        await require(`../createPythonBridge`)();
+        await require(`../pythonBridge`).create();
 
         ws.send({message: `Successfully set up python build of yt-dlp!`, progress: 1});
 

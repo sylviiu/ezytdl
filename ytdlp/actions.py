@@ -1,15 +1,17 @@
 import yt_dlp as yt
-import json
-import asyncio
 import threading
+import concurrent.futures
+import json
 
 def parseOptions(opt, hook):
-    options = {
-        #"quiet": True,
-        "logger": hook,
+    returnOptions = {
+        'action': 'download',
+        'options': {
+            'logger': hook,
+            'verbose': True,
+        },
+        'resources': []
     }
-
-    resources = []
 
     skipOpt = False
 
@@ -21,51 +23,68 @@ def parseOptions(opt, hook):
         else:
             match o:
                 case '-o':
-                    options['outtmpl'] = opt[opt.index(o) + 1]
+                    returnOptions['options']['outtmpl'] = opt[opt.index(o) + 1]
                     skipOpt = True
                 case '-f':
-                    options['format'] = opt[opt.index(o) + 1]
+                    returnOptions['options']['format'] = opt[opt.index(o) + 1]
                     skipOpt = True
                 case '-c':
-                    options['continue_dl'] = True
+                    returnOptions['options']['continue_dl'] = True
                 case '-r':
-                    options['retries'] = opt[opt.index(o) + 1]
+                    returnOptions['options']['retries'] = opt[opt.index(o) + 1]
                     skipOpt = True
                 case '-R':
-                    options['retries'] = 10
+                    returnOptions['options']['retries'] = 10
                 case '-s':
-                    options['simulate'] = True
+                    returnOptions['options']['simulate'] = True
                 case '-S':
-                    options['writesubtitles'] = True
+                    returnOptions['options']['writesubtitles'] = True
                 case '-x':
-                    options['extractaudio'] = True
+                    returnOptions['options']['extractaudio'] = True
                 case '-p':
-                    options['proxy'] = opt[opt.index(o) + 1]
+                    returnOptions['options']['proxy'] = opt[opt.index(o) + 1]
                     skipOpt = True
                 case '--dump-single-json':
-                    options['dump_single_json'] = True
+                    returnOptions['action'] = 'extract_info'
+                    returnOptions['options']['logtostderr'] = True
                 case _:
                     print('Assuming URL / query: ' + o)
-                    resources.append(o)
+                    returnOptions['resources'].append(o)
     
+    if(returnOptions['action'] != 'download'):
+        returnOptions['options']['skip_download'] = True
+        returnOptions['options']['simulate'] = True
+
     print(opt)
-    print(options)
-
-    returnOptions = {
-        'options': options,
-        'resources': resources
-    }
-
-    print("Created returnOptions")
     print(returnOptions)
+
+    hook.debug("Parsed options: " + json.dumps(returnOptions['options'], indent=4, default=lambda o: '<not serializable>'))
+    hook.debug("Parsed resource(s): [ " + ", ".join(returnOptions['resources']) + " ]")
+    hook.debug("Parsed action: " + returnOptions['action'])
 
     return returnOptions
 
-def download(args, hook):
+def exec(args, hook):
     parsed = parseOptions(args, hook)
 
     with yt.YoutubeDL(parsed['options']) as ytdl:
-        print("Created ytdl object")
-        thread = threading.Thread(target=ytdl.download, args=(parsed['resources']), name="YTDL PROCESS")
+        print("Created ytdl object (ACTION: " + parsed['action'] + ")")
+        """
+        thread = threading.Thread(target=getattr(ytdl, parsed['action']), args=(parsed['resources']), name="YTDL PROCESS")
         print("Started ytdl download thread")
         thread.start()
+        thread.join()
+        print("Done.")
+        hook.complete()
+        """
+        
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(getattr(ytdl, parsed['action']), parsed['resources'][0])
+            print("Started ytdl download thread")
+            result = future.result()
+            print("Done.")
+
+            if result is not None:
+                hook.debug(json.dumps(result, indent=4, default=lambda o: '<not serializable>'))
+
+            hook.complete()
