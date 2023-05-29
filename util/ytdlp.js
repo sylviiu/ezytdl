@@ -147,7 +147,7 @@ module.exports = {
     search: ({query, count, from}) => new Promise(async res => {
         if(!count) count = 10;
 
-        console.log(`going to path ${path}; query "${query}"; count: ${count}`)
+        console.log(`query "${query}"; count: ${count}`)
 
         let args = [`--dump-single-json`, `--quiet`, `--verbose`, `--flat-playlist`, `--playlist-end`, `${count}`];
 

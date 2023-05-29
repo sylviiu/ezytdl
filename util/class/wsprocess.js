@@ -6,9 +6,6 @@ class wsprocess extends events.EventEmitter {
     constructor(args) {
         super();
 
-        this.bridge = require(`../pythonBridge`);
-
-        this.ws = this.bridge.wsConnection;
         this.args = args;
 
         this.processID = idGen(24);
@@ -20,19 +17,21 @@ class wsprocess extends events.EventEmitter {
     }
 
     _spawn() {
+        const bridge = require(`../pythonBridge`);
+
         const hook = (data) => {
             if(data.type == `complete`) {
                 this.emit(`close`, 0);
             } else if(data.type == `info`) {
-                this.stdout.write(data.content + `\n`);
+                this.stdout.write(Buffer.from(data.content + `\n`));
             } else {
-                this.stderr.write(data.content + `\n`);
+                this.stderr.write(Buffer.from(data.content + `\n`));
             }
         };
 
-        this.bridge.idHooks.push({ id: this.processID, func: hook, });
+        bridge.idHooks.push({ id: this.processID, func: hook, });
 
-        this.ws.send(JSON.stringify({
+        bridge.wsConnection.send(JSON.stringify({
             id: this.processID,
             args: this.args,
         }));

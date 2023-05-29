@@ -14,9 +14,6 @@ def parseOptions(opt, hook):
 
     returnOptions['options']['no_color'] = True
 
-    print(opt)
-    print(returnOptions)
-
     return returnOptions
 
 def exec(args, hook):
@@ -30,7 +27,7 @@ def exec(args, hook):
         
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(ytdl.download, parsed['resources'])
-            print("Started ytdl download thread")
+            #print("Started ytdl download thread")
             result = future.result()
-            print("Done.")
+            #print("Done.")
             hook.complete()
