@@ -7,12 +7,11 @@ class hook:
 
     def __format(self, msg, type):
         #print(msg)
-        o = {
+        return json.dumps({
             'id': self.id,
             'type': type,
             'content': msg
-        }
-        return json.dumps(o, indent = 4)
+        }, indent = 4, default=lambda o: '<not serializable>')
 
     def complete(self):
         #print('Completed ws message')
