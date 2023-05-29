@@ -1,40 +1,33 @@
 const child_process = require(`child_process`);
 const path = require(`path`);
+const wsprocess = require(`./class/wsprocess`);
 const idGen = require(`./idGen`);
 const basepath = require('electron').app.getAppPath();
 
 const WebSocket = require(`ws`);
 
 let bridgeProc = null;
-let wsConnection = null;
 
 let resObj = () => ({
     send: (args) => {
-        wsConnection.send(JSON.stringify(args));
+        module.exports.wsConnection.send(JSON.stringify(args));
     },
     close: () => {
-        wsConnection.close();
-        wsConnection = null;
+        module.exports.wsConnection.close();
+        module.exports.wsConnection = null;
     }
-})
+});
 
 module.exports = {
+    wsConnection: null,
     idHooks: [],
     active: false,
-    spawn: (args) => new Promise(async res => {
-        const processID = idGen(24);
-
-        const obj = {
-            id: processID,
-            args,
-        }
-    }),
     create: () => new Promise(async res => {
         global.createdBridge = true;
         module.exports.active = true;
         
         if(global.useBridge) {
-            if(wsConnection) {
+            if(module.exports.wsConnection) {
                 res(resObj());
             } else {
                 const { bindir, pyenvPath } = require(`./filenames/python`);
@@ -50,9 +43,9 @@ module.exports = {
                 if(!bridgeProc) {
                     console.log(`no bridge process!`)
 
-                    if(wsConnection) {
-                        wsConnection.close();
-                        wsConnection = null;
+                    if(module.exports.wsConnection) {
+                        module.exports.wsConnection.close();
+                        module.exports.wsConnection = null;
                     };
         
                     bridgeProc = await new Promise(r => {
@@ -89,33 +82,30 @@ module.exports = {
             
                 console.log(`bridge process active`);
         
-                wsConnection = new WebSocket(`ws://127.0.0.1:8765`);
+                module.exports.wsConnection = new WebSocket(`ws://127.0.0.1:8765`);
 
                 const thisConnectionID = idGen(24);
                 
-                wsConnection.id = thisConnectionID;
+                module.exports.wsConnection.id = thisConnectionID;
 
-                wsConnection.onclose = () => {
-                    if(wsConnection.id == thisConnectionID) {
+                module.exports.wsConnection.onclose = () => {
+                    if(module.exports.wsConnection.id == thisConnectionID) {
                         console.log(`ws connection closed`);
-                        wsConnection = null;
+                        module.exports.wsConnection = null;
                     }
                 }
         
-                wsConnection.onopen = () => {
+                module.exports.wsConnection.onopen = () => {
                     console.log(`ws connection open`);
                     res(resObj());
                 }
         
-                wsConnection.onmessage = (msg) => {
+                module.exports.wsConnection.onmessage = (msg) => {
                     try {
                         const data = JSON.parse(msg.data);
-                        if(data.type == `id`) {
-                            const id = data.id;
-    
-                            const hooks = module.exports.idHooks.filter(h => h.id == id);
-    
-                            if(hooks.length) hooks.forEach(h => h.func(data.data));
+                        if(data.id) {
+                            const hooks = module.exports.idHooks.filter(h => h.id == data.id);
+                            if(hooks.length) hooks.forEach(h => h.func(data));
                         }
                     } catch(e) {
                         console.error(e);
