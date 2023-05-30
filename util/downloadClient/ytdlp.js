@@ -78,6 +78,7 @@ module.exports = async () => new Promise(async res => {
             const cmds = [
                 [`install`, `-U`, `yt-dlp`],
                 [`install`, `-U`, `websocket-server`],
+                [`install`, `-U`, `websocket-client`],
                 [`install`, `-U`, `eventemitter`],
             ];
 

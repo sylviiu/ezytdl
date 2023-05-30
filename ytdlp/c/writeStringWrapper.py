@@ -2,8 +2,9 @@ import json
 import yt_dlp
 
 class writeStringWrapper:
-    def __init__(self, wsHook):
+    def __init__(self, wsHook, type='info'):
         self.wsHook = wsHook
+        self.type = type
     
     _printed_messages = set()
     
@@ -33,4 +34,4 @@ class writeStringWrapper:
         output = s.encode(enc, 'ignore') if enc else s
         
         #buffer.write(s.encode(enc, 'ignore') if enc else s)
-        getattr(self.wsHook, logFunc)(json.dumps(output, default=lambda o: '<not serializable>') if type(output) is dict else output.decode('utf-8'))
+        getattr(self.wsHook, logFunc)(json.dumps(output, default=lambda o: '<not serializable>') if type(output) is dict else output.decode('utf-8') if hasattr(output, 'decode') else output)
