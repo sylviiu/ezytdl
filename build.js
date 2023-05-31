@@ -90,7 +90,7 @@ const config = {
         "devscripts/*/*.js",
         "checks/*.js"
     ],
-    "extraFiles": [
+    "extraResources": [
         "pybridge/**"
     ],
     "extraMetadata": {
