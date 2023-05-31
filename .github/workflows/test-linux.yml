@@ -29,6 +29,11 @@ jobs:
         uses: actions/setup-node@main
         with:
           node-version: "18"
+      
+      - name: Install python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11.3'
 
       - name: Install libvips
         run: |
