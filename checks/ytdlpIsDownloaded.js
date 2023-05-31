@@ -4,7 +4,7 @@ module.exports = (doNotCheckForUpdates) => new Promise(async res => {
 
     const bridgepath = require(`../util/pythonBridge`).bridgepath;
 
-    if(fs.existsSync(bridgepath)) {
+    if(/*fs.existsSync(bridgepath)*/ true) {
         console.log(`BRIDGE PATH EXISTS.`);
         if(!global.createdBridge) {
             console.log(`creating bridge`)

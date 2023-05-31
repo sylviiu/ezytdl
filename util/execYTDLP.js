@@ -9,6 +9,6 @@ module.exports = (...args) => {
         return new wsprocess(args[0])
     } else {
         const path = getPath();
-        return child_process.execFile(getPath, ...args)
+        return child_process.execFile(path, ...args)
     }
 }

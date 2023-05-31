@@ -2,7 +2,7 @@ const electronPath = require('electron').app.getAppPath();
 const fs = require('fs');
 const path = require('path');
 
-module.exports = (filePath, allowNull) => {
+module.exports = (filePath, allowNull, debug) => {
     if(filePath.startsWith(`./`)) filePath = filePath.slice(2)
 
     const splitPath = filePath.split(`/`);
@@ -12,12 +12,22 @@ module.exports = (filePath, allowNull) => {
 
     const originalPath = path.join(electronPath, ...splitPath);
     const unpackedPath = path.join(electronPath.replace(`app.asar`, `app.asar.unpacked`), ...splitPath);
+    const noasarPath = path.join(electronPath.replace(`app.asar`, ``), ...splitPath);
+    const nounpackedasarPath = path.join(electronPath.replace(`app.asar.unpacked`, ``), ...splitPath);
     const relativePath = path.join(...__dirname.split(`util`).slice(0, -1).join(`core`).split(`/`), ...splitPath);
+
+    if(debug) {
+        console.log(`\n\noriginalPath: ${originalPath}\nunpackedPath: ${unpackedPath}\nnoasarPath: ${noasarPath}\nnounpackedasarPath: ${nounpackedasarPath}\nrelativePath: ${relativePath}\n\n`)
+    }
 
     if(fs.existsSync(unpackedPath)) {
         return unpackedPath
     } else if(fs.existsSync(originalPath)) {
         return originalPath
+    } else if(fs.existsSync(noasarPath)) {
+        return noasarPath
+    } else if(fs.existsSync(nounpackedasarPath)) {
+        return nounpackedasarPath
     } else if(fs.existsSync(relativePath)) {
         return relativePath
     } else {

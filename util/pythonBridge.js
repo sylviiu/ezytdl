@@ -1,13 +1,16 @@
 const child_process = require(`child_process`);
 const path = require(`path`);
 const wsprocess = require(`./class/wsprocess`);
+const getPath = require(`./getPath`);
 const idGen = require(`./idGen`);
 
-let basepath = process.resourcesPath;
+let basepath = require(`electron`).app.getAppPath();
 
 if(basepath.endsWith(`app.asar`)) basepath = basepath.split(`app.asar`).slice(0, -1).join(`app.asar`)
 if(basepath.endsWith(`app.asar/`)) basepath = basepath.split(`app.asar/`).slice(0, -1).join(`app.asar/`)
 if(basepath.endsWith(`app.asar\\`)) basepath = basepath.split(`app.asar\\`).slice(0, -1).join(`app.asar\\`)
+
+console.log(`basepath = ${basepath}`)
 
 const WebSocket = require(`ws`);
 
@@ -21,32 +24,29 @@ let resObj = () => ({
     }
 });
 
-const logHeading = (usePath) => {
-    console.log(`-------------------------------\nBRIDGE DETAILS\nbridgeProc: ${module.exports.bridgeProc}\nwsConnection: ${module.exports.wsConnection}\nbridgepath: ${module.exports.bridgepath}\nbridgecwd: ${bridgecwd}${usePath ? `\noverriden path: ${usePath}` : ``}\n-------------------------------`)
+const logHeading = (bridgepath, bridgecwd) => {
+    console.log(`-------------------------------\nBRIDGE DETAILS\nbasepath: ${basepath}\nbridgeProc: ${module.exports.bridgeProc}\nwsConnection: ${module.exports.wsConnection}\nbridgepath: ${bridgepath}\nbridgecwd: ${bridgecwd}\n-------------------------------`)
 }
-
-let filename = process.platform == `win32` ? `bridge.exe` : `bridge`;
-let relativebridgepath = path.join(`pybridge`, filename);
-let bridgepath = path.join(basepath, relativebridgepath);
-if(!require('fs').existsSync(bridgepath)) bridgepath = `./${relativebridgepath}`
-
-if(bridgepath.startsWith(`.`)) bridgepath = path.join(__dirname.split(`util`).slice(0, -1).join(`util`), bridgepath);
-
-let bridgecwd = bridgepath.split(filename).slice(0, -1).join(filename)
 
 module.exports = {
     wsConnection: null,
     bridgeProc: null,
     idHooks: [],
     active: false,
-    bridgepath,
     create: () => new Promise(async res => {
         global.createdBridge = true;
         module.exports.active = true;
 
-        logHeading();
+        let filename = process.platform == `win32` ? `pybridge.exe` : `pybridge`;
+        let bridgepath = getPath(`./pybridge/${filename}`, true, true) || getPath(`./resources/pybridge/${filename}`, true, true) || `-- unknown --`;
         
-        if(require('fs').existsSync(module.exports.bridgepath)) {
+        if(bridgepath.startsWith(`.`)) bridgepath = path.join(__dirname.split(`util`).slice(0, -1).join(`util`), bridgepath);
+        
+        let bridgecwd = bridgepath.split(filename).slice(0, -1).join(filename)
+
+        logHeading(bridgepath, bridgecwd);
+        
+        if(require('fs').existsSync(bridgepath)) {
             if(module.exports.wsConnection && module.exports.bridgeProc) {
                 res(resObj());
             } else {
@@ -59,23 +59,23 @@ module.exports = {
                     };
 
                     if(!process.platform.toLowerCase().includes(`win32`)) {
-                        console.log(`CHMOD ${module.exports.bridgepath}`);
+                        console.log(`CHMOD ${bridgepath}`);
                         
                         try {
-                            require(`child_process`).execFileSync(`chmod`, [`+x`, module.exports.bridgepath])
+                            require(`child_process`).execFileSync(`chmod`, [`+x`, bridgepath])
                         } catch(e) {
-                            fs.chmodSync(module.exports.bridgepath, 0o777)
+                            fs.chmodSync(bridgepath, 0o777)
                         }
                     }
         
                     module.exports.bridgeProc = await new Promise(r => {
                         let resolved = false;
 
-                        console.log(`starting bridge:\n- bridge path: ${module.exports.bridgepath}`)
+                        console.log(`starting bridge:\n- bridge path: ${bridgepath}`)
 
                         process.env.PYTHONUNBUFFERED = `1`;
                 
-                        const proc = child_process.execFile(module.exports.bridgepath, {cwd: bridgecwd});
+                        const proc = child_process.execFile(bridgepath, {cwd: bridgecwd});
 
                         proc.on(`close`, (code) => {
                             console.log(`bridge process closed; code: ${code}`);
@@ -130,8 +130,6 @@ module.exports = {
                     }
                 }
             }
-        } else res(null);
+        }// else res(null);
     }),
 };
-
-logHeading();
