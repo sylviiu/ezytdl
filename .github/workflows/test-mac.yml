@@ -31,10 +31,12 @@ jobs:
         uses: actions/setup-node@main
         with:
           node-version: "18"
-
-      - name: Install python (brew)
-        run: |
-          brew install python@3.11
+      
+      - name: Install python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
 
       - name: Install npm deps
         run: |

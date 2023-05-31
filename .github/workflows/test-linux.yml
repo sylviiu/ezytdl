@@ -29,10 +29,12 @@ jobs:
         uses: actions/setup-node@main
         with:
           node-version: "18"
-
-      - name: Install python (apt)
-        run: |
-          sudo apt-get install python3.11
+      
+      - name: Install python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
 
       - name: Install libvips
         run: |
