@@ -3,7 +3,6 @@
     "outputFilename": "File Name Format",
     "reduceAnimations": "Reduce Animations",
     "disableAnimations": "Disable All Animations",
-    "ytdlpNightlyBuilds": "Download YT-DLP Nightly Builds",
     "lastMediaConversionOutputs": "Default Media Conversion",
     "concurrentDownloads": "Maximum Concurrent Downloads",
     "onlyGPUConversion": "Only Allow Hardware-Accelerated Video Conversion",

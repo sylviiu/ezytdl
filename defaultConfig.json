@@ -3,7 +3,6 @@
     "outputFilename": "[ %(webpage_url_domain)s ] %(format_id)s - %(fulltitle)s",
     "reduceAnimations": false,
     "disableAnimations": false,
-    "ytdlpNightlyBuilds": false,
     "lastMediaConversionOutputs": {
         "audio": "mp3",
         "video": "mp4",
