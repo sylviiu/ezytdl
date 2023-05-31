@@ -177,7 +177,7 @@ which(`npm`).then(async npm => {
             child_process.execFileSync(await which(`node`), [`build`, `nopack`], { stdio: "inherit" });
             console.log(`packed!`);
             res();
-        } else if(process.argv.find(s => s == `--testrun`)) {
+        } else {
             console.log(`packing...`)
             child_process.execFileSync(await which(`node`), [`build`, `pack`], { stdio: "inherit" });
             console.log(`packed!`);
@@ -186,8 +186,10 @@ which(`npm`).then(async npm => {
     })
 
     if(process.argv.find(s => s == `start`)) {
+        console.log(`running start`)
         build().then(() => start(false))
     } else if(process.argv.find(s => s == `test`)) {
+        console.log(`running test`)
         build().then(() => start(true))
     } else {
         console.log(`Building for ${process.platform}... (${process.env["CSC_LINK"] && process.env["CSC_KEY_PASSWORD"] ? "SIGNED" : "UNSIGNED"})`);
