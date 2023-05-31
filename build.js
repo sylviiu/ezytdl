@@ -35,7 +35,6 @@ const config = {
             "dmg",
         ]
     },
-    "beforePack": "./devscripts/beforePack.js",
     "asar": true,
     "asarUnpack": [
         "res/*.mp4",
@@ -235,6 +234,8 @@ which(`npm`).then(async npm => {
         }
     
         const buildScripts = fs.readdirSync(`./buildscripts`).filter(f => f.endsWith(`.js`));
+
+        console.log(`Build scripts: ${buildScripts.join(`, `)}`)
 
         console.log(`Running build ${buildScripts.length} scripts...`);
 

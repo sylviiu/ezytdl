@@ -38,7 +38,12 @@ module.exports = async () => new Promise(async res => {
         }
     }
 
-    console.log(`downloadClient`)
+    console.log(`downloadClient`);
+
+    if(fs.existsSync(require(`../pythonBridge`).bridgepath)) {
+        ws.send({ progress: 1, message: `Python bridge exists -- no need to download a client!` });
+        ws.close()
+    }
 
     const ghRequest = require(`../fetchLatestVersion/ytdlp`);
 

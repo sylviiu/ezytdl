@@ -1,23 +1,32 @@
 const child_process = require(`child_process`);
 const path = require(`path`);
 const fs = require(`fs`);
-const fse = require(`fs-extra`);
-const { platform } = require("os");
+const which = require(`which`);
 
 module.exports = () => new Promise(async res => {
-    const ytdlpPath = path.join(__dirname.split(`devscripts`)[0], `ytdlp`);
+    const ytdlpPath = path.join(__dirname.split(`buildscripts`)[0], `ytdlp`);
 
     const venvLocation = path.join(ytdlpPath, `.venv`)
-
-    console.log(`building python bridge...\n- ytdlp path: ${ytdlpPath}\n- venv location: ${venvLocation}`)
 
     if(fs.existsSync(venvLocation)) {
         console.log(`removing old venv...`)
         fs.rmSync(venvLocation, {recursive: true, force: true});
     }
 
+    const python = await new Promise(r => {
+        which(`python`).then(r).catch(e => {
+            which(`python3`).then(r).catch(e => {
+                which(`py`).then(r).catch(e => {
+                    console.log(`no python found!`);
+                })
+            })
+        })
+    });
+
+    console.log(`building python bridge...\n- python path: ${python}\n- ytdlp path: ${ytdlpPath}\n- venv location: ${venvLocation}`)
+
     console.log(`creating venv...`)
-    child_process.execFileSync(`python`, [`-m`, `venv`, `.venv`], {stdio: `inherit`, cwd: ytdlpPath});
+    child_process.execFileSync(python, [`-m`, `venv`, `.venv`], {stdio: `inherit`, cwd: ytdlpPath});
 
     const bindir = process.platform == `win32` ? path.join(venvLocation, `Scripts`) : path.join(venvLocation, `bin`);
     const pipPath = process.platform == `win32` ? path.join(bindir, `pip.exe`) : path.join(bindir, `pip`);
