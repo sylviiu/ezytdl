@@ -6,8 +6,6 @@ const basepath = require('electron').app.getAppPath();
 
 const WebSocket = require(`ws`);
 
-let bridgeProc = null;
-
 let resObj = () => ({
     send: (args) => {
         module.exports.wsConnection.send(JSON.stringify(args));
@@ -20,28 +18,21 @@ let resObj = () => ({
 
 module.exports = {
     wsConnection: null,
+    bridgeProc: null,
     idHooks: [],
     active: false,
+    bridgepath: path.join(basepath, 'pybridge', process.platform == `win32` ? `bridge.exe` : `bridge`),
     create: () => new Promise(async res => {
         global.createdBridge = true;
         module.exports.active = true;
+
+        console.log(`-------------------------------\nCREATING BRIDGE\nbridgeProc: ${module.exports.bridgeProc}\nwsConnection: ${module.exports.wsConnection}\n-------------------------------`)
         
-        if(global.useBridge) {
-            if(module.exports.wsConnection) {
+        if(require('fs').existsSync(module.exports.bridgepath)) {
+            if(module.exports.wsConnection && module.exports.bridgeProc) {
                 res(resObj());
             } else {
-                const { bindir, pyenvPath } = require(`./filenames/python`);
-
-                const pythonBin = process.platform == `win32` ? path.join(bindir, `python.exe`) : path.join(bindir, `python`);
-            
-                //process.env.PYTHON_BIN = pythonBin
-                //process.env.PATH = process.platform == `win32` ? `${bindir};${process.env.PATH}` : `${bindir}:${process.env.PATH}`
-                //process.env.VIRTUAL_ENV = pyenvPath;
-                process.env.PYTHONUNBUFFERED = `1`
-
-                //console.log(`\nnew instance path: ${process.env.PATH}\n\nbindir: ${bindir}\n\nPYTHON_BIN: ${process.env.PYTHON_BIN}\n\nVIRTUAL_ENV: ${process.env.VIRTUAL_ENV}\n\nAPP BASEPATH: ${basepath}\n`);
-                
-                if(!bridgeProc) {
+                if(!module.exports.bridgeProc) {
                     console.log(`no bridge process!`)
 
                     if(module.exports.wsConnection) {
@@ -49,14 +40,14 @@ module.exports = {
                         module.exports.wsConnection = null;
                     };
         
-                    bridgeProc = await new Promise(r => {
+                    module.exports.bridgeProc = await new Promise(r => {
                         let resolved = false;
 
-                        const bridgePath = path.join(basepath, `ytdlp`, `bridge.py`);
+                        const bridgePath = path.join(basepath, 'pybridge', 'bridge.exe');
 
-                        console.log(`starting bridge:\n- python bin: ${pythonBin}\n- bridge path: ${bridgePath}`)
+                        console.log(`starting bridge:\n- bridge path: ${bridgePath}`)
                 
-                        const proc = child_process.execFile(pythonBin, [bridgePath]);
+                        const proc = child_process.execFile(bridgePath);
 
                         proc.on(`close`, (code) => {
                             console.log(`bridge process closed; code: ${code}`);
@@ -93,6 +84,7 @@ module.exports = {
                     if(module.exports.wsConnection.id == thisConnectionID) {
                         console.log(`ws connection closed`);
                         module.exports.wsConnection = null;
+                        module.exports.create();
                     }
                 }
         

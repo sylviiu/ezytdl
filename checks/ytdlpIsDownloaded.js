@@ -1,30 +1,18 @@
-const fs = require('fs');
-
 module.exports = (doNotCheckForUpdates) => new Promise(async res => {
     const { file, getPath } = require(`../util/filenames/ytdlp`);
     const fs = require(`fs`);
 
-    await require(`../util/filenames/python`).getPaths();
-    
-    const { pythonPath, pyenvPath, bindir } = require(`../util/filenames/python`);
+    const bridgepath = require(`../util/pythonBridge`).bridgepath;
 
-    if(global.useBridge && pythonPath) {
-        console.log(`using python distributions!`)
-        console.log(`pythonPath: ${pythonPath}\npyenvPath: ${pyenvPath}\nbindir: ${bindir}`)
-
-        if(!fs.existsSync(bindir)) {
-            console.log(`DOES NOT EXIST.`)
-            return res(false)
-        } else {
-            console.log(`EXISTS.`);
-            if(!global.createdBridge) {
-                console.log(`creating bridge`)
-                require(`../util/pythonBridge`).create().then(() => {
-                    console.log(`bridge created`)
-                    return res(true)
-                })
-            } else return res(true)
-        }
+    if(fs.existsSync(bridgepath)) {
+        console.log(`BRIDGE PATH EXISTS.`);
+        if(!global.createdBridge) {
+            console.log(`creating bridge`)
+            require(`../util/pythonBridge`).create().then(() => {
+                console.log(`bridge created`)
+                return res(true)
+            })
+        } else return res(true)
     } else {
         console.log(`falling back to binary distribution`)
         console.log(`Looking for file ${file}`);
