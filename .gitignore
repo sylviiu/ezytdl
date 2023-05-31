@@ -1,4 +1,6 @@
 node_modules/
+.venv/
+pybridge/
 __pycache__/
 dist/
 keys.json

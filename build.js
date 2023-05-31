@@ -35,6 +35,7 @@ const config = {
             "dmg",
         ]
     },
+    "beforePack": "./devscripts/beforePack.js",
     "asar": true,
     "asarUnpack": [
         "res/*.mp4",
@@ -89,8 +90,8 @@ const config = {
         "devscripts/*/*.js",
         "checks/*.js"
     ],
-    "extraResources": [
-        "ytdlp"
+    "extraFiles": [
+        "pybridge/**"
     ],
     "extraMetadata": {
         buildDate: Date.now(),
@@ -247,8 +248,12 @@ which(`npm`).then(async npm => {
             console.log(`Wrote config!`);
             
             console.log(`Spawning npm at ${npm}`);
+
+            const procArgs = [`run`, `electron-builder`, `--`, `-c`, `./build.json`, ...(process.argv.find(s => s == `pack`) ? [`--dir`] : []), ...(config.publish ? [`-p`, `always`] : [`-p`, `never`])]
+
+            console.log(`Spawning npm with args "${procArgs.join(` `)}"`);
             
-            const proc = child_process.spawn(npm, [`run`, `electron-builder`, `--`, `-c`, `./build.json`, ...(process.argv.find(s => s == `pack`) ? [`--dir`] : []), ...(config.publish ? [`-p`, `always`] : [`-p`, `never`])], { stdio: "inherit" });
+            const proc = child_process.spawn(npm, procArgs, { stdio: "inherit" });
             
             proc.on(`close`, (code) => {
                 console.log(`Build closed with code ${code}`);
