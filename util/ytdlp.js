@@ -227,14 +227,14 @@ module.exports = {
                 };
 
                 if(anyNoTitle && !disableFlatPlaylist) {
-                    return module.exports.listFormats({url}, true).then(res)
+                    return module.exports.listFormats({query}, true).then(res)
                 } else {
                     res(module.exports.parseInfo(d))
                 }
             } else if(!disableFlatPlaylist) {
                 updateStatus(`Restarting playlist search... (there were no formats returned!!)`)
                 console.log(`no formats found! starting over...`);
-                return module.exports.listFormats({url}, true).then(res)
+                return module.exports.listFormats({query}, true).then(res)
             } else {
                 sendNotification({
                     type: `error`,
