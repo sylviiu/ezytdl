@@ -5,7 +5,7 @@ on: workflow_dispatch
 
 jobs:
   linux-dist:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     permissions:
       contents: write
@@ -19,10 +19,15 @@ jobs:
         with:
           node-version: '18'
       
-      - name: Install python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11.3'
+      #- name: Install python
+      #  uses: actions/setup-python@v4
+      #  with:
+      #    python-version: '3.11.3'
+      #    cache: 'pip'
+
+      - name: Install python (apt)
+        run: |
+          sudo apt-get install python3.11
 
       - name: Install npm deps
         run: |
@@ -47,10 +52,15 @@ jobs:
         with:
           node-version: '18'
       
-      - name: Install python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11.3'
+      #- name: Install python
+      #  uses: actions/setup-python@v4
+      #  with:
+      #    python-version: '3.11.3'
+      #    cache: 'pip'
+
+      - name: Install python (brew)
+        run: |
+          brew install python@3.11
 
       - name: Install npm deps
         run: |
@@ -77,10 +87,15 @@ jobs:
         with:
           node-version: '18'
       
-      - name: Install python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11.3'
+      #- name: Install python
+      #  uses: actions/setup-python@v4
+      #  with:
+      #    python-version: '3.11.3'
+      #    cache: 'pip'
+
+      - name: Install python (choco)
+        run: |
+          choco install python --version 3.11.3
 
       - name: Install npm deps
         run: |

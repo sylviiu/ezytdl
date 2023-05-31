@@ -70,7 +70,7 @@ jobs:
   linux-dist:
     needs: release_info
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     permissions: write-all
 
@@ -82,15 +82,10 @@ jobs:
         uses: actions/setup-node@main
         with:
           node-version: "18"
-      
-      - name: Install python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11.3'
-      
-      - name: Install patchelf (linux only)
+
+      - name: Install python (apt)
         run: |
-          pip install patchelf
+          sudo apt-get install python3.11
 
       - name: Install npm deps
         run: |
@@ -116,11 +111,10 @@ jobs:
         uses: actions/setup-node@main
         with:
           node-version: "18"
-      
-      - name: Install python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11.3'
+
+      - name: Install python (brew)
+        run: |
+          brew install python@3.11
 
       - name: Install npm deps
         run: |
@@ -148,11 +142,11 @@ jobs:
         uses: actions/setup-node@main
         with:
           node-version: "18"
-      
-      - name: Install python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11.3'
+
+      - name: Install python (choco)
+        run: |
+          choco install python --version 3.11.3
+
       - name: Install npm deps
         run: |
           npm install

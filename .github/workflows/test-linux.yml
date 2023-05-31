@@ -10,7 +10,7 @@ on:
 
 jobs:
   linux:
-    runs-on: "ubuntu-20.04"
+    runs-on: "ubuntu-22.04"
 
     permissions:
       contents: read
@@ -29,15 +29,10 @@ jobs:
         uses: actions/setup-node@main
         with:
           node-version: "18"
-      
-      - name: Install python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11.3'
-      
-      - name: Install patchelf (linux only)
+
+      - name: Install python (apt)
         run: |
-          pip install patchelf
+          sudo apt-get install python3.11
 
       - name: Install libvips
         run: |
