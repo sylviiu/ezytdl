@@ -52,6 +52,16 @@ module.exports = {
                         module.exports.wsConnection.close();
                         module.exports.wsConnection = null;
                     };
+
+                    if(!process.platform.toLowerCase().includes(`win32`)) {
+                        console.log(`CHMOD ${module.exports.bridgepath}`);
+                        
+                        try {
+                            require(`child_process`).execFileSync(`chmod`, [`+x`, module.exports.bridgepath])
+                        } catch(e) {
+                            fs.chmodSync(module.exports.bridgepath, 0o777)
+                        }
+                    }
         
                     module.exports.bridgeProc = await new Promise(r => {
                         let resolved = false;
