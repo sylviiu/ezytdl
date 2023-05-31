@@ -245,6 +245,14 @@ which(`npm`).then(async npm => {
             console.log(`Completed build script ${script}!`);
         }
 
+        if(process.argv.find(s => s == `pack`)) {
+            console.log(`Pack flag found (removing targets)...`);
+
+            config.win.target = [];
+            config.linux.target = [];
+            config.mac.target = [];
+        }
+
         if(!process.argv.find(s => s == `nopack`)) {
             fs.writeFileSync(`./build.json`, JSON.stringify(config, null, 4));
             
