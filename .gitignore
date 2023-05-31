@@ -8,3 +8,4 @@ keys.json
 build.json
 release-notes.md
 build-*.json
+*.spec

@@ -1,8 +1,5 @@
 import yt_dlp
 import threading
-import concurrent.futures
-import json
-import sys
 from c.writeStringWrapper import writeStringWrapper
 
 def parseOptions(opt):

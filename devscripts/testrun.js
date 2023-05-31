@@ -69,10 +69,10 @@ module.exports = async (startTime) => {
     console.log(`${require(`os`).freemem()} free, \n~${Math.round(process.memoryUsage().rss/1000000)}MB used / ~${Math.round(require(`os`).totalmem()/1000000)}MB total`)
 
     if(passed != total) {
-        process.exit(1);
+        console.log(`TESTRUN FAILED.`)
+        require(`../core/quit`).quit(1);
     } else {
         console.log(`TESTRUN PASSED.`)
-        global.quitting = true;
-        require(`electron`).app.quit();
+        require(`../core/quit`).quit(0);
     }
 }

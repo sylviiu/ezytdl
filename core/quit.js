@@ -2,9 +2,26 @@ const { dialog, app } = require(`electron`);
 
 global.quitting = false;
 
-const quit = () => {
+const quit = async (code) => {
+    console.log(`quitting (function called)`)
+
     global.quitting = true;
+
+    const { bridgeProc } = require(`../util/pythonBridge`);
+
+    if(bridgeProc && bridgeProc.kill) await new Promise(r => {
+        bridgeProc.on(`close`, r);
+        bridgeProc.kill();
+    })
+
     app.quit();
+
+    app.once(`will-quit`, (e) => {
+        if(code && Number(code)) {
+            e.preventDefault();
+            process.exit(Number(code));
+        }
+    })
 }
 
 module.exports = (noExit) => new Promise(async res => {
@@ -49,3 +66,5 @@ module.exports = (noExit) => new Promise(async res => {
         if(!noExit) quit()
     }
 });
+
+module.exports.quit = quit;

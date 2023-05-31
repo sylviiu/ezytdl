@@ -17,12 +17,17 @@ let resObj = () => ({
 });
 
 const logHeading = (usePath) => {
-    console.log(`-------------------------------\nBRIDGE DETAILS\nbridgeProc: ${module.exports.bridgeProc}\nwsConnection: ${module.exports.wsConnection}\nbridgepath: ${module.exports.bridgepath}${usePath ? `\noverriden path: ${usePath}` : ``}\n-------------------------------`)
+    console.log(`-------------------------------\nBRIDGE DETAILS\nbridgeProc: ${module.exports.bridgeProc}\nwsConnection: ${module.exports.wsConnection}\nbridgepath: ${module.exports.bridgepath}\nbridgecwd: ${bridgecwd}${usePath ? `\noverriden path: ${usePath}` : ``}\n-------------------------------`)
 }
 
-let relativebridgepath = path.join(`pybridge`, process.platform == `win32` ? `bridge.exe` : `bridge`);
+let filename = process.platform == `win32` ? `bridge.exe` : `bridge`;
+let relativebridgepath = path.join(`pybridge`, filename);
 let bridgepath = path.join(basepath, relativebridgepath);
 if(!require('fs').existsSync(bridgepath)) bridgepath = `./${relativebridgepath}`
+
+if(bridgepath.startsWith(`.`)) bridgepath = path.join(__dirname.split(`util`).slice(0, -1).join(`util`), bridgepath);
+
+let bridgecwd = bridgepath.split(filename).slice(0, -1).join(filename)
 
 module.exports = {
     wsConnection: null,
@@ -52,8 +57,10 @@ module.exports = {
                         let resolved = false;
 
                         console.log(`starting bridge:\n- bridge path: ${module.exports.bridgepath}`)
+
+                        process.env.PYTHONUNBUFFERED = `1`;
                 
-                        const proc = child_process.execFile(module.exports.bridgepath);
+                        const proc = child_process.execFile(module.exports.bridgepath, {cwd: bridgecwd});
 
                         proc.on(`close`, (code) => {
                             console.log(`bridge process closed; code: ${code}`);

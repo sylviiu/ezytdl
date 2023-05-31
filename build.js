@@ -90,7 +90,11 @@ const config = {
         "checks/*.js"
     ],
     "extraResources": [
-        "pybridge/**"
+        {
+            from: "./pybridge/",
+            to: "pybridge/",
+            filter: ["**/*"]
+        }
     ],
     "extraMetadata": {
         buildDate: Date.now(),
@@ -126,12 +130,14 @@ which(`npm`).then(async npm => {
 
         proc.on(`error`, (err) => {
             console.log(`Testrun errored with ${err}`);
+            global.quitting = true;
             process.exit(1);
         })
 
         proc.on(`close`, (code) => {
             const exitWithCode = passed ? 0 : 1
             console.log(`Testrun closed with code ${code}; exiting with code ${exitWithCode}`);
+            global.quitting = true;
             process.exit(exitWithCode);
         });
     }
@@ -256,8 +262,8 @@ which(`npm`).then(async npm => {
         if(process.argv.find(s => s == `nopack`) || process.argv.find(s => s == `pack`)) {
             console.log(`Not fully building, removing signatures...`);
             
-            process.env["CSC_LINK"] = null;
-            process.env["CSC_KEY_PASSWORD"] = null;
+            delete process.env["CSC_LINK"];
+            delete process.env["CSC_KEY_PASSWORD"];
         }
 
         if(!process.argv.find(s => s == `nopack`)) {

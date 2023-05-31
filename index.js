@@ -88,3 +88,5 @@ if(!locked) {
         } else start();
     });
 };
+
+process.on(`SIGINT`, require(`./core/quit`).quit);
