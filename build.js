@@ -253,6 +253,13 @@ which(`npm`).then(async npm => {
             config.mac.target = [];
         }
 
+        if(process.argv.find(s => s == `nopack`) || process.argv.find(s => s == `pack`)) {
+            console.log(`Not fully building, removing signatures...`);
+            
+            process.env["CSC_LINK"] = null;
+            process.env["CSC_KEY_PASSWORD"] = null;
+        }
+
         if(!process.argv.find(s => s == `nopack`)) {
             fs.writeFileSync(`./build.json`, JSON.stringify(config, null, 4));
             
