@@ -1,7 +1,7 @@
 const svgns = `http://www.w3.org/2000/svg`;
 
 const addProgressCircle = (node, width, showBackground) => {
-    let animeFunc = (rawAnimeFunc || anime)
+    let animeFunc = (typeof rawAnimeFunc == `function` ? rawAnimeFunc : anime)
 
     const nodeSize = Math.floor(node.getBoundingClientRect().width, node.getBoundingClientRect().height);
 

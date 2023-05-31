@@ -16,13 +16,20 @@ const queueEventEmitter = new (require(`events`))();
 let activeProgress = {};
 
 let ws = {
-    send: (content) => {
+    send: (c1) => {
         if(!global.window) return;
 
-        let c2 = content;
-        if(typeof c2 == `object`) c2 = JSON.stringify(content);
+        let content = Object.assign({}, c1);
+
+        if(typeof content == `object` && typeof content.data == `object` && content.data.ytdlpProc) {
+            content.data = Object.assign({}, content.data, { ytdlpProc: null })
+        }
+
+        console.log(content)
+
+        if(typeof content == `object`) content = JSON.stringify(content);
         
-        global.window.webContents.send(`queueUpdate`, JSON.parse(c2));
+        global.window.webContents.send(`queueUpdate`, JSON.parse(content));
     }
 };
 

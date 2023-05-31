@@ -75,7 +75,7 @@ module.exports = (notDefault, overrideArgs) => {
         args.titleBarStyle = `hidden-inset`
     } else console.log(`Using default window controls`);
 
-    if(app.isPackaged) {
+    if(/*app.isPackaged*/ true) {
         console.log(`-------------\nSTARTING WITH PRODUCTION MODE\n-------------`)
 
         /*args.webPreferences.devTools = false;

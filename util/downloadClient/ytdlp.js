@@ -1,6 +1,9 @@
 const { file, downloadPath } = require(`../filenames/ytdlp`);
 const fs = require('fs');
 const Stream = require('stream');
+const which = require(`which`);
+const path = require(`path`);
+const child_process = require(`child_process`);
 
 const errorHandler = require(`../errorHandler`);
 
@@ -13,9 +16,12 @@ module.exports = async () => new Promise(async res => {
 
     activeDownload = true;
 
+    let obj = {};
+
     const ws = {
         send: (args) => {
-            global.window ? global.window.webContents.send(`updateClientEvent`, args) : null
+            obj = Object.assign(obj, args)
+            global.window ? global.window.webContents.send(`updateClientEvent`, obj) : null
             if(global.testrun) {
                 const newNum = Math.round(args.progress * 100);
                 if(newNum != lastRoundedNum) {
@@ -26,14 +32,43 @@ module.exports = async () => new Promise(async res => {
         },
         close: () => {
             activeDownload = null;
-            global.window ? global.window.webContents.send(`updateClientEvent`, {complete: true}) : null;
+            obj = Object.assign(obj, {complete: true})
+            global.window ? global.window.webContents.send(`updateClientEvent`, obj) : null;
             res()
         }
     }
 
-    console.log(`downloadClient`)
+    console.log(`downloadClient`);
+
+    if(fs.existsSync(require(`../pythonBridge`).bridgepath)) {
+        ws.send({ progress: 1, message: `Python bridge exists -- no need to download a client!` });
+        ws.close()
+    }
 
     const ghRequest = require(`../fetchLatestVersion/ytdlp`);
+
+    const execFile = (...args) => new Promise(async r => {
+        let updateFunc = () => {};
+
+        if(typeof args[0] == `function`) updateFunc = args.shift();
+
+        const proc = child_process.execFile(...args);
+
+        const log = (prefix, d) => {
+            const str = d.toString().trim();
+            console.log(prefix + d.split(`\n`).join(`\n${prefix}`));
+            if(str.includes(`Collecting `)) {
+                updateFunc(str.split(`Collecting `).slice(-1)[0].split(`\n`)[0])
+            } else if(str.includes(`Installing collected packages: `)) {
+                updateFunc(null, null, `Installing packages to pyenv...`, `"${str.split(`Installing collected packages: `).slice(-1)[0].split(`\n`)[0].split(`, `).join(`", "`)}"`)
+            }
+        }
+
+        proc.stdout.on(`data`, d => log(`OUT | `, d))
+        proc.stderr.on(`data`, d => log(`ERR | `, d))
+
+        proc.on(`close`, r)
+    })
 
     ghRequest().then(async r => {        
         const latest = r.response;

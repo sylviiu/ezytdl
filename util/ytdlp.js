@@ -1,7 +1,8 @@
-const { getPath } = require(`./filenames/ytdlp`);
 const child_process = require('child_process');
 const fs = require('fs');
 const idGen = require(`../util/idGen`);
+
+const execYTDLP = require(`./execYTDLP`);
 
 const sanitize = require(`sanitize-filename`);
 
@@ -144,11 +145,9 @@ module.exports = {
         return d
     },
     search: ({query, count, from}) => new Promise(async res => {
-        const path = getPath();
-
         if(!count) count = 10;
 
-        console.log(`going to path ${path}; query "${query}"; count: ${count}`)
+        console.log(`query "${query}"; count: ${count}`)
 
         let args = [`--dump-single-json`, `--quiet`, `--verbose`, `--flat-playlist`, `--playlist-end`, `${count}`];
 
@@ -160,7 +159,7 @@ module.exports = {
 
         console.log(`search args: "${args.map(s => s.includes(` `) ? `'${s}'` : s).join(` `)}"`)
 
-        const proc = child_process.execFile(path, args);
+        const proc = execYTDLP(args);
 
         let data = ``;
 
@@ -187,15 +186,13 @@ module.exports = {
     listFormats: ({query}, disableFlatPlaylist) => new Promise(async res => {
         let url = query;
 
-        const path = getPath();
-
-        console.log(`going to path ${path}; url "${url}"`)
+        console.log(`url "${url}"`)
 
         let args = [url, `--dump-single-json`, `--quiet`, `--progress`, `--verbose`];
 
         if(!disableFlatPlaylist) args.push(`--flat-playlist`);
 
-        const proc = child_process.execFile(path, args);
+        const proc = execYTDLP(args);
 
         let data = ``;
 
@@ -250,15 +247,13 @@ module.exports = {
         })
     }),
     getFilename: (url, format, template) => new Promise(async res => {
-        const path = getPath();
-        
         const { outputFilename } = require(`../getConfig`)();
 
         const args = [url, `-o`, template || outputFilename, `--get-filename`, `--quiet`];
 
         if(format) args.unshift(`-f`, format)
 
-        const proc = child_process.execFile(path, args);
+        const proc = execYTDLP(args);
 
         let data = ``;
 
@@ -355,8 +350,6 @@ module.exports = {
 
         try {
             const { saveLocation, onlyGPUConversion, disableHWAcceleratedConversion, outputFilename } = require(`../getConfig`)();
-
-            const path = getPath();
 
             let thisFormat;
 
@@ -671,7 +664,7 @@ module.exports = {
                 
                 console.log(`saveTo: ` + saveTo, `\n- ` + args.join(`\n- `))
         
-                proc = child_process.execFile(path, args);
+                proc = execYTDLP(args);
         
                 update({saveLocation: saveTo, url, format, kill: () => {
                     console.log(`killing yt-dlp download...`)
