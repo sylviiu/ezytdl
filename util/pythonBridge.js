@@ -2,7 +2,12 @@ const child_process = require(`child_process`);
 const path = require(`path`);
 const wsprocess = require(`./class/wsprocess`);
 const idGen = require(`./idGen`);
-const basepath = process.resourcesPath;
+
+let basepath = process.resourcesPath;
+
+if(basepath.endsWith(`app.asar`)) basepath = basepath.split(`app.asar`).slice(0, -1).join(`app.asar`)
+if(basepath.endsWith(`app.asar/`)) basepath = basepath.split(`app.asar/`).slice(0, -1).join(`app.asar/`)
+if(basepath.endsWith(`app.asar\\`)) basepath = basepath.split(`app.asar\\`).slice(0, -1).join(`app.asar\\`)
 
 const WebSocket = require(`ws`);
 
