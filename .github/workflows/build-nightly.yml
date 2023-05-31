@@ -90,8 +90,7 @@ jobs:
       
       - name: Install patchelf (linux only)
         run: |
-          sudo apt update -y
-          sudo apt install -y patchelf
+          pip install patchelf
 
       - name: Install npm deps
         run: |
