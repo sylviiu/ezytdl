@@ -1,12 +1,16 @@
 import json
 import threading
 import actions
+import sys
 
 from websocket_server import WebsocketServer
 
 import versionHeader
 
-versionHeader.printHeader()
+if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+    versionHeader.printHeader()
+else:
+    print("Running in development mode. Versions will not be printed.", flush=True)
 
 print("Creating bridge...")
 

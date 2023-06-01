@@ -1,18 +1,20 @@
 import json
 
-import yt_dlp
-import sys
-
 def printHeader():
+    from constants import BUILD_DATE
+    import yt_dlp
+    import sys
+
     versionObj = {
-        'Python': {
-            'version': sys.version.split(' ')[0],
-            'implementation': sys.implementation.name,
+        'ezytdl-pybridge': {
+            'Built': BUILD_DATE,
+            'Python Version': sys.version.split(' ')[0],
+            'Python Implementation': sys.implementation.name,
         },
         'yt-dlp': {
-            'channel': yt_dlp.version.CHANNEL,
-            'version': yt_dlp.version.__version__,
-            'commit': yt_dlp.version.RELEASE_GIT_HEAD
+            'Channel': yt_dlp.version.CHANNEL,
+            'Version': yt_dlp.version.__version__,
+            'Commit': yt_dlp.version.RELEASE_GIT_HEAD
         }
     }
 

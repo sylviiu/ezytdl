@@ -97,7 +97,6 @@ const config = {
         }
     ],
     "extraMetadata": {
-        buildDate: Date.now(),
         commitHash,
         fullCommitHash: child_process.execSync(`git rev-parse HEAD`).toString().trim(),
     },
@@ -267,6 +266,8 @@ which(`npm`).then(async npm => {
         }
 
         if(!process.argv.find(s => s == `nopack`)) {
+            config.extraMetadata.buildDate = Date.now();
+
             fs.writeFileSync(`./build.json`, JSON.stringify(config, null, 4));
             
             console.log(`Wrote config!`);

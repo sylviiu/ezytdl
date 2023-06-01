@@ -3,21 +3,11 @@ const dayOfWeek = [`Sunday`, `Monday`, `Tuesday`, `Wednesday`, `Thursday`, `Frid
 
 const pkg = require(`../../../package.json`);
 
-const date = new Date(pkg.buildDate || global.startTime);
-
-const time = {
-    h: date.getHours(),
-    m: date.getMinutes(),
-    s: date.getSeconds(),
-}
-
-Object.entries(time).forEach(([k, v]) => v < 10 ? time[k] = `0${v}` : null)
-
 const appVersions = {
     "ezytdl": {
         "Version": pkg.version,
         "Commit Hash": pkg.fullCommitHash || `unknown`,
-        "Built": `${dayOfWeek[date.getDay()]}, ${month[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()} at ${Object.values(time).join(`:`)}`,
+        "Built": pkg.buildDate || global.startTime,
     },
     "Node.JS": {
         "Version": `${process.versions.node} (${process.release.lts || process.release.name})`,
@@ -43,6 +33,20 @@ module.exports = {
         Object.keys(useObj).forEach(pkg => {
             details.push(``, `#### ${pkg}`);
             Object.entries(useObj[pkg]).forEach(([k, v]) => {
+                if(k.toLowerCase() == `built`) {
+                    const date = new Date(v);
+                    
+                    const time = {
+                        h: date.getHours(),
+                        m: date.getMinutes(),
+                        s: date.getSeconds(),
+                    }
+                    
+                    Object.entries(time).forEach(([k, v]) => v < 10 ? time[k] = `0${v}` : null)
+
+                    v = `${dayOfWeek[date.getDay()]}, ${month[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()} at ${Object.values(time).join(`:`)}`
+                };
+                
                 details.push(`- ${k}: ${v}`)
             });
         });

@@ -39,6 +39,9 @@ module.exports = () => new Promise(async res => {
     console.log(`installing pyinstaller...`)
     child_process.execFileSync(pipPath, [`install`, `pyinstaller`], {stdio: `inherit`, cwd: ytdlpPath});
 
+    console.log(`writing constants.py`);
+    fs.writeFileSync(path.join(ytdlpPath, `constants.py`), `BUILD_DATE = ${Date.now()}`)
+
     if(fs.existsSync(`./pybridge`)) {
         console.log(`removing old compiled pybridge...`)
         fs.rmSync(`./pybridge`, {recursive: true, force: true});

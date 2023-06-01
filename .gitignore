@@ -1,6 +1,7 @@
 node_modules/
 .venv/
 pybridge/
+constants.py
 __pycache__/
 dist/
 keys.json
