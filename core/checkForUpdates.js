@@ -98,6 +98,7 @@ module.exports = async (manual) => {
         });
 
         autoUpdater.allowPrerelease = true;
+        autoUpdater.allowDowngrade = true;
     }
 
     if(!autoUpdater.isUpdaterActive() && manual) {
