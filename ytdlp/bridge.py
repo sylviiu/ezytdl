@@ -28,7 +28,7 @@ def recv(client, websocket, message):
         print("Target ID: " + targetId)
 
         if(hasattr(actions, data['type'])):
-            threading.Thread(target=getattr(actions, data['type'])(hooks[data[targetId]] if data[targetId] in hooks else None, data), name="ACTION THREAD / " + data[targetId], daemon=True).start()
+            threading.Thread(target=getattr(actions, data['type'])(hooks[targetId] if targetId in hooks else None, data), name="ACTION THREAD / " + targetId, daemon=True).start()
         else:
             print("Unknown message type: " + data['type'])
     else:
