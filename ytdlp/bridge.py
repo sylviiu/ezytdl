@@ -11,9 +11,6 @@ hooks = {}
 def recv(client, websocket, message):
     data = json.loads(message)
 
-    print("recv called")
-    print(data)
-
     if 'type' in data:
         print("Has type: " + data['type'])
 
@@ -40,14 +37,7 @@ def recv(client, websocket, message):
 
         threading.Thread(target=actions.exec(hook, data, complete), name="ACTION THREAD / " + data['id'], daemon=True).start()
 
-def wsHandler(client, websocket):
-    ip = client['address'][0]
-    port = client['address'][1]
-
-    print("New connection: " + ip + ":" + str(port))
-
 server = WebsocketServer(host='127.0.0.1', port=8765)
-server.set_fn_new_client(wsHandler)
 server.set_fn_message_received(recv)
 print("Bridge ready", flush=True)
 server.run_forever()

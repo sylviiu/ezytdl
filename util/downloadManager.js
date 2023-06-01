@@ -25,8 +25,6 @@ let ws = {
             content.data = Object.assign({}, content.data, { ytdlpProc: null })
         }
 
-        console.log(content)
-
         if(typeof content == `object`) content = JSON.stringify(content);
         
         global.window.webContents.send(`queueUpdate`, JSON.parse(content));
