@@ -38,16 +38,5 @@ class hook:
         #print('Completed ws message')
         self.send(self._format(status, 'complete'))
     
-    """
-    def debug(self, msg):
-        #print(msg)
-        self.send(self.__format(msg, 'info'))
-    
-    def warning(self, msg):
-        #print(msg)
-        self.send(self.__format(msg, 'warn'))
-    
-    def error(self, msg):
-        #print(msg)
-        self.send(self.__format(msg, 'error'))
-    """
+    def setKill(self, kill):
+        self.kill = kill

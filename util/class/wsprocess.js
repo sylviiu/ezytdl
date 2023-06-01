@@ -16,6 +16,18 @@ class wsprocess extends events.EventEmitter {
         this._spawn();
     }
 
+    kill(code) {
+        const bridge = require(`../pythonBridge`);
+
+        bridge.wsConnection.send(JSON.stringify({
+            id: idGen(24),
+            type: `kill`,
+            targetID: this.processID,
+        }));
+
+        this.emit(`close`, code);
+    }
+
     _spawn() {
         const bridge = require(`../pythonBridge`);
 

@@ -1,6 +1,8 @@
 import yt_dlp
-import threading
 from c.writeStringWrapper import writeStringWrapper
+from c.killableThread import killableThread
+
+import c.wsHook as wsHook
 
 def parseOptions(opt):
     parsedOptions = yt_dlp.parse_options(opt)
@@ -15,22 +17,55 @@ def parseOptions(opt):
 
     return returnOptions
 
-def exec(args, hook):
-    parsed = parseOptions(args)
+def hook(id, func):
+    print("Creating hook for id: " + id)
+    return wsHook.hook(id, func)
+
+def kill(hook, data):
+    if(hook is not None and hasattr(hook, 'kill')):
+        hook.kill()
+        del hook
+    else:
+        print("No hook (or kill function) found for id: " + data['id'])
+
+def exec(hook, data, complete):
+    parsed = parseOptions(data['args'])
 
     write_string = writeStringWrapper(hook)
-    yt_dlp.write_string = write_string
-    yt_dlp.utils.write_string = write_string
+    #yt_dlp.write_string = write_string
+    #yt_dlp.utils.write_string = write_string
+
+    killed = False
+
+    def killDownload():
+        nonlocal killed
+        killed = True
+
+    hook.setKill(killDownload)
 
     with yt_dlp.YoutubeDL(parsed['options']) as ytdl:
-
         ytdl._write_string = write_string
         ytdl.write_string = write_string
         ytdl.write_debug = write_string
 
         def execDownload():
-            ytdl.download(parsed['resources'])
-            hook.complete()
+            nonlocal killed
+            if killed == True:
+                return complete()
+            else:
+                ytdl.download(parsed['resources'])
+                complete()
 
-        t = threading.Thread(target=execDownload, name="YTDL THREAD", daemon=True)
+        t = killableThread(target=execDownload, name="YTDL THREAD", daemon=True)
+
+        t.setHook(hook)
+
+        def killDownload():
+            nonlocal killed
+            killed = True
+            if t.is_alive():
+                t.raiseExc(SystemExit)
+
+        hook.setKill(killDownload)
+
         t.start()

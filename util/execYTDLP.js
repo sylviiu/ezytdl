@@ -8,7 +8,6 @@ module.exports = (...args) => {
     if(bridge.active) {
         return new wsprocess(args[0])
     } else {
-        const path = getPath();
-        return child_process.execFile(path, ...args)
+        return child_process.execFile(getPath(), ...args)
     }
 }
