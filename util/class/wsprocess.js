@@ -24,8 +24,6 @@ class wsprocess extends events.EventEmitter {
             type: `kill`,
             targetID: this.processID,
         }));
-
-        this.emit(`close`, code);
     }
 
     _spawn() {
