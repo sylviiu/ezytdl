@@ -69,9 +69,15 @@ const addScript = (path, type) => new Promise(async res => {
     });
 })
 
-let systemColors = { r: 255, g: 255, b: 255 };
+const parseSystemColors = require(`../util/parseSystemColors`);
 
-invoke(`systemColors`).then(c => { systemColors = c; })
+let systemColors = localStorage.getItem(`systemColors`) ? JSON.parse(localStorage.getItem(`systemColors`)) : parseSystemColors({ r: 255, g: 255, b: 255 });
+
+invoke(`systemColors`).then(c => { 
+    console.log(`systemColors`, c);
+    systemColors = parseSystemColors(c);
+    localStorage.setItem(`systemColors`, JSON.stringify(systemColors));
+})
 
 on(`updateAvailable`, () => updateAvailable = true)
 

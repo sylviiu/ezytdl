@@ -39,6 +39,8 @@ ajax.onload = async () => {
         document.head.appendChild(node);
     }
 
+    searchHighlights(h.querySelector(`body`));
+
     document.body = h.querySelector(`body`);
     
     await system.addScript(`./pagescripts/${htmlFile.split(`.`).slice(0, -1).join(`.`)}.js`)

@@ -238,7 +238,9 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
                 btn.style.backgroundColor = `#000000`;
                 btn.style.color = `#ffffff`;
             } else {
-                btn.style.backgroundColor = defaultColors.background;
+                if(i == 0) {
+                    highlightButton(btn)
+                } else btn.style.backgroundColor = defaultColors.background;
                 btn.style.color = defaultColors.color;
             }
         });
@@ -323,6 +325,7 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
         })
     }
 
+    highlightButton(node.querySelector(`#downloadBest`))
     node.querySelector(`#downloadBest`).onclick = () => btnClick(0);
     node.querySelector(`#downloadBestAudio`).onclick = () => btnClick(1);
     node.querySelector(`#downloadBestVideo`).onclick = () => btnClick(2);

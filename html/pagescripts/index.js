@@ -35,7 +35,7 @@ console.log(`wavesHeight`, wavesHeight)
 
 anime({
     targets: document.body,
-    backgroundColor: `rgb(${systemColors.r/10}, ${systemColors.g/10}, ${systemColors.b/10})`,
+    backgroundColor: `rgb(${systemColors.darker.r}, ${systemColors.darker.g}, ${systemColors.darker.b})`,
     duration: 1000,
     easing: `easeInCirc`
 })
@@ -222,6 +222,28 @@ const runSearch = async (url, initialMsg, func) => {
 
             if(info.is_live) listbox.querySelector(`#qualityButtons`).classList.add(`d-none`);
 
+            const appendCard = (card) => {
+                /*const convertDownload = card.querySelector(`#convertDownload`);
+                if(!convertDownload || convertDownload.classList.contains(`d-none`)) {
+                    if(card.querySelector(`#confirmDownload`)) highlightButton(card.querySelector(`#confirmDownload`))
+                } else {
+                    const originalConvertClick = convertDownload.onclick;
+
+                    const originalConvertDownloadBG = convertDownload.style.backgroundColor;
+
+                    convertDownload.onclick = () => {
+                        convertDownload.style.backgroundColor = originalConvertDownloadBG;
+                        originalConvertClick();
+                        highlightButton(card.querySelector(`#confirmDownload`))
+                    }
+                    
+                    highlightButton(convertDownload);
+                };*/
+                if(card.querySelector(`#confirmDownload`)) highlightButton(card.querySelector(`#confirmDownload`))
+
+                formatList.appendChild(card);
+            }
+
             if(info.entries) {
                 if(info.entries.filter(e => e.entries).length == info.entries.length || info.entries.length == 0) {
                     listbox.querySelector(`#qualityButtons`).classList.add(`d-none`);
@@ -301,6 +323,8 @@ const runSearch = async (url, initialMsg, func) => {
 
                         card.querySelector(`#downloadicon`).style.transform = `rotate(270deg)`;
                         // make arrow point right
+                    
+                        //highlightButton(card.querySelector(`#formatDownload`))
 
                         card.querySelector(`#formatDownload`).onclick = () => {
                             input.disabled = false;
@@ -453,7 +477,7 @@ const runSearch = async (url, initialMsg, func) => {
 
                     observer.observe(card);
 
-                    formatList.appendChild(card);
+                    appendCard(card);
 
                     if(i % 25 == 0) await new Promise((resolve) => setTimeout(resolve, 1));
                 }
@@ -618,7 +642,7 @@ const runSearch = async (url, initialMsg, func) => {
 
                     btn.onclick = () => btnClick()
 
-                    formatList.appendChild(card);
+                    appendCard(card);
 
                     if(i % 25 == 0) await new Promise((resolve) => setTimeout(resolve, 1));
                 }
@@ -721,7 +745,7 @@ const setSearchBtn = (btn, enabled, noAnim) => {
     anime.remove(btn)
     let duration = noAnim ? 0 : 500;
     if(enabled) {
-        btn.style.backgroundColor = `rgb(255,255,255,0.85)`;
+        highlightButton(btn);
         btn.style.color = `rgb(0,0,0)`;
         anime({
             targets: btn,

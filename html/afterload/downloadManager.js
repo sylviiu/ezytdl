@@ -474,7 +474,8 @@ var initDownloadManager = () => {
             
                     repositionNotifications(currentHeight, true)
             
-                    downloadsList.style.background = `rgba(255,255,255,1)`;
+                    //downloadsList.style.background = `rgba(255,255,255,1)`;
+                    highlightButton(downloadsList)
                     downloadsList.style.color = `rgba(0,0,0,1)`;
             
                     anime({

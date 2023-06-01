@@ -18,8 +18,8 @@ console.log(htmlContent.join(`\n`))
 
 const generateWaves = (color) => {
     if(!color) {
-        console.log(`no color provided, using system colors`, systemColors)
-        color = systemColors
+        console.log(`no color provided, using standard system colors`, systemColors)
+        color = systemColors.standard;
     };
 
     const { r, g, b } = color;
