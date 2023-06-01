@@ -3,8 +3,9 @@ from c.writeStringWrapper import writeStringWrapper
 from c.killableThread import killableThread
 
 import c.wsHook as wsHook
+from c.progressHook import progressHook
 
-def parseOptions(opt):
+def parseOptions(opt, hook):
     parsedOptions = yt_dlp.parse_options(opt)
 
     returnOptions = {
@@ -12,6 +13,7 @@ def parseOptions(opt):
         'resources': parsedOptions[2]
     }
 
+    returnOptions['options']['progress_hooks'] = [ progressHook(hook) ]
     returnOptions['options']['progress_with_newline'] = True
     returnOptions['options']['no_color'] = True
 
@@ -29,7 +31,7 @@ def kill(hook, data):
         print("No hook (or kill function) found for id: " + data['id'])
 
 def exec(hook, data, complete):
-    parsed = parseOptions(data['args'])
+    parsed = parseOptions(data['args'], hook)
 
     write_string = writeStringWrapper(hook)
     #yt_dlp.write_string = write_string
