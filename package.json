@@ -37,5 +37,8 @@
   "devDependencies": {
     "electron": "^24.2.0",
     "electron-builder": "^24.4.0"
+  },
+  "optionalDependencies": {
+    "dbus": "^1.0.7"
   }
 }
