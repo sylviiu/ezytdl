@@ -33,6 +33,7 @@ module.exports = {
     bridgeProc: null,
     idHooks: [],
     active: false,
+    bridgeVersions: null,
     create: () => new Promise(async res => {
         global.createdBridge = true;
         module.exports.active = true;
@@ -86,6 +87,10 @@ module.exports = {
                         })
 
                         const parseLog = (d, type) => {
+                            if(!module.exports.bridgeVersions) try {
+                                module.exports.bridgeVersions = JSON.parse(d.toString().trim());
+                            } catch(e) { }
+
                             const prefix = `[BRIDGE] ${type} | `;
                             console.log(prefix + d.toString().trim().split(`\n`).join(`\n` + prefix));
 

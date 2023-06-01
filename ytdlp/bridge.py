@@ -4,6 +4,10 @@ import actions
 
 from websocket_server import WebsocketServer
 
+import versionHeader
+
+versionHeader.printHeader()
+
 print("Creating bridge...")
 
 hooks = {}

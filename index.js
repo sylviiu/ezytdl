@@ -1,5 +1,7 @@
 const startTime = Date.now();
 
+global.startTime = startTime;
+
 global.testrun = process.argv.find(s => s == `--testrun`) ? true : false;
 global.headless = process.argv.find(s => s == `--headless`) ? true : false;
 

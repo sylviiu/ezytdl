@@ -1,5 +1,6 @@
-
 const settingsCardMDConverter = new showdown.Converter({ parseImgDimensions: true });
+
+const detailsStr = document.getElementById(`detailsStr`)
 
 document.getElementById(`settingsBox`).querySelector(`#options`).childNodes.forEach(node => node.classList.add(`d-none`));
 const settingsBox = document.getElementById(`settingsBox`).cloneNode(true);
@@ -155,6 +156,8 @@ const createCards = (config) => {
     const descriptions = config.descriptions;
 
     for (entry of Object.entries(strings)) createCard(entry[0], entry[1], descriptions[entry[0]], config, document.getElementById(`settingsList`), true, 0)
+
+    if(detailsStr) document.getElementById(`settingsList`).appendChild(detailsStr)
 }
 
 const toggleButtons = (enable) => {
@@ -204,3 +207,9 @@ if(paltform.toLowerCase() != `win32` && !paltform.toLowerCase().includes(`linux`
     });
     ffmpegCard.querySelector(`#ffmpegDownloadTxt`).innerHTML = `FFmpeg downloading is not available on your platform.<br>If FFmpeg is installed system-wide, ezytdl will use that.`
 }
+
+if(detailsStr) system.detailsStr().then(details => {
+    const detailsStrConverter = new showdown.Converter({ parseImgDimensions: true });
+    detailsStr.innerHTML = detailsStrConverter.makeHtml(details.join(`\n`) + `\n`);
+    detailsStr.classList.remove(`d-none`)
+})
