@@ -311,7 +311,7 @@ module.exports = {
                     findFiles = findFiles.split(`.part`).slice(0, -1).join(`.ytdl`)
                 }
 
-                if(findFiles) {
+                if(findFiles && fs.existsSync(saveTo)) {
                     const dir = fs.readdirSync(saveTo);
     
                     const prevFiles = dir.filter(f => f.startsWith(findFiles));
@@ -395,7 +395,7 @@ module.exports = {
         
             killAttempt = 0;
 
-            let args = [`--retries`, `10`, `--fragment-retries`, `10`];
+            let args = [];
 
             const runThroughFFmpeg = async (code, replaceInputArgs) => {
                 let previousFilename = obj.destinationFile ? `ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0] : temporaryFilename;
@@ -435,6 +435,8 @@ module.exports = {
                     if(convert.videoBitrate) outputArgs.unshift(`-b:v`, convert.videoBitrate);
                     if(convert.videoFPS) outputArgs.unshift(`-r`, convert.videoFPS);
                     if(convert.videoResolution) outputArgs.unshift(`-vf`, `scale=${convert.videoResolution.trim().replace(`x`, `:`)}`);
+
+                    inputArgs.push(`--retries`, `10`, `--fragment-retries`, `10`)
 
                     const mainArgs = [...inputArgs, ...outputArgs];
 
