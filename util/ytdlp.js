@@ -395,7 +395,7 @@ module.exports = {
         
             killAttempt = 0;
 
-            let args = [];
+            let args = [`--retries`, `10`, `--fragment-retries`, `10`];
 
             const runThroughFFmpeg = async (code, replaceInputArgs) => {
                 let previousFilename = obj.destinationFile ? `ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0] : temporaryFilename;
