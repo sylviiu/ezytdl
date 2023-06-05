@@ -19,6 +19,12 @@ const formatCard = document.getElementById(`formatCard`).cloneNode(true);
 const listboxTemplate = document.getElementById(`listbox`).cloneNode(true);
 const listboxParent = document.getElementById(`listbox`).parentElement;
 
+const advancedOptions = document.getElementById(`advancedOptions`);
+
+const extraArguments = document.getElementById(`extraArguments`);
+
+if(!config.advanced) advancedOptions.classList.add(`d-none`)
+
 listboxTemplate.querySelector(`#formatCard`).parentElement.removeChild(listboxTemplate.querySelector(`#formatCard`));
 
 listboxParent.removeChild(document.getElementById(`listbox`));
@@ -178,14 +184,13 @@ const runSearch = async (url, initialMsg, func) => {
         
         document.body.style.overflowY = `scroll`;
 
-        if(info.error) {
-            document.getElementById(`errorMsg`).innerHTML = info.error;
+        if(!info || info.error) {
+            console.log(`Errored. Doing nothing.`)
 
-            if(document.getElementById(`errorMsg`).classList.contains(`d-none`)) {
-                document.getElementById(`errorMsg`).classList.remove(`d-none`);
-            };
+            progressObj.remove();
+            progressObj = null;
 
-            return;
+            refreshSelectionBox();
         } else {
             listbox.querySelector(`#mediaTitle`).innerHTML = `[${func == `search` ? info.entries.length + ` results` : info.webpage_url_domain}] ${info.title}`;
 
@@ -671,21 +676,22 @@ const runSearch = async (url, initialMsg, func) => {
 
             if(!config.reduceAnimations && !config.disableAnimations) listboxParent.appendChild(listbox);
 
-            progressObj.remove();
-            progressObj = null;    
-
             parseProgress.remove();
             parseProgress = null;
-        
-            input.disabled = false;
-            button.disabled = false;
+
+            progressObj.remove();
+            progressObj = null;
         }
+    
+        input.disabled = false;
+        button.disabled = false;
     }
 
     let parse = false;
 
     let opt = {
-        query: url
+        query: url,
+        extraArguments: extraArguments.value || ``
     };
 
     if(func == `search`) {
@@ -694,6 +700,9 @@ const runSearch = async (url, initialMsg, func) => {
     }
 
     deselectAllSearchBtns();
+
+    console.log(`selectionBox / hiding from parseinfo`)
+    selectionBox.hide(false, true);
 
     mainQueue[func || `getInfo`](opt).then(data => {
         info = data;
@@ -765,62 +774,89 @@ const setSearchBtn = (btn, enabled, noAnim) => {
     }
 };
 
-const deselectAllSearchBtns = () => innerSearchSelectionBox.childNodes.forEach(c => {
-    selectedSearch = null;
-    if(c.classList.contains(`btn`)) {
-        setSearchBtn(c, false, true);
-        c.onclick = () => {
-            console.log(`clicked search btn ${c.id}`)
-            setCurrentSearch(c)
+const deselectAllSearchBtns = () => {
+    extraArguments.value = ``;
+
+    innerSearchSelectionBox.childNodes.forEach(c => {
+        selectedSearch = null;
+        if(c.classList.contains(`btn`)) {
+            setSearchBtn(c, false, true);
+            c.onclick = () => {
+                console.log(`clicked search btn ${c.id}`)
+                setCurrentSearch(c)
+            }
         }
-    }
-})
+    })
+}
 
 let selectonBoxShowing = false;
 
-const selectionBoxHeight = searchSelectionBox.getBoundingClientRect().height;
+//const selectionBoxHeight = searchSelectionBox.getBoundingClientRect().height;
 const selectonBoxMargin = searchSelectionBox.style.marginTop;
 
-console.log(`height: ${selectionBoxHeight}, margin: ${selectonBoxMargin}`)
+//console.log(`height: ${selectionBoxHeight}, margin: ${selectonBoxMargin}`)
 
 const selectionBox = {
     show: (noAnim) => {
         if(selectonBoxShowing) return;
         selectonBoxShowing = true;
-        if(searchSelectionBox.classList.contains(`d-none`)) searchSelectionBox.classList.remove(`d-none`)
-        console.log(`showing search box`)
-        anime.remove(searchSelectionBox);
-        anime({
-            targets: searchSelectionBox,
-            height: selectionBoxHeight,
-            marginTop: selectonBoxMargin,
-            top: 0,
-            opacity: 1,
-            duration: noAnim ? 0 : 500,
-            easing: `easeOutExpo`
-        });
+        console.log(`selectionBox / showing search box`)
+
+        const run = (node) => {
+            console.log(`selectionBox / show / node id: ${node.id}`)
+
+            if(node.classList.contains(`d-none`)) node.classList.remove(`d-none`)
+            anime.remove(node);
+
+            const currentHeight = node.style.height;
+
+            node.style.height = null;
+            
+            const height = node.getBoundingClientRect().height;
+
+            node.style.height = currentHeight;
+
+            anime({
+                targets: node,
+                height: height,
+                marginTop: selectonBoxMargin,
+                top: 0,
+                opacity: 1,
+                duration: noAnim ? 0 : 500,
+                easing: `easeOutExpo`
+            });
+        };
+
+        run(searchSelectionBox);
+        if(config.advanced) run(advancedOptions);
     },
-    hide: (noAnim) => {
-        if(!selectonBoxShowing) return;
+    hide: (noAnim, hideAdvanced) => {
+        if(!selectonBoxShowing && !hideAdvanced) return;
         selectonBoxShowing = false;
-        console.log(`hiding search box`)
-        anime.remove(searchSelectionBox);
-        anime({
-            targets: searchSelectionBox,
-            height: 0,
-            marginTop: 0,
-            top: -searchSelectionBox.getBoundingClientRect().height,
-            opacity: 0,
-            duration: noAnim ? 0 : 500,
-            easing: `easeOutExpo`,
-            complete: () => {
-                if(!searchSelectionBox.classList.contains(`d-none`)) searchSelectionBox.classList.add(`d-none`)
-            }
-        });
+        console.log(`selectionBox / hiding search box (hideadvanced: ${hideAdvanced})`)
+
+        const run = (node) => {
+            console.log(`selectionBox / hide / node id: ${node.id}`)
+            anime.remove(node);
+            anime({
+                targets: node,
+                height: 0,
+                marginTop: 0,
+                top: -node.getBoundingClientRect().height,
+                opacity: 0,
+                duration: noAnim ? 0 : 500,
+                easing: `easeOutExpo`,
+                complete: () => {
+                    if(!node.classList.contains(`d-none`)) node.classList.add(`d-none`)
+                }
+            });
+        }
+
+        run(searchSelectionBox);
+        if(hideAdvanced && config.advanced) run(advancedOptions);
     }
 }
 
-//selectionBox.hide(true);
 deselectAllSearchBtns();
 
 const setCurrentSearch = (btn) => {
@@ -844,9 +880,7 @@ const genericUrlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA
 const processURL = () => {
     const url = input.value;
 
-    if(url.length > 0) {
-        selectionBox.hide();
-        
+    if(url.length > 0) {        
         console.log (`clicc`, url)
     
         const match = url.match(genericUrlRegex);
@@ -864,27 +898,36 @@ const processURL = () => {
 button.onclick = () => processURL();
 
 const refreshSelectionBox = () => {
-    if(input.value.match(genericUrlRegex) && input.value.length > 0) {
-        console.log(`matches url`)
-        selectionBox.hide();
-    } else {
-        console.log(`does not match url`)
-        selectionBox.show();
+    if(!progressObj) {
+        selectionBox.show(null, false);
+        if(input.value.match(genericUrlRegex) && input.value.length > 0) {
+            console.log(`matches url`)
+            selectionBox.hide(null, false);
+        } else {
+            console.log(`does not match url`)
+            selectionBox.show(null, false);
+        }
     }
 }
 
-input.addEventListener(`input`, () => {
-    changesMadeToInput = true;
-    centerURLBox(true);
-    refreshSelectionBox();
-});
-input.addEventListener(`click`, refreshSelectionBox);
-input.addEventListener(`blur`, () => setTimeout(() => !changesMadeToInput ? selectionBox.hide() : null, 100));
+const inputs = [input, extraArguments];
 
-input.addEventListener(`keyup`, (e) => {
-    if(e.key == `Enter` || e.keyCode == 13) processURL();
-});
-
+inputs.forEach(inp => {
+    inp.addEventListener(`input`, () => {
+        changesMadeToInput = true;
+        centerURLBox(true);
+        refreshSelectionBox();
+    });
+    
+    inp.addEventListener(`click`, refreshSelectionBox);
+    inp.addEventListener(`blur`, () => setTimeout(() => !changesMadeToInput ? selectionBox.hide(null, true) : null, 100));
+    //inp.addEventListener(`focus`, () => !changesMadeToInput ? selectionBox.hide(null, true) : null);
+    
+    inp.addEventListener(`keyup`, (e) => {
+        if((e.key == `Enter` || e.keyCode == 13) && !input.disabled) processURL();
+    });
+})
+    
 resultsCountInput.addEventListener(`keyup`, (e) => {
     if(e.key == `Enter` || e.keyCode == 13) processURL();
 });

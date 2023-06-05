@@ -13,7 +13,8 @@
     "superagent": "^8.0.9",
     "unzipper": "^0.10.14",
     "which": "^3.0.1",
-    "ws": "^8.13.0"
+    "ws": "^8.13.0",
+    "yargs": "^17.7.2"
   },
   "scripts": {
     "start": "node build start --from-source",

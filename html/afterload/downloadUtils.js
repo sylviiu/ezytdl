@@ -79,6 +79,8 @@ function createDownloadManager(card, id) {
 }
 
 const startDownload = (originalCard, opt) => {
+    opt.extraArguments = document.getElementById(`extraArguments`).value;
+
     if(config.reduceAnimations) {
         mainQueue.download(opt);
         anime({

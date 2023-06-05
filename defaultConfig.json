@@ -14,6 +14,7 @@
     "closeToTray": true,
     "logsEnabled": false,
     "defaultWindowControls": false,
+    "advanced": false,
     "version": "v0.0.0",
     "systemTrayNotifSent": false
 }

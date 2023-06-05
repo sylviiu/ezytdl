@@ -1,5 +1,6 @@
 const child_process = require('child_process');
 const fs = require('fs');
+const yargs = require('yargs');
 const idGen = require(`../util/idGen`);
 
 const execYTDLP = require(`./execYTDLP`);
@@ -117,6 +118,25 @@ const sendUpdates = (proc, initialMsg) => {
 }
 
 module.exports = {
+    additionalArguments: (args) => {
+        const returnArgs = [];
+
+        const yargsResult = yargs(args).argv
+
+        const parsed = Object.entries(yargsResult)
+
+        parsed.filter(o => o[1]).forEach((o, i) => {
+            if(o[0] != `$0` && o[0] != `_`) {
+                const str = [`--${o[0]}`, `${o[1]}`];
+                console.log(str, o[0], o[1])
+                returnArgs.push(...str)
+            }
+        });
+
+        if(yargsResult._ && yargsResult._.length > 0) returnArgs.push(...yargsResult._)
+
+        return returnArgs;
+    },
     parseInfo: (d) => {
         let totalTime = 0;
 
@@ -144,12 +164,14 @@ module.exports = {
 
         return d
     },
-    search: ({query, count, from}) => new Promise(async res => {
+    search: ({query, count, from, extraArguments}) => new Promise(async res => {
         if(!count) count = 10;
 
-        console.log(`query "${query}"; count: ${count}`)
+        const additional = module.exports.additionalArguments(extraArguments);
 
-        let args = [`--dump-single-json`, `--quiet`, `--verbose`, `--flat-playlist`, `--playlist-end`, `${count}`];
+        console.log(`query "${query}"; count: ${count}; additional args: "${additional.join(`", "`)}"`)
+
+        let args = [`--dump-single-json`, `--quiet`, `--verbose`, `--flat-playlist`, `--playlist-end`, `${count}`, ...additional];
 
         if(from == `soundcloud`) {
             args.unshift(`scsearch${count}:${query}`)
@@ -183,12 +205,14 @@ module.exports = {
             //console.log(d)
         })
     }),
-    listFormats: ({query}, disableFlatPlaylist) => new Promise(async res => {
+    listFormats: ({query, extraArguments}, disableFlatPlaylist) => new Promise(async res => {
         let url = query;
 
-        console.log(`url "${url}"`)
+        const additional = module.exports.additionalArguments(extraArguments);
 
-        let args = [url, `--dump-single-json`, `--quiet`, `--progress`, `--verbose`];
+        console.log(`url "${url}"; additional args: "${additional.join(`", "`)}"`)
+
+        let args = [url, `--dump-single-json`, `--quiet`, `--progress`, `--verbose`, ...additional];
 
         if(!disableFlatPlaylist) args.push(`--flat-playlist`);
 
@@ -285,7 +309,7 @@ module.exports = {
             res(data)
         })
     }),
-    download: ({url, format, ext, convert, filePath, info}, updateFunc) => new Promise(async res => {
+    download: ({url, format, ext, convert, filePath, info, extraArguments}, updateFunc) => new Promise(async res => {
         const temporaryFilename = `ezytdl-` + idGen(24);
         
         let obj = {};
@@ -395,7 +419,7 @@ module.exports = {
         
             killAttempt = 0;
 
-            let args = [];
+            let args = [...module.exports.additionalArguments(typeof extraArguments == `string` ? extraArguments : ``)];
 
             const runThroughFFmpeg = async (code, replaceInputArgs) => {
                 let previousFilename = obj.destinationFile ? `ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0] : temporaryFilename;
@@ -436,7 +460,7 @@ module.exports = {
                     if(convert.videoFPS) outputArgs.unshift(`-r`, convert.videoFPS);
                     if(convert.videoResolution) outputArgs.unshift(`-vf`, `scale=${convert.videoResolution.trim().replace(`x`, `:`)}`);
 
-                    inputArgs.push(`--retries`, `10`, `--fragment-retries`, `10`)
+                    //inputArgs.push(`--retries`, `10`, `--fragment-retries`, `10`)
 
                     const mainArgs = [...inputArgs, ...outputArgs];
 
