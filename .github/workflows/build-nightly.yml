@@ -2,8 +2,8 @@ name: ezytdl nightly distributable build
 run-name: ${{ github.actor }} - ${{ github.event_name }} - ${{ github.sha }}
 
 on:
-  #schedule:
-  #  - cron: "0 11 * * *" # 6am cst (i'll probably be asleep and have pushed a working change by then)
+  schedule:
+    - cron: "0 11 * * *" # 6am cst (i'll probably be asleep and have pushed a working change by then)
   workflow_dispatch:
 
 jobs:
@@ -97,7 +97,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm run nightly -- --run-number ${{github.run_number}}
+          npm run nightly -- --build-number ${{github.run_number}}
   macos-dist:
     needs: release_info
 
@@ -130,7 +130,7 @@ jobs:
           CSC_LINK: ${{ secrets.MAC_CERTS }}
           CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTS_KEY }}
         run: |
-          npm run nightly -- --run-number ${{github.run_number}}
+          npm run nightly -- --build-number ${{github.run_number}}
   windows-dist:
     needs: release_info
 
@@ -161,7 +161,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm run nightly -- --run-number ${{github.run_number}}
+          npm run nightly -- --build-number ${{github.run_number}}
   release:
     needs: [linux-dist, macos-dist, windows-dist, release_info]
     name: "Release the build"
