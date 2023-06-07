@@ -126,7 +126,7 @@ module.exports = {
         const parsed = Object.entries(yargsResult)
 
         parsed.filter(o => o[1]).forEach((o, i) => {
-            if(o[0] != `$0` && o[0] != `_`) {
+            if(o[0] != `$0` && o[0] != `_` && o[0].toLowerCase() == o[0]) {
                 const str = [`--${o[0]}`, `${o[1]}`];
                 console.log(str, o[0], o[1])
                 returnArgs.push(...str)
