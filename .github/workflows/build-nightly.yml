@@ -47,8 +47,8 @@ jobs:
       - name: Get the pre-release tag
         id: get_tag
         run: |
-          echo "TAG_NAME=$(node -e "console.log(require('./package.json').version)")-nightly.$(git rev-list --count HEAD)" >> "$GITHUB_ENV"
-          echo "RELEASE_NAME=[NIGHTLY] $(node -e "console.log(require('./package.json').version)")-nightly.$(git rev-list --count HEAD)" >> "$GITHUB_ENV"
+          echo "TAG_NAME=$(node -e "console.log(require('./package.json').version)")-nightly.${{github.run_number}}" >> "$GITHUB_ENV"
+          echo "RELEASE_NAME=[NIGHTLY] $(node -e "console.log(require('./package.json').version)")-nightly.${{github.run_number}}" >> "$GITHUB_ENV"
 
           node devscripts/generateReleaseNotes.js nightly
 
