@@ -2,6 +2,11 @@ const child_process = require(`child_process`);
 const fs = require(`fs`);
 const which = require('which')
 
+const yargs = require('yargs');
+const { hideBin } = require('yargs/helpers')
+
+const buildArgs = yargs(hideBin(process.argv)).argv
+
 // previous store: electron-builder -c ./package-build-store.json -p never
 // previous dist: electron-builder -c ./package-build.json -p always
 
@@ -99,6 +104,7 @@ const config = {
     "extraMetadata": {
         commitHash,
         fullCommitHash: child_process.execSync(`git rev-parse HEAD`).toString().trim(),
+        buildNumber: buildArgs.buildNumber || -1,
     },
 };
 
@@ -222,8 +228,13 @@ which(`npm`).then(async npm => {
             };
         } else if(process.argv.find(s => s == `nightly`)) {
             console.log(`Using nightly build...`);
+
+            if(!buildArgs.buildNumber) {
+                console.log(`No build number found! (--build-number)`);
+                process.exit(1);
+            }
         
-            config.extraMetadata.version = `${pkg.version}-nightly.${commitHash}`;
+            config.extraMetadata.version = `${pkg.version}-nightly.${buildArgs.buildNumber}`;
         
             config.productName += `-nightly`;
         
@@ -237,6 +248,8 @@ which(`npm`).then(async npm => {
                 "releaseType": "draft"
             };
         }
+
+        console.log(`Building:\n| ${config.productName} (${config.appId})\n| version: ${config.extraMetadata.version}\n| commit: ${config.extraMetadata.commitHash}\n| full commit: ${config.extraMetadata.fullCommitHash}\n| build number: ${config.extraMetadata.buildNumber}`)
     
         const buildScripts = fs.readdirSync(`./buildscripts`).filter(f => f.endsWith(`.js`));
 
