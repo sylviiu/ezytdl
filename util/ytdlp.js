@@ -453,7 +453,7 @@ module.exports = {
                 if(convert) {
                     ext = `.${convert.ext || (thisFormat || {}).ext}`
 
-                    const inputArgs = replaceInputArgs || [`-i`, saveTo + previousFilename, `-map`, `0:0`];
+                    const inputArgs = replaceInputArgs || [`-i`, saveTo + previousFilename/*, `-map`, `0:0`*/];
                     const outputArgs = [saveTo + ytdlpFilename + ext];
 
                     if(convert.audioBitrate) outputArgs.unshift(`-b:a`, convert.audioBitrate);
@@ -490,9 +490,12 @@ module.exports = {
                         }})
         
                         let duration = null;
+
+                        let allLogs = ``;
         
                         proc.stderr.on(`data`, d => {
-                            const data = `${d}`
+                            const data = `${d}`;
+                            allLogs += data.trim() + `\n`;
         
                             console.log(`STDERR | ${data.trim()}`);
                             if(data.includes(`Duration:`)) {
@@ -524,6 +527,7 @@ module.exports = {
         
                         proc.stdout.on(`data`, data => {
                             console.log(`STDOUT | ${data.toString().trim()}`)
+                            allLogs += data.toString().trim() + `\n`;
                         });
         
                         proc.on(`close`, (code) => {
@@ -538,7 +542,9 @@ module.exports = {
                                 update({percentNum: 100, status: `Done!`, saveLocation: saveTo, destinationFile: saveTo + ytdlpFilename + `.${ext}`, url, format});
                                 resolveFFmpeg(obj)
                             } else {
-                                rej(code)
+                                if(allLogs.includes(`Press [q] to stop, [?] for help`)) {
+                                    rej(allLogs.split(`Press [q] to stop, [?] for help`)[1].trim())
+                                } else rej(code)
                             }
                         })
                     });
