@@ -640,8 +640,10 @@ module.exports = {
                         update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: saveTo + ytdlpFilename + `.${ext}`, url, format})
                         return res(obj)
                         //purgeLeftoverFiles(saveTo)
-                    } else if(args.includes(`-S`)) {
+                    } else if(args.includes(`-S`) && ytdlpSaveExt == ext) {
                         update({code, saveLocation, url, format, status: `Downloaded best quality provided for ${ext} format (no conversion done${reasonConversionNotDone ? ` -- ${reasonConversionNotDone}` : ``})`});
+                    } else if(args.includes(`-S`) && ytdlpSaveExt != ext) {
+                        update({code, saveLocation, url, format, status: `${ext} was not provided by this website (downloaded ${ytdlpSaveExt} instead${reasonConversionNotDone ? ` -- ${reasonConversionNotDone}` : ``})`});
                     } else if(reasonConversionNotDone) {
                         update({code, saveLocation, url, format, status: `Could not convert: ${reasonConversionNotDone}`});
                     } else update({code, saveLocation, url, format, status: `Done!`});
