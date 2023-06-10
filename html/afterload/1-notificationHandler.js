@@ -205,6 +205,33 @@ const createNotification = (opt, providedClickFunc) => {
         container.appendChild(body);
 
         container.style.paddingBottom = `0px`;
+
+        if(type == `error`) {
+            const button = document.createElement(`a`);
+            button.classList.add(`btn`);
+            button.classList.add(`btn-primary`);
+            button.setAttribute(`role`, `button`);
+            button.id = `githubIssuesButton`;
+            button.style.background = `rgb(255,255,255)`;
+            button.style.borderStyle = `none`;
+            button.style.borderRadius = `100px`;
+            button.style.height = `36px`;
+            button.style.marginBottom = `16px`;
+            button.style.color = `rgb(0,0,0)`;
+            //button.style.marginTop = `10px`;
+
+            button.href = `https://github.com/sylviiu/ezytdl/issues/new`;
+
+            const icon = document.createElement(`i`);
+            icon.classList.add(`fab`);
+            icon.classList.add(`fa-github`);
+            icon.style.marginRight = `6px`;
+
+            button.appendChild(icon);
+            button.appendChild(document.createTextNode(`Report on GitHub`));
+
+            container.appendChild(button);
+        }
     }
 
     addNotification(container);
