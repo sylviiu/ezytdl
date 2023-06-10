@@ -419,7 +419,9 @@ module.exports = {
         
             killAttempt = 0;
 
-            let args = [...module.exports.additionalArguments(typeof extraArguments == `string` ? extraArguments : ``)];
+            const additionalArgs = module.exports.additionalArguments(typeof extraArguments == `string` ? extraArguments : ``);
+
+            let args = [...additionalArgs];
 
             const runThroughFFmpeg = async (code, replaceInputArgs) => {
                 let previousFilename = obj.destinationFile ? `ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0] : temporaryFilename;
@@ -433,7 +435,7 @@ module.exports = {
                             fs.renameSync(saveTo + previousFilename, saveTo + ytdlpFilename + `.` + previousFilename.split(`.`).slice(-1)[0]);
                         }
                     } catch(e) { console.log(e) }
-                    if(msg) {
+                    if(msg && typeof msg == `string`) {
                         update({failed: true, percentNum: 100, status: msg, saveLocation: saveTo, destinationFile: saveTo + ytdlpFilename + `.` + previousFilename.split(`.`).slice(-1)[0], url, format})
                     } else update({failed: true, percentNum: 100, status: `Could not convert to ${`${convert ? convert.ext : `--`}`.toUpperCase()}.`, saveLocation: saveTo, destinationFile: saveTo + ytdlpFilename + `.` + previousFilename.split(`.`).slice(-1)[0], url, format});
                     return res(obj)
@@ -451,7 +453,7 @@ module.exports = {
                 if(convert) {
                     ext = `.${convert.ext || (thisFormat || {}).ext}`
 
-                    const inputArgs = replaceInputArgs || [`-i`, saveTo + previousFilename];
+                    const inputArgs = replaceInputArgs || [`-i`, saveTo + previousFilename, `-map`, `0:0`];
                     const outputArgs = [saveTo + ytdlpFilename + ext];
 
                     if(convert.audioBitrate) outputArgs.unshift(`-b:a`, convert.audioBitrate);
@@ -586,7 +588,10 @@ module.exports = {
                                             console.log(`FFmpeg failed converting -- ${e}; trying again...`);
                                             if(onlyGPUConversion) {
                                                 return fallback(`The video codec (${thisCodec}) provided by the downloaded format is not compatible with FFmpeg's GPU transcoding.`);
-                                            } else spawnFFmpeg([...inputArgs, `-c:v`, `h264`, ...outputArgs], `${thisCodec}_software`).then(res).catch(fallback)
+                                            } else spawnFFmpeg([...inputArgs, `-c:v`, `h264`, ...outputArgs], `${thisCodec}_software`).then(res).catch(e => {
+                                                console.log(`FFmpeg failed converting [1] -- ${e}; trying again...`)
+                                                spawnFFmpeg([...inputArgs, ...outputArgs], `${thisCodec}_software`).then(res).catch(fallback);
+                                            })
                                         })
                                     })
                                 })
@@ -657,7 +662,7 @@ module.exports = {
 
             if(/*thisFormat && thisFormat.protocol && thisFormat.protocol.toLowerCase().includes(`m3u8`) && fs.existsSync(ffmpegPath)*/ false) {
             } else {
-                args = [`-f`, format, url, `-o`, saveTo + ytdlpFilename + `.%(ext)s`, `--no-mtime`];
+                args = [`-f`, format, url, `-o`, saveTo + ytdlpFilename + `.%(ext)s`, `--no-mtime`, ...additionalArgs];
     
                 args.push(`--ffmpeg-location`, ``);
         
