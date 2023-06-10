@@ -392,7 +392,7 @@ module.exports = {
 
             const ytdlpSaveExt = fullYtdlpFilename.split(`.`).slice(-1)[0];
 
-            let ytdlpFilename = fullYtdlpFilename.split(`.`).slice(0, -1).join(`.`);
+            const ytdlpFilename = fullYtdlpFilename.split(`.`).slice(0, -1).join(`.`);
 
             if(!thisFormat) thisFormat = {
                 ext: ytdlpSaveExt,
@@ -411,7 +411,7 @@ module.exports = {
     
             const saveTo = (filePath || saveLocation) + (require('os').platform() == `win32` ? `\\` : `/`)
 
-            updateFunc({ deleteFiles: () => purgeLeftoverFiles(saveTo), live: info.is_live ? true : false })
+            updateFunc({ deleteFiles: () => purgeLeftoverFiles(saveTo), live: info.is_live ? true : false, destinationFilename: ytdlpFilename, formatID: format })
     
             fs.mkdirSync(saveTo, { recursive: true, failIfExists: false });
         

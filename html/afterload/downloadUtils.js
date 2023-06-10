@@ -20,11 +20,29 @@ function createDownloadManager(card, id) {
 
     let status = {};
 
+    setTimeout(() => {
+        if(status.percentNum) {
+            console.log(status.percentNum)
+            progress.setProgress(status.percentNum);
+            if(status.percentNum >= 0) {
+                if(fileFormat.classList.contains(`d-none`)) fileFormat.classList.remove(`d-none`);
+                fileFormat.innerHTML = `${status.percentNum}%`;
+            } else {
+                if(!fileFormat.classList.contains(`d-none`)) fileFormat.classList.add(`d-none`);
+            }
+        };
+    }, 50)
+
     const update = (m) => {
         if(m) {
             for(key of Object.keys(m)) status[key] = m[key];
 
             if(m.saveLocation) location = m.saveLocation;
+
+            if(status.destinationFilename && status.formatID) {
+                const titleStr = `[${status.formatID}] ${status.destinationFilename}`;
+                if(formatName.innerHTML != titleStr) formatName.innerHTML = titleStr
+            }
 
             if(status.live) {
                 progress.setProgress(-1);
@@ -38,7 +56,7 @@ function createDownloadManager(card, id) {
                 } else {
                     if(!fileFormat.classList.contains(`d-none`)) fileFormat.classList.add(`d-none`);
                 }
-            };
+            }
     
             if(m.downloadSpeed) {
                 if(card.querySelector(`#speed`).classList.contains(`d-none`)) card.querySelector(`#speed`).classList.remove(`d-none`);
