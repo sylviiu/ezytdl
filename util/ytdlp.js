@@ -373,7 +373,10 @@ module.exports = {
         }
 
         try {
-            const { saveLocation, onlyGPUConversion, disableHWAcceleratedConversion, outputFilename } = require(`../getConfig`)();
+            const currentConfig = require(`../getConfig`)();
+            const { onlyGPUConversion, disableHWAcceleratedConversion, outputFilename, downloadInWebsiteFolders } = currentConfig;
+
+            const saveLocation = downloadInWebsiteFolders && info.webpage_url_domain ? require(`path`).join(currentConfig.saveLocation, sanitize(`${info.webpage_url_domain}`)) : currentConfig.saveLocation;
 
             if(filePath) filePath = require(`path`).join(saveLocation, sanitize(filePath));
 

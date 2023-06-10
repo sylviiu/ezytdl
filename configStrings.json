@@ -1,6 +1,7 @@
 {
     "saveLocation": "Save Location",
     "outputFilename": "File Name Format",
+    "downloadInWebsiteFolders": "Create Folders for Websites",
     "reduceAnimations": "Reduce Animations",
     "disableAnimations": "Disable All Animations",
     "lastMediaConversionOutputs": "Default Media Conversion",
