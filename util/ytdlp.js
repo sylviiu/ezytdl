@@ -375,6 +375,8 @@ module.exports = {
         try {
             const { saveLocation, onlyGPUConversion, disableHWAcceleratedConversion, outputFilename } = require(`../getConfig`)();
 
+            if(filePath) filePath = require(`path`).join(saveLocation, sanitize(filePath));
+
             let thisFormat;
 
             if(info.is_live && (format == `bv*+ba/b` || format == `bv` || format == `ba`)) format = null;

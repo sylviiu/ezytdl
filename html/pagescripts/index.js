@@ -602,7 +602,8 @@ const runSearch = async (url, initialMsg, func) => {
                     }
 
                     card.querySelector(`#formatConversionTextbox`).placeholder = `${format.ext}`;
-                    card.querySelector(`#saveLocation`).value = `${config && config.saveLocation ? config.saveLocation : `{default save location}`}`;
+                    //card.querySelector(`#saveLocation`).value = `${config && config.saveLocation ? config.saveLocation : `{default save location}`}`;
+                    card.querySelector(`#basedir`).innerText = `${config && config.saveLocation ? config.saveLocation : `Save Location`}`;
 
                     if(config.lastMediaConversionOutputs[formatDownloadType]) card.querySelector(`#formatConversionTextbox`).value = config.lastMediaConversionOutputs[formatDownloadType];
 

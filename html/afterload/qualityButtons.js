@@ -22,8 +22,8 @@ const setDefaultSaveOptValues = (node, info) => {
         conversionOptions(node, info)
 
         if(info.entries && info.entries.length > 0) {
-            if(!node.querySelector(`#saveLocation`).value.endsWith(navigator.platform.toLowerCase() == `win32` ? `\\` : `/`)) node.querySelector(`#saveLocation`).value += navigator.platform.toLowerCase() == `win32` ? `\\` : `/`
-            node.querySelector(`#saveLocation`).value += info.title
+            //if(!node.querySelector(`#saveLocation`).value.endsWith(navigator.platform.toLowerCase() == `win32` ? `\\` : `/`)) node.querySelector(`#saveLocation`).value += navigator.platform.toLowerCase() == `win32` ? `\\` : `/`
+            node.querySelector(`#saveLocation`).value = info.title
         }
     } else console.log(`no saveLocation`)
 };
@@ -253,11 +253,12 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
 
     const saveLocation = node.querySelector(`#saveLocation`)
 
-    saveLocation.value = `${config && config.saveLocation ? config.saveLocation : ``}`;
+    node.querySelector(`#basedir`).innerText = `${config && config.saveLocation ? config.saveLocation : `Save Location`}`;
+    //saveLocation.value = `${config && config.saveLocation ? config.saveLocation : ``}`;
 
     if(info.entries && info.entries.length > 0) {
-        if(!saveLocation.value.endsWith(`/`) && !saveLocation.value.endsWith(`\\`)) saveLocation.value += navigator.platform.toLowerCase() == `win32` ? `\\` : `/`
-        saveLocation.value += info.title
+        //if(!saveLocation.value.endsWith(`/`) && !saveLocation.value.endsWith(`\\`)) saveLocation.value += navigator.platform.toLowerCase() == `win32` ? `\\` : `/`
+        saveLocation.value = info.title
     }
 
     const modifyQualityButtonsDropdown = () => {
