@@ -2,6 +2,8 @@ import threading
 import ctypes
 import inspect
 
+from .print import print
+
 # https://stackoverflow.com/a/325528/21949399
 
 def _async_raise(tid, hook, exctype):

@@ -1,6 +1,7 @@
 import yt_dlp
 from c.writeStringWrapper import writeStringWrapper
 from c.killableThread import killableThread
+from c.print import print
 
 import c.wsHook as wsHook
 from c.progressHook import progressHook

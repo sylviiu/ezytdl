@@ -2,8 +2,9 @@ import json
 import threading
 import actions
 import sys
+import builtins
 
-from websocket_server import WebsocketServer
+from c.print import print
 
 import versionHeader
 
@@ -16,7 +17,7 @@ print("Creating bridge...")
 
 hooks = {}
 
-def recv(client, websocket, message):
+def recv(message):
     data = json.loads(message)
 
     if 'type' in data:
@@ -35,7 +36,12 @@ def recv(client, websocket, message):
         if data['id'] in hooks:
             hook = hooks[data['id']]
         else:
-            hook = actions.hook(data['id'], websocket.send_message_to_all)
+            def out(data): 
+                #builtins.print(data)
+                sys.stdout.write(data + '\n\r')
+                sys.stdout.flush()
+            
+            hook = actions.hook(data['id'], out)
             hooks[data['id']] = hook
         
         def complete():
@@ -45,7 +51,7 @@ def recv(client, websocket, message):
 
         threading.Thread(target=actions.exec(hook, data, complete), name="ACTION THREAD / " + data['id'], daemon=True).start()
 
-server = WebsocketServer(host='127.0.0.1', port=8765)
-server.set_fn_message_received(recv)
 print("Bridge ready", flush=True)
-server.run_forever()
+
+for line in sys.stdin:
+    recv(line)

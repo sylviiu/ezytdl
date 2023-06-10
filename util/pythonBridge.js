@@ -16,24 +16,25 @@ const WebSocket = require(`ws`);
 
 let resObj = () => ({
     send: (args) => {
-        module.exports.wsConnection.send(JSON.stringify(args));
+        //module.exports.wsConnection.send(JSON.stringify(args));
+        module.exports.bridgeProc.stdin.write((typeof args == `object` ? JSON.stringify(args) : `${args}`) + `\n`);
     },
     close: () => {
-        module.exports.wsConnection.close();
-        module.exports.wsConnection = null;
+        //module.exports.wsConnection.close();
+        //module.exports.wsConnection = null;
     }
 });
 
 const logHeading = (bridgepath, bridgecwd) => {
-    console.log(`-------------------------------\nBRIDGE DETAILS\nbasepath: ${basepath}\nbridgeProc: ${module.exports.bridgeProc}\nwsConnection: ${module.exports.wsConnection}\nbridgepath: ${bridgepath}\nbridgecwd: ${bridgecwd}\n-------------------------------`)
+    console.log(`-------------------------------\nBRIDGE DETAILS\nbasepath: ${basepath}\nbridgeProc: ${module.exports.bridgeProc}\nbridgepath: ${bridgepath}\nbridgecwd: ${bridgecwd}\n-------------------------------`)
 }
 
 module.exports = {
-    wsConnection: null,
     bridgeProc: null,
     idHooks: [],
     active: false,
     bridgeVersions: null,
+    resObj: () => resObj(),
     create: () => new Promise(async res => {
         global.createdBridge = true;
         module.exports.active = true;
@@ -48,16 +49,11 @@ module.exports = {
         logHeading(bridgepath, bridgecwd);
         
         if(require('fs').existsSync(bridgepath)) {
-            if(module.exports.wsConnection && module.exports.bridgeProc) {
+            if(module.exports.bridgeProc) {
                 res(resObj());
             } else {
                 if(!module.exports.bridgeProc) {
                     console.log(`no bridge process!`)
-
-                    if(module.exports.wsConnection) {
-                        module.exports.wsConnection.close();
-                        module.exports.wsConnection = null;
-                    };
 
                     if(!process.platform.toLowerCase().includes(`win32`)) {
                         console.log(`CHMOD ${bridgepath}`);
@@ -86,7 +82,7 @@ module.exports = {
                             console.log(`bridge process errored; err: ${err}`);
                         })
 
-                        const parseLog = (d, type) => {
+                        const parseLog = async (d, type) => {
                             if(!module.exports.bridgeVersions) try {
                                 module.exports.bridgeVersions = JSON.parse(d.toString().trim());
                             } catch(e) { }
@@ -100,40 +96,35 @@ module.exports = {
                             }
                         }
 
-                        proc.stdout.on(`data`, d => parseLog(d, `OUT`));
+                        //proc.stdout.on(`data`, d => parseLog(d, `OUT`));
                         proc.stderr.on(`data`, d => parseLog(d, `ERR`));
                     });
                 }
             
                 console.log(`bridge process active`);
-        
-                module.exports.wsConnection = new WebSocket(`ws://127.0.0.1:8765`);
 
-                const thisConnectionID = idGen(24);
-                
-                module.exports.wsConnection.id = thisConnectionID;
+                module.exports.bridgeProc.stdout.on(`data`, data => {
+                    data.toString().trim().split(`\n\r`).forEach(msg => {
+                        try {
+                            msg = msg.toString().trim();
+                            const data = JSON.parse(msg.toString().trim());
+                            if(data.id) module.exports.idHooks.filter(h => h.id == data.id).forEach(h => h.func(data));
+                        } catch(e) {
+                            console.error(`-----------------------\nmsg: "${msg}"\nerr: ${e}\n-----------------------`)
+                        }
+                    })
+                });
 
-                module.exports.wsConnection.onclose = () => {
-                    if(module.exports.wsConnection.id == thisConnectionID) {
-                        console.log(`ws connection closed`);
-                        module.exports.wsConnection = null;
-                        module.exports.create();
-                    }
-                }
+                res(resObj())
         
-                module.exports.wsConnection.onopen = () => {
-                    console.log(`ws connection open`);
-                    res(resObj());
-                }
-        
-                module.exports.wsConnection.onmessage = (msg) => {
+                /*module.exports.wsConnection.onmessage = (msg) => {
                     try {
                         const data = JSON.parse(msg.data);
                         if(data.id) module.exports.idHooks.filter(h => h.id == data.id).forEach(h => h.func(data));
                     } catch(e) {
                         console.error(e);
                     }
-                }
+                }*/
             }
         }// else res(null);
     }),

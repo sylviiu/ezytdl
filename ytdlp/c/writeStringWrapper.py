@@ -1,6 +1,8 @@
 import json
 import yt_dlp
 
+from .print import print
+
 class writeStringWrapper:
     def __init__(self, wsHook, type='info'):
         self.wsHook = wsHook

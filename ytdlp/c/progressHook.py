@@ -1,5 +1,7 @@
 import math
 
+from .print import print
+
 class progressHook:
     def __init__(self, hook):
         self.hook = hook

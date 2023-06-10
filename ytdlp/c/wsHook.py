@@ -1,13 +1,16 @@
 import json
 
+from .print import print
+
 class logHandler:
-    def __init__(self, hook, type):
-        self.hook = hook
+    def __init__(self, hook, func, type):
         self.type = type
+        self.hook = hook
+        self.func = func
 
     def __call__(self, data):
         # print(data)
-        self.hook.send(self.hook._format(data, self.type))
+        self.func(self.hook._format(data, self.type))
     
     data = ""
 
@@ -18,13 +21,13 @@ class logHandler:
             self.data = ""
 
 class hook:
-    def __init__(self, id, send):
+    def __init__(self, id, out):
         self.id = id
-        self.send = send
+        self.send = out
 
-        self.debug = logHandler(self, 'info')
-        self.warning = logHandler(self, 'warning')
-        self.error = logHandler(self, 'error')
+        self.debug = logHandler(self, out, 'info')
+        self.warning = logHandler(self, out, 'warning')
+        self.error = logHandler(self, out, 'error')
 
     def _format(self, msg, type):
         #print(msg)
@@ -32,10 +35,10 @@ class hook:
             'id': self.id,
             'type': type,
             'content': msg
-        }, indent = 4, default=lambda o: '<not serializable>')
+        }, default=lambda o: '<not serializable>')
 
     def complete(self, status=None):
-        #print('Completed ws message')
+        print('Completed message')
         self.send(self._format(status, 'complete'))
     
     def setKill(self, kill):

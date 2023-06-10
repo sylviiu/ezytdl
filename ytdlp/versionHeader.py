@@ -1,4 +1,5 @@
 import json
+from c.print import print
 
 def printHeader():
     from constants import BUILD_DATE

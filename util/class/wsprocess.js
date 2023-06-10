@@ -31,17 +31,20 @@ class wsprocess extends events.EventEmitter {
 
         const hook = (data) => {
             if(data.type == `complete`) {
+                console.log(`complete`)
                 this.emit(`close`, 0);
             } else if(data.type == `info`) {
+                console.log(`info / ${data.content.length}`)
                 this.stdout.write(Buffer.from(data.content + `\n`));
             } else {
+                console.log(`err / ${data.content.length}`)
                 this.stderr.write(Buffer.from(data.content + `\n`));
             }
         };
 
         bridge.idHooks.push({ id: this.processID, func: hook, });
 
-        bridge.wsConnection.send(JSON.stringify({
+        bridge.resObj().send(JSON.stringify({
             id: this.processID,
             args: this.args,
         }));
