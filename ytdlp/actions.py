@@ -35,8 +35,6 @@ def exec(hook, data, complete):
     parsed = parseOptions(data['args'], hook)
 
     write_string = writeStringWrapper(hook)
-    #yt_dlp.write_string = write_string
-    #yt_dlp.utils.write_string = write_string
 
     killed = False
 

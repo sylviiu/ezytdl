@@ -110,7 +110,7 @@ module.exports = {
                             const data = JSON.parse(msg.toString().trim());
                             if(data.id) module.exports.idHooks.filter(h => h.id == data.id).forEach(h => h.func(data));
                         } catch(e) {
-                            console.error(`-----------------------\nmsg: "${msg}"\nerr: ${e}\n-----------------------`)
+                            //console.error(`-----------------------\nmsg: "${msg}"\nerr: ${e}\n-----------------------`)
                         }
                     })
                 });

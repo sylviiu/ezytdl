@@ -37,9 +37,9 @@ def recv(message):
             hook = hooks[data['id']]
         else:
             def out(data): 
-                #builtins.print(data)
-                sys.stdout.write(data + '\n\r')
-                sys.stdout.flush()
+                builtins.print(data + '\n\r', flush=True)
+                #sys.stdout.write(data + '\n\r')
+                #sys.stdout.flush()
             
             hook = actions.hook(data['id'], out)
             hooks[data['id']] = hook
