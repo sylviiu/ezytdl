@@ -54,4 +54,7 @@ def recv(message):
 print("Bridge ready", flush=True)
 
 for line in sys.stdin:
-    recv(line)
+    try:
+        recv(line)
+    except:
+        print("Error in bridge (exception): " + str(sys.exc_info()[0]))
