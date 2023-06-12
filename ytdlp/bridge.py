@@ -2,6 +2,7 @@ import json
 import threading
 import actions
 import sys
+import traceback
 import builtins
 
 from c.print import print
@@ -53,8 +54,14 @@ def recv(message):
 
 print("Bridge ready", flush=True)
 
+def handleGlobalException(exc_type, exc_value, exc_traceback):
+    print("Error in bridge (global exception): " + str(exc_type) + " - " + str(exc_value) + " - " + str(exc_traceback))
+
+sys.excepthook = handleGlobalException
+
 for line in sys.stdin:
     try:
         recv(line)
     except:
-        print("Error in bridge (exception): " + str(sys.exc_info()[0]))
+        exc_info = sys.exc_info()
+        handleGlobalException(exc_info[0], exc_info[1], exc_info[2])
