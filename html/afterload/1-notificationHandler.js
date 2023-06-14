@@ -119,7 +119,7 @@ const addNotification = container => {
 }
 
 const createNotification = (opt, providedClickFunc) => {
-    let { headingText, title, bodyText, content, redirect, type } = opt;
+    let { headingText, title, bodyText, content, redirect, type, stack } = opt;
 
     const container = document.createElement(`div`);
 
@@ -220,7 +220,13 @@ const createNotification = (opt, providedClickFunc) => {
             button.style.color = `rgb(0,0,0)`;
             //button.style.marginTop = `10px`;
 
-            button.href = `https://github.com/sylviiu/ezytdl/issues/new`;
+            let reportStrings = [`## Type: ${type[0].toUpperCase() + type.slice(1)}`];
+
+            if(headingText || title) reportStrings.push(`### Title: \n${headingText || title}`)
+            if(bodyText || content) reportStrings.push(`### Content: \n${bodyText || content}`)
+            if(stack) reportStrings.push(`### Stack: \n\`\`\`js\n${stack}\n\`\`\``)
+
+            button.href = `https://github.com/sylviiu/ezytdl/issues/new?labels=bug&body=${encodeURIComponent(reportStrings.join(`\n\n`) + `\n\n### Below this line, please describe what caused this error.\n----\n`)}`;
 
             const icon = document.createElement(`i`);
             icon.classList.add(`fab`);

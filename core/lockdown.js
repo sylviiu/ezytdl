@@ -2,13 +2,19 @@ const { app, globalShortcut, session, shell } = require('electron');
 
 const path = require('path');
 
+const fs = require('fs')
+const getPath = require(`../util/getPath`);
+
 module.exports = () => {
     const genericURLRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/i;
 
     const urlHandler = (e, url) => {
-        console.log(`urlHandler:`, url)
+        let urlWithoutFile = url.includes(`file:///`) ? url.split(`file:///`)[1] : url;
+        if(urlWithoutFile.includes(`?`)) urlWithoutFile = urlWithoutFile.split(`?`)[0];
 
-        if(`${url}`.match(genericURLRegex)) {
+        console.log(`urlHandler:`, urlWithoutFile)
+
+        if(url.match(genericURLRegex) || (!fs.existsSync(urlWithoutFile) && !getPath(urlWithoutFile, true) && !getPath(`./html/${urlWithoutFile}`, true) && !getPath(`./html/${urlWithoutFile}.html`, true))) {
             console.log(`opening in new window (url regex matched)`)
             if(e && e.preventDefault) e.preventDefault();
             shell.openExternal(url);

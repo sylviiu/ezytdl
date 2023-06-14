@@ -5,6 +5,8 @@ const notifQueue = [];
 module.exports = (content) => {
     console.log(`sending notification ${global.window ? true : false}`, content);
 
+    content.stack = `- ${new Error().stack.split(`\n`).slice(1).map(s => s.trim()).join(`\n- `)}`;
+
     if(!content) {
         console.log(`no content`, notifQueue)
         if(notifQueue.length > 0 && global.window) {
