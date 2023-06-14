@@ -19,7 +19,7 @@ class wsprocess extends events.EventEmitter {
     kill(code) {
         const bridge = require(`../pythonBridge`);
 
-        bridge.resObj().send(JSON.stringify({
+        bridge.resObj.send(JSON.stringify({
             id: idGen(24),
             type: `kill`,
             targetID: this.processID,
@@ -33,6 +33,10 @@ class wsprocess extends events.EventEmitter {
             if(data.type == `complete`) {
                 console.log(`complete`)
                 this.emit(`close`, 0);
+                
+                while(bridge.idHooks.filter(h => h.id == this.processID).length > 0) {
+                    bridge.idHooks.splice(bridge.idHooks.findIndex(h => h.id == this.processID), 1);
+                }
             } else if(data.type == `info`) {
                 console.log(`info / ${data.content.length}`)
                 this.stdout.write(Buffer.from(data.content + `\n`));
@@ -42,9 +46,9 @@ class wsprocess extends events.EventEmitter {
             }
         };
 
-        bridge.idHooks.push({ id: this.processID, func: hook, });
+        bridge.idHooks.push({ id: this.processID, func: hook, args: this.args });
 
-        bridge.resObj().send(JSON.stringify({
+        bridge.resObj.send(JSON.stringify({
             id: this.processID,
             args: this.args,
         }));
