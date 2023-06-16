@@ -59,7 +59,7 @@ module.exports = (notDefault, overrideArgs) => {
             devTools: true,
             sandbox: false,
             scrollBounce: true,
-            backgroundThrottling: false,
+            //backgroundThrottling: false,
             preload: path.join(__dirname, `preload.js`)
         },
         icon: iconPath

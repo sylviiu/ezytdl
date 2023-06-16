@@ -936,3 +936,10 @@ resultsCountInput.addEventListener(`keyup`, (e) => {
 setTimeout(() => wavesAnims.fadeIn(), 50)
 
 changelog.check();
+
+if(window.location.search.slice(1)) {
+    const str = window.location.search.slice(1);
+    history.pushState({ page: 1 }, "introAnimation", window.location.href.split(`?`)[0]);
+    input.value = str;
+    processURL();
+};

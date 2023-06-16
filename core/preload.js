@@ -92,7 +92,8 @@ contextBridge.exposeInMainWorld(`system`, {
     loading: () => invoke(`loading`),
     detailsStr: () => invoke(`detailsStr`),
     addScript,
-    colors: () => systemColors
+    colors: () => systemColors,
+    downloadReq: (cb) => on(`download`, cb)
 })
 
 contextBridge.exposeInMainWorld(`dialog`, {

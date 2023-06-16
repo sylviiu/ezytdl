@@ -2,6 +2,7 @@
     "saveLocation": "Set the directory where media files are saved.",
     "outputFilename": "Change the format of the output filename. You can find the full list of fields at [yt-dlp's README](https://github.com/yt-dlp/yt-dlp#output-template)",
     "downloadInWebsiteFolders": "When enabled, ezytdl will download media files in a folder named after the website it was downloaded from.",
+    "downloadFromClipboard": "When enabled, ezytdl will automatically prompt you to download media from your clipboard when it detects a valid URL.",
     "reduceAnimations": "Remove some animations that may perform poorly on some systems.",
     "disableAnimations": "Disables all of the animations in the app (in a crude manner). This will not disable smaller things like progress bars, but is still useful if you want to reduce the amount of resources ezytdl uses, though reducing the animations should have a similar effect.",
     "lastMediaConversionOutputs": "Set the format ezytdl should convert media files to.",

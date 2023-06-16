@@ -2,6 +2,7 @@
     "saveLocation": "Save Location",
     "outputFilename": "File Name Format",
     "downloadInWebsiteFolders": "Create Folders for Websites",
+    "downloadFromClipboard": "Allow Checking Clipboard for URLs",
     "reduceAnimations": "Reduce Animations",
     "disableAnimations": "Disable All Animations",
     "lastMediaConversionOutputs": "Default Media Conversion",

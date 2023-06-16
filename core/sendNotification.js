@@ -17,7 +17,7 @@ module.exports = (content) => {
                 global.window.webContents.send(`notification`, c)
             };
         }
-    } else if((!global.window || global.windowHidden) && content.systemAllowed) {
+    } else if(module.exports.systemNotificationsEnabled() && content.systemAllowed) {
         const notif = new Notification({ 
             title: (content.type ? `[${content.type.toUpperCase()}] ` : ``) + content.headingText, 
             body: content.bodyText,
@@ -40,3 +40,5 @@ module.exports = (content) => {
         return false;
     }
 }
+
+module.exports.systemNotificationsEnabled = () => (!global.window || global.windowHidden)

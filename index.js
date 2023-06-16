@@ -79,9 +79,9 @@ if(!locked) {
                     console.log(`complete`)
                 }
             }));
+
             if(!app.isPackaged) window.webContents.openDevTools();
             
-        
             window.loadFile(`./html/loading.html`);
         };
 
