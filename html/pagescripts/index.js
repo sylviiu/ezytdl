@@ -101,64 +101,7 @@ let selectedSearch = null;
 
 let resultsVisible = false;
 
-const centerURLBox = (removeListbox, checkParse, duration) => {
-    console.log(`centerURLBox called; resultsVisible: ${resultsVisible}; doing anything? ${resultsVisible != false}`);
-
-    if(!resultsVisible) return false;
-
-    resultsVisible = false;
-
-    document.body.style.overflowY = `hidden`;
-
-    currentInfo = null;
-
-    window.scrollTo(0, 0);
-
-    duration = Number(duration) || 600;
-
-    const growUrlBox = (d) => {
-        anime({
-            targets: urlBox,
-            height: searchBoxHeights().reverse(),
-            duration: d || duration,
-            easing: `easeOutCirc`,
-            complete: () => {
-                if(document.getElementById(`listbox`)) listboxParent.removeChild(document.getElementById(`listbox`));
-
-                urlBox.style.height = `calc(100vh - 80px)`
-                
-                if(checkParse) {
-                    if(parse) {
-                        parseInfo();
-                    } else {
-                        parse = true;
-                    }
-                }
-            }
-        });
-    }
-
-    if(config.reduceAnimations) {
-        if(removeListbox && document.getElementById(`listbox`)) {
-            anime({
-                targets: document.getElementById(`listbox`),
-                opacity: [1, 0],
-                duration: duration/2,
-                easing: `easeOutCirc`,
-                complete: () => {
-                    if(document.getElementById(`listbox`)) listboxParent.removeChild(document.getElementById(`listbox`));
-                    growUrlBox(duration/2);
-                }
-            });
-        } else growUrlBox(duration/2);
-    } else {
-        growUrlBox();
-    }
-
-    if(config.disableAnimations) {
-        wavesAnims.fadeIn();
-    } else setTimeout(() => wavesAnims.fadeIn(), duration/10)
-}
+let centerURLBox;
 
 const runSearch = async (url, initialMsg, func) => {
     document.getElementById(`statusText`).innerHTML = initialMsg || `Fetching info...`;
@@ -169,6 +112,65 @@ const runSearch = async (url, initialMsg, func) => {
     console.log(`${initialMsg || `running search for`}: ${url}`)
 
     let info = null;
+
+    centerURLBox = (removeListbox, checkParse, duration) => {
+        console.log(`centerURLBox called; resultsVisible: ${resultsVisible}; doing anything? ${resultsVisible != false}`);
+    
+        if(!resultsVisible) return false;
+    
+        resultsVisible = false;
+    
+        document.body.style.overflowY = `hidden`;
+    
+        currentInfo = null;
+    
+        window.scrollTo(0, 0);
+    
+        duration = Number(duration) || 600;
+    
+        const growUrlBox = (d) => {
+            anime({
+                targets: urlBox,
+                height: searchBoxHeights().reverse(),
+                duration: d || duration,
+                easing: `easeOutCirc`,
+                complete: () => {
+                    if(document.getElementById(`listbox`)) listboxParent.removeChild(document.getElementById(`listbox`));
+    
+                    urlBox.style.height = `calc(100vh - 80px)`
+                    
+                    if(checkParse) {
+                        if(typeof parse != `undefined`) {
+                            parseInfo();
+                        } else {
+                            parse = true;
+                        }
+                    }
+                }
+            });
+        }
+    
+        if(config.reduceAnimations) {
+            if(removeListbox && document.getElementById(`listbox`)) {
+                anime({
+                    targets: document.getElementById(`listbox`),
+                    opacity: [1, 0],
+                    duration: duration/2,
+                    easing: `easeOutCirc`,
+                    complete: () => {
+                        if(document.getElementById(`listbox`)) listboxParent.removeChild(document.getElementById(`listbox`));
+                        growUrlBox(duration/2);
+                    }
+                });
+            } else growUrlBox(duration/2);
+        } else {
+            growUrlBox();
+        }
+    
+        if(config.disableAnimations) {
+            wavesAnims.fadeIn();
+        } else setTimeout(() => wavesAnims.fadeIn(), duration/10)
+    }
 
     const parseInfo = async () => {
         resultsVisible = true;
@@ -677,11 +679,15 @@ const runSearch = async (url, initialMsg, func) => {
 
             if(!config.reduceAnimations && !config.disableAnimations) listboxParent.appendChild(listbox);
 
-            parseProgress.remove();
-            parseProgress = null;
+            if(typeof parseProgress != `undefined` && parseProgress) {
+                parseProgress.remove();
+                parseProgress = null;
+            }
 
-            progressObj.remove();
-            progressObj = null;
+            if(typeof progressObj != `undefined` && progressObj) {
+                progressObj.remove();
+                progressObj = null;
+            }
         }
     
         input.disabled = false;
