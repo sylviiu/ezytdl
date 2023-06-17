@@ -31,17 +31,17 @@ class wsprocess extends events.EventEmitter {
 
         const hook = (data) => {
             if(data.type == `complete`) {
-                console.log(`complete`)
+                console.log(`[${this.processID}] complete`)
                 this.emit(`close`, 0);
                 
                 while(bridge.idHooks.filter(h => h.id == this.processID).length > 0) {
                     bridge.idHooks.splice(bridge.idHooks.findIndex(h => h.id == this.processID), 1);
                 }
             } else if(data.type == `info`) {
-                console.log(`info / ${data.content.length}`)
+                console.log(`[${this.processID}] info / ${data.content.length}`)
                 this.stdout.write(Buffer.from(data.content + `\n`));
             } else {
-                console.log(`err / ${data.content.length}`)
+                console.log(`[${this.processID}] err / ${data.content.length}`)
                 this.stderr.write(Buffer.from(data.content + `\n`));
             }
         };
