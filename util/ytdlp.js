@@ -481,26 +481,31 @@ module.exports = {
                         } else {
                             const cleanup = (restoreOriginal) => {
                                 if(fs.existsSync(target + `.ezytdl`) && !fs.existsSync(target)) {
-                                    update({status: `Removing temporary file...`})
+                                    update({status: `Restoring original file...`})
+                                    console.log(`-- restoring ${target + `.ezytdl`}...`)
                                     fs.renameSync(target + `.ezytdl`, target);
                                 } else if(fs.existsSync(target + `.ezytdl`) && fs.existsSync(target)) {
                                     if(restoreOriginal) {
                                         update({status: `Rolling back changes...`})
+                                        console.log(`-- restoring ${target}...`)
                                         fs.unlinkSync(target);
                                         fs.renameSync(target + `.ezytdl`, target);
                                     } else {
                                         update({status: `Removing temporary file...`})
+                                        console.log(`-- removing ${target + `.ezytdl`}...`)
                                         fs.unlinkSync(target + `.ezytdl`);
                                     }
                                 }
                                 
                                 if(fs.existsSync(target + `.songcover`)) {
                                     update({status: `Removing temporary thumbnail file...`})
+                                    console.log(`-- removing ${target + `.songcover`}...`)
                                     fs.unlinkSync(target + `.songcover`);
                                 }
                                 
                                 if(fs.existsSync(target + `.png`)) {
                                     update({status: `Removing temporary thumbnail file...`})
+                                    console.log(`-- removing ${target + `.png`}...`)
                                     fs.unlinkSync(target + `.png`);
                                 }
                             }
@@ -519,7 +524,6 @@ module.exports = {
                                 if(info.album) tags.push([`album`, info.album]);
                                 if(info.artist || info.album_artist || info.creator || info.uploader || info.channel) tags.push([`artist`, info.artist || info.album_artist || info.creator || info.uploader || info.channel]);
                                 if(info.track_number) tags.push([`track number`, info.track_number]);
-                                if(info.upload_date) tags.push([`year`, info.upload_date.slice(0, 4)], [`date`, info.upload_date]);
                                 if(info.genre) tags.push([`genre`, info.genre]);
                                 if(info.license) tags.push([`copyright`, info.license]);
                                 if(info.description) tags.push([`comment`, info.description]);
@@ -528,7 +532,7 @@ module.exports = {
     
                                 tags.forEach(t => meta.push(`-metadata`, `${t[0]}=${t[1].replace(/\n/g, `\r\n`)}`));
         
-                                const args = [`-y`, `-i`, target + `.ezytdl`, ...meta, `-c`, `copy`, target];
+                                const args = [`-y`, `-ignore_unknown`, `-i`, target + `.ezytdl`, `-id3v2_version`, `3`, `-write_id3v1`, `1`, ...meta, `-c`, `copy`, target];
         
                                 console.log(args);
         
@@ -539,7 +543,7 @@ module.exports = {
                                 });
         
                                 proc.stderr.on(`data`, d => {
-                                    console.error(d.toString().trim())
+                                    console.log(d.toString().trim())
                                 });
         
                                 proc.on(`error`, e => {
@@ -598,7 +602,7 @@ module.exports = {
                                 req.once(`end`, () => {
                                     update({status: `Converting thumbnail...`})
 
-                                    const imgConvertProc = child_process.execFile(ffmpegPath, [`-y`, `-i`, target + `.songcover`, `-vf`, `crop=min(in_w\\,in_h):min(in_w\\,in_h)`, target + `.png`]);
+                                    const imgConvertProc = child_process.execFile(ffmpegPath, [`-y`, `-i`, target + `.songcover`, `-update`, `1`, `-vf`, `crop=min(in_w\\,in_h):min(in_w\\,in_h)`, target + `.png`]);
 
                                     imgConvertProc.stdout.on(`data`, d => {
                                         console.log(d.toString().trim())
