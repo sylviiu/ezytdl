@@ -373,7 +373,7 @@ module.exports = {
                 purgeFiles(`${i}`, f)
             });
 
-            updateFunc({status: `Download cancelled.`})
+            update({status: `Download cancelled.`})
 
             resolve(obj)
         }
@@ -420,7 +420,7 @@ module.exports = {
     
             const saveTo = (filePath || saveLocation) + (require('os').platform() == `win32` ? `\\` : `/`)
 
-            updateFunc({ deleteFiles: () => purgeLeftoverFiles(saveTo), live: info.is_live ? true : false, destinationFilename: ytdlpFilename, formatID: format })
+            update({ deleteFiles: () => purgeLeftoverFiles(saveTo), live: info.is_live ? true : false, destinationFilename: ytdlpFilename, formatID: format })
     
             fs.mkdirSync(saveTo, { recursive: true, failIfExists: false });
         
@@ -436,11 +436,11 @@ module.exports = {
 
             const res = async (o) => {
                 console.log(o)
-                updateFunc(Object.assign({}, typeof o == `object` ? o : {}, { percentNum: 100 }));
+                update(Object.assign({}, typeof o == `object` ? o : {}, { percentNum: -1 }));
                 const resolveStatus = obj.status;
                 new Promise(async r => {
                     const file = fs.readdirSync(saveLocation).find(f => f.startsWith(ytdlpFilename));
-                    const target = require(`path`).join(saveLocation, file || ``)
+                    const target = require(`path`).join(saveLocation, file || ``);
 
                     const isWritable = () => {
                         try {
@@ -454,11 +454,19 @@ module.exports = {
                     if(addMetadata && ffmpegPath && file && fs.existsSync(target)) {
                         console.log(`adding metadata...`)
 
+                        let totalTasks = Object.values(addMetadata).filter(v => v).length + 1;
+                        let current = 0;
+
+                        const updateTask = (o) => {
+                            current++;
+                            update(Object.assign({}, o, {percentNum: Math.round((current/totalTasks) * 100)}))
+                        }
+
                         let n = 0;
 
                         while(!isWritable()) {
                             n++;
-                            updateFunc({status: `Waiting for file to unlock for metadata... (${n}/10)`})
+                            update({status: `Waiting for file to unlock for metadata... (${n}/10)`})
                             if(n > 10) break;
                             await new Promise(r => setTimeout(r, 1000));
                         };
@@ -473,32 +481,32 @@ module.exports = {
                         } else {
                             const cleanup = (restoreOriginal) => {
                                 if(fs.existsSync(target + `.ezytdl`) && !fs.existsSync(target)) {
-                                    updateFunc({status: `Removing temporary file...`})
+                                    update({status: `Removing temporary file...`})
                                     fs.renameSync(target + `.ezytdl`, target);
                                 } else if(fs.existsSync(target + `.ezytdl`) && fs.existsSync(target)) {
                                     if(restoreOriginal) {
-                                        updateFunc({status: `Rolling back changes...`})
+                                        update({status: `Rolling back changes...`})
                                         fs.unlinkSync(target);
                                         fs.renameSync(target + `.ezytdl`, target);
                                     } else {
-                                        updateFunc({status: `Removing temporary file...`})
+                                        update({status: `Removing temporary file...`})
                                         fs.unlinkSync(target + `.ezytdl`);
                                     }
                                 }
                                 
                                 if(fs.existsSync(target + `.songcover`)) {
-                                    updateFunc({status: `Removing temporary thumbnail file...`})
+                                    update({status: `Removing temporary thumbnail file...`})
                                     fs.unlinkSync(target + `.songcover`);
                                 }
                                 
                                 if(fs.existsSync(target + `.png`)) {
-                                    updateFunc({status: `Removing temporary thumbnail file...`})
+                                    update({status: `Removing temporary thumbnail file...`})
                                     fs.unlinkSync(target + `.png`);
                                 }
                             }
                             
                             if(addMetadata.generalInfo) await new Promise(async r => {
-                                updateFunc({status: `Adding tags...`})
+                                updateTask({status: `Adding tags...`})
 
                                 cleanup();
     
@@ -566,7 +574,7 @@ module.exports = {
                             });
 
                             if(addMetadata.songCover && info.thumbnail) await new Promise(async r => {
-                                updateFunc({status: `Downloading thumbnail...`})
+                                updateTask({status: `Downloading thumbnail...`})
     
                                 cleanup();
 
@@ -588,7 +596,7 @@ module.exports = {
                                 });
     
                                 req.once(`end`, () => {
-                                    updateFunc({status: `Converting thumbnail...`})
+                                    update({status: `Converting thumbnail...`})
 
                                     const imgConvertProc = child_process.execFile(ffmpegPath, [`-y`, `-i`, target + `.songcover`, `-vf`, `crop=min(in_w\\,in_h):min(in_w\\,in_h)`, target + `.png`]);
 
@@ -602,7 +610,7 @@ module.exports = {
 
                                     imgConvertProc.on(`close`, code => {
                                         if(code == 0) {
-                                            updateFunc({status: `Adding thumbnail...`})
+                                            update({status: `Adding thumbnail...`})
 
                                             const args = [`-y`, `-i`, target + `.ezytdl`, `-i`, `${target + `.png`}`, `-c`, `copy`, `-map`, `0:0`, `-map`, `1:0`, `-metadata:s:v`, `title=Album cover`, `-metadata:s:v`, `comment=Cover (front)`];
                     
@@ -668,7 +676,7 @@ module.exports = {
     
                     r();
                 }).then(() => {
-                    updateFunc({status: resolveStatus})
+                    update({status: resolveStatus, percentNum: 100})
                     resolve(obj)
                 })
             }
