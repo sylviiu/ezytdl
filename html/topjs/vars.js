@@ -7,3 +7,6 @@ configuration.hook(newConf => { config = newConf });
 
 var systemColors = system.colors();
 console.log(`systemColors: `, systemColors)
+
+var appVersion = `0.0.0`;
+version.get().then(v => appVersion = v);
