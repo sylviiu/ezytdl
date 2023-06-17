@@ -514,11 +514,11 @@ module.exports = {
                                 if(info.upload_date) tags.push([`year`, info.upload_date.slice(0, 4)], [`date`, info.upload_date]);
                                 if(info.genre) tags.push([`genre`, info.genre]);
                                 if(info.license) tags.push([`copyright`, info.license]);
-                                if(info.description) tags.push([`comments`, info.description]);
+                                if(info.description) tags.push([`comment`, info.description]);
     
                                 const meta = [];
     
-                                tags.forEach(t => meta.push(`-metadata`, `${t[0]}=${t[1]}`));
+                                tags.forEach(t => meta.push(`-metadata`, `${t[0]}=${t[1].replace(/\n/g, `\r\n`)}`));
         
                                 const args = [`-y`, `-i`, target + `.ezytdl`, ...meta, `-c`, `copy`, target];
         
