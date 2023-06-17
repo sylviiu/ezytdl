@@ -471,14 +471,30 @@ module.exports = {
                                 bodyText: `the file is still locked after 10 attempts.`
                             });
                         } else {
-                            const cleanup = () => {
+                            const cleanup = (restoreOriginal) => {
                                 if(fs.existsSync(target + `.ezytdl`) && !fs.existsSync(target)) {
+                                    updateFunc({status: `Removing temporary file...`})
                                     fs.renameSync(target + `.ezytdl`, target);
                                 } else if(fs.existsSync(target + `.ezytdl`) && fs.existsSync(target)) {
-                                    fs.unlinkSync(target + `.ezytdl`);
+                                    if(restoreOriginal) {
+                                        updateFunc({status: `Rolling back changes...`})
+                                        fs.unlinkSync(target);
+                                        fs.renameSync(target + `.ezytdl`, target);
+                                    } else {
+                                        updateFunc({status: `Removing temporary file...`})
+                                        fs.unlinkSync(target + `.ezytdl`);
+                                    }
                                 }
                                 
-                                if(fs.existsSync(target + `.songcover`)) fs.unlinkSync(target + `.songcover`);
+                                if(fs.existsSync(target + `.songcover`)) {
+                                    updateFunc({status: `Removing temporary thumbnail file...`})
+                                    fs.unlinkSync(target + `.songcover`);
+                                }
+                                
+                                if(fs.existsSync(target + `.png`)) {
+                                    updateFunc({status: `Removing temporary thumbnail file...`})
+                                    fs.unlinkSync(target + `.png`);
+                                }
                             }
                             
                             if(addMetadata.generalInfo) await new Promise(async r => {
@@ -527,13 +543,13 @@ module.exports = {
                                         bodyText: `${e.toString()}`
                                     });
     
-                                    cleanup();
+                                    cleanup(true);
                                     r()
                                 });
         
                                 proc.on(`close`, code => {
                                     console.log(`metadata added! (code ${code})`)
-                                    cleanup();
+                                    cleanup(code === 0 ? false : true);
                                     r()
                                 })
                             }).catch(e => {
@@ -545,12 +561,12 @@ module.exports = {
                                     bodyText: `${e.toString()}`
                                 });
     
-                                cleanup();
+                                cleanup(true);
                                 r()
                             });
 
                             if(addMetadata.songCover && info.thumbnail) await new Promise(async r => {
-                                updateFunc({status: `Adding thumbnail...`})
+                                updateFunc({status: `Downloading thumbnail...`})
     
                                 cleanup();
 
@@ -572,39 +588,65 @@ module.exports = {
                                 });
     
                                 req.once(`end`, () => {
-                                    const args = [`-y`, `-i`, target + `.ezytdl`, `-i`, `${target + `.songcover`}`, `-c`, `copy`, `-map`, `0:0`, `-map`, `1:0`, `-metadata:s:v`, `title=Album cover`, `-metadata:s:v`, `comment=Cover (front)`];
-            
-                                    if(target.endsWith(`.mp3`)) args.splice(args.indexOf(`1:0`)+1, 0, `-id3v2_version`, `3`, `-write_id3v1`, `1`);
+                                    updateFunc({status: `Converting thumbnail...`})
 
-                                    console.log(args);
-            
-                                    const proc = child_process.execFile(ffmpegPath, [...args, target]);
-            
-                                    proc.stdout.on(`data`, d => {
+                                    const imgConvertProc = child_process.execFile(ffmpegPath, [`-y`, `-i`, target + `.songcover`, `-vf`, `crop=min(in_w\\,in_h):min(in_w\\,in_h)`, target + `.png`]);
+
+                                    imgConvertProc.stdout.on(`data`, d => {
                                         console.log(d.toString().trim())
-                                    });
-            
-                                    proc.stderr.on(`data`, d => {
-                                        console.error(d.toString().trim())
-                                    });
-            
-                                    proc.on(`error`, e => {
-                                        console.error(e)
-        
-                                        sendNotification({
-                                            type: `warn`,
-                                            headingText: `failed to add song cover to ${info.title}!`,
-                                            bodyText: `${e.toString()}`
-                                        });
-        
-                                        cleanup();
-                                        r()
-                                    });
-            
-                                    proc.on(`close`, code => {
-                                        console.log(`song cover added! (code ${code})`)
+                                    })
 
-                                        r()
+                                    imgConvertProc.stderr.on(`data`, d => {
+                                        console.error(d.toString().trim())
+                                    })
+
+                                    imgConvertProc.on(`close`, code => {
+                                        if(code == 0) {
+                                            updateFunc({status: `Adding thumbnail...`})
+
+                                            const args = [`-y`, `-i`, target + `.ezytdl`, `-i`, `${target + `.png`}`, `-c`, `copy`, `-map`, `0:0`, `-map`, `1:0`, `-metadata:s:v`, `title=Album cover`, `-metadata:s:v`, `comment=Cover (front)`];
+                    
+                                            if(target.endsWith(`.mp3`)) args.splice(args.indexOf(`1:0`)+1, 0, `-id3v2_version`, `3`, `-write_id3v1`, `1`);
+        
+                                            console.log(args);
+                    
+                                            const proc = child_process.execFile(ffmpegPath, [...args, target]);
+                    
+                                            proc.stdout.on(`data`, d => {
+                                                console.log(d.toString().trim())
+                                            });
+                    
+                                            proc.stderr.on(`data`, d => {
+                                                console.error(d.toString().trim())
+                                            });
+                    
+                                            proc.on(`error`, e => {
+                                                console.error(e)
+                
+                                                sendNotification({
+                                                    type: `warn`,
+                                                    headingText: `failed to add song cover to ${info.title}!`,
+                                                    bodyText: `${e.toString()}`
+                                                });
+                
+                                                cleanup(true);
+                                                r();
+                                            });
+                    
+                                            proc.on(`close`, code => {
+                                                console.log(`song cover added! (code ${code})`)
+                                                cleanup(code === 0 ? false : true);
+                                                r();
+                                            })
+                                        } else {
+                                            console.log(`failed to convert image to png!`)
+                                            sendNotification({
+                                                type: `warn`,
+                                                headingText: `failed to add song cover to ${info.title}!`,
+                                                bodyText: `failed to convert image to png!`
+                                            });
+                                            cleanup(true)
+                                        }
                                     })
                                 })
                             }).catch(e => {
@@ -616,7 +658,7 @@ module.exports = {
                                     bodyText: `${e.toString()}`
                                 });
     
-                                cleanup();
+                                cleanup(true);
                                 r()
                             });
 
