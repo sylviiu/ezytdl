@@ -95,7 +95,12 @@ module.exports = {
                             })
 
                             const prefix = `[BRIDGE] ${type} | `;
-                            console.log(prefix + d.toString().trim().split(`\n`).join(`\n` + prefix));
+
+                            let str = d.toString().trim();
+
+                            if(str.length > 500) str = str.slice(0, 500) + `...`
+
+                            console.log(prefix + str.trim().split(`\n`).join(`\n` + prefix));
 
                             if(d.toString().trim().includes(`Bridge ready`) && !resolved) {
                                 resolved = true;
