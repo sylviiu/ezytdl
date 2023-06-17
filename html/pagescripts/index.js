@@ -101,7 +101,7 @@ let selectedSearch = null;
 
 let resultsVisible = false;
 
-let centerURLBox;
+let centerURLBox = () => null;
 
 const runSearch = async (url, initialMsg, func) => {
     document.getElementById(`statusText`).innerHTML = initialMsg || `Fetching info...`;
@@ -882,7 +882,7 @@ const setCurrentSearch = (btn) => {
     })
 };
 
-const genericUrlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/;
+const genericUrlRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/;
 
 const processURL = () => {
     const url = input.value;
@@ -890,7 +890,7 @@ const processURL = () => {
     if(url.length > 0) {        
         console.log (`clicc`, url)
     
-        const match = url.match(genericUrlRegex);
+        const match = `${url}`.split(`?`)[0].match(genericUrlRegex);
     
         console.log (`match`, match)
     
