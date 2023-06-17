@@ -388,6 +388,8 @@ module.exports = {
 
             let thisFormat;
 
+            if(format == `bv*+ba/b`) format = null;
+
             if(info.is_live && (format == `bv*+ba/b` || format == `bv` || format == `ba`)) format = null;
 
             if(info.formats) {
