@@ -323,8 +323,9 @@ module.exports = {
         let proc;
 
         let update = (o) => {
-            obj = Object.assign({}, obj, o);
+            Object.assign(obj, o);
             updateFunc({ latest: o, overall: obj }, proc);
+            return obj;
         };
 
         let filenames = [];
@@ -440,6 +441,7 @@ module.exports = {
                 console.log(o)
                 update(Object.assign({}, typeof o == `object` ? o : {}, { percentNum: -1 }));
                 const resolveStatus = obj.status;
+                const skipped = {};
                 new Promise(async r => {
                     let run = true;
 
@@ -479,11 +481,7 @@ module.exports = {
 
                         if(n > 10) {
                             console.log(`file still locked after 10 attempts!`)
-                            sendNotification({
-                                type: `warn`,
-                                headingText: `failed to add metadata to ${info.title}!`,
-                                bodyText: `the file is still locked after 10 attempts.`
-                            });
+                            Object.entries(addMetadata).filter(v => v[1]).forEach(k => skipped[k[0]] = `File was locked (10 attempts were made).`);
                         } else {
                             const cleanup = (restoreOriginal) => {
                                 if(fs.existsSync(target + `.ezytdl`) && !fs.existsSync(target)) {
@@ -555,11 +553,7 @@ module.exports = {
                                 proc.on(`error`, e => {
                                     console.error(e)
     
-                                    sendNotification({
-                                        type: `warn`,
-                                        headingText: `failed to add metadata to ${info.title}!`,
-                                        bodyText: `${e.toString()}`
-                                    });
+                                    skipped.generalInfo = `${e}`;
     
                                     cleanup(true);
                                     r()
@@ -573,121 +567,117 @@ module.exports = {
                             }).catch(e => {
                                 console.error(e)
     
-                                sendNotification({
-                                    type: `warn`,
-                                    headingText: `failed to add metadata to ${info.title}!`,
-                                    bodyText: `${e.toString()}`
-                                });
-    
-                                cleanup(true);
-                                r()
-                            });
-
-                            if(addMetadata.songCover && info.thumbnail) await new Promise(async r => {
-                                updateTask({status: `Downloading thumbnail...`})
-    
-                                cleanup();
-
-                                fs.renameSync(target, target + `.ezytdl`);
-    
-                                const req = require(`superagent`).get(info.thumbnail);
-    
-                                req.pipe(fs.createWriteStream(target + `.songcover`))
-    
-                                req.once(`error`, e => {
-                                    console.log(e)
-                                    sendNotification({
-                                        type: `warn`,
-                                        headingText: `failed to add song cover to ${info.title}!`,
-                                        bodyText: `${e.toString()}`
-                                    });
-                                    fs.renameSync(target + `.ezytdl`, target);
-                                    r()
-                                });
-    
-                                req.once(`end`, () => {
-                                    update({status: `Converting thumbnail...`})
-
-                                    const imgConvertProc = child_process.execFile(ffmpegPath, [`-y`, `-i`, target + `.songcover`, `-update`, `1`, `-vf`, `crop=min(in_w\\,in_h):min(in_w\\,in_h)`, target + `.png`]);
-
-                                    imgConvertProc.stdout.on(`data`, d => {
-                                        console.log(d.toString().trim())
-                                    })
-
-                                    imgConvertProc.stderr.on(`data`, d => {
-                                        console.error(d.toString().trim())
-                                    })
-
-                                    imgConvertProc.on(`close`, code => {
-                                        if(code == 0) {
-                                            update({status: `Adding thumbnail...`})
-
-                                            const args = [`-y`, `-i`, target + `.ezytdl`, `-i`, `${target + `.png`}`, `-c`, `copy`, `-map`, `0:0`, `-map`, `1:0`, `-metadata:s:v`, `title=Album cover`, `-metadata:s:v`, `comment=Cover (front)`];
-                    
-                                            if(target.endsWith(`.mp3`)) args.splice(args.indexOf(`1:0`)+1, 0, `-id3v2_version`, `3`, `-write_id3v1`, `1`);
-        
-                                            console.log(args);
-                    
-                                            const proc = child_process.execFile(ffmpegPath, [...args, target]);
-                    
-                                            proc.stdout.on(`data`, d => {
-                                                console.log(d.toString().trim())
-                                            });
-                    
-                                            proc.stderr.on(`data`, d => {
-                                                console.error(d.toString().trim())
-                                            });
-                    
-                                            proc.on(`error`, e => {
-                                                console.error(e)
-                
-                                                sendNotification({
-                                                    type: `warn`,
-                                                    headingText: `failed to add song cover to ${info.title}!`,
-                                                    bodyText: `${e.toString()}`
-                                                });
-                
-                                                cleanup(true);
-                                                r();
-                                            });
-                    
-                                            proc.on(`close`, code => {
-                                                console.log(`song cover added! (code ${code})`)
-                                                cleanup(code === 0 ? false : true);
-                                                r();
-                                            })
-                                        } else {
-                                            console.log(`failed to convert image to png!`)
-                                            sendNotification({
-                                                type: `warn`,
-                                                headingText: `failed to add song cover to ${info.title}!`,
-                                                bodyText: `failed to convert image to png!`
-                                            });
-                                            cleanup(true)
-                                        }
-                                    })
-                                })
-                            }).catch(e => {
-                                console.error(e)
-    
-                                sendNotification({
-                                    type: `warn`,
-                                    headingText: `failed to add song cover to ${info.title}!`,
-                                    bodyText: `${e.toString()}`
-                                });
+                                skipped.generalInfo = `${e}`;
     
                                 cleanup(true);
                                 r()
                             });
 
                             cleanup();
+
+                            const vcodec = getCodec(target)
+
+                            if(addMetadata.songCover && info.thumbnail && !vcodec) {
+                                await new Promise(async r => {
+                                    updateTask({status: `Downloading thumbnail...`})
+    
+                                    fs.renameSync(target, target + `.ezytdl`);
+        
+                                    const req = require(`superagent`).get(info.thumbnail);
+        
+                                    req.pipe(fs.createWriteStream(target + `.songcover`))
+        
+                                    req.once(`error`, e => {
+                                        console.log(e)
+                                        skipped.songCover = `Failed to download thumbnail`;
+                                        fs.renameSync(target + `.ezytdl`, target);
+                                        r()
+                                    });
+        
+                                    req.once(`end`, () => {
+                                        update({status: `Converting thumbnail...`})
+    
+                                        const imgConvertProc = child_process.execFile(ffmpegPath, [`-y`, `-i`, target + `.songcover`, `-update`, `1`, `-vf`, `crop=min(in_w\\,in_h):min(in_w\\,in_h)`, target + `.png`]);
+    
+                                        imgConvertProc.stdout.on(`data`, d => {
+                                            console.log(d.toString().trim())
+                                        })
+    
+                                        imgConvertProc.stderr.on(`data`, d => {
+                                            console.error(d.toString().trim())
+                                        })
+    
+                                        imgConvertProc.on(`close`, code => {
+                                            if(code == 0) {
+                                                update({status: `Adding thumbnail...`})
+    
+                                                const args = [`-y`, `-i`, target + `.ezytdl`, `-i`, `${target + `.png`}`, `-c`, `copy`, `-map`, `0:0`, `-map`, `1:0`, `-metadata:s:v`, `title=Album cover`, `-metadata:s:v`, `comment=Cover (front)`];
+                        
+                                                if(target.endsWith(`.mp3`)) args.splice(args.indexOf(`1:0`)+1, 0, `-id3v2_version`, `3`, `-write_id3v1`, `1`);
+            
+                                                console.log(args);
+                        
+                                                const proc = child_process.execFile(ffmpegPath, [...args, target]);
+                        
+                                                proc.stdout.on(`data`, d => {
+                                                    console.log(d.toString().trim())
+                                                });
+                        
+                                                proc.stderr.on(`data`, d => {
+                                                    console.error(d.toString().trim())
+                                                });
+                        
+                                                proc.on(`error`, e => {
+                                                    console.error(e)
+                    
+                                                    skipped.songCover = `Failed to add cover: ${e}`;
+                    
+                                                    cleanup(true);
+                                                    r();
+                                                });
+                        
+                                                proc.on(`close`, code => {
+                                                    console.log(`song cover added! (code ${code})`)
+                                                    cleanup(code === 0 ? false : true);
+                                                    r();
+                                                })
+                                            } else {
+                                                console.log(`failed to convert image to png!`)
+                                                skipped.songCover = `Failed to convert thumbnail to PNG`;
+                                                cleanup(true)
+                                            }
+                                        })
+                                    })
+                                }).catch(e => {
+                                    console.error(e)
+        
+                                    skipped.songCover = `${e}`;
+        
+                                    cleanup(true);
+                                    r()
+                                })
+                            } else if(vcodec) {
+                                skipped.songCover = `Video detected`;
+                            }
+
+                            cleanup();
                         }
-                    } else console.log(`no metadata to add! (run: ${run}) (ffmpeg installed: ${ffmpegPath ? true : false}) (file: ${file ? true : false})`);
+                    } else {
+                        console.log(`no metadata to add! (run: ${run}) (ffmpeg installed: ${ffmpegPath ? true : false}) (file: ${file ? true : false})`);
+                        if(!run) {
+                            Object.entries(addMetadata).filter(v => v[1]).forEach(k => skipped[k[0]] = `Download was cancelled.`);
+                        } else if(!ffmpegPath) {
+                            Object.entries(addMetadata).filter(v => v[1]).forEach(k => skipped[k[0]] = `FFmpeg wasn't found.`);
+                        } else if(!file || !fs.existsSync(target)) {
+                            Object.entries(addMetadata).filter(v => v[1]).forEach(k => skipped[k[0]] = `File wasn't found.`);
+                        }
+                    }
     
                     r();
                 }).then(() => {
-                    update({status: resolveStatus, percentNum: 100})
-                    resolve(obj)
+                    const status = resolveStatus + (Object.keys(skipped).length > 0 ? `<br><br>${Object.entries(skipped).map(s => `- Skipped ${s[0]} embed: ${s[1]}`).join(`<br>`)}` : ``);
+                    console.log(`-------------\n${status}\n-------------`)
+                    resolve(update({status, percentNum: 100}))
                 })
             }
 
@@ -944,6 +934,8 @@ module.exports = {
             if(/*thisFormat && thisFormat.protocol && thisFormat.protocol.toLowerCase().includes(`m3u8`) && fs.existsSync(ffmpegPath)*/ false) {
             } else {
                 args = [`-f`, format, url, `-o`, require(`path`).join(saveTo, ytdlpFilename) + `.%(ext)s`, `--no-mtime`, ...additionalArgs];
+
+                if(!format) args.splice(0, 2)
     
                 args.push(`--ffmpeg-location`, ``);
         
