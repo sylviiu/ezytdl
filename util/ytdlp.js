@@ -448,7 +448,7 @@ module.exports = {
                     if(killAttempt > 0) run = false;
 
                     const file = fs.readdirSync(saveLocation).find(f => f.startsWith(ytdlpFilename) && !f.endsWith(`.meta`));
-                    const target = require(`path`).join(saveLocation, file || ``);
+                    const target = file ? require(`path`).join(saveLocation, file) : null;
 
                     const isWritable = () => {
                         try {
@@ -514,10 +514,8 @@ module.exports = {
                                 }
                             }
                             
-                            if(addMetadata.generalInfo) await new Promise(async r => {
+                            if(addMetadata.tags) await new Promise(async r => {
                                 updateTask({status: `Adding tags...`})
-
-                                cleanup();
     
                                 fs.renameSync(target, target + `.ezytdl`);
     
@@ -553,7 +551,7 @@ module.exports = {
                                 proc.on(`error`, e => {
                                     console.error(e)
     
-                                    skipped.generalInfo = `${e}`;
+                                    skipped.tags = `${e}`;
     
                                     cleanup(true);
                                     r()
@@ -567,17 +565,17 @@ module.exports = {
                             }).catch(e => {
                                 console.error(e)
     
-                                skipped.generalInfo = `${e}`;
+                                skipped.tags = `${e}`;
     
                                 cleanup(true);
-                                r()
                             });
 
-                            cleanup();
+                            const foundCodec = getCodec(target);
+                            const vcodec = typeof info.video == `boolean` ? info.video : (foundCodec && !`${foundCodec}`.includes(`jpeg`) && !`${foundCodec}`.includes(`png`))
 
-                            const vcodec = getCodec(target)
+                            console.log(`--------------\nfoundCodec: ${foundCodec}\nvcodec: ${vcodec}\ninfo.video: ${info.video}\n--------------`)
 
-                            if(addMetadata.songCover && info.thumbnail && !vcodec) {
+                            if(addMetadata.thumbnail && info.thumbnail && !vcodec) {
                                 await new Promise(async r => {
                                     updateTask({status: `Downloading thumbnail...`})
     
@@ -589,7 +587,7 @@ module.exports = {
         
                                     req.once(`error`, e => {
                                         console.log(e)
-                                        skipped.songCover = `Failed to download thumbnail`;
+                                        skipped.thumbnail = `Failed to download thumbnail`;
                                         fs.renameSync(target + `.ezytdl`, target);
                                         r()
                                     });
@@ -630,7 +628,7 @@ module.exports = {
                                                 proc.on(`error`, e => {
                                                     console.error(e)
                     
-                                                    skipped.songCover = `Failed to add cover: ${e}`;
+                                                    skipped.thumbnail = `Failed to add cover: ${e}`;
                     
                                                     cleanup(true);
                                                     r();
@@ -643,7 +641,7 @@ module.exports = {
                                                 })
                                             } else {
                                                 console.log(`failed to convert image to png!`)
-                                                skipped.songCover = `Failed to convert thumbnail to PNG`;
+                                                skipped.thumbnail = `Failed to convert thumbnail to PNG`;
                                                 cleanup(true)
                                             }
                                         })
@@ -651,16 +649,13 @@ module.exports = {
                                 }).catch(e => {
                                     console.error(e)
         
-                                    skipped.songCover = `${e}`;
+                                    skipped.thumbnail = `${e}`;
         
                                     cleanup(true);
-                                    r()
                                 })
                             } else if(vcodec) {
-                                skipped.songCover = `Video detected`;
+                                skipped.thumbnail = `Video detected`;
                             }
-
-                            cleanup();
                         }
                     } else {
                         console.log(`no metadata to add! (run: ${run}) (ffmpeg installed: ${ffmpegPath ? true : false}) (file: ${file ? true : false})`);
@@ -953,8 +948,6 @@ module.exports = {
                     args[4] = args[4].replace(ytdlpFilename, temporaryFilename);
                     //args.splice(5, 2);
                 } else {
-                    if(addMetadata && addMetadata.generalInfo) args.push(`--add-metadata`);
-                    if(addMetadata && addMetadata.thumbnail) args.push(`--embed-thumbnail`);
                     if((format == `bv*+ba/b` || format == `bv`) && ext) {
                         if(format == `bv`) {
                             args.splice(2, 0, `-S`, `ext:${ext}`)
@@ -969,6 +962,9 @@ module.exports = {
                         downloadInExt = ext
                     }
                 }
+                
+                if(!ffmpegPath && addMetadata && addMetadata.tags) args.push(`--add-metadata`, `--no-write-playlist-metafiles`);
+                if(!ffmpegPath && addMetadata && addMetadata.thumbnail) args.push(`--embed-thumbnail`, `--no-write-thumbnail`);
                 
                 console.log(`saveTo: ` + saveTo, `\n- ` + args.join(`\n- `))
         
