@@ -29,8 +29,18 @@ const conversionOptions = (node, info) => {
 
         node.querySelector(`#conversionDiv`).appendChild(formattxtbox);
 
+        const add = [
+            parseInt(window.getComputedStyle(ffmpegOptions).marginBottom),
+            parseInt(window.getComputedStyle(ffmpegOptions).marginTop),
+            parseInt(window.getComputedStyle(node).marginTop),
+        ]
+
+        const newHeight = (ffmpegBoundingClientRect.height + add.reduce((a, b) => a + b, 0));
+
+        console.log(`newHeight`, newHeight)
+
         if(config.reduceAnimations) {
-            ffmpegOptions.style.maxHeight = ffmpegBoundingClientRect.height + `px`;
+            ffmpegOptions.style.maxHeight = newHeight + `px`;
             anime({
                 targets: ffmpegOptions,
                 opacity: [`0%`, `100%`],
@@ -43,7 +53,7 @@ const conversionOptions = (node, info) => {
         } else {
             anime({
                 targets: ffmpegOptions,
-                maxHeight: [`0px`, ffmpegBoundingClientRect.height + `px`],
+                maxHeight: [`0px`, newHeight + `px`],
                 opacity: [`0%`, `100%`],
                 duration: 500,
                 easing: `easeOutExpo`,
