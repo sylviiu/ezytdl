@@ -8,9 +8,171 @@ document.getElementById(`settingsBox`).parentNode.removeChild(document.getElemen
 
 const addFilenameFunctionality = () => {
     const fileNameInput = document.getElementById(`outputFilename`).querySelector(`#string`);
-    document.getElementById(`fileNameOptions`).querySelectorAll(`.btn`).forEach((button) => button.onclick = () => {
-        fileNameInput.value += `%(${button.id})s`;
-        fileNameInput.focus();
+
+    let cloned = null;
+
+    const clearCloned = (success) => {
+        if(cloned) {
+            const thisButton = cloned;
+            cloned = null;
+
+            anime.remove(thisButton)
+
+            if(success) {
+                anime({
+                    targets: thisButton,
+                    scale: 0,
+                    marginBottom: 0,
+                    duration: 100,
+                    easing: `easeOutQuad`,
+                    complete: () => {
+                        thisButton.parentNode.removeChild(thisButton);
+                    }
+                });
+            } else {
+                const duration = parseInt(window.innerHeight);
+                const maxRotation = (duration/540)*500
+                const rot = (Math.random() * maxRotation)-(maxRotation/2);
+
+                anime({
+                    targets: thisButton,
+                    marginBottom: 0,
+                    bottom: parseInt(thisButton.style.bottom) - parseInt(window.innerHeight),
+                    rotate: rot,
+                    opacity: [1, 1, 0],
+                    duration,
+                    easing: `easeInQuad`,
+                    complete: () => {
+                        thisButton.parentNode.removeChild(thisButton);
+                    }
+                });
+            }
+        };
+    }
+
+    document.getElementById(`fileNameOptions`).querySelectorAll(`.btn`).forEach((button) => {
+        const str = `%(${button.id.replace(/-/g, `,`)})s`;
+
+        let buttonBounds = null;
+
+        button.ondrag = (e) => {
+            //console.log(e)
+            if(e.pageX && e.pageY) {
+                //console.log(e.pageX, e.pageY)
+                if(cloned) {
+                    cloned.style.left = e.pageX - cloned.getBoundingClientRect().width/2 + `px`;
+                    cloned.style.bottom = (window.innerHeight - e.pageY) - cloned.getBoundingClientRect().height/2 + `px`;
+                };
+                if(button.style.position != `relative`) button.style.position = `relative`;
+                const left = e.pageX - (buttonBounds.left/2)
+                const bottom = (window.innerHeight - e.pageY) - (buttonBounds.bottom/2)
+                button.style.left = left
+                button.style.bottom = bottom
+                //console.log(left, bottom)
+            }
+        }
+
+        const refreshButton = (first) => {
+            if(fileNameInput.value.includes(str) && button.style.opacity != `0.35`) {
+                button.style.opacity = `0.35`;
+                button.style.userSelect = `none`;
+
+                anime.remove(button);
+                anime({
+                    targets: button,
+                    scale: 0.85,
+                    opacity: 0.35,
+                    duration: first ? 0 : 500,
+                    easing: `easeOutQuad`
+                });
+            } else if(!fileNameInput.value.includes(str) && button.style.opacity != `1`) {
+                button.style.opacity = `1`;
+                button.style.userSelect = `all`;
+
+                anime.remove(button);
+                anime({
+                    targets: button,
+                    scale: 1,
+                    opacity: 1,
+                    duration: first ? 0 : 500,
+                    easing: `easeOutQuad`
+                });
+            }
+        }
+
+        refreshButton(true);
+
+        fileNameInput.addEventListener(`input`, () => {
+            clearCloned(true);
+            refreshButton();
+        });
+
+        const onclick = () => {
+            if(fileNameInput.value.includes(str)) {
+                fileNameInput.value = fileNameInput.value.replace(str, ``);
+            } else {
+                fileNameInput.value += str;
+            };
+
+            refreshButton();
+            fileNameInput.focus();
+        }; button.onclick = onclick;
+
+        const ondragover = (e) => {
+            //console.log(`dragover`, e)
+            e.preventDefault();
+        }; button.ondragover = ondragover;
+
+        const dragstart = (e) => {
+            console.log(`dragstart`)
+
+            buttonBounds = button.getBoundingClientRect();
+
+            e.dataTransfer.setData(`text`, str);
+
+            const existingBounds = button.getBoundingClientRect();
+
+            clearCloned();
+
+            cloned = button.cloneNode(true);
+
+            cloned.style.pointerEvents = `none`;
+            cloned.style.userSelect = `none`;
+            cloned.style.margin = `0px`;
+            cloned.style.position = `absolute`;
+            cloned.style.left = existingBounds.left + `px`;
+            cloned.style.bottom = existingBounds.bottom + `px`;
+
+            document.body.appendChild(cloned);
+
+            anime({
+                targets: cloned,
+                marginBottom: [`20px`, `50px`],
+                duration: 300,
+                easing: `easeOutQuad`
+            })
+
+            //fileNameInput.focus();
+        }; button.addEventListener(`dragstart`, dragstart);
+
+        const dragend = (e) => {
+            console.log(`dragend`, e);
+
+            fileNameInput.focus();
+
+            refreshButton();
+
+            setTimeout(() => clearCloned(false), 50)
+        }; button.addEventListener(`dragend`, dragend);
+
+        /*const ondrop = (e) => {
+            console.log(`ondrop`);
+
+            e.preventDefault();
+            fileNameInput.focus();
+
+            refreshButton();
+        }; button.addEventListener(`ondrop`, ondrop);*/
     })
 }
 
@@ -100,7 +262,19 @@ const createCard = (key, string, description, config, parentNode, showSaveButton
         if(card.querySelector(`#${typeof config[key]}`).classList.contains(`d-none`)) card.querySelector(`#${typeof config[key]}`).classList.remove(`d-none`);
 
         if(typeof config[key] == `string`) {
-            card.querySelector(`#string`).value = config[key];
+            const elm = card.querySelector(`#string`);
+            elm.value = config[key];
+
+            console.log(parentNode)
+
+            if(elm.getAttribute(`savekey`) != `true`) {
+                elm.setAttribute(`savekey`, `true`);
+                elm.addEventListener(`keyup`, (e) => {
+                    if(((e.ctrlKey && e.key == `s`) || (e.key == `Enter` || e.keyCode == 13)) && (card.querySelector(`#save`) || card.parentElement.parentElement.querySelector(`#save`))) {
+                        (card.querySelector(`#save`) || card.parentElement.parentElement.querySelector(`#save`)).onclick();
+                    }
+                });
+            }
         } else if(typeof config[key] == `boolean`) {
             let btn = card.querySelector(`#boolean`);
 
