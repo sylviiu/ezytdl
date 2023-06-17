@@ -156,6 +156,8 @@ const addFilenameFunctionality = () => {
 
             e.dataTransfer.setDragImage(new Image(), 0, 0);
 
+            anime.remove(button);
+
             buttonBounds = button.getBoundingClientRect();
             initialOffset = null;
 
