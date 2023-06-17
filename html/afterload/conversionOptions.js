@@ -78,4 +78,42 @@ const conversionOptions = (node, info) => {
             easing: `easeOutExpo`,
         });
     }
+
+    node.querySelector(`#metadataOptions`).querySelectorAll(`.btn`).forEach(m => {
+        const icon = m.querySelector(`#icon`);
+
+        m.onclick = () => {
+            if(m.getAttribute(`value`) == `true`) {
+                m.setAttribute(`value`, `false`);
+                if(icon.classList.contains(`fa-check-circle`)) {
+                    icon.classList.remove(`fa-check-circle`);
+                    icon.classList.add(`fa-times-circle`);
+                }
+
+                anime.remove(m);
+                anime({
+                    targets: m,
+                    scale: 0.9,
+                    opacity: 0.65,
+                    duration: 300,
+                    easing: `easeOutExpo`,
+                })
+            } else {
+                m.setAttribute(`value`, `true`);
+                if(icon.classList.contains(`fa-times-circle`)) {
+                    icon.classList.remove(`fa-times-circle`);
+                    icon.classList.add(`fa-check-circle`);
+                }
+
+                anime.remove(m);
+                anime({
+                    targets: m,
+                    scale: 1,
+                    opacity: 1,
+                    duration: 300,
+                    easing: `easeOutExpo`,
+                })
+            }
+        }
+    });
 }

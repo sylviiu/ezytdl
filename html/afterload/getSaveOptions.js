@@ -20,6 +20,16 @@ const getSaveOptions = (node, info, overrideDownloadObj) => {
 
     console.log(`convert? ${convert}`, convertInfo)
 
+    let addMetadata = {};
+
+    node.querySelector(`#metadataOptions`).querySelectorAll(`.btn`).forEach(m => {
+        const active = m.getAttribute(`value`) == `true`;
+        console.log(`${m.id}: ${active}`)
+        addMetadata[m.id] = active
+    });
+
+    console.log(`addMetadata`, addMetadata)
+
     if(info.entries) {
         return {
             entries: info.entries.filter(e => !e.entries).map(e => Object.assign({}, {
@@ -27,6 +37,7 @@ const getSaveOptions = (node, info, overrideDownloadObj) => {
                 ext: convert ? null : formatConversionTextbox.value,
                 convert: convert ? convertInfo : null,
                 filePath: node.querySelector(`#saveLocation`).value || null,
+                addMetadata,
                 info: e
             }, overrideDownloadObj && typeof overrideDownloadObj == `object` ? overrideDownloadObj : {})),
             info,
@@ -38,6 +49,7 @@ const getSaveOptions = (node, info, overrideDownloadObj) => {
             format: info.format_id || info.formats ? info.formats[0].format_id : null,
             convert: convert ? convertInfo : null,
             filePath: node.querySelector(`#saveLocation`).value || null,
+            addMetadata,
             info: info
         }, overrideDownloadObj && typeof overrideDownloadObj == `object` ? overrideDownloadObj : {});
     }

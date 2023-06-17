@@ -309,7 +309,7 @@ module.exports = {
             res(data)
         })
     }),
-    download: ({url, format, ext, convert, filePath, info, extraArguments}, updateFunc) => new Promise(async res => {
+    download: ({url, format, ext, convert, filePath, addMetadata, info, extraArguments}, updateFunc) => new Promise(async resolve => {
         const temporaryFilename = `ezytdl-` + idGen(24);
         
         let obj = {};
@@ -369,7 +369,7 @@ module.exports = {
 
             updateFunc({status: `Download cancelled.`})
 
-            res(obj)
+            resolve(obj)
         }
 
         try {
@@ -427,6 +427,199 @@ module.exports = {
             const additionalArgs = module.exports.additionalArguments(typeof extraArguments == `string` ? extraArguments : ``);
 
             let args = [...additionalArgs];
+
+            const res = async (o) => {
+                console.log(o)
+                if(typeof o == `object`) Object.assign(obj, o);
+                new Promise(async r => {
+                    const file = fs.readdirSync(saveLocation).find(f => f.startsWith(ytdlpFilename));
+                    const target = require(`path`).join(saveLocation, file || ``)
+
+                    const isWritable = () => {
+                        try {
+                            fs.accessSync(target, fs.constants.W_OK);
+                            return true;
+                        } catch (err) {
+                            return false;
+                        }
+                    }
+
+                    if(addMetadata && ffmpegPath && file && fs.existsSync(target)) {
+                        console.log(`adding metadata...`)
+
+                        let n = 0;
+
+                        while(!isWritable()) {
+                            n++;
+                            updateFunc({status: `Waiting for file to unlock for metadata... (${n}/10)`})
+                            if(n > 10) break;
+                            await new Promise(r => setTimeout(r, 1000));
+                        };
+
+                        if(n > 10) {
+                            console.log(`file still locked after 10 attempts!`)
+                            sendNotification({
+                                type: `warn`,
+                                headingText: `failed to add metadata to ${info.title}!`,
+                                bodyText: `the file is still locked after 10 attempts.`
+                            });
+                        } else {
+                            const cleanup = () => {
+                                if(fs.existsSync(target + `.ezytdl`) && !fs.existsSync(target)) {
+                                    fs.renameSync(target + `.ezytdl`, target);
+                                } else if(fs.existsSync(target + `.ezytdl`) && fs.existsSync(target)) {
+                                    fs.unlinkSync(target + `.ezytdl`);
+                                }
+                                
+                                if(fs.existsSync(target + `.songcover`)) fs.unlinkSync(target + `.songcover`);
+                            }
+                            
+                            if(addMetadata.generalInfo) await new Promise(async r => {
+                                updateFunc({status: `Adding tags...`})
+
+                                cleanup();
+    
+                                fs.renameSync(target, target + `.ezytdl`);
+    
+                                const tags = [];
+        
+                                if(info.track) tags.push([`title`, info.track])
+                                else if(info.title) tags.push([`title`, info.title]);
+                                if(info.album) tags.push([`album`, info.album]);
+                                if(info.artist || info.album_artist || info.creator || info.uploader || info.channel) tags.push([`artist`, info.artist || info.album_artist || info.creator || info.uploader || info.channel]);
+                                if(info.track_number) tags.push([`track number`, info.track_number]);
+                                if(info.upload_date) tags.push([`year`, info.upload_date.slice(0, 4)], [`date`, info.upload_date]);
+                                if(info.genre) tags.push([`genre`, info.genre]);
+                                if(info.license) tags.push([`copyright`, info.license]);
+                                if(info.description) tags.push([`comments`, info.description]);
+    
+                                const meta = [];
+    
+                                tags.forEach(t => meta.push(`-metadata`, `${t[0]}=${t[1]}`));
+        
+                                const args = [`-y`, `-i`, target + `.ezytdl`, ...meta, `-c`, `copy`, target];
+        
+                                console.log(args);
+        
+                                const proc = child_process.execFile(ffmpegPath, args);
+        
+                                proc.stdout.on(`data`, d => {
+                                    console.log(d.toString().trim())
+                                });
+        
+                                proc.stderr.on(`data`, d => {
+                                    console.error(d.toString().trim())
+                                });
+        
+                                proc.on(`error`, e => {
+                                    console.error(e)
+    
+                                    sendNotification({
+                                        type: `warn`,
+                                        headingText: `failed to add metadata to ${info.title}!`,
+                                        bodyText: `${e.toString()}`
+                                    });
+    
+                                    cleanup();
+                                    r()
+                                });
+        
+                                proc.on(`close`, code => {
+                                    console.log(`metadata added! (code ${code})`)
+                                    cleanup();
+                                    r()
+                                })
+                            }).catch(e => {
+                                console.error(e)
+    
+                                sendNotification({
+                                    type: `warn`,
+                                    headingText: `failed to add metadata to ${info.title}!`,
+                                    bodyText: `${e.toString()}`
+                                });
+    
+                                cleanup();
+                                r()
+                            });
+
+                            if(addMetadata.songCover && info.thumbnail) await new Promise(async r => {
+                                updateFunc({status: `Adding thumbnail...`})
+    
+                                cleanup();
+
+                                fs.renameSync(target, target + `.ezytdl`);
+    
+                                const req = require(`superagent`).get(info.thumbnail);
+    
+                                req.pipe(fs.createWriteStream(target + `.songcover`))
+    
+                                req.once(`error`, e => {
+                                    console.log(e)
+                                    sendNotification({
+                                        type: `warn`,
+                                        headingText: `failed to add song cover to ${info.title}!`,
+                                        bodyText: `${e.toString()}`
+                                    });
+                                    fs.renameSync(target + `.ezytdl`, target);
+                                    r()
+                                });
+    
+                                req.once(`end`, () => {
+                                    const args = [`-y`, `-i`, target + `.ezytdl`, `-i`, `${target + `.songcover`}`, `-c`, `copy`, `-map`, `0:0`, `-map`, `1:0`, `-metadata:s:v`, `title=Album cover`, `-metadata:s:v`, `comment=Cover (front)`];
+            
+                                    if(target.endsWith(`.mp3`)) args.splice(args.indexOf(`1:0`)+1, 0, `-id3v2_version`, `3`, `-write_id3v1`, `1`);
+
+                                    console.log(args);
+            
+                                    const proc = child_process.execFile(ffmpegPath, [...args, target]);
+            
+                                    proc.stdout.on(`data`, d => {
+                                        console.log(d.toString().trim())
+                                    });
+            
+                                    proc.stderr.on(`data`, d => {
+                                        console.error(d.toString().trim())
+                                    });
+            
+                                    proc.on(`error`, e => {
+                                        console.error(e)
+        
+                                        sendNotification({
+                                            type: `warn`,
+                                            headingText: `failed to add song cover to ${info.title}!`,
+                                            bodyText: `${e.toString()}`
+                                        });
+        
+                                        cleanup();
+                                        r()
+                                    });
+            
+                                    proc.on(`close`, code => {
+                                        console.log(`song cover added! (code ${code})`)
+
+                                        r()
+                                    })
+                                })
+                            }).catch(e => {
+                                console.error(e)
+    
+                                sendNotification({
+                                    type: `warn`,
+                                    headingText: `failed to add song cover to ${info.title}!`,
+                                    bodyText: `${e.toString()}`
+                                });
+    
+                                cleanup();
+                                r()
+                            });
+
+                            cleanup();
+                        }
+                    } else console.log(`no metadata to add! (ffmpeg installed: ${ffmpegPath ? true : false}) (file: ${file ? true : false})`);
+    
+                    r();
+                }).then(() => resolve(typeof o == `object` ? obj : o))
+            }
 
             const runThroughFFmpeg = async (code, replaceInputArgs) => {
                 let previousFilename = obj.destinationFile ? `ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0] : temporaryFilename;
@@ -692,18 +885,22 @@ module.exports = {
                 if(convert && !ext) {
                     args[4] = args[4].replace(ytdlpFilename, temporaryFilename);
                     //args.splice(5, 2);
-                } else if((format == `bv*+ba/b` || format == `bv`) && ext) {
-                    if(format == `bv`) {
-                        args.splice(2, 0, `-S`, `ext:${ext}`)
+                } else {
+                    if(addMetadata && addMetadata.generalInfo) args.push(`--add-metadata`);
+                    if(addMetadata && addMetadata.thumbnail) args.push(`--embed-thumbnail`);
+                    if((format == `bv*+ba/b` || format == `bv`) && ext) {
+                        if(format == `bv`) {
+                            args.splice(2, 0, `-S`, `ext:${ext}`)
+                            downloadInExt = ext
+                        } else {
+                            args.splice(2, 0, `-S`, `ext:${ext}:m4a`)
+                            downloadInExt = ext + `:m4a`
+                        };
+                    } else if(format == `ba` && ext) {
+                        args.splice(2, 0, `-S`, `ext:${ext}`);
+            
                         downloadInExt = ext
-                    } else {
-                        args.splice(2, 0, `-S`, `ext:${ext}:m4a`)
-                        downloadInExt = ext + `:m4a`
-                    };
-                } else if(format == `ba` && ext) {
-                    args.splice(2, 0, `-S`, `ext:${ext}`);
-        
-                    downloadInExt = ext
+                    }
                 }
                 
                 console.log(`saveTo: ` + saveTo, `\n- ` + args.join(`\n- `))
