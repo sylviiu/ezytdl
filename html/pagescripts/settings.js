@@ -50,6 +50,12 @@ const addFilenameFunctionality = () => {
         };
     }
 
+    let lastPos = []
+
+    document.body.onpointermove = (e) => {
+        lastPos = [e.x, e.y]
+    }
+
     document.getElementById(`fileNameOptions`).querySelectorAll(`.btn`).forEach((button) => {
         const str = `%(${button.id.replace(/-/g, `,`)})s`;
 
@@ -58,25 +64,9 @@ const addFilenameFunctionality = () => {
 
         button.style.webkitUserDrag = `all`;
 
-        const resetButtonPosition = () => {
-            if(buttonBounds) {
-                anime({
-                    targets: button,
-                    left: 0,
-                    bottom: 0,
-                    duration: 500,
-                    easing: `easeOutExpo`
-                })
-
-                buttonBounds = null;
-                initialOffset = null;
-            };
-        }
-
         button.ondrag = (e) => {
             //console.log(e)
             if(e.pageX && e.pageY) {
-                //console.log(e.pageX, e.pageY)
                 if(cloned) {
                     cloned.style.left = e.pageX - cloned.getBoundingClientRect().width/2 + `px`;
                     cloned.style.bottom = (window.innerHeight - e.pageY) - cloned.getBoundingClientRect().height/2 + `px`;
@@ -84,47 +74,50 @@ const addFilenameFunctionality = () => {
                 if(button.getAttribute(`cloned`) != `true`) {
                     if(button.style.position != `relative`) button.style.position = `relative`;
                     if(!initialOffset) initialOffset = { x: e.x, y: e.y };
-                    let left = ((e.x - initialOffset.x)/24)
-                    let bottom = ((initialOffset.y - e.y)/24)
+                    let left = ((e.x - initialOffset.x)/12)
+                    let bottom = ((initialOffset.y - e.y)/12)
 
-                    if(left > 12) left = 12
-                    else if(left < -12) left = -12
+                    if(left > 24) left = 24
+                    else if(left < -24) left = -24
 
-                    if(bottom > 3) bottom = 3
-                    else if(bottom < -3) bottom = -3
+                    if(bottom > 12) bottom = 12
+                    else if(bottom < -12) bottom = -12
 
                     button.style.left = left + `px`
                     button.style.bottom = bottom + `px`
-                    console.log(button.style.left, button.style.bottom)
+                    //console.log(button.style.left, button.style.bottom)
                 }
-                //console.log(e)
             }
         }
 
         const refreshButton = (first) => {
             if(fileNameInput.value.includes(str) && button.style.opacity != `0.35`) {
-                button.style.opacity = `0.35`;
+                //button.style.opacity = `0.35`;
                 button.setAttribute(`draggable`, `false`)
 
                 //anime.remove(button);
                 anime({
                     targets: button,
-                    scale: 0.85,
+                    scale: button.style.opacity == 0 ? [0, 0.85] : 0.85,
                     opacity: 0.35,
+                    left: 0,
+                    bottom: 0,
                     duration: first ? 0 : 500,
-                    easing: `easeOutQuad`
+                    easing: `easeOutExpo`
                 });
             } else if(!fileNameInput.value.includes(str) && button.style.opacity != `1`) {
-                button.style.opacity = `1`;
+                //button.style.opacity = `1`;
                 button.setAttribute(`draggable`, `true`)
 
                 //anime.remove(button);
                 anime({
                     targets: button,
-                    scale: 1,
+                    scale: button.style.opacity == 0 ? [0, 1] : 1,
                     opacity: 1,
+                    left: 0,
+                    bottom: 0,
                     duration: first ? 0 : 500,
-                    easing: `easeOutQuad`
+                    easing: `easeOutExpo`
                 });
             }
         }
@@ -159,11 +152,10 @@ const addFilenameFunctionality = () => {
             anime.remove(button);
 
             buttonBounds = button.getBoundingClientRect();
+            const style = window.getComputedStyle(button);
             initialOffset = null;
 
             e.dataTransfer.setData(`text`, str);
-
-            const existingBounds = button.getBoundingClientRect();
 
             clearCloned();
 
@@ -175,17 +167,29 @@ const addFilenameFunctionality = () => {
             cloned.style.userSelect = `none`;
             cloned.style.margin = `0px`;
             cloned.style.position = `absolute`;
-            cloned.style.left = existingBounds.left + `px`;
-            cloned.style.bottom = existingBounds.bottom + `px`;
+            cloned.style.left = (e.pageX - buttonBounds.width/2 - parseInt(style.marginLeft)) + `px`;
+            cloned.style.bottom = (window.innerHeight - (e.pageY + buttonBounds.height/2 - parseInt(style.marginBottom))) + `px`;
+
+            console.log(`starting pos`, lastPos, cloned.style.left, cloned.style.bottom)
 
             document.body.appendChild(cloned);
 
+            const bottomOffset = ((buttonBounds.y - e.y + (buttonBounds.height/2)) * -1);
+            const leftOffset = ((buttonBounds.x - e.x + (buttonBounds.width/2)));
+
+            console.log(`bottom offset: ${bottomOffset}; leftOffset: ${leftOffset}`)
+
             anime({
                 targets: cloned,
-                opacity: [0, 1],
-                marginBottom: [`10px`, `50px`],
+                marginBottom: [bottomOffset, `50px`],
+                marginLeft: [leftOffset, `0px`],
+                opacity: 1,
+                scale: 1.15,
                 duration: 800,
-                easing: `easeOutExpo`
+                easing: `easeOutExpo`,
+                begin: () => {
+                    button.style.opacity = 0;
+                }
             })
 
             //fileNameInput.focus();
@@ -196,7 +200,6 @@ const addFilenameFunctionality = () => {
 
             fileNameInput.focus();
 
-            resetButtonPosition();
             refreshButton();
 
             setTimeout(() => clearCloned(false), 50)
