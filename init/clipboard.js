@@ -14,7 +14,7 @@ const start = () => new Promise(async r => {
             if(global.sendNotifs) try {
                 const text = clipboard.readText();
                 if(typeof text == `string` && text != lastText && text.split(`?`)[0].match(genericUrlRegex)) {
-                    console.log(`new clipboard text, is url!: ${text}`)
+                    console.log(`new clipboard text, is url!`)
                     lastText = text;
 
                     const notif = new Notification({
@@ -31,7 +31,7 @@ const start = () => new Promise(async r => {
                         global.window.webContents.send(`download`, text);
                     })
                 } else if(text != lastText) {
-                    console.log(`new clipboard text, but not url: ${text}`)
+                    console.log(`new clipboard text, but not url`)
                     lastText = text;
                 }
             } catch(e) {
