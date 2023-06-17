@@ -54,6 +54,24 @@ const addFilenameFunctionality = () => {
         const str = `%(${button.id.replace(/-/g, `,`)})s`;
 
         let buttonBounds = null;
+        let initialOffset = null;
+
+        button.style.webkitUserDrag = `all`;
+
+        const resetButtonPosition = () => {
+            if(buttonBounds) {
+                anime({
+                    targets: button,
+                    left: 0,
+                    bottom: 0,
+                    duration: 500,
+                    easing: `easeOutExpo`
+                })
+
+                buttonBounds = null;
+                initialOffset = null;
+            };
+        }
 
         button.ondrag = (e) => {
             //console.log(e)
@@ -63,21 +81,32 @@ const addFilenameFunctionality = () => {
                     cloned.style.left = e.pageX - cloned.getBoundingClientRect().width/2 + `px`;
                     cloned.style.bottom = (window.innerHeight - e.pageY) - cloned.getBoundingClientRect().height/2 + `px`;
                 };
-                if(button.style.position != `relative`) button.style.position = `relative`;
-                const left = e.pageX - (buttonBounds.left/2)
-                const bottom = (window.innerHeight - e.pageY) - (buttonBounds.bottom/2)
-                button.style.left = left
-                button.style.bottom = bottom
-                //console.log(left, bottom)
+                if(button.getAttribute(`cloned`) != `true`) {
+                    if(button.style.position != `relative`) button.style.position = `relative`;
+                    if(!initialOffset) initialOffset = { x: e.x, y: e.y };
+                    let left = ((e.x - initialOffset.x)/24)
+                    let bottom = ((initialOffset.y - e.y)/24)
+
+                    if(left > 12) left = 12
+                    else if(left < -12) left = -12
+
+                    if(bottom > 3) bottom = 3
+                    else if(bottom < -3) bottom = -3
+
+                    button.style.left = left + `px`
+                    button.style.bottom = bottom + `px`
+                    console.log(button.style.left, button.style.bottom)
+                }
+                //console.log(e)
             }
         }
 
         const refreshButton = (first) => {
             if(fileNameInput.value.includes(str) && button.style.opacity != `0.35`) {
                 button.style.opacity = `0.35`;
-                button.style.userSelect = `none`;
+                button.setAttribute(`draggable`, `false`)
 
-                anime.remove(button);
+                //anime.remove(button);
                 anime({
                     targets: button,
                     scale: 0.85,
@@ -87,9 +116,9 @@ const addFilenameFunctionality = () => {
                 });
             } else if(!fileNameInput.value.includes(str) && button.style.opacity != `1`) {
                 button.style.opacity = `1`;
-                button.style.userSelect = `all`;
+                button.setAttribute(`draggable`, `true`)
 
-                anime.remove(button);
+                //anime.remove(button);
                 anime({
                     targets: button,
                     scale: 1,
@@ -103,7 +132,6 @@ const addFilenameFunctionality = () => {
         refreshButton(true);
 
         fileNameInput.addEventListener(`input`, () => {
-            clearCloned(true);
             refreshButton();
         });
 
@@ -124,9 +152,12 @@ const addFilenameFunctionality = () => {
         }; button.ondragover = ondragover;
 
         const dragstart = (e) => {
-            console.log(`dragstart`)
+            console.log(`dragstart`, e)
+
+            e.dataTransfer.setDragImage(new Image(), 0, 0);
 
             buttonBounds = button.getBoundingClientRect();
+            initialOffset = null;
 
             e.dataTransfer.setData(`text`, str);
 
@@ -135,6 +166,8 @@ const addFilenameFunctionality = () => {
             clearCloned();
 
             cloned = button.cloneNode(true);
+            
+            cloned.setAttribute(`cloned`, `true`)
 
             cloned.style.pointerEvents = `none`;
             cloned.style.userSelect = `none`;
@@ -147,9 +180,10 @@ const addFilenameFunctionality = () => {
 
             anime({
                 targets: cloned,
-                marginBottom: [`20px`, `50px`],
-                duration: 300,
-                easing: `easeOutQuad`
+                opacity: [0, 1],
+                marginBottom: [`10px`, `50px`],
+                duration: 800,
+                easing: `easeOutExpo`
             })
 
             //fileNameInput.focus();
@@ -160,19 +194,21 @@ const addFilenameFunctionality = () => {
 
             fileNameInput.focus();
 
+            resetButtonPosition();
             refreshButton();
 
             setTimeout(() => clearCloned(false), 50)
         }; button.addEventListener(`dragend`, dragend);
 
-        /*const ondrop = (e) => {
-            console.log(`ondrop`);
+        const ondrop = (e) => {
+            console.log(`ondrop`, e);
 
-            e.preventDefault();
             fileNameInput.focus();
 
             refreshButton();
-        }; button.addEventListener(`ondrop`, ondrop);*/
+
+            clearCloned(true);
+        }; fileNameInput.ondrop = ondrop;
     })
 }
 
@@ -263,6 +299,7 @@ const createCard = (key, string, description, config, parentNode, showSaveButton
 
         if(typeof config[key] == `string`) {
             const elm = card.querySelector(`#string`);
+            elm.ondrop = (e) => e.preventDefault();
             elm.value = config[key];
 
             console.log(parentNode)
