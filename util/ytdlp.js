@@ -388,7 +388,7 @@ module.exports = {
 
             let thisFormat;
 
-            if(format == `bv*+ba/b`) format = null;
+            if(format == `bv*+ba/b` && (!ffmpegPath || !convert)) format = null;
 
             if(info.is_live && (format == `bv*+ba/b` || format == `bv` || format == `ba`)) format = null;
 
@@ -441,7 +441,11 @@ module.exports = {
                 update(Object.assign({}, typeof o == `object` ? o : {}, { percentNum: -1 }));
                 const resolveStatus = obj.status;
                 new Promise(async r => {
-                    const file = fs.readdirSync(saveLocation).find(f => f.startsWith(ytdlpFilename));
+                    let run = true;
+
+                    if(killAttempt > 0) run = false;
+
+                    const file = fs.readdirSync(saveLocation).find(f => f.startsWith(ytdlpFilename) && !f.endsWith(`.meta`));
                     const target = require(`path`).join(saveLocation, file || ``);
 
                     const isWritable = () => {
@@ -453,7 +457,7 @@ module.exports = {
                         }
                     }
 
-                    if(addMetadata && ffmpegPath && file && fs.existsSync(target)) {
+                    if(run && addMetadata && ffmpegPath && file && fs.existsSync(target)) {
                         console.log(`adding metadata...`)
 
                         let totalTasks = Object.values(addMetadata).filter(v => v).length + 1;
@@ -678,7 +682,7 @@ module.exports = {
 
                             cleanup();
                         }
-                    } else console.log(`no metadata to add! (ffmpeg installed: ${ffmpegPath ? true : false}) (file: ${file ? true : false})`);
+                    } else console.log(`no metadata to add! (run: ${run}) (ffmpeg installed: ${ffmpegPath ? true : false}) (file: ${file ? true : false})`);
     
                     r();
                 }).then(() => {
@@ -714,10 +718,15 @@ module.exports = {
     
                 filenames.push(previousFilename)
 
+                const temporaryFiles = fs.readdirSync(saveTo).filter(f => f.startsWith(temporaryFilename) && !f.endsWith(`.part`) && !f.endsWith(`.meta`));
+
+                filenames.push(...temporaryFiles)
+
                 if(convert) {
                     ext = `.${convert.ext || (thisFormat || {}).ext}`
 
-                    const inputArgs = replaceInputArgs || [`-i`, saveTo + previousFilename/*, `-map`, `0:0`*/];
+                    const inputArgs = replaceInputArgs || [];
+                    temporaryFiles.forEach(file => inputArgs.push(`-i`, require(`path`).join(saveTo, file)));
                     const outputArgs = [require(`path`).join(saveTo, ytdlpFilename) + ext];
 
                     if(convert.audioBitrate) outputArgs.unshift(`-b:a`, convert.audioBitrate);
