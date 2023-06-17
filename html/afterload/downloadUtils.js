@@ -214,7 +214,7 @@ const startDownload = (originalCard, opt) => {
             easing: `easeInQuad`,
         });
     
-        setTimeout(() => mainQueue.download(opt), 780);
+        //setTimeout(() => mainQueue.download(opt), 780);
         
         setTimeout(() => {
             let currentX = card.getBoundingClientRect().x;
@@ -234,37 +234,24 @@ const startDownload = (originalCard, opt) => {
                 duration: 500,
                 easing: `easeInExpo`,
                 complete: () => {
+                    mainQueue.download(opt);
                     card.opacity = 0;
                     if(card.parentNode) card.parentNode.removeChild(card);
     
-                    const copy = downloadsListBtn.cloneNode(true);
-                    
-                    downloadsListBtn.style.opacity = 0;
-    
-                    copy.onclick = () => downloadsListBtn.click();
-    
+                    if(downloadsListBtn.style.position != `relative`) downloadsListBtn.style.position = `relative`
+
                     const newTarget = downloadsListBtn.getBoundingClientRect()
     
                     newTarget.x -= 6
     
-                    copy.style.position = `fixed`;
-                    copy.style.left = `${newTarget.x}px`;
-                    copy.style.top = `${newTarget.y}px`;
-    
-                    document.body.appendChild(copy);
-    
                     anime({
-                        targets: copy,
+                        targets: downloadsListBtn,
                         filter: [`invert(1)`, `invert(0)`],
-                        top: [((newTarget.y - formatDownloadButtonPosition.y)/15) + newTarget.y, newTarget.y],
-                        left: [((newTarget.x - currentX)/15) + newTarget.x, newTarget.x],
+                        top: [((newTarget.y - formatDownloadButtonPosition.y)/15), 0],
+                        left: [((newTarget.x - currentX)/15), 0],
                         duration: 400,
                         easing: `easeOutExpo`,
-                        complete: () => {
-                            document.body.removeChild(copy);
-                            downloadsListBtn.style.opacity = 1;
-                        }
-                    })
+                    });
                 }
             });
         }, 350);
