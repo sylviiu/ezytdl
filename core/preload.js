@@ -93,7 +93,8 @@ contextBridge.exposeInMainWorld(`system`, {
     detailsStr: () => invoke(`detailsStr`),
     addScript,
     colors: () => systemColors,
-    downloadReq: (cb) => on(`download`, cb)
+    downloadReq: (cb) => on(`download`, cb),
+    hasFFmpeg: () => invoke(`hasFFmpeg`),
 })
 
 contextBridge.exposeInMainWorld(`dialog`, {
