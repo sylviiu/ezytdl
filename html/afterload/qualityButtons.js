@@ -144,7 +144,7 @@ const saveOptionsAnimations = {
                     formatCard.querySelector(`#ffmpegOptions`).classList.add(`d-none`);
                 }
         
-                if(formatCard.querySelector(`#convertDownload`).style.width != `49%`) {
+                if(formatCard.querySelector(`#convertDownload`).style.width != `49%` && hasFFmpeg) {
                     anime.remove(formatCard.querySelector(`#convertDownload`));
                     anime.remove(formatCard.querySelector(`#confirmDownload`));
                     formatCard.querySelector(`#convertDownload`).style.opacity = 1;
@@ -333,7 +333,7 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
             ffmpegOptions.classList.add(`d-none`);
         }
 
-        if(convertDownload.style.width != `49%`) {
+        if(convertDownload.style.width != `49%` && hasFFmpeg) {
             anime.remove(convertDownload);
             anime.remove(confirmDownload);
             convertDownload.style.opacity = 1;
