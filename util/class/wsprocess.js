@@ -3,7 +3,7 @@ const stream = require(`stream`);
 const idGen = require(`../idGen`);
 
 class wsprocess extends events.EventEmitter {
-    constructor(args) {
+    constructor(args, opt) {
         super();
 
         this.args = args;
@@ -12,6 +12,8 @@ class wsprocess extends events.EventEmitter {
 
         this.stdout = new stream.PassThrough();
         this.stderr = new stream.PassThrough();
+
+        this.persist = opt && typeof opt.persist == `boolean` ? opt.persist : true;
 
         this._spawn();
     }
@@ -26,17 +28,23 @@ class wsprocess extends events.EventEmitter {
         }));
     }
 
+    _complete(code = 0) {
+        const bridge = require(`../pythonBridge`);
+
+        console.log(`[${this.processID}] complete (code: ${code})`)
+        this.emit(`close`, code);
+        
+        while(bridge.idHooks.filter(h => h.id == this.processID).length > 0) {
+            bridge.idHooks.splice(bridge.idHooks.findIndex(h => h.id == this.processID), 1);
+        }
+    }
+
     _spawn() {
         const bridge = require(`../pythonBridge`);
 
         const hook = (data) => {
             if(data.type == `complete`) {
-                console.log(`[${this.processID}] complete`)
-                this.emit(`close`, 0);
-                
-                while(bridge.idHooks.filter(h => h.id == this.processID).length > 0) {
-                    bridge.idHooks.splice(bridge.idHooks.findIndex(h => h.id == this.processID), 1);
-                }
+                this._complete();
             } else if(data.type == `info`) {
                 console.log(`[${this.processID}] info / ${data.content.length}`)
                 this.stdout.write(Buffer.from(data.content + `\n`));
@@ -46,7 +54,7 @@ class wsprocess extends events.EventEmitter {
             }
         };
 
-        bridge.idHooks.push({ id: this.processID, func: hook, args: this.args });
+        bridge.idHooks.push({ id: this.processID, func: hook, args: this.args, complete: (code) => this._complete(code) });
 
         bridge.resObj.send(JSON.stringify({
             id: this.processID,

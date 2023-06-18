@@ -74,6 +74,7 @@ module.exports = {
 
                         proc.on(`close`, (code) => {
                             console.log(`bridge process closed; code: ${code}`);
+                            proc.stdout.removeAllListeners();
                             sendNotification({
                                 headingText: `The bridge process closed.`,
                                 bodyText: `*this wasn't supposed to happen oh no (exit code ${code})*\n\nRestarting now...`,
@@ -108,8 +109,23 @@ module.exports = {
                             }
                         }
 
-                        //proc.stdout.on(`data`, d => parseLog(d, `OUT`));
                         proc.stderr.on(`data`, d => parseLog(d, `ERR`));
+
+                        proc.stdout.on(`data`, data => {
+                            data.toString().trim().split(`\n\r`).forEach(msg => {
+                                try {
+                                    msg = msg.toString().trim();
+                                    const data = JSON.parse(msg.toString().trim());
+                                    if(data.id) {
+                                        module.exports.idHooks.filter(h => h.id == data.id).forEach(h => h.func(data));
+                                    } else if(!module.exports.bridgeVersions) {
+                                        module.exports.bridgeVersions = data;
+                                    }
+                                } catch(e) {
+                                    //console.error(`-----------------------\nmsg: "${msg}"\nerr: ${e}\n-----------------------`)
+                                }
+                            })
+                        });
                     });
                 }
             
@@ -117,32 +133,20 @@ module.exports = {
 
                 if(restarted == true) sendNotification({
                     headingText: `Bridge process restarted!`,
-                    bodyText: `Existing downloads and/or searches should resume shortly.`,
-                });
-
-                module.exports.bridgeProc.stdout.on(`data`, data => {
-                    data.toString().trim().split(`\n\r`).forEach(msg => {
-                        try {
-                            msg = msg.toString().trim();
-                            const data = JSON.parse(msg.toString().trim());
-                            if(data.id) {
-                                module.exports.idHooks.filter(h => h.id == data.id).forEach(h => h.func(data));
-                            } else if(!module.exports.bridgeVersions) {
-                                module.exports.bridgeVersions = data;
-                            }
-                        } catch(e) {
-                            //console.error(`-----------------------\nmsg: "${msg}"\nerr: ${e}\n-----------------------`)
-                        }
-                    })
+                    bodyText: `Existing downloads should resume shortly.`,
                 });
 
                 if(module.exports.idHooks.length > 0) {
                     console.log(`idHooks: ${module.exports.idHooks.length}`)
                     module.exports.idHooks.forEach(h => {
-                        resObj.send(JSON.stringify({
-                            id: h.id,
-                            args: h.args,
-                        }));
+                        if(h.persist) {
+                            resObj.send(JSON.stringify({
+                                id: h.id,
+                                args: h.args,
+                            }));
+                        } else {
+                            h.complete(1)
+                        }
                     })
                 }
 
