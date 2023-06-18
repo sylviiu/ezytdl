@@ -15,7 +15,9 @@ console.log(`basepath = ${basepath}`)
 let resObj = {
     send: (args) => {
         //module.exports.wsConnection.send(JSON.stringify(args));
-        module.exports.bridgeProc.stdin.write((typeof args == `object` ? JSON.stringify(args) : `${args}`) + `\n`);
+        try {
+            module.exports.bridgeProc.stdin.write((typeof args == `object` ? JSON.stringify(args) : `${args}`) + `\n`);
+        } catch(e) {}
     },
     close: () => {
         //module.exports.wsConnection.close();
@@ -80,6 +82,13 @@ module.exports = {
                                 bodyText: `*this wasn't supposed to happen oh no (exit code ${code})*\n\nRestarting now...`,
                                 type: `warn`
                             });
+                            try {
+                                module.exports.idHooks.filter(h => !h.persist).forEach(h => {
+                                    try {
+                                        h.complete(1)
+                                    } catch(e) {}
+                                });
+                            } catch(e) {}
                             module.exports.bridgeProc = null;
                             module.exports.create(true);
                         });
