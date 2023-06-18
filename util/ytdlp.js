@@ -214,7 +214,7 @@ module.exports = {
                 })
                 return res(null);
             };
-            
+
             const d = JSON.parse(data);
             //if(d.entries.filter(o => !o.title).length != d.entries.length) d.entries = d.entries.filter(o => o.title);
             res(module.exports.parseInfo(d))
@@ -472,8 +472,8 @@ module.exports = {
 
                     if(killAttempt > 0) run = false;
 
-                    const file = fs.readdirSync(saveLocation).find(f => f.startsWith(ytdlpFilename) && !f.endsWith(`.meta`));
-                    const target = file ? require(`path`).join(saveLocation, file) : null;
+                    const file = fs.readdirSync(saveTo).find(f => f.startsWith(ytdlpFilename) && !f.endsWith(`.meta`));
+                    const target = file ? require(`path`).join(saveTo, file) : null;
 
                     const isWritable = () => {
                         try {
@@ -667,7 +667,8 @@ module.exports = {
                                             } else {
                                                 console.log(`failed to convert image to png!`)
                                                 skipped.thumbnail = `Failed to convert thumbnail to PNG`;
-                                                cleanup(true)
+                                                cleanup(true);
+                                                r();
                                             }
                                         })
                                     })
