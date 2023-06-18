@@ -19,4 +19,4 @@ def printHeader():
         }
     }
 
-    print(json.dumps(versionObj), flush=True)
+    print(json.dumps(versionObj, ensure_ascii=False, encoding='utf-8'), flush=True)

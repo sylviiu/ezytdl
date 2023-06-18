@@ -36,4 +36,4 @@ class writeStringWrapper:
         output = s.encode(enc, 'ignore') if enc else s
         
         #buffer.write(s.encode(enc, 'ignore') if enc else s)
-        getattr(self.wsHook, logFunc)(json.dumps(output, default=lambda o: '<not serializable>') if type(output) is dict else output.decode('utf-8', 'ignore') if hasattr(output, 'decode') else output)
+        getattr(self.wsHook, logFunc)(json.dumps(output, ensure_ascii=False, encoding='utf-8', default=lambda o: '<not serializable>') if type(output) is dict else output.decode('utf-8', 'ignore') if hasattr(output, 'decode') else output)

@@ -35,7 +35,7 @@ class hook:
             'id': self.id,
             'type': type,
             'content': msg
-        }, default=lambda o: '<not serializable>')
+        }, ensure_ascii=False, encoding='utf-8', default=lambda o: '<not serializable>')
 
     def complete(self, status=None):
         print('Completed message')
