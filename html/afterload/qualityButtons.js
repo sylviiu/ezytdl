@@ -129,6 +129,35 @@ const saveOptionsAnimations = {
             });
 
             if(saveOptions && saveOptions.parentNode && saveOptions.parentNode.parentNode && saveOptions.parentNode.parentNode.id == `formatCard`) {
+                const formatCard = saveOptions.parentNode.parentNode;
+
+                const clearInput = (n) => {
+                    if(n && n.placeholder) {
+                        n.value = ``;
+                    }
+                }
+        
+                formatCard.querySelector(`#audioOptions`).childNodes.forEach(clearInput)
+                formatCard.querySelector(`#videoOptions`).childNodes.forEach(clearInput)
+                
+                if(!formatCard.querySelector(`#ffmpegOptions`).classList.contains(`d-none`)) {
+                    formatCard.querySelector(`#ffmpegOptions`).classList.add(`d-none`);
+                }
+        
+                if(formatCard.querySelector(`#convertDownload`).style.width != `49%`) {
+                    anime.remove(formatCard.querySelector(`#convertDownload`));
+                    anime.remove(formatCard.querySelector(`#confirmDownload`));
+                    formatCard.querySelector(`#convertDownload`).style.opacity = 1;
+                    formatCard.querySelector(`#convertDownload`).style.width = `49%`;
+                    formatCard.querySelector(`#confirmDownload`).style.width = `49%`;
+                    formatCard.querySelector(`#convertDownload`).style.maxWidth = null;
+                }
+        
+                if(formatCard.querySelector(`#ffmpegOptions`).style.maxHeight) {
+                    anime.remove(formatCard.querySelector(`#ffmpegOptions`));
+                    formatCard.querySelector(`#ffmpegOptions`).style.maxHeight = null;
+                }
+
                 anime({
                     targets: saveOptions.parentNode.parentNode,
                     scale: 1.03,
