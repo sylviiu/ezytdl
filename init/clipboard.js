@@ -10,7 +10,7 @@ const start = () => new Promise(async r => {
 
         let lastText = null;
 
-        while(true) await new Promise(async res => {
+        while(true) if(global.downloadFromClipboard) await new Promise(async res => {
             if(global.sendNotifs) try {
                 const text = clipboard.readText();
                 if(typeof text == `string` && text != lastText && text.split(`?`)[0].match(genericUrlRegex)) {
@@ -44,9 +44,6 @@ const start = () => new Promise(async r => {
 })
 
 module.exports = () => {
-    const { downloadFromClipboard } = require(`../getConfig`)();
-
-    if(downloadFromClipboard) start();
-
+    start();
     return true;
 }

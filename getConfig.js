@@ -120,6 +120,12 @@ module.exports = (configObject) => {
 
         if(!userConfig.saveLocation) userConfig.saveLocation = (fs.existsSync(os.homedir() + `${slashUsed}Downloads`) ? os.homedir() + `${slashUsed}Downloads` : os.homedir()) + `${slashUsed}ezytdl`;
 
+        if(userConfig.downloadFromClipboard) {
+            global.downloadFromClipboard = true;
+        } else {
+            global.downloadFromClipboard = false;
+        }
+
         firstCheckDone = true;
 
         userConfig.strings = require(`./configStrings.json`);
