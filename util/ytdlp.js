@@ -9,11 +9,10 @@ const sanitize = require(`sanitize-filename`);
 
 var ffmpegVideoCodecs = null;
 var ffmpegRawVideoCodecsOutput = null;
-var ffmpegPath = null;
 
 const refreshVideoCodecs = () => {
-    if(ffmpegPath && fs.existsSync(ffmpegPath)) {
-        ffmpegRawVideoCodecsOutput = child_process.execFileSync(ffmpegPath, [`-codecs`, `-hide_banner`, `loglevel`, `error`]).toString().trim();
+    if(module.exports.ffmpegPath && fs.existsSync(module.exports.ffmpegPath)) {
+        ffmpegRawVideoCodecsOutput = child_process.execFileSync(module.exports.ffmpegPath, [`-codecs`, `-hide_banner`, `loglevel`, `error`]).toString().trim();
         ffmpegVideoCodecs = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `V`).map(s => s.split(` `)[2]);
     
         console.log(ffmpegVideoCodecs);
@@ -21,8 +20,14 @@ const refreshVideoCodecs = () => {
 }
 
 var refreshFFmpeg = () => {
-    ffmpegPath = require(`./filenames/ffmpeg`).getPath();
-    if(ffmpegPath) refreshVideoCodecs();
+    if(!module.exports.ffmpegPath || !fs.existsSync(module.exports.ffmpegPath)) module.exports.ffmpegPath = require(`./filenames/ffmpeg`).getPath();
+
+    if(module.exports.ffmpegPath && !ffmpegVideoCodecs) {
+        refreshVideoCodecs();
+        return true;
+    } else if(module.exports.ffmpegPath) {
+        return true;
+    } else return false;
 };
 
 refreshFFmpeg();
@@ -118,6 +123,8 @@ const sendUpdates = (proc, initialMsg) => {
 }
 
 module.exports = {
+    ffmpegPath: null,
+    hasFFmpeg: () => refreshFFmpeg(),
     additionalArguments: (args) => {
         const returnArgs = [];
 
@@ -181,7 +188,7 @@ module.exports = {
 
         console.log(`search args: "${args.map(s => s.includes(` `) ? `'${s}'` : s).join(` `)}"`)
 
-        const proc = execYTDLP(args);
+        const proc = execYTDLP(args, { persist: false });
 
         let data = ``;
 
@@ -216,7 +223,7 @@ module.exports = {
 
         if(!disableFlatPlaylist) args.push(`--flat-playlist`);
 
-        const proc = execYTDLP(args);
+        const proc = execYTDLP(args, { persist: false });
 
         let data = ``;
 
@@ -389,7 +396,7 @@ module.exports = {
 
             let thisFormat;
 
-            if(format == `bv*+ba/b` && (!ffmpegPath || !convert)) format = null;
+            if(format == `bv*+ba/b` && (!module.exports.ffmpegPath || !convert)) format = null;
 
             if(info.is_live && (format == `bv*+ba/b` || format == `bv` || format == `ba`)) format = null;
 
@@ -417,7 +424,7 @@ module.exports = {
             filenames.push(fullYtdlpFilename)
             filenames.push(temporaryFilename)
     
-            if(!ffmpegPath || !ffmpegVideoCodecs) refreshFFmpeg();
+            if(!module.exports.ffmpegPath || !ffmpegVideoCodecs) refreshFFmpeg();
     
             console.log(saveLocation, filePath, ytdlpFilename)
     
@@ -459,7 +466,7 @@ module.exports = {
                         }
                     }
 
-                    if(run && addMetadata && ffmpegPath && file && fs.existsSync(target)) {
+                    if(run && addMetadata && module.exports.ffmpegPath && file && fs.existsSync(target)) {
                         console.log(`adding metadata...`)
 
                         let totalTasks = Object.values(addMetadata).filter(v => v).length + 1;
@@ -538,7 +545,7 @@ module.exports = {
         
                                 console.log(args);
         
-                                const proc = child_process.execFile(ffmpegPath, args);
+                                const proc = child_process.execFile(module.exports.ffmpegPath, args);
         
                                 proc.stdout.on(`data`, d => {
                                     console.log(d.toString().trim())
@@ -595,7 +602,7 @@ module.exports = {
                                     req.once(`end`, () => {
                                         update({status: `Converting thumbnail...`})
     
-                                        const imgConvertProc = child_process.execFile(ffmpegPath, [`-y`, `-i`, target + `.songcover`, `-update`, `1`, `-vf`, `crop=min(in_w\\,in_h):min(in_w\\,in_h)`, target + `.png`]);
+                                        const imgConvertProc = child_process.execFile(module.exports.ffmpegPath, [`-y`, `-i`, target + `.songcover`, `-update`, `1`, `-vf`, `crop=min(in_w\\,in_h):min(in_w\\,in_h)`, target + `.png`]);
     
                                         imgConvertProc.stdout.on(`data`, d => {
                                             console.log(d.toString().trim())
@@ -615,7 +622,7 @@ module.exports = {
             
                                                 console.log(args);
                         
-                                                const proc = child_process.execFile(ffmpegPath, [...args, target]);
+                                                const proc = child_process.execFile(module.exports.ffmpegPath, [...args, target]);
                         
                                                 proc.stdout.on(`data`, d => {
                                                     console.log(d.toString().trim())
@@ -658,10 +665,10 @@ module.exports = {
                             }
                         }
                     } else {
-                        console.log(`no metadata to add! (run: ${run}) (ffmpeg installed: ${ffmpegPath ? true : false}) (file: ${file ? true : false})`);
+                        console.log(`no metadata to add! (run: ${run}) (ffmpeg installed: ${module.exports.ffmpegPath ? true : false}) (file: ${file ? true : false})`);
                         if(!run) {
                             Object.entries(addMetadata).filter(v => v[1]).forEach(k => skipped[k[0]] = `Download was cancelled.`);
-                        } else if(!ffmpegPath) {
+                        } else if(!module.exports.ffmpegPath) {
                             Object.entries(addMetadata).filter(v => v[1]).forEach(k => skipped[k[0]] = `FFmpeg wasn't found.`);
                         } else if(!file || !fs.existsSync(target)) {
                             Object.entries(addMetadata).filter(v => v[1]).forEach(k => skipped[k[0]] = `File wasn't found.`);
@@ -738,7 +745,7 @@ module.exports = {
     
                         update({status: `${replaceInputArgs ? `Streaming & converting to` : `Converting to`} ${`${ext}`.toUpperCase()} using ${name}...<br><br>- ${Object.keys(convert).map(s => `${s}: ${convert[s] || `(no conversion)`}`).join(`<br>- `)}`, percentNum: -1, eta: `--`});
     
-                        proc = child_process.execFile(ffmpegPath, [`-y`, ...args2]);
+                        proc = child_process.execFile(module.exports.ffmpegPath, [`-y`, ...args2]);
                         
                         update({kill: () => {
                             console.log(`killing ffmpeg conversion...`)
@@ -926,7 +933,7 @@ module.exports = {
 
             console.log(`--- DOWNLOADING FORMAT (${format}) ---\n`, thisFormat)
 
-            if(/*thisFormat && thisFormat.protocol && thisFormat.protocol.toLowerCase().includes(`m3u8`) && fs.existsSync(ffmpegPath)*/ false) {
+            if(/*thisFormat && thisFormat.protocol && thisFormat.protocol.toLowerCase().includes(`m3u8`) && fs.existsSync(module.exports.ffmpegPath)*/ false) {
             } else {
                 args = [`-f`, format, url, `-o`, require(`path`).join(saveTo, ytdlpFilename) + `.%(ext)s`, `--no-mtime`, ...additionalArgs];
 
@@ -934,8 +941,8 @@ module.exports = {
     
                 args.push(`--ffmpeg-location`, ``);
         
-                if(fs.existsSync(ffmpegPath)) {
-                    //args.push(`--ffmpeg-location`, ffmpegPath);
+                if(fs.existsSync(module.exports.ffmpegPath)) {
+                    //args.push(`--ffmpeg-location`, module.exports.ffmpegPath);
                 } else {
                     if(convert && convert.ext) {
                         ext = convert.ext
@@ -963,8 +970,8 @@ module.exports = {
                     }
                 }
                 
-                if(!ffmpegPath && addMetadata && addMetadata.tags) args.push(`--add-metadata`, `--no-write-playlist-metafiles`);
-                if(!ffmpegPath && addMetadata && addMetadata.thumbnail) args.push(`--embed-thumbnail`, `--no-write-thumbnail`);
+                if(!module.exports.ffmpegPath && addMetadata && addMetadata.tags) args.push(`--add-metadata`, `--no-write-playlist-metafiles`);
+                if(!module.exports.ffmpegPath && addMetadata && addMetadata.thumbnail) args.push(`--embed-thumbnail`, `--no-write-thumbnail`);
                 
                 console.log(`saveTo: ` + saveTo, `\n- ` + args.join(`\n- `))
         
@@ -1038,7 +1045,7 @@ module.exports = {
                         killAttempt++
                     }});
 
-                    if(fallbackToFFmpeg && ffmpegPath) {
+                    if(fallbackToFFmpeg && module.exports.ffmpegPath) {
                         if(!convert) {
                             // download with FFmpeg instead of yt-dlp
             
@@ -1052,7 +1059,7 @@ module.exports = {
             
                             console.log(`saveTo: ` + saveTo, `\n- ` + args.join(`\n- `))
             
-                            proc = child_process.execFile(ffmpegPath, args);
+                            proc = child_process.execFile(module.exports.ffmpegPath, args);
                     
                             update({saveLocation: saveTo, url, format, kill: () => {
                                 console.log(`killing ffmpeg stream...`)
@@ -1092,7 +1099,7 @@ module.exports = {
                                     killAttempt++
                                 }, live: false, percentNum: 0});
             
-                                proc = child_process.execFile(ffmpegPath, [`-i`, require(`path`).join(saveTo, ytdlpFilename) + `.mkv`, `-c`, `copy`, `-y`, require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`]);
+                                proc = child_process.execFile(module.exports.ffmpegPath, [`-i`, require(`path`).join(saveTo, ytdlpFilename) + `.mkv`, `-c`, `copy`, `-y`, require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`]);
             
                                 update({status: `Remuxing to ${`${ytdlpSaveExt}`.toUpperCase()}`, kill: () => {
                                     killAttempt++
