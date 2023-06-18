@@ -280,7 +280,7 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
 
     formatConversionTextbox.placeholder = `ext`;
 
-    let configSelectionMap = [`both`, `audio`, `video`]
+    let configSelectionMap = [`quick`, `audio`, `video`]
 
     let refreshOutputExt = () => {
         console.log(`setting value to ${configSelectionMap[currentSelected]} / ${config.lastMediaConversionOutputs[configSelectionMap[currentSelected]]}`)

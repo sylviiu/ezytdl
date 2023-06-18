@@ -29,7 +29,19 @@ module.exports = (configObject) => {
             }
         };
 
-        const checkKeys = (logPrefix, thisKey, config, defaults, addDefaults) => {
+        const checkKeys = (logPrefix, thisKey, config, defaults, addDefaults, removeNonexistent) => {
+            if(removeNonexistent) {
+                console.log(`checking for nonexistent keys in ${logPrefix} > ${thisKey}`)
+                for(const key of Object.keys(config)) {
+                    console.log(`checking key ${key} in config (removeNonexistent is true) (this: ${typeof config[key]}; default: ${typeof defaults[key]})`)
+                    if(typeof defaults[key] == 'undefined') {
+                        console.log(`removing key ${key} from config (removeNonexistent is true and this was not found in defaults)`)
+                        delete config[key];
+                        checked = true;
+                    }
+                }
+            }
+
             for(const key of Object.keys(defaults)) {
                 if(addDefaults && typeof config[key] == `undefined`) {
                     if(!newSettingsNotifSent && !firstCheckDone) {
@@ -52,7 +64,7 @@ module.exports = (configObject) => {
                     
                     if(defaults[key] && typeof defaults[key] == `object`) {
                         //console.log(`checking keys for ${key}`)
-                        config[key] = checkKeys(logPrefix + ` > `, thisKey + ` / ` + key, config[key], defaults[key], addDefaults);
+                        config[key] = checkKeys(logPrefix + ` > `, thisKey + ` / ` + key, config[key], defaults[key], addDefaults, removeNonexistent);
                     } else {
                         if(config[key] && typeof config[key] != typeof defaults[key]) {
                             if(typeof defaults[key] == `number` && !isNaN(config[key])) config[key] = Number(config[key]);
@@ -82,7 +94,7 @@ module.exports = (configObject) => {
         if(!checked) {
             const config = JSON.parse(fs.readFileSync(`${global.configPath}/config.json`));
 
-            const checkedConfig = checkKeys(`> `, `root config object`, config, defaultConfig, true);
+            const checkedConfig = checkKeys(`> `, `root config object`, config, defaultConfig, true, true);
 
             //console.log(config, checkedConfig)
             

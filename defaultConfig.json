@@ -7,8 +7,7 @@
     "disableAnimations": false,
     "lastMediaConversionOutputs": {
         "audio": "mp3",
-        "video": "mp4",
-        "both": "mp4"
+        "video": "mp4"
     },
     "concurrentDownloads": 4,
     "onlyGPUConversion": true,
