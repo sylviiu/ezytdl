@@ -118,12 +118,26 @@ const saveOptionsAnimations = {
             });
         }
 
-        if(btn) anime({
-            targets: btn.querySelector(`#downloadicon`),
-            rotate: [`0deg`, `180deg`],
-            duration: 500,
-            easing: `easeOutExpo`
-        })
+        if(btn) {
+            console.log(saveOptions.parentNode.parentNode)
+
+            anime({
+                targets: btn.querySelector(`#downloadicon`),
+                rotate: [`0deg`, `180deg`],
+                duration: 500,
+                easing: `easeOutExpo`
+            });
+
+            if(saveOptions && saveOptions.parentNode && saveOptions.parentNode.parentNode && saveOptions.parentNode.parentNode.id == `formatCard`) {
+                anime({
+                    targets: saveOptions.parentNode.parentNode,
+                    scale: 1.03,
+                    boxShadow: `0px 0px 15px 4px rgba(0,0,0,0.6)`,
+                    duration: 500,
+                    easing: `easeOutExpo`
+                });
+            }
+        }
     }),
     fadeOut: (btn, saveOptions, btnClick, node) => new Promise(res => {
         if(saveOptions.classList.contains(`d-none`)) return res()
@@ -191,12 +205,24 @@ const saveOptionsAnimations = {
                 })
             }
 
-            if(btn) anime({
-                targets: btn.querySelector(`#downloadicon`),
-                rotate: [`180deg`, `0deg`],
-                duration: 500,
-                easing: `easeOutExpo`
-            })
+            if(btn) {
+                anime({
+                    targets: btn.querySelector(`#downloadicon`),
+                    rotate: [`180deg`, `0deg`],
+                    duration: 500,
+                    easing: `easeOutExpo`
+                })
+
+                if(saveOptions && saveOptions.parentNode && saveOptions.parentNode.parentNode && saveOptions.parentNode.parentNode.id == `formatCard`) {
+                    anime({
+                        targets: saveOptions.parentNode.parentNode,
+                        scale: 1,
+                        boxShadow: `0px 0px 15px 4px rgba(0,0,0,0)`,
+                        duration: 500,
+                        easing: `easeOutExpo`
+                    });
+                }
+            }
         }
     })
 };
@@ -316,20 +342,24 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
         }
     }
 
-    const btnClick = (i) => {
-        currentSelected = i;
-        refreshQualityButtonSelection();
-        saveOptionsAnimations.fadeOut(null, qualityButtonsDropdown, btnClick, node).then(() => {
-            modifyQualityButtonsDropdown();
-            refreshOutputExt();
-            saveOptionsAnimations.fadeIn(null, qualityButtonsDropdown, btnClick, node).then(() => { })
-        })
+    const btnClick = (btn, i) => {
+        if(typeof i != `number` || currentSelected == i) {
+            buttonDisabledAnim(btn);
+        } else {
+            currentSelected = i;
+            refreshQualityButtonSelection();
+            saveOptionsAnimations.fadeOut(null, qualityButtonsDropdown, (i) => btnClick(btn, i), node).then(() => {
+                modifyQualityButtonsDropdown();
+                refreshOutputExt();
+                saveOptionsAnimations.fadeIn(null, qualityButtonsDropdown, (i) => btnClick(btn, i), node).then(() => { })
+            })
+        }
     }
 
     //highlightButton(node.querySelector(`#downloadBest`))
-    node.querySelector(`#downloadBest`).onclick = () => btnClick(0);
-    node.querySelector(`#downloadBestAudio`).onclick = () => btnClick(1);
-    node.querySelector(`#downloadBestVideo`).onclick = () => btnClick(2);
+    node.querySelector(`#downloadBest`).onclick = () => btnClick(node.querySelector(`#downloadBest`), 0);
+    node.querySelector(`#downloadBestAudio`).onclick = () => btnClick(node.querySelector(`#downloadBestAudio`), 1);
+    node.querySelector(`#downloadBestVideo`).onclick = () => btnClick(node.querySelector(`#downloadBestVideo`), 2);
 
     const send = () => {
         node.querySelectorAll(`.btn`).forEach(btn => btn.disabled = true);

@@ -104,6 +104,10 @@ let resultsVisible = false;
 let centerURLBox = () => null;
 
 const runSearch = async (url, initialMsg, func) => {
+    system.hasFFmpeg().then(has => {
+        hasFFmpeg = has;
+    });
+    
     document.getElementById(`statusText`).innerHTML = initialMsg || `Fetching info...`;
     if(document.getElementById(`statusText`).classList.contains(`d-none`)) document.getElementById(`statusText`).classList.remove(`d-none`);
 

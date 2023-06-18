@@ -6,7 +6,7 @@ const getSaveOptions = (node, info, overrideDownloadObj) => {
 
     let convert = false;
 
-    if(convertDownload.style.width != `49%`) {
+    if(convertDownload.style.width != `49%` && hasFFmpeg) {
         convert = true;
 
         node.querySelector(`#audioOptions`).childNodes.forEach(n => {
