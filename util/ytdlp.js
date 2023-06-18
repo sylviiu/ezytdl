@@ -205,7 +205,16 @@ module.exports = {
 
         proc.on(`close`, code => {
             console.log(`search closed with code ${code}`)
-            console.log(data)
+            
+            if(code) {
+                sendNotification({
+                    type: `error`,
+                    headingText: `Error getting media info`,
+                    bodyText: `There was an issue retrieving the info. Please try again.`
+                })
+                return res(null);
+            };
+            
             const d = JSON.parse(data);
             //if(d.entries.filter(o => !o.title).length != d.entries.length) d.entries = d.entries.filter(o => o.title);
             res(module.exports.parseInfo(d))
@@ -240,7 +249,16 @@ module.exports = {
 
         proc.on(`close`, code => {
             console.log(`listFormats closed with code ${code}`)
-            console.log(data)
+
+            if(code) {
+                sendNotification({
+                    type: `error`,
+                    headingText: `Error getting media info`,
+                    bodyText: `There was an issue retrieving the info. Please try again.`
+                })
+                return res(null);
+            };
+
             const d = JSON.parse(data);
             if(d && d.formats) {
                 console.log(`formats found! resolving...`);
