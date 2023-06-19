@@ -1,5 +1,7 @@
 const settingsCardMDConverter = new showdown.Converter({ parseImgDimensions: true });
 
+const cards = [];
+
 const detailsStr = document.getElementById(`detailsStr`)
 
 document.getElementById(`settingsBox`).querySelector(`#options`).childNodes.forEach(node => node.classList.add(`d-none`));
@@ -61,7 +63,7 @@ const addFilenameFunctionality = () => {
 
         if(button.getAttribute(`dragEnabled`) != `true`) {
             button.setAttribute(`dragEnabled`, `true`)
-            
+
             let buttonBounds = null;
             let initialOffset = null;
     
@@ -253,6 +255,8 @@ const createCard = (key, string, description, config, parentNode, showSaveButton
 
     const card = document.getElementById(key)
 
+    cards.push(card);
+
     card.querySelector(`#name`).innerHTML = settingsCardMDConverter.makeHtml(string);
 
     if(description) {
@@ -410,11 +414,6 @@ const updateConfig = (json) => {
     })
 }
 
-configuration.get().then(newConf => {
-    parse(newConf)
-    addFilenameFunctionality(newConf)
-});
-
 let paltform = navigator.platform.toLowerCase();
 
 if(paltform.toLowerCase() != `win32` && !paltform.toLowerCase().includes(`linux`)) {
@@ -433,3 +432,23 @@ if(detailsStr) system.detailsStr().then(details => {
     detailsStr.innerHTML = detailsStrConverter.makeHtml(details.join(`\n`) + `\n`);
     detailsStr.classList.remove(`d-none`)
 })
+
+configuration.get().then(newConf => {
+    parse(newConf)
+    addFilenameFunctionality(newConf)
+    if(document.getElementById(`settingsList`).style.opacity == 0) {
+        console.log(`Staggering cards: ${cards.map(c => c.id).join(`, `)}`)
+        //cards.forEach(c => c.style.scale = 0);
+        anime({
+            targets: `.settingsBox`,
+            delay: anime.stagger(15, {start: 10}),
+            scale: [0, 1],
+            opacity: [0, 1],
+            duration: anime.stagger(150, {start: 600, easing: 'easeInExpo'}),
+            easing: `easeOutExpo`,
+            begin: () => {
+                document.getElementById(`settingsList`).style.opacity = 1;
+            }
+        })
+    }
+});

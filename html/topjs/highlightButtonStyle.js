@@ -1,5 +1,5 @@
 const highlightButton = (target) => {
-    const targetColor = systemColors.light
+    const targetColor = (typeof systemColors != `undefined` ? systemColors : system.colors()).light
     console.log(`Setting background color of ${target} to ${targetColor.r}, ${targetColor.g}, ${targetColor.b}`)
     target.style.backgroundColor = `rgb(${targetColor.r}, ${targetColor.g}, ${targetColor.b})`;
 }
