@@ -144,30 +144,28 @@ module.exports = {
 
         return returnArgs;
     },
-    parseInfo: (d) => {
+    parseInfo: (d, full, root=true) => {
         let totalTime = 0;
 
-        const map = e => {
-            if(e.duration) {
-                e.duration = time(e.duration*1000);
-                totalTime += e.duration.units.ms;
-            }
+        if(typeof d.fullInfo != `boolean`) d.fullInfo = full === true;
 
-            if(e.timestamp) {
-                e.released = time((Date.now()/60) - e.timestamp);
-            }
+        if(d.entries) d.entries = d.entries.map(o => module.exports.parseInfo(o, full, false));
+        if(d.formats) d.formats = d.formats.map(o => module.exports.parseInfo(o, full, false));
 
-            return e;
-        }
-
-        if(d.entries) d.entries = d.entries.map(map);
-        if(d.formats) d.formats = d.formats.map(map);
+        if(d.duration && !root) totalTime += typeof d.duration == `object` ? d.duration.units.ms : d.duration*1000;
 
         if(d.timestamp) {
             d.released = time((Date.now()/60) - d.timestamp);
         }
 
+        if(d.entries) totalTime += d.entries.filter(o => o.duration).reduce((a, b) => a + b.duration.units.ms, 0);
+        if(d.formats) totalTime += d.formats.filter(o => o.duration).reduce((a, b) => a + b.duration.units.ms, 0);
+
         d.duration = time(totalTime)
+
+        if(!d.thumbnail && d.thumbnails && d.thumbnails.length > 0) {
+            d.thumbnail = typeof d.thumbnails[d.thumbnails.length - 1] == `object` ? d.thumbnails[d.thumbnails.length - 1].url : `${d.thumbnails[d.thumbnails.length - 1]}`
+        }
 
         return d
     },
@@ -254,7 +252,7 @@ module.exports = {
                 const d = JSON.parse(data);
                 if(d && d.formats) {
                     console.log(`formats found! resolving...`);
-                    res(module.exports.parseInfo(d))
+                    res(module.exports.parseInfo(d, true))
                 } else if(d && d.entries) {
                     console.log(`entries found! adding time objects...`);
     
@@ -270,7 +268,7 @@ module.exports = {
                     if(anyNoTitle && !disableFlatPlaylist) {
                         return module.exports.listFormats({query}, true).then(res)
                     } else {
-                        res(module.exports.parseInfo(d))
+                        res(module.exports.parseInfo(d, disableFlatPlaylist))
                     }
                 } else if(!disableFlatPlaylist) {
                     updateStatus(`Restarting playlist search... (there were no formats returned!!)`)
@@ -403,6 +401,28 @@ module.exports = {
 
             resolve(obj)
         }
+
+        const fetchFullInfo = (status) => new Promise(async res => {
+            if(info.fullInfo) {
+                return res(true);
+            } else {
+                update({status: status || `Getting full media info...`})
+                try {
+                    const i = await module.exports.listFormats({query: url}, true);
+                    Object.assign(info, i, {
+                        fullInfo: true
+                    });
+                    res(true);
+                } catch(e) {
+                    sendNotification({
+                        type: `warn`,
+                        headingText: `Failed to get full media info`,
+                        bodyText: `There was an issue retrieving the info. Please try again.`
+                    })
+                    res(false);
+                }
+            }
+        })
 
         try {
             const currentConfig = require(`../getConfig`)();
@@ -545,6 +565,8 @@ module.exports = {
                                 fs.renameSync(target, target + `.ezytdl`);
     
                                 const tags = [];
+
+                                await fetchFullInfo(`Getting full metadata...`)
         
                                 if(info.track) tags.push([`title`, info.track])
                                 else if(info.title) tags.push([`title`, info.title]);
@@ -600,8 +622,10 @@ module.exports = {
 
                             console.log(`--------------\nfoundCodec: ${foundCodec}\nvcodec: ${vcodec}\ninfo.video: ${info.video}\n--------------`)
 
-                            if(addMetadata.thumbnail && info.thumbnail && !vcodec) {
-                                await new Promise(async r => {
+                            if(addMetadata.thumbnail && !vcodec) {
+                                if(!info.thumbnail) await fetchFullInfo(`Getting thumbnail...`)
+
+                                if(info.thumbnail) await new Promise(async r => {
                                     updateTask({status: `Downloading thumbnail...`})
     
                                     fs.renameSync(target, target + `.ezytdl`);

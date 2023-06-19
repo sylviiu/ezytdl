@@ -141,6 +141,7 @@ contextBridge.exposeInMainWorld(`update`, {
 contextBridge.exposeInMainWorld(`mainQueue`, {
     get: () => invoke(`getQueue`),
     getInfo: (url) => invoke(`getInfo`, url),
+    parseInfo: (info) => invoke(`parseInfo`, info),
     search: (query) => invoke(`search`, query),
     download: (obj) => send(`download`, obj),
     action: (obj) => send(`queueAction`, obj),
