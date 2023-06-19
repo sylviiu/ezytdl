@@ -54,9 +54,8 @@ jobs:
         run: |
           echo "TAG_NAME=$(node -e "console.log(require('./package.json').version)")-nightly.${{github.run_number}}" >> "$GITHUB_ENV"
           echo "RELEASE_NAME=[NIGHTLY] $(node -e "console.log(require('./package.json').version)")-nightly.${{github.run_number}}" >> "$GITHUB_ENV"
-          echo "RELEASE_NOTES=${{ github.event.inputs.notes }}" >> "$GITHUB_ENV
 
-          node devscripts/generateReleaseNotes.js nightly
+          node devscripts/generateReleaseNotes.js nightly ${{ github.event.inputs.notes }}
 
           echo "BODY_PATH=$(echo "$(pwd)/release-notes.md")" >> "$GITHUB_ENV"
       - name: Create pre-release draft
