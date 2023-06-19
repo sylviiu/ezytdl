@@ -5,13 +5,16 @@ const genericUrlRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-z
 let started = false;
 
 const start = () => new Promise(async r => {
+    r();
     if(!started) {
         started = true;
 
         let lastText = null;
 
-        while(true) if(global.downloadFromClipboard) await new Promise(async res => {
-            if(global.sendNotifs) try {
+        console.log(`Starting clipboard listener`)
+
+        while(true) await new Promise(async res => {
+            if(global.downloadFromClipboard && global.sendNotifs) try {
                 const text = clipboard.readText();
                 if(typeof text == `string` && text != lastText && text.split(`?`)[0].match(genericUrlRegex)) {
                     console.log(`new clipboard text, is url!`)
