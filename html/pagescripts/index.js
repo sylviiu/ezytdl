@@ -48,6 +48,8 @@ anime({
 
 waves.style.bottom = (wavesHeight * -1) + `px`
 
+let parse = false;
+
 const wavesAnims = {
     fadeIn: () => {
         anime.remove(waves)
@@ -214,6 +216,7 @@ const runSearch = async (url, initialMsg, func) => {
         } else {
             listbox.querySelector(`#mediaTitle`).innerHTML = ``;
 
+            let type = info.extractor_key || info.extractor || info.webpage_url_domain;
             let icon;
 
             const setIcon = (name, original, extra) => {
@@ -237,6 +240,7 @@ const runSearch = async (url, initialMsg, func) => {
             if(!icon && info.extractor) setIcon(info.extractor.split(`:`)[0].toLowerCase(), `extractor`, info.extractor.split(`:`).slice(1).map(s => s[0].toUpperCase() + s.slice(1)).join(` `));
             if(!icon) setIcon(type.toLowerCase(), type);
             if(!icon) setIcon(type.split(/(?=[A-Z])/)[0].toLowerCase(), `"${type}" split by capital letters`, type.split(/(?=[A-Z])/).slice(1).join(``));
+            if(!icon && info.webpage_url_domain && info.webpage_url_domain.split(`.`).slice(-2, -1)[0].toLowerCase().endsWith(`app`)) setIcon(info.webpage_url_domain.split(`.`).slice(-2, -1)[0].toLowerCase().slice(0, -3), `webpage_url_domain (without app at end)`);
 
             if(icon) listbox.querySelector(`#mediaTitle`).appendChild(icon);
 
@@ -244,8 +248,6 @@ const runSearch = async (url, initialMsg, func) => {
 
             const updateMetadata = async (parse) => {
                 if(parse) info = await mainQueue.parseInfo(info);
-
-                let type = info.extractor_key || info.extractor || info.webpage_url_domain;
 
                 let afterType = ``;
                 if(info.formats) afterType += ` entry`
@@ -763,7 +765,7 @@ const runSearch = async (url, initialMsg, func) => {
         button.disabled = false;
     }
 
-    let parse = false;
+    parse = false;
 
     let opt = {
         query: url,
@@ -801,9 +803,7 @@ const runSearch = async (url, initialMsg, func) => {
 
     if(document.getElementById(`listbox`)) {
         centerURLBox(true, true);
-    };
-    
-    if(parse) {
+    } else if(parse) {
         parseInfo();
     } else {
         parse = true;
