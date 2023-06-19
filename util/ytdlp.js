@@ -777,7 +777,7 @@ module.exports = {
     
                     r();
                 }).then(() => {
-                    if(Object.keys(skipped).length == Object.keys(addMetadata).filter(v => v).length) deleteProgress(`metadata`);
+                    if(Object.keys(skipped).length == Object.keys(addMetadata || {}).filter(v => v).length) deleteProgress(`metadata`);
                     const status = resolveStatus + (Object.keys(skipped).length > 0 ? `<br><br>${Object.entries(skipped).map(s => `- Skipped ${s[0]} embed: ${s[1]}`).join(`<br>`)}` : ``);
                     console.log(`-------------\n${status}\n-------------`)
                     resolve(update({status, percentNum: 100}))
