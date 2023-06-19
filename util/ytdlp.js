@@ -46,7 +46,7 @@ refreshFFmpeg();
 
 const time = require(`../util/time`);
 
-const { updateStatus, updateStatusPercent } = require(`../util/downloadManager`);
+const { updateStatus, updateStatusPercent } = require(`../util/downloadManager`).default;
 
 const sendNotification = require(`../core/sendNotification`);
 
@@ -157,6 +157,65 @@ module.exports = {
 
         return returnArgs;
     },
+    unflatPlaylist: (extraArguments, info) => new Promise(async res => {
+        const manager = require(`./downloadManager`).get(`unflatPlaylist`);
+
+        manager.queueAction(manager.queue.queue.map(o => o.id), `remove`);
+        manager.queueAction(manager.queue.complete.map(o => o.id), `remove`);
+        manager.queueAction(manager.queue.paused.map(o => o.id), `remove`);
+
+        manager.queueEventEmitter.removeAllListeners(`queueUpdate`);
+
+        manager.queueEventEmitter.on(`queueUpdate`, (queue) => {
+            updateStatus(`Fetching info of ${queue.active.length + queue.paused.length + queue.queue.length}/${Object.values(queue).reduce((a, b) => a + b.length, 0)} items... (${queue.active.length} active)`)
+
+            updateStatusPercent([queue.complete.length, info.entries.length]);
+
+            if(queue.complete.length > 0 && queue.active.length + queue.paused.length + queue.queue.length == 0) {
+                console.log(`queue complete!`)
+                res(info);
+            }
+        });
+
+        for(const e of info.entries) manager.createDownload([{query: e.url, extraArguments, ignoreStderr: true}, false], (i) => Object.assign(e, i), `listFormats`);
+    }),
+    verifyPlaylist: (d, { extraArguments, disableFlatPlaylist }) => new Promise(async res => {
+        if(d && d.formats) {
+            console.log(`formats found! resolving...`);
+            res(module.exports.parseInfo(d, true))
+        } else if(d && d.entries) {
+            console.log(`entries found! adding time objects...`);
+
+            let anyNoTitle = false;
+
+            for (entry of d.entries) {
+                if(!entry.title || entry.title == entry.url) {
+                    anyNoTitle = true;
+                    break;
+                }
+            };
+
+            if(anyNoTitle) {
+                console.log(`Missing titles!`);
+                //return module.exports.listFormats({query, extraArguments}, true).then(res)
+                module.exports.unflatPlaylist(extraArguments, d).then(i => res(module.exports.parseInfo(i, true)))
+            } else {
+                res(module.exports.parseInfo(d, disableFlatPlaylist))
+            }
+        } else if(!disableFlatPlaylist) {
+            updateStatus(`Restarting playlist search... (there were no formats returned!!)`)
+            console.log(`no formats found! starting over...`);
+            //return module.exports.listFormats({query, extraArguments}, true).then(res)
+            module.exports.unflatPlaylist(extraArguments, d).then(i => res(module.exports.parseInfo(i, true)))
+        } else {
+            sendNotification({
+                type: `error`,
+                headingText: `Error getting media info`,
+                bodyText: `Either the URL is invalid or the media is unavailable. Please try with a different link.`
+            })
+            return res(null);
+        }
+    }),
     parseInfo: (d, full, root=true) => {
         let totalTime = 0;
 
@@ -221,8 +280,9 @@ module.exports = {
 
             try {
                 const d = JSON.parse(data);
+                module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, extraArguments }).then(res);
                 //if(d.entries.filter(o => !o.title).length != d.entries.length) d.entries = d.entries.filter(o => o.title);
-                res(module.exports.parseInfo(d))
+                //res(module.exports.parseInfo(d))
                 //console.log(d)
             } catch(e) {
                 sendNotification({
@@ -234,7 +294,7 @@ module.exports = {
             }
         })
     }),
-    listFormats: ({query, extraArguments}, disableFlatPlaylist) => new Promise(async res => {
+    listFormats: ({query, extraArguments, ignoreStderr}, disableFlatPlaylist) => new Promise(async res => {
         let url = query;
 
         const additional = module.exports.additionalArguments(extraArguments);
@@ -249,7 +309,7 @@ module.exports = {
 
         let data = ``;
 
-        sendUpdates(proc, `Starting info query of "${url}"`);
+        if(!ignoreStderr) sendUpdates(proc, `Starting info query of "${url}"`);
 
         proc.stdout.on(`data`, d => {
             //console.log(`output`, d.toString())
@@ -265,38 +325,7 @@ module.exports = {
 
             try {
                 const d = JSON.parse(data);
-                if(d && d.formats) {
-                    console.log(`formats found! resolving...`);
-                    res(module.exports.parseInfo(d, true))
-                } else if(d && d.entries) {
-                    console.log(`entries found! adding time objects...`);
-    
-                    let anyNoTitle = false;
-    
-                    for (entry of d.entries) {
-                        if(!entry.title || entry.title == entry.url) {
-                            anyNoTitle = true;
-                            break;
-                        }
-                    };
-    
-                    if(anyNoTitle && !disableFlatPlaylist) {
-                        return module.exports.listFormats({query, extraArguments}, true).then(res)
-                    } else {
-                        res(module.exports.parseInfo(d, disableFlatPlaylist))
-                    }
-                } else if(!disableFlatPlaylist) {
-                    updateStatus(`Restarting playlist search... (there were no formats returned!!)`)
-                    console.log(`no formats found! starting over...`);
-                    return module.exports.listFormats({query, extraArguments}, true).then(res)
-                } else {
-                    sendNotification({
-                        type: `error`,
-                        headingText: `Error getting media info`,
-                        bodyText: `Either the URL is invalid or the media is unavailable. Please try with a different link.`
-                    })
-                    return res(null);
-                }
+                module.exports.verifyPlaylist(d, { disableFlatPlaylist: false }).then(res);
                 //console.log(d)
             } catch(e) {
                 sendNotification({

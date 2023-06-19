@@ -1,5 +1,5 @@
 const { app, Menu, Tray, nativeImage, nativeTheme, ipcMain } = require('electron');
-const { queueEventEmitter, queueAction } = require(`../util/downloadManager`);
+const { queueEventEmitter, queueAction } = require(`../util/downloadManager`).default;
 
 global.tray = null;
 
@@ -20,7 +20,7 @@ module.exports = async () => {
     downloadIcons.on(`icon`, i => global.tray.setImage(i));
 
     createArrayAndApply = (queue) => {
-        if(!queue) queue = Object.assign({}, require(`../util/downloadManager`).queue, { length: Object.values(require(`../util/downloadManager`).queue).slice(1).reduce((a,b) => a+b.length, 0) });
+        if(!queue) queue = Object.assign({}, require(`../util/downloadManager`).default.queue, { length: Object.values(require(`../util/downloadManager`).default.queue).slice(1).reduce((a,b) => a+b.length, 0) });
 
         const length = Object.values(queue).slice(1).reduce((a,b) => a+b.length, 0);
     
@@ -103,7 +103,7 @@ module.exports = async () => {
 
     queueEventEmitter.on(`queueUpdate`, createArrayAndApply);
 
-    createArrayAndApply(require(`../util/downloadManager`).queue);
+    createArrayAndApply(require(`../util/downloadManager`).default.queue);
 
     global.tray.on(`click`, require(`./bringToFront`));
 }

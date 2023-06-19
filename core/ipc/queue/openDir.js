@@ -3,7 +3,7 @@ const { shell } = require('electron');
 module.exports = {
     type: `on`,
     func: (_e, id) => {
-        const { getFromQueue } = require(`../../../util/downloadManager`);
+        const { getFromQueue } = require(`../../../util/downloadManager`).default;
 
         if(!id) {
             const { saveLocation } = require(`../../../getConfig`)();

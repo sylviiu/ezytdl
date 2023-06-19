@@ -1,4 +1,4 @@
 module.exports = {
     type: `handle`,
-    func: () => require(`../../../util/downloadManager`).queue
+    func: () => require(`../../../util/downloadManager`).default.queue
 }

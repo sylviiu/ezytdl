@@ -25,7 +25,7 @@ const quit = async (code) => {
 }
 
 module.exports = (noExit) => new Promise(async res => {
-    const queue = require(`../util/downloadManager`).queue;
+    const queue = require(`../util/downloadManager`).default.queue;
 
     const length = Object.values(queue).slice(1).reduce((a,b) => a+b.length, 0)
 

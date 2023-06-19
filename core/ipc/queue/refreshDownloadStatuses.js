@@ -1,4 +1,4 @@
 module.exports = {
     type: `on`,
-    func: () => require(`../../../util/downloadManager`).refreshAll()
+    func: () => require(`../../../util/downloadManager`).default.refreshAll()
 }
