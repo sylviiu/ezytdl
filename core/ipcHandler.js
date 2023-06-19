@@ -22,7 +22,7 @@ const registerIpc = (group, method) => {
     ipcMain.removeHandler(name);
 
     ipcMain[ipcEvent.type](name, (event, args) => {
-        console.log(`${ipcEvent.type.toUpperCase()} / ${name}`, args);
+        console.log(`${ipcEvent.type.toUpperCase()} / ${name} (${args ? typeof args.length == `number` ? args.length : 1 : 0} args)`);
         return ipcEvent.func(event, args);
     })
 }
