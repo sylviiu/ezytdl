@@ -1,4 +1,4 @@
-const throwNode = (originalCard, target, beforeCloneFunc, noClone, noCloneTarget) => {
+const throwNode = (originalCard, target, noClone, noCloneTarget) => new Promise(async res => {
     const targetPosition = target.getBoundingClientRect();
 
     console.log(`throwNode target pos`, targetPosition)
@@ -140,7 +140,7 @@ const throwNode = (originalCard, target, beforeCloneFunc, noClone, noCloneTarget
             duration: 500,
             easing: `easeInCirc`,
             complete: () => {
-                if(beforeCloneFunc) beforeCloneFunc();
+                res();
                 
                 card.opacity = 0;
                 if(card.parentNode) card.parentNode.removeChild(card);
@@ -197,4 +197,4 @@ const throwNode = (originalCard, target, beforeCloneFunc, noClone, noCloneTarget
             }
         });
     }, noClone ? 0 : 350);
-}
+})
