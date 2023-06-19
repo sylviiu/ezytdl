@@ -198,7 +198,56 @@ const runSearch = async (url, initialMsg, func) => {
 
             refreshSelectionBox();
         } else {
-            listbox.querySelector(`#mediaTitle`).innerHTML = `[${func == `search` ? info.entries.length + ` results` : info.webpage_url_domain}] ${info.title}`;
+            listbox.querySelector(`#mediaTitle`).innerHTML = ``;
+
+            let icon;
+
+            const setIcon = (name, original, extra) => {
+                console.log(`checking if icon "fab fa-${name}" exists (from ${original}) -- extra: ${extra || `(none)`}`);
+                if(faIconExists(`fab`, name)) {
+                    console.log(`icon exists! setting icon...`)
+                    icon = document.createElement(`i`);
+                    icon.style.fontWeight = `normal`;
+                    icon.style.marginRight = `12px`;
+                    icon.classList.add(`fab`);
+                    icon.classList.add(`fa-${name}`);
+                    if(typeof extra == `string`) iconExtra = `| ` + extra + `, `;
+                    return true;
+                } else {
+                    console.log(`icon does not exist!`)
+                    return false;
+                }
+            }
+
+            if(!icon && info.webpage_url_domain) setIcon(info.webpage_url_domain.split(`.`).slice(-2, -1)[0].toLowerCase(), `webpage_url_domain`);
+            if(!icon && info.extractor) setIcon(info.extractor.split(`:`)[0].toLowerCase(), `extractor`, info.extractor.split(`:`).slice(1).map(s => s[0].toUpperCase() + s.slice(1)).join(` `));
+            if(!icon) setIcon(type.toLowerCase(), type);
+            if(!icon) setIcon(type.split(/(?=[A-Z])/)[0].toLowerCase(), `"${type}" split by capital letters`, type.split(/(?=[A-Z])/).slice(1).join(``));
+
+            if(icon) listbox.querySelector(`#mediaTitle`).appendChild(icon);
+
+            listbox.querySelector(`#mediaTitle`).innerHTML += `${info.title}`;
+
+            const updateMetadata = async (parse) => {
+                if(parse) info = await mainQueue.parseInfo(info);
+
+                let type = info.extractor_key || info.extractor || info.webpage_url_domain;
+
+                let afterType = ``;
+                if(info.formats) afterType += ` entry`
+                if(info.creator || info.uploader || info.channel) afterType += ` by ${info.creator || info.uploader || info.channel}`;
+                
+                let results;
+
+                if(info.entries) results = info.entries.length + ` entr${info.entries.length == 1 ? `y` : `ies`}`
+                else if(info.formats) results = info.formats.length + ` format${info.formats.length == 1 ? `` : `s`}`
+
+                listbox.querySelector(`#mediaSubtext`).innerHTML = ((type || iconExtra) + afterType + (results ? (type || iconExtra || afterType ? ` | ` : ``) + `${results}` : ``)).trim();
+    
+                if(info.duration && info.duration.string && info.duration.units.ms) listbox.querySelector(`#mediaSubtext`).innerHTML += ` | ${info.duration.string}`;
+            };
+
+            updateMetadata();
 
             if(info.thumbnails && info.thumbnails.length > 0) {
                 const thumbnail = info.thumbnails[info.thumbnails.length - 1];
@@ -291,8 +340,8 @@ const runSearch = async (url, initialMsg, func) => {
 
                     card.querySelector(`#formatName`).innerHTML = entry.title;
 
-                    if(entry.uploader || entry.channel) {
-                        card.querySelector(`#formatSubtext`).innerHTML = `${entry.uploader || entry.channel}`;
+                    if(entry.creator || entry.uploader || entry.channel) {
+                        card.querySelector(`#formatSubtext`).innerHTML = `${entry.creator || entry.uploader || entry.channel}`;
                         if(entry.released) {
                             card.querySelector(`#formatSubtext`).innerHTML += ` | ${entry.released.string.split(`,`)[0] + ` ago`}`;
                         }
@@ -315,6 +364,7 @@ const runSearch = async (url, initialMsg, func) => {
                         if(thisIndex != -1) {
                             console.log(`Removing index ${thisIndex}`)
                             info.entries.splice(thisIndex, 1);
+                            updateMetadata(true);
                         } else console.log(`Failed to find index for ${entry.id || entry.webpage_url || entry.url}`)
                     }
 
