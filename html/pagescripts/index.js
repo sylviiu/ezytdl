@@ -202,6 +202,8 @@ const runSearch = async (url, initialMsg, func) => {
     }
 
     const parseInfo = async () => {
+        console.log(`parseInfo: started`)
+
         input.value = url;
 
         resultsVisible = true;
@@ -430,7 +432,7 @@ const runSearch = async (url, initialMsg, func) => {
     
                                 const bounding = card.getBoundingClientRect();
 
-                                centerURLBox(null, 800);
+                                centerURLBox(null, 900);
                                 runSearch(entry.url, `Fetching info...`, `getInfo`)
     
                                 window.scrollTo(0, 0);
@@ -444,13 +446,14 @@ const runSearch = async (url, initialMsg, func) => {
     
                                 anime({
                                     targets: newCard,
-                                    top: `90px`,
+                                    top: (window.innerHeight - 90) + `px`,
                                     easing: `easeOutCirc`,
                                     borderRadius: `${Math.floor(bounding.height, bounding.width)/2}px`,
                                     duration: 400,
                                     complete: () => {
                                         console.log(`throwing node`)
                                         throwNode(newCard, innerUrlBox, true, true).then(() => {
+                                            console.log(`parseInfo: node hit`)
                                             //input.value = entry.webpage_url || entry.url;
                                             //runSearch(input.value, `Fetching info...`, `getInfo`)
                                         })
@@ -797,16 +800,21 @@ const runSearch = async (url, initialMsg, func) => {
     console.log(`selectionBox / hiding from parseinfo`)
     selectionBox.hide(false, true);
 
-    mainQueue[func || `getInfo`](opt).then(data => {
-        info = data;
-
-        console.log(`info received`)
-
+    const runParse = (from) => {
+        console.log(`parseInfo: check completed: ${from}`)
         if(parse) {
             parseInfo();
         } else {
             parse = true;
         }
+    }
+
+    mainQueue[func || `getInfo`](opt).then(data => {
+        info = data;
+
+        console.log(`info received`)
+
+        runParse(`queue function`)
     })
     
     input.disabled = true;
@@ -816,17 +824,7 @@ const runSearch = async (url, initialMsg, func) => {
         document.getElementById(`errorMsg`).classList.add(`d-none`);
     }
 
-    const runParse = () => {
-        if(parse) {
-            parseInfo();
-        } else {
-            parse = true;
-        }
-    }
-
-    if(document.getElementById(`listbox`)) {
-        centerURLBox(true).then(runParse);
-    } else runParse()
+    centerURLBox(true).then(() => runParse(`centerURLBox`));
 }
 
 const resultsCountInput = document.getElementById(`resultsCountInput`);

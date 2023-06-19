@@ -139,9 +139,7 @@ const throwNode = (originalCard, target, noClone, noCloneTarget) => new Promise(
             top: `${targetPosition.y}px`,
             duration: 500,
             easing: `easeInCirc`,
-            complete: () => {
-                res();
-                
+            complete: () => {                
                 card.opacity = 0;
                 if(card.parentNode) card.parentNode.removeChild(card);
 
@@ -168,6 +166,7 @@ const throwNode = (originalCard, target, noClone, noCloneTarget) => new Promise(
                         left: [((newTarget.x - currentX)/15), 0],
                         duration: 400,
                         easing: `easeOutCirc`,
+                        begin: () => res()
                     })
                 } else {
                     copy.style.position = `fixed`;
@@ -188,6 +187,7 @@ const throwNode = (originalCard, target, noClone, noCloneTarget) => new Promise(
                         left: [((newTarget.x - currentX)/15) + newTarget.x, newTarget.x],
                         duration: 400,
                         easing: `easeOutCirc`,
+                        begin: () => res(),
                         complete: () => {
                             document.body.removeChild(copy);
                             target.style.opacity = 1;
