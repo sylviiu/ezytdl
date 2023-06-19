@@ -48,8 +48,6 @@ anime({
 
 waves.style.bottom = (wavesHeight * -1) + `px`
 
-let parse = false;
-
 const wavesAnims = {
     fadeIn: () => {
         anime.remove(waves)
@@ -103,7 +101,7 @@ let selectedSearch = null;
 
 let resultsVisible = false;
 
-let centerURLBox = () => null;
+let centerURLBox = () => new Promise(r => r(false));
 
 const runSearch = async (url, initialMsg, func) => {
     system.hasFFmpeg().then(has => {
@@ -119,10 +117,10 @@ const runSearch = async (url, initialMsg, func) => {
 
     let info = null;
 
-    centerURLBox = (removeListbox, checkParse, duration) => {
+    centerURLBox = (removeListbox, duration) => new Promise(async res => {
         console.log(`centerURLBox called; resultsVisible: ${resultsVisible}; doing anything? ${resultsVisible != false}`);
     
-        if(!resultsVisible) return false;
+        if(!resultsVisible) return res(false);
     
         resultsVisible = false;
     
@@ -157,15 +155,9 @@ const runSearch = async (url, initialMsg, func) => {
                 complete: () => {
                     if(document.getElementById(`listbox`)) listboxParent.removeChild(document.getElementById(`listbox`));
     
-                    urlBox.style.height = `calc(100vh - 80px)`
-                    
-                    if(checkParse) {
-                        if(typeof parse != `undefined`) {
-                            parseInfo();
-                        } else {
-                            parse = true;
-                        }
-                    }
+                    urlBox.style.height = `calc(100vh - 80px)`;
+
+                    res(true);
                 }
             });
         }
@@ -190,7 +182,7 @@ const runSearch = async (url, initialMsg, func) => {
         if(config.disableAnimations) {
             wavesAnims.fadeIn();
         } else setTimeout(() => wavesAnims.fadeIn(), duration/10)
-    }
+    })
 
     const parseInfo = async () => {
         resultsVisible = true;
@@ -416,7 +408,7 @@ const runSearch = async (url, initialMsg, func) => {
     
                                 const bounding = card.getBoundingClientRect();
 
-                                centerURLBox(null, null, 800);
+                                centerURLBox(null, 800);
     
                                 window.scrollTo(0, 0);
                                 
@@ -765,7 +757,7 @@ const runSearch = async (url, initialMsg, func) => {
         button.disabled = false;
     }
 
-    parse = false;
+    let parse = false;
 
     let opt = {
         query: url,
@@ -801,13 +793,17 @@ const runSearch = async (url, initialMsg, func) => {
         document.getElementById(`errorMsg`).classList.add(`d-none`);
     }
 
-    if(document.getElementById(`listbox`)) {
-        centerURLBox(true, true);
-    } else if(parse) {
-        parseInfo();
-    } else {
-        parse = true;
+    const runParse = () => {
+        if(parse) {
+            parseInfo();
+        } else {
+            parse = true;
+        }
     }
+
+    if(document.getElementById(`listbox`)) {
+        centerURLBox(true).then(runParse);
+    } else runParse()
 }
 
 const resultsCountInput = document.getElementById(`resultsCountInput`);
