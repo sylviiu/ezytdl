@@ -351,6 +351,20 @@ module.exports = {
             return obj;
         };
 
+        let setProgress = (key, o) => {
+            //Object.assign(obj, { progressBars: Object.assign({}, obj.progressBars, { [key]: o }) });
+            Object.assign(obj, { [`progress-${key}`]: o })
+            updateFunc({ latest: obj, overall: obj }, proc);
+            return obj;
+        };
+
+        let deleteProgress = (key) => {
+            //Object.assign(obj, { progressBars: Object.assign({}, obj.progressBars, { [key]: null }) });
+            if(obj[`progress-${key}`]) delete obj[`progress-${key}`];
+            updateFunc({ latest: obj, overall: obj }, proc);
+            return obj;
+        }
+
         let filenames = [];
         
         const purgeLeftoverFiles = (saveTo) => {
@@ -406,7 +420,7 @@ module.exports = {
             if(info.fullInfo) {
                 return res(true);
             } else {
-                update({status: status || `Getting full media info...`})
+                if(status) update({status})
                 try {
                     const i = await module.exports.listFormats({query: url}, true);
                     Object.assign(info, i, {
@@ -484,7 +498,7 @@ module.exports = {
 
             const res = async (o) => {
                 console.log(o)
-                update(Object.assign({}, typeof o == `object` ? o : {}, { percentNum: -1 }));
+                update(Object.assign({}, typeof o == `object` ? o : {}, { percentNum: 100 }));
                 const resolveStatus = obj.status;
                 const skipped = {};
                 new Promise(async r => {
@@ -506,6 +520,8 @@ module.exports = {
 
                     if(run && addMetadata && module.exports.ffmpegPath && file && fs.existsSync(target)) {
                         console.log(`adding metadata...`)
+
+                        setProgress(`metadata`, `Metadata`)
 
                         let totalTasks = Object.values(addMetadata).filter(v => v).length + 1;
                         let current = 0;
@@ -560,13 +576,14 @@ module.exports = {
                             }
                             
                             if(addMetadata.tags) await new Promise(async r => {
-                                updateTask({status: `Adding tags...`})
-    
                                 fs.renameSync(target, target + `.ezytdl`);
     
                                 const tags = [];
 
-                                await fetchFullInfo(`Getting full metadata...`)
+                                if(!info.fullInfo) {
+                                    setProgress(`tags`, {progressNum: -1, status: `Getting full metadata...`})
+                                    await fetchFullInfo()
+                                };
         
                                 if(info.track) tags.push([`title`, info.track])
                                 else if(info.title) tags.push([`title`, info.title]);
@@ -576,6 +593,8 @@ module.exports = {
                                 if(info.genre) tags.push([`genre`, info.genre]);
                                 if(info.license) tags.push([`copyright`, info.license]);
                                 if(info.description) tags.push([`comment`, info.description]);
+                                
+                                setProgress(`tags`, {progressNum: 30, status: `Adding ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}...`})
     
                                 const meta = [];
     
@@ -594,11 +613,17 @@ module.exports = {
                                 proc.stderr.on(`data`, d => {
                                     console.log(d.toString().trim())
                                 });
+
+                                proc.once(`spawn`, () => {
+                                    setProgress(`tags`, {progressNum: 50, status: `Adding ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}... (FFmpeg spawned)`})
+                                })
         
                                 proc.on(`error`, e => {
                                     console.error(e)
     
                                     skipped.tags = `${e}`;
+
+                                    deleteProgress(`tags`);
     
                                     cleanup(true);
                                     r()
@@ -606,6 +631,7 @@ module.exports = {
         
                                 proc.on(`close`, code => {
                                     console.log(`metadata added! (code ${code})`)
+                                    setProgress(`tags`, {progressNum: 100, status: `Added ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}`})
                                     cleanup(code === 0 ? false : true);
                                     r()
                                 })
@@ -613,6 +639,8 @@ module.exports = {
                                 console.error(e)
     
                                 skipped.tags = `${e}`;
+                                
+                                deleteProgress(`tags`);
     
                                 cleanup(true);
                             });
@@ -623,31 +651,50 @@ module.exports = {
                             console.log(`--------------\nfoundCodec: ${foundCodec}\nvcodec: ${vcodec}\ninfo.video: ${info.video}\n--------------`)
 
                             if(addMetadata.thumbnail && !vcodec) {
-                                if(!info.thumbnail) await fetchFullInfo(`Getting thumbnail...`)
+                                if(!info.thumbnail && !info.fullInfo) {
+                                    await fetchFullInfo()
+                                    setProgress(`thumbnail`, {progressNum: -1, status: `Getting full metadata...`})
+                                };
+                                
+                                if(!info.thumbnail && info.fullInfo) {
+                                    skipped.thumbnail = `No thumbnail found`;
+                                    deleteProgress(`thumbnail`);
+                                } else if(info.thumbnail) await new Promise(async r => {
+                                    let progressNum = 15;
 
-                                if(info.thumbnail) await new Promise(async r => {
-                                    updateTask({status: `Downloading thumbnail...`})
+                                    setProgress(`thumbnail`, {progressNum, status: `Downloading thumbnail...`})
     
                                     fs.renameSync(target, target + `.ezytdl`);
         
                                     const req = require(`superagent`).get(info.thumbnail);
         
-                                    req.pipe(fs.createWriteStream(target + `.songcover`))
+                                    req.pipe(fs.createWriteStream(target + `.songcover`));
+
+                                    req.on(`data`, () => {
+                                        progressNum += 1;
+                                        if(progressNum > 30) progressNum = 30;
+                                        setProgress(`thumbnail`, {progressNum})
+                                    })
         
                                     req.once(`error`, e => {
                                         console.log(e)
                                         skipped.thumbnail = `Failed to download thumbnail`;
+                                        deleteProgress(`thumbnail`);
                                         fs.renameSync(target + `.ezytdl`, target);
                                         r()
                                     });
         
                                     req.once(`end`, () => {
-                                        update({status: `Converting thumbnail...`})
+                                        progressNum = 35;
+                                        setProgress(`thumbnail`, {progressNum, status: `Converting thumbnail...`})
     
                                         const imgConvertProc = child_process.execFile(module.exports.ffmpegPath, [`-y`, `-i`, target + `.songcover`, `-update`, `1`, `-vf`, `crop=min(in_w\\,in_h):min(in_w\\,in_h)`, target + `.png`]);
     
                                         imgConvertProc.stdout.on(`data`, d => {
                                             console.log(d.toString().trim())
+                                            progressNum += 1;
+                                            if(progressNum > 60) progressNum = 60;
+                                            setProgress(`thumbnail`, {progressNum})
                                         })
     
                                         imgConvertProc.stderr.on(`data`, d => {
@@ -656,7 +703,8 @@ module.exports = {
     
                                         imgConvertProc.on(`close`, code => {
                                             if(code == 0) {
-                                                update({status: `Adding thumbnail...`})
+                                                progressNum = 65;
+                                                setProgress(`thumbnail`, {progressNum, status: `Applying thumbnail...`})
     
                                                 const args = [`-y`, `-i`, target + `.ezytdl`, `-i`, `${target + `.png`}`, `-c`, `copy`, `-map`, `0:0`, `-map`, `1:0`, `-metadata:s:v`, `title=Album cover`, `-metadata:s:v`, `comment=Cover (front)`];
                         
@@ -672,12 +720,17 @@ module.exports = {
                         
                                                 proc.stderr.on(`data`, d => {
                                                     console.error(d.toString().trim())
+                                                    progressNum += 1;
+                                                    if(progressNum > 90) progressNum = 90;
+                                                    setProgress(`thumbnail`, {progressNum})
                                                 });
                         
                                                 proc.on(`error`, e => {
                                                     console.error(e)
                     
                                                     skipped.thumbnail = `Failed to add cover: ${e}`;
+
+                                                    deleteProgress(`thumbnail`);
                     
                                                     cleanup(true);
                                                     r();
@@ -686,11 +739,13 @@ module.exports = {
                                                 proc.on(`close`, code => {
                                                     console.log(`song cover added! (code ${code})`)
                                                     cleanup(code === 0 ? false : true);
+                                                    setProgress(`thumbnail`, {progressNum: 100, status: `Thumbnail added!`})
                                                     r();
                                                 })
                                             } else {
                                                 console.log(`failed to convert image to png!`)
                                                 skipped.thumbnail = `Failed to convert thumbnail to PNG`;
+                                                deleteProgress(`thumbnail`);
                                                 cleanup(true);
                                                 r();
                                             }
@@ -700,6 +755,8 @@ module.exports = {
                                     console.error(e)
         
                                     skipped.thumbnail = `${e}`;
+
+                                    deleteProgress(`thumbnail`);
         
                                     cleanup(true);
                                 })
@@ -720,6 +777,7 @@ module.exports = {
     
                     r();
                 }).then(() => {
+                    if(Object.keys(skipped).length == Object.keys(addMetadata).filter(v => v).length) deleteProgress(`metadata`);
                     const status = resolveStatus + (Object.keys(skipped).length > 0 ? `<br><br>${Object.entries(skipped).map(s => `- Skipped ${s[0]} embed: ${s[1]}`).join(`<br>`)}` : ``);
                     console.log(`-------------\n${status}\n-------------`)
                     resolve(update({status, percentNum: 100}))
