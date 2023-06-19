@@ -685,7 +685,7 @@ module.exports = {
                         }
                     } else {
                         console.log(`no metadata to add! (run: ${run}) (ffmpeg installed: ${module.exports.ffmpegPath ? true : false}) (file: ${file ? true : false})`);
-                        if(!run) {
+                        if(!run && addMetadata) {
                             Object.entries(addMetadata).filter(v => v[1]).forEach(k => skipped[k[0]] = `Download was cancelled.`);
                         } else if(!module.exports.ffmpegPath) {
                             Object.entries(addMetadata).filter(v => v[1]).forEach(k => skipped[k[0]] = `FFmpeg wasn't found.`);
