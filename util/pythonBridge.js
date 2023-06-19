@@ -136,7 +136,6 @@ module.exports = {
                                 }
 
                                 const parse = (msg) => {
-                                    msg = msg.toString().trim();
                                     const data = JSON.parse(msg.toString().trim());
                                     if(data.id) {
                                         module.exports.idHooks.filter(h => h.id == data.id).forEach(h => h.func(data));
@@ -149,8 +148,13 @@ module.exports = {
                                     try {
                                         parse(msg)
                                     } catch(e) {
-                                        parse(`{` + msg.toString().trim().split(`{`).slice(1).join(`{`).split(`}`).slice(0, -1).join(`}`) + `}`)
-                                        //console.error(`-----------------------\nmsg: "${msg}"\nerr: ${e}\n-----------------------`)
+                                        try {
+                                            parse(`{` + msg.toString().trim().split(`{`).slice(1).join(`{`).split(`}`).slice(0, -1).join(`}`) + `}`)
+                                        } catch(e) {
+                                            //console.error(`-----------------------\nmsg: "${msg}"\nerr: ${e}\n-----------------------`)
+                                            console.log(`failed to parse msg -- adding to existingData`);
+                                            existingData += msg.toString();
+                                        }
                                     }
                                 })
                             }
