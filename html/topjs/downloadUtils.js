@@ -1,7 +1,7 @@
-function createDownloadManager(card, id) {
+var createDownloadManager = (card, id) => {
     const btn = card.querySelector(`#formatDownload`);
 
-    const progress = addProgressBar(card.querySelector(`#leftContent`))
+    const progress = addProgressBar(card.querySelector(`#leftContent`), null, null, { align: `left`, usePercentText: true })
     
     progress.setProgress(null);
     
@@ -19,6 +19,72 @@ function createDownloadManager(card, id) {
     let destinationFile;
 
     let status = {};
+    let otherProgBars = {};
+
+    const updateProg = (k, obj) => {
+        const id = k.split(`-`)[1];
+
+        let clearTimer = () => {
+            if(typeof otherProgBars[id] != `undefined` && otherProgBars[id].deleteTimer) {
+                clearTimeout(otherProgBars[id].deleteTimer);
+                otherProgBars[id].deleteTimer = null;
+            }
+        }
+
+        if(typeof obj == `object`) {
+            clearTimer();
+
+            if(!otherProgBars[id]) {
+                console.log(`Creating other progress bar for ${id}`)
+                const newProgBar = addProgressBar(card.querySelector(`#leftContent`), `85%`, null, { align: `left` });
+                newProgBar.setProgress(null);
+                otherProgBars[id] = newProgBar;
+            }
+
+            let newNum = typeof obj.progressNum == `number` ? obj.progressNum : undefined;
+            let newStr = typeof obj.status == `string` ? obj.status : undefined;
+
+            if(otherProgBars[id].newNum == newNum) newNum = undefined
+            else if(newNum) otherProgBars[id].newNum = newNum;
+
+            if(otherProgBars[id].newStr == newStr) newStr = undefined
+            else if(newStr) otherProgBars[id].newStr = newStr;
+
+            console.log(`Updating other progress bar for ${id} (progressNum: ${newNum}, status: ${newStr})`)
+            otherProgBars[id].setProgress(newNum, newStr);
+        } else if(typeof obj == `string`) {
+            clearTimer();
+            
+            if(!otherProgBars[id]) {
+                otherProgBars[id] = { node: formatSubtext.cloneNode(true) }
+                otherProgBars[id].node.id = `formatSubtext-${id}`;
+                otherProgBars[id].node.style.marginTop = `8px`;
+                otherProgBars[id].node.style.fontWeight = `normal`;
+                otherProgBars[id].node.style.fontSize = `0.9em`;
+                card.querySelector(`#leftContent`).appendChild(otherProgBars[id].node);
+            };
+
+            otherProgBars[id].node.innerHTML = obj;
+        } else {    
+            if(typeof otherProgBars[id] != `undefined` && !otherProgBars[id].deleteTimer) otherProgBars[id].deleteTimer = setTimeout(() => {
+                console.log(`Removing other progress bar for ${id}`, obj)
+                otherProgBars[id].remove();
+                delete otherProgBars[id];
+            }, 150)
+        }
+    }
+
+    const refreshProgBars = () => {
+        const allProgObjs = Object.keys(status).filter(k => k.startsWith(`progress-`));
+
+        const notCreated = allProgObjs.filter(k => !otherProgBars[k.split(`-`)[1]]);
+
+        if(notCreated.length > 0) notCreated.forEach(k => status[k] ? updateProg(k, status[k]) : null);
+
+        const deleted = Object.keys(otherProgBars).filter(k => !allProgObjs.includes(`progress-${k}`));
+
+        if(deleted.length > 0) deleted.forEach(k => updateProg(k, null));
+    }
 
     setTimeout(() => {
         if(status.percentNum) {
@@ -31,18 +97,25 @@ function createDownloadManager(card, id) {
                 if(!fileFormat.classList.contains(`d-none`)) fileFormat.classList.add(`d-none`);
             }
         };
-    }, 50)
+        setTimeout(() => refreshProgBars(), 50)
+    }, 50);
 
     const update = (m) => {
         if(m) {
-            for(key of Object.keys(m)) status[key] = m[key];
+            Object.assign(status, m);
 
             if(m.saveLocation) location = m.saveLocation;
 
             if(status.destinationFilename && status.formatID) {
                 const titleStr = `[${status.formatID}] ${status.destinationFilename}`;
                 if(formatName.innerHTML != titleStr) formatName.innerHTML = titleStr
-            }
+            };
+
+            //refreshProgBars();
+            
+            const updatedProgObjs = Object.keys(status).filter(k => k.startsWith(`progress-`));
+
+            if(updatedProgObjs.length > 0) setTimeout(() => updatedProgObjs.forEach(k => updateProg(k, m[k])), 50);
 
             if(status.live) {
                 progress.setProgress(-1);
@@ -88,7 +161,6 @@ function createDownloadManager(card, id) {
 
         btn2.classList.remove(`d-none`);
 
-        //formatName.innerHTML = `Saved to: ${location}`
         if(!card.querySelector(`#eta`).classList.contains(`d-none`)) card.querySelector(`#eta`).classList.add(`d-none`);
         if(!card.querySelector(`#speed`).classList.contains(`d-none`)) card.querySelector(`#speed`).classList.add(`d-none`);
     };
@@ -96,7 +168,7 @@ function createDownloadManager(card, id) {
     return { update, complete, status, progress }
 }
 
-const startDownload = (originalCard, opt) => {
+var startDownload = (originalCard, opt) => {
     opt.extraArguments = document.getElementById(`extraArguments`).value;
 
     if(config.reduceAnimations) {
@@ -123,12 +195,6 @@ const startDownload = (originalCard, opt) => {
             formatDownloadButtonPosition = originalCard.querySelector(`#formatDownload`).getBoundingClientRect();
         } else {
             formatDownloadButtonPosition = originalCard.getBoundingClientRect();
-    
-            //formatDownloadButtonPosition.x += formatDownloadButtonPosition.width/2;
-            //formatDownloadButtonPosition.y += formatDownloadButtonPosition.height/2;
-    
-            //formatDownloadButtonPosition.x += downloadsListBtn.style.width/2;
-            //formatDownloadButtonPosition.y -= downloadsListBtn.style.height/2;
         }
     
         const card = originalCard.cloneNode(true);
@@ -140,7 +206,6 @@ const startDownload = (originalCard, opt) => {
     
         const currentPosition = originalCard.getBoundingClientRect();
         
-        //card.parentNode.removeChild(card);
         document.body.appendChild(card);
     
         originalCard.style.opacity = 0;
