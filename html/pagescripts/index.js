@@ -133,6 +133,20 @@ const runSearch = async (url, initialMsg, func) => {
         duration = Number(duration) || 600;
     
         const growUrlBox = (d) => {
+            currentInfo = null;
+
+            if(background.style.opacity != 0) {
+                anime.remove(background)
+        
+                anime({
+                    targets: background,
+                    opacity: 0,
+                    scale: 1.05,
+                    duration: 1000,
+                    easing: `easeOutExpo`,
+                })
+            }
+
             anime({
                 targets: urlBox,
                 height: searchBoxHeights().reverse(),
@@ -265,8 +279,9 @@ const runSearch = async (url, initialMsg, func) => {
                         anime({
                             targets: background,
                             opacity: [0, 0.15],
-                            duration: 1000,
-                            easing: `easeOutQuad`
+                            scale: [1, 1.15],
+                            duration: 4000,
+                            easing: `easeOutExpo`
                         })
                     }
                 });
@@ -786,23 +801,9 @@ const runSearch = async (url, initialMsg, func) => {
 
     if(document.getElementById(`listbox`)) {
         centerURLBox(true, true);
-
-        anime.remove(background)
-
-        anime({
-            targets: background,
-            opacity: [0.15, 0],
-            duration: 500,
-            easing: `easeOutExpo`,
-            complete: () => {
-                if(parse) {
-                    parseInfo();
-                } else {
-                    parse = true;
-                }
-            }
-        })
-    } else if(parse) {
+    };
+    
+    if(parse) {
         parseInfo();
     } else {
         parse = true;
