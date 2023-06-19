@@ -33,7 +33,8 @@ class wsprocess extends events.EventEmitter {
 
         console.log(`[${this.processID}] complete (code: ${code})`)
         this.emit(`close`, code);
-        
+
+        console.log(`[${this.processID}] Removing hook`)
         while(bridge.idHooks.filter(h => h.id == this.processID).length > 0) {
             bridge.idHooks.splice(bridge.idHooks.findIndex(h => h.id == this.processID), 1);
         }
@@ -48,18 +49,24 @@ class wsprocess extends events.EventEmitter {
             } else if(data.type == `info`) {
                 console.log(`[${this.processID}] info / ${data.content.length}`)
                 this.stdout.write(Buffer.from(data.content + `\n`));
-            } else {
+            } else if(data.type == `warning` || data.type == `error`) {
                 console.log(`[${this.processID}] err / ${data.content.length}`)
                 this.stderr.write(Buffer.from(data.content + `\n`));
+            } else {
+                console.log(`[${this.processID}] unknown (${data.type}) / ${data.content.length}`, data.content)
             }
         };
 
         bridge.idHooks.push({ id: this.processID, func: hook, args: this.args, complete: (code) => this._complete(code) });
 
-        bridge.resObj.send(JSON.stringify({
+        const obj = {
             id: this.processID,
             args: this.args,
-        }));
+        }
+
+        bridge.resObj.send(JSON.stringify(obj));
+
+        console.log(`spawned ${JSON.stringify(obj)}`)
     }
 }
 

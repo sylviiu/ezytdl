@@ -72,7 +72,10 @@ module.exports = {
 
                         process.env.PYTHONUNBUFFERED = `1`;
                 
-                        const proc = child_process.execFile(bridgepath, {cwd: bridgecwd});
+                        const proc = child_process.execFile(bridgepath, {
+                            cwd: bridgecwd,
+                            maxBuffer: 1024 * 1024 * 1024, // 1GB
+                        });
 
                         proc.on(`close`, (code) => {
                             console.log(`bridge process closed; code: ${code}`);
@@ -120,9 +123,19 @@ module.exports = {
 
                         proc.stderr.on(`data`, d => parseLog(d, `ERR`));
 
+                        let existingData = ``;
+
                         proc.stdout.on(`data`, data => {
-                            data.toString().trim().split(`\n\r`).forEach(msg => {
-                                try {
+                            if(!data.toString().includes(`\n\r`)) {
+                                existingData += data.toString();
+                                return;
+                            } else {
+                                if(existingData) {
+                                    data = existingData + data.toString();
+                                    existingData = ``;
+                                }
+
+                                const parse = (msg) => {
                                     msg = msg.toString().trim();
                                     const data = JSON.parse(msg.toString().trim());
                                     if(data.id) {
@@ -130,10 +143,17 @@ module.exports = {
                                     } else if(!module.exports.bridgeVersions) {
                                         module.exports.bridgeVersions = data;
                                     }
-                                } catch(e) {
-                                    //console.error(`-----------------------\nmsg: "${msg}"\nerr: ${e}\n-----------------------`)
                                 }
-                            })
+    
+                                data.toString().trim().split(`\n\r`).forEach((msg, i) => {
+                                    try {
+                                        parse(msg)
+                                    } catch(e) {
+                                        parse(`{` + msg.toString().trim().split(`{`).slice(1).join(`{`).split(`}`).slice(0, -1).join(`}`) + `}`)
+                                        //console.error(`-----------------------\nmsg: "${msg}"\nerr: ${e}\n-----------------------`)
+                                    }
+                                })
+                            }
                         });
                     });
                 }
