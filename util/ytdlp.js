@@ -5,7 +5,19 @@ const idGen = require(`../util/idGen`);
 
 const execYTDLP = require(`./execYTDLP`);
 
-const sanitize = require(`sanitize-filename`);
+const sanitizeFilename = require(`sanitize-filename`);
+
+const sanitize = (str) => sanitizeFilename(str, { replacement: `-` });
+
+const sanitizePath = (...paths) => {
+    const parsed = require(`path`).parse(require(`path`).join(...paths));
+
+    if(parsed.dir.startsWith(parsed.root)) parsed.dir = parsed.dir.slice(parsed.root.length);
+
+    const dir = parsed.dir.replace(parsed.root, ``).replace(/\\/g, `/`).split(`/`)
+
+    return require(`path`).join(parsed.root, ...[...dir, parsed.base].map(sanitize))
+}
 
 var ffmpegVideoCodecs = null;
 var ffmpegRawVideoCodecsOutput = null;
@@ -125,6 +137,7 @@ const sendUpdates = (proc, initialMsg) => {
 module.exports = {
     ffmpegPath: null,
     hasFFmpeg: () => refreshFFmpeg(),
+    sanitizePath: (...args) => sanitizePath(...args),
     additionalArguments: (args) => {
         const returnArgs = [];
 
@@ -178,7 +191,9 @@ module.exports = {
 
         let args = [`--dump-single-json`, `--quiet`, `--verbose`, `--flat-playlist`, `--playlist-end`, `${count}`, ...additional];
 
-        if(from == `soundcloud`) {
+        if(from == `youtubemusic`) {
+            args.unshift(`https://music.youtube.com/search?q=${encodeURIComponent(query)}`)
+        } else if(from == `soundcloud`) {
             args.unshift(`scsearch${count}:${query}`)
         } else {
             args.unshift(`ytsearch${count}:${query}`)
@@ -259,21 +274,21 @@ module.exports = {
                     let anyNoTitle = false;
     
                     for (entry of d.entries) {
-                        if(!entry.title) {
+                        if(!entry.title || entry.title == entry.url) {
                             anyNoTitle = true;
                             break;
                         }
                     };
     
                     if(anyNoTitle && !disableFlatPlaylist) {
-                        return module.exports.listFormats({query}, true).then(res)
+                        return module.exports.listFormats({query, extraArguments}, true).then(res)
                     } else {
                         res(module.exports.parseInfo(d, disableFlatPlaylist))
                     }
                 } else if(!disableFlatPlaylist) {
                     updateStatus(`Restarting playlist search... (there were no formats returned!!)`)
                     console.log(`no formats found! starting over...`);
-                    return module.exports.listFormats({query}, true).then(res)
+                    return module.exports.listFormats({query, extraArguments}, true).then(res)
                 } else {
                     sendNotification({
                         type: `error`,
@@ -442,9 +457,11 @@ module.exports = {
             const currentConfig = require(`../getConfig`)();
             const { onlyGPUConversion, disableHWAcceleratedConversion, outputFilename, downloadInWebsiteFolders } = currentConfig;
 
-            const saveLocation = downloadInWebsiteFolders && info.webpage_url_domain ? require(`path`).join(currentConfig.saveLocation, sanitize(`${info.webpage_url_domain}`)) : currentConfig.saveLocation;
+            //const saveLocation = downloadInWebsiteFolders && info.webpage_url_domain ? require(`path`).join(currentConfig.saveLocation, sanitize(`${info.webpage_url_domain}`)) : currentConfig.saveLocation;
+            const saveLocation = downloadInWebsiteFolders && info.webpage_url_domain ? sanitizePath(currentConfig.saveLocation, sanitize(`${info.webpage_url_domain}`)) : sanitizePath(currentConfig.saveLocation);
 
-            if(filePath) filePath = require(`path`).join(saveLocation, sanitize(filePath));
+            //if(filePath) filePath = require(`path`).join(saveLocation, sanitize(filePath));
+            if(filePath) filePath = sanitizePath(saveLocation, filePath);
 
             let thisFormat;
 
@@ -661,96 +678,141 @@ module.exports = {
                                     deleteProgress(`thumbnail`);
                                 } else if(info.thumbnail) await new Promise(async r => {
                                     let progressNum = 15;
-
-                                    setProgress(`thumbnail`, {progressNum, status: `Downloading thumbnail...`})
     
                                     fs.renameSync(target, target + `.ezytdl`);
-        
-                                    const req = require(`superagent`).get(info.thumbnail);
-        
-                                    req.pipe(fs.createWriteStream(target + `.songcover`));
 
-                                    req.on(`data`, () => {
-                                        progressNum += 1;
-                                        if(progressNum > 30) progressNum = 30;
-                                        setProgress(`thumbnail`, {progressNum})
-                                    })
-        
-                                    req.once(`error`, e => {
-                                        console.log(e)
-                                        skipped.thumbnail = `Failed to download thumbnail`;
-                                        deleteProgress(`thumbnail`);
-                                        fs.renameSync(target + `.ezytdl`, target);
-                                        r()
-                                    });
-        
-                                    req.once(`end`, () => {
-                                        progressNum = 35;
-                                        setProgress(`thumbnail`, {progressNum, status: `Converting thumbnail...`})
-    
-                                        const imgConvertProc = child_process.execFile(module.exports.ffmpegPath, [`-y`, `-i`, target + `.songcover`, `-update`, `1`, `-vf`, `crop=min(in_w\\,in_h):min(in_w\\,in_h)`, target + `.png`]);
-    
-                                        imgConvertProc.stdout.on(`data`, d => {
-                                            console.log(d.toString().trim())
-                                            progressNum += 1;
-                                            if(progressNum > 60) progressNum = 60;
-                                            setProgress(`thumbnail`, {progressNum})
-                                        })
-    
-                                        imgConvertProc.stderr.on(`data`, d => {
-                                            console.error(d.toString().trim())
-                                        })
-    
-                                        imgConvertProc.on(`close`, code => {
-                                            if(code == 0) {
-                                                progressNum = 65;
-                                                setProgress(`thumbnail`, {progressNum, status: `Applying thumbnail...`})
-    
-                                                const args = [`-y`, `-i`, target + `.ezytdl`, `-i`, `${target + `.png`}`, `-c`, `copy`, `-map`, `0:0`, `-map`, `1:0`, `-metadata:s:v`, `title=Album cover`, `-metadata:s:v`, `comment=Cover (front)`];
-                        
-                                                if(target.endsWith(`.mp3`)) args.splice(args.indexOf(`1:0`)+1, 0, `-id3v2_version`, `3`, `-write_id3v1`, `1`);
-            
-                                                console.log(args);
-                        
-                                                const proc = child_process.execFile(module.exports.ffmpegPath, [...args, target]);
-                        
-                                                proc.stdout.on(`data`, d => {
-                                                    console.log(d.toString().trim())
-                                                });
-                        
-                                                proc.stderr.on(`data`, d => {
-                                                    console.error(d.toString().trim())
-                                                    progressNum += 1;
-                                                    if(progressNum > 90) progressNum = 90;
-                                                    setProgress(`thumbnail`, {progressNum})
-                                                });
-                        
-                                                proc.on(`error`, e => {
-                                                    console.error(e)
-                    
-                                                    skipped.thumbnail = `Failed to add cover: ${e}`;
+                                    let thumbnailAttempts = 0;
+                                    let successfulThumbnail = null;
+                                    
+                                    const continueWithThumbnail = () => {
+                                        if(fs.existsSync(`${target + `.png`}`)) {
+                                            progressNum = 65;
+                                            setProgress(`thumbnail`, {progressNum, status: `Applying thumbnail...`})
 
-                                                    deleteProgress(`thumbnail`);
+                                            const args = [`-y`, `-i`, target + `.ezytdl`, `-i`, `${target + `.png`}`, `-c`, `copy`, `-map`, `0:0`, `-map`, `1:0`, `-metadata:s:v`, `title=Album cover`, `-metadata:s:v`, `comment=Cover (front)`];
                     
-                                                    cleanup(true);
-                                                    r();
-                                                });
-                        
-                                                proc.on(`close`, code => {
-                                                    console.log(`song cover added! (code ${code})`)
-                                                    cleanup(code === 0 ? false : true);
-                                                    setProgress(`thumbnail`, {progressNum: 100, status: `Thumbnail added!`})
-                                                    r();
-                                                })
-                                            } else {
-                                                console.log(`failed to convert image to png!`)
-                                                skipped.thumbnail = `Failed to convert thumbnail to PNG`;
+                                            if(target.endsWith(`.mp3`)) args.splice(args.indexOf(`1:0`)+1, 0, `-id3v2_version`, `3`, `-write_id3v1`, `1`);
+        
+                                            console.log(args);
+                    
+                                            const proc = child_process.execFile(module.exports.ffmpegPath, [...args, target]);
+                    
+                                            proc.stdout.on(`data`, d => {
+                                                console.log(d.toString().trim())
+                                            });
+                    
+                                            proc.stderr.on(`data`, d => {
+                                                console.error(d.toString().trim())
+                                                progressNum += 1;
+                                                if(progressNum > 90) progressNum = 90;
+                                                setProgress(`thumbnail`, {progressNum})
+                                            });
+                    
+                                            proc.on(`error`, e => {
+                                                console.error(e)
+                
+                                                skipped.thumbnail = `Failed to add cover: ${e}`;
+
                                                 deleteProgress(`thumbnail`);
+                
                                                 cleanup(true);
                                                 r();
-                                            }
-                                        })
-                                    })
+                                            });
+                    
+                                            proc.on(`close`, code => {
+                                                console.log(`song cover added! (code ${code})`)
+                                                cleanup(code === 0 ? false : true);
+
+                                                switch(thumbnailAttempts) {
+                                                    case 0:
+                                                        thumbnailAttempts = `wait how did it register as 0 tries what`
+                                                        break;
+                                                    case 1:
+                                                        thumbnailAttempts = `ez first try`
+                                                        break;
+                                                    case 2:
+                                                        thumbnailAttempts = `ez second try`
+                                                        break;
+                                                    case 3:
+                                                        thumbnailAttempts = `only 3 attempts maybe possibly (thats kinda high uhh hh)`
+                                                        break;
+                                                    default:
+                                                        thumbnailAttempts = `${thumbnailAttempts} attempt${thumbnailAttempts == 1 ? `` : `s`}${thumbnailAttempts > 10 ? `. what.` : ``}`
+                                                        break;
+                                                }
+
+                                                setProgress(`thumbnail`, {progressNum: 100, status: `Thumbnail added! (${thumbnailAttempts})`});
+                                                r();
+                                            })
+                                        } else {
+                                            console.log(`failed to convert image to png!`)
+                                            skipped.thumbnail = `Failed to convert thumbnail to PNG`;
+                                            deleteProgress(`thumbnail`);
+                                            cleanup(true);
+                                            r();
+                                        }
+                                    }
+
+                                    const thumbnails = (info.thumbnails || []).reverse();
+
+                                    for(const thumbnail of thumbnails) {
+                                        const code = await new Promise(async res => {
+                                            thumbnailAttempts++;
+
+                                            let extension = thumbnail.id ? ` "${thumbnail.id}"` : ``;
+                                            if(thumbnail.preference) extension += ` (priority ${thumbnail.preference})`;
+
+                                            progressNum = 15;
+                                            setProgress(`thumbnail`, {progressNum, status: `Downloading thumbnail` + extension + `...`});
+
+                                            const req = require(`superagent`).get(thumbnail.url);
+                
+                                            req.pipe(fs.createWriteStream(target + `.songcover`));
+        
+                                            req.on(`data`, () => {
+                                                progressNum += 1;
+                                                if(progressNum > 30) progressNum = 30;
+                                                setProgress(`thumbnail`, {progressNum})
+                                            })
+                
+                                            req.once(`error`, e => {
+                                                console.log(e)
+                                                skipped.thumbnail = `Failed to download thumbnail`;
+                                                deleteProgress(`thumbnail`);
+                                                fs.renameSync(target + `.ezytdl`, target);
+                                                r()
+                                            });
+                
+                                            req.once(`end`, () => {
+                                                progressNum = 35;
+                                                setProgress(`thumbnail`, {progressNum, status: `Converting thumbnail` + extension + `...`})
+            
+                                                const imgConvertProc = child_process.execFile(module.exports.ffmpegPath, [`-y`, `-i`, target + `.songcover`, `-update`, `1`, `-vf`, `crop=min(in_w\\,in_h):min(in_w\\,in_h)`, target + `.png`]);
+            
+                                                imgConvertProc.stdout.on(`data`, d => {
+                                                    console.log(d.toString().trim())
+                                                    progressNum += 1;
+                                                    if(progressNum > 60) progressNum = 60;
+                                                    setProgress(`thumbnail`, {progressNum})
+                                                })
+            
+                                                imgConvertProc.stderr.on(`data`, d => {
+                                                    console.error(d.toString().trim())
+                                                })
+            
+                                                imgConvertProc.once(`close`, c => {
+                                                    successfulThumbnail = c == 0 ? thumbnail : successfulThumbnail;
+                                                    res(c)
+                                                });
+
+                                                imgConvertProc.once(`error`, e => res(1));
+                                            })
+                                        });
+
+                                        if(code == 0) break;
+                                    };
+
+                                    continueWithThumbnail();
                                 }).catch(e => {
                                     console.error(e)
         

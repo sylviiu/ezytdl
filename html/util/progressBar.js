@@ -53,6 +53,7 @@ const addProgressBar = (node, width, height, {
     fillText.style.color = `rgb(0, 0, 0)`;
 
     fillText.style.position = `absolute`;
+    fillText.style.pointerEvents = `none`;
 
     fillText.innerText = ``;
 
