@@ -1,6 +1,8 @@
 // designated for linux
 
-const type = process.argv.shift();
+const args = process.argv.slice(2);
+
+const type = args.shift();
 
 if(type == `nightly`) {
     const fs = require(`fs`);
@@ -35,8 +37,8 @@ if(type == `nightly`) {
 
     let processed = fs.readFileSync(`./res/releaseNotes/nightly.md`).toString() + str.join(`\n`)
 
-    if(process.argv.length > 0) {
-        processed = processed.split(`--------------`)[0] + `--------------\n\n### Release Notes\n\n${process.argv.join(` `)}\n\n--------------\n\n` + processed.split(`--------------`)[1]
+    if(args.length > 0) {
+        processed = processed.split(`--------------`)[0] + `--------------\n\n### Release Notes\n\n${args.join(` `)}\n\n--------------\n\n` + processed.split(`--------------`)[1]
     }
     
     fs.writeFileSync(`./release-notes.md`, processed)
