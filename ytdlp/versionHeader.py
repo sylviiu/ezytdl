@@ -19,4 +19,4 @@ def printHeader():
         }
     }
 
-    print(json.dumps(versionObj, ensure_ascii=False), flush=True)
+    print(json.dumps(versionObj, ensure_ascii=False, default=lambda o: '<not serializable>'), flush=True)
