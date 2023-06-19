@@ -1,12 +1,20 @@
-const addProgressBar = (node, width, height) => {
+const addProgressBar = (node, width, height, {
+    align,
+    usePercentText,
+} = {}) => {
     let animeFunc = (typeof rawAnimeFunc == `function` ? rawAnimeFunc : anime)
 
-    const dotSize = height || `10px`;
+    if(usePercentText && !align) align = `right`
+
+    const dotSize = height || `15px`;
 
     const bar = document.createElement(`div`);
     bar.id = `progressBar`;
     bar.style.width = width || `100%`;
     bar.style.height = dotSize;
+
+    bar.classList.add(`d-flex`);
+    bar.classList.add(`flex-column`);
 
     bar.style.marginTop = `5px`;
 
@@ -26,23 +34,38 @@ const addProgressBar = (node, width, height) => {
 
     fill.style.background = `rgba(255, 255, 255, 0.75)`;
     fill.style.borderRadius = `100px`;
+    fill.style.paddingLeft = `4px`;
+    fill.style.paddingRight = `4px`;
+
+    bar.appendChild(fill);
 
     const fillText = document.createElement(`p`);
     fillText.id = `progressText`;
 
-    fillText.style.margin = `0px`;
+    fillText.style.marginLeft = `5px`;
+    fillText.style.marginRight = `5px`;
     fillText.style.padding = `0px`;
-    fillText.style.fontSize = `0.6rem`;
+    fillText.style.fontSize = `0.65rem`;
+
+    fillText.style.width = `100%`;
+    fillText.style.textAlign = align || `center`;
 
     fillText.style.color = `rgb(0, 0, 0)`;
 
+    fillText.style.position = `absolute`;
+
     fillText.innerText = ``;
 
-    fill.appendChild(fillText);
+    bar.appendChild(fillText);
 
-    bar.appendChild(fill);
+    let lastProgress = null;
+    let lastMsg = ``;
+
+    let allowProgressChanges = true;
         
-    const startPendingAnimation = () => {
+    const startPendingAnimation = (first) => {
+        if((lastProgress || lastMsg) && first) return retObj.setProgress();
+
         animeFunc.remove(fill)
         
         fill.style.width = dotSize;
@@ -67,20 +90,31 @@ const addProgressBar = (node, width, height) => {
         begin: () => {
             node.appendChild(bar);
         
-            startPendingAnimation();
+            startPendingAnimation(true);
         }
     });
 
-    let lastProgress = 0;
-
-    let allowProgressChanges = true;
-
-    return {
+    const retObj = {
         node,
         setProgress: (progress, txt) => {
+            if(progress == lastProgress) progress = undefined;
+            if(txt == lastMsg || usePercentText) txt = undefined;
+
+            if(typeof progress == `undefined` && typeof txt == `undefined`) return;
+
+            if(usePercentText) txt = `${progress}% complete`;
+
+            console.log(`progbar: ${progress}% / ${txt}`)
+
             if(!allowProgressChanges) return;
 
             if(!bar.parentElement) node.appendChild(bar);
+
+            if(txt && txt != lastMsg) {
+                fillText.innerText = txt;
+            } else {
+                fillText.innerText = ``;
+            }
 
             if(typeof progress == `number` && progress >= 0 && progress <= 100) {
                 animeFunc.remove(fill);
@@ -92,13 +126,7 @@ const addProgressBar = (node, width, height) => {
                     duration: 350,
                     easing: `easeOutCirc`,
                 });
-
-                if(txt) {
-                    fillText.innerText = txt;
-                } else {
-                    fillText.innerText = ``;
-                }
-            } else if(lastProgress != progress) {
+            } else if(typeof progress != `undefined` && lastProgress != progress) {
                 startPendingAnimation();
             }
 
@@ -134,4 +162,6 @@ const addProgressBar = (node, width, height) => {
             return true;
         }
     };
+
+    return retObj
 }
