@@ -33,9 +33,9 @@ module.exports = (configObject) => {
             if(removeNonexistent) {
                 console.log(`checking for nonexistent keys in ${logPrefix} > ${thisKey}`)
                 for(const key of Object.keys(config)) {
-                    console.log(`checking key ${key} in config (removeNonexistent is true) (this: ${typeof config[key]}; default: ${typeof defaults[key]})`)
+                    //console.log(`checking key ${key} in config (removeNonexistent is true) (this: ${typeof config[key]}; default: ${typeof defaults[key]})`)
                     if(typeof defaults[key] == 'undefined') {
-                        console.log(`removing key ${key} from config (removeNonexistent is true and this was not found in defaults)`)
+                        //console.log(`removing key ${key} from config (removeNonexistent is true and this was not found in defaults)`)
                         delete config[key];
                         checked = true;
                     }
