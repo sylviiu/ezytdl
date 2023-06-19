@@ -101,7 +101,8 @@ let selectedSearch = null;
 
 let resultsVisible = false;
 
-let centerURLBox = () => new Promise(r => r(false));
+let existingCenterBoxPromise = null;
+let centerURLBox = () => existingCenterBoxPromise ? existingCenterBoxPromise : new Promise(r => r(false));
 
 const runSearch = async (url, initialMsg, func) => {
     system.hasFFmpeg().then(has => {
@@ -117,74 +118,92 @@ const runSearch = async (url, initialMsg, func) => {
 
     let info = null;
 
-    centerURLBox = (removeListbox, duration) => new Promise(async res => {
-        console.log(`centerURLBox called; resultsVisible: ${resultsVisible}; doing anything? ${resultsVisible != false}`);
-    
-        if(!resultsVisible) return res(false);
-    
-        resultsVisible = false;
-    
-        document.body.style.overflowY = `hidden`;
-    
-        currentInfo = null;
-    
-        window.scrollTo(0, 0);
-    
-        duration = Number(duration) || 600;
-    
-        const growUrlBox = (d) => {
-            currentInfo = null;
-
-            if(background.style.opacity != 0) {
-                anime.remove(background)
-        
-                anime({
-                    targets: background,
-                    opacity: 0,
-                    scale: 1.05,
-                    duration: 1000,
-                    easing: `easeOutExpo`,
-                })
-            }
-
-            anime({
-                targets: urlBox,
-                height: searchBoxHeights().reverse(),
-                duration: d || duration,
-                easing: `easeOutCirc`,
-                complete: () => {
-                    if(document.getElementById(`listbox`)) listboxParent.removeChild(document.getElementById(`listbox`));
-    
-                    urlBox.style.height = `calc(100vh - 80px)`;
-
-                    res(true);
-                }
-            });
-        }
-    
-        if(config.reduceAnimations) {
-            if(removeListbox && document.getElementById(`listbox`)) {
-                anime({
-                    targets: document.getElementById(`listbox`),
-                    opacity: [1, 0],
-                    duration: duration/2,
-                    easing: `easeOutCirc`,
-                    complete: () => {
-                        if(document.getElementById(`listbox`)) listboxParent.removeChild(document.getElementById(`listbox`));
-                        growUrlBox(duration/2);
-                    }
-                });
-            } else growUrlBox(duration/2);
+    centerURLBox = (removeListbox, duration) => {
+        if(existingCenterBoxPromise) {
+            console.log(`centerURLBox: existing promise found; returning...`)
+            return existingCenterBoxPromise;
         } else {
-            growUrlBox();
-        }
+            console.log(`centerURLBox: no existing promise found; creating new promise...`)
+            const promise = new Promise(async resolvPromise => {
+                const res = (...args) => {
+                    console.log(`centerURLBox: promise resolved; args:`, args)
+                    resolvPromise(...args);
+                }
     
-        if(config.disableAnimations) {
-            wavesAnims.fadeIn();
-        } else setTimeout(() => wavesAnims.fadeIn(), duration/10)
-    })
+                console.log(`centerURLBox called; resultsVisible: ${resultsVisible}; doing anything? ${resultsVisible != false}`);
+            
+                if(!resultsVisible) return res(false);
+            
+                resultsVisible = false;
+            
+                document.body.style.overflowY = `hidden`;
+            
+                currentInfo = null;
+            
+                window.scrollTo(0, 0);
+            
+                duration = Number(duration) || 600;
+            
+                const growUrlBox = (d) => {
+                    currentInfo = null;
+        
+                    if(background.style.opacity != 0) {
+                        anime.remove(background)
+                
+                        anime({
+                            targets: background,
+                            opacity: 0,
+                            scale: 1.05,
+                            duration: 1000,
+                            easing: `easeOutExpo`,
+                        })
+                    }
+        
+                    anime({
+                        targets: urlBox,
+                        height: searchBoxHeights().reverse(),
+                        duration: d || duration,
+                        easing: `easeOutCirc`,
+                        complete: () => {
+                            if(document.getElementById(`listbox`)) listboxParent.removeChild(document.getElementById(`listbox`));
+            
+                            urlBox.style.height = `calc(100vh - 80px)`;
+        
+                            res(true);
+                        }
+                    });
+                }
+            
+                if(config.reduceAnimations) {
+                    if(removeListbox && document.getElementById(`listbox`)) {
+                        anime({
+                            targets: document.getElementById(`listbox`),
+                            opacity: [1, 0],
+                            duration: duration/2,
+                            easing: `easeOutCirc`,
+                            complete: () => {
+                                if(document.getElementById(`listbox`)) listboxParent.removeChild(document.getElementById(`listbox`));
+                                growUrlBox(duration/2);
+                            }
+                        });
+                    } else growUrlBox(duration/2);
+                } else {
+                    growUrlBox();
+                }
+            
+                if(config.disableAnimations) {
+                    wavesAnims.fadeIn();
+                } else setTimeout(() => wavesAnims.fadeIn(), duration/10)
+            });
+            existingCenterBoxPromise = promise;
+            promise.then(() => existingCenterBoxPromise = null)
+            return promise;
+        }
+    }
 
     const parseInfo = async () => {
+        input.value = url;
+
         resultsVisible = true;
         changesMadeToInput = false;
 
@@ -257,9 +276,12 @@ const runSearch = async (url, initialMsg, func) => {
 
             updateMetadata();
 
-            if(info.thumbnails && info.thumbnails.length > 0) {
-                const thumbnail = info.thumbnails[info.thumbnails.length - 1];
+            let thumbnail = null;
 
+            if(info.thumbnails && info.thumbnails.length > 0) thumbnail = info.thumbnails[info.thumbnails.length - 1];
+            if(info.entries && info.entries.find(o => o.thumbnails && o.thumbnails.length > 0)) thumbnail = info.entries.find(o => o.thumbnails && o.thumbnails.length > 0).thumbnails[info.entries.find(o => o.thumbnails && o.thumbnails.length > 0).thumbnails.length - 1];
+
+            if(thumbnail) {
                 console.log(`thumbnail:`, thumbnail);
 
                 const img = new Image();
@@ -409,6 +431,7 @@ const runSearch = async (url, initialMsg, func) => {
                                 const bounding = card.getBoundingClientRect();
 
                                 centerURLBox(null, 800);
+                                runSearch(entry.url, `Fetching info...`, `getInfo`)
     
                                 window.scrollTo(0, 0);
                                 
@@ -427,10 +450,10 @@ const runSearch = async (url, initialMsg, func) => {
                                     duration: 400,
                                     complete: () => {
                                         console.log(`throwing node`)
-                                        throwNode(newCard, innerUrlBox, () => {
-                                            input.value = entry.webpage_url || entry.url;
-                                            runSearch(input.value, `Fetching info...`, `getInfo`)
-                                        }, true, true)
+                                        throwNode(newCard, innerUrlBox, true, true).then(() => {
+                                            //input.value = entry.webpage_url || entry.url;
+                                            //runSearch(input.value, `Fetching info...`, `getInfo`)
+                                        })
                                     }
                                 })
                             }
