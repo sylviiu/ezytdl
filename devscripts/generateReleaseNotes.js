@@ -30,6 +30,12 @@ if(process.argv.find(s => s == `nightly`)) {
     });
     
     console.log(str);
+
+    let processed = fs.readFileSync(`./res/releaseNotes/nightly.md`).toString() + str.join(`\n`)
+
+    if(process.env['RELEASE_NOTES'] && process.env['RELEASE_NOTES'].length > 2) {
+        processed = processed.split(`--------------`)[0] + `--------------\n\n### Release Notes\n\n${process.env['RELEASE_NOTES']}\n\n--------------\n\n` + processed.split(`--------------`)[1]
+    }
     
-    fs.writeFileSync(`./release-notes.md`, fs.readFileSync(`./res/releaseNotes/nightly.md`).toString() + str.join(`\n`))
+    fs.writeFileSync(`./release-notes.md`, processed)
 }

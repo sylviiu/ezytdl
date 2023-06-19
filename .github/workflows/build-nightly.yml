@@ -5,6 +5,11 @@ on:
   schedule:
     - cron: "0 11 * * *" # 6am cst (i'll probably be asleep and have pushed a working change by then)
   workflow_dispatch:
+    inputs:
+      notes:
+        description: "Release notes"
+        required: false
+        default: ''
 
 jobs:
   check_date:
@@ -49,6 +54,7 @@ jobs:
         run: |
           echo "TAG_NAME=$(node -e "console.log(require('./package.json').version)")-nightly.${{github.run_number}}" >> "$GITHUB_ENV"
           echo "RELEASE_NAME=[NIGHTLY] $(node -e "console.log(require('./package.json').version)")-nightly.${{github.run_number}}" >> "$GITHUB_ENV"
+          echo "RELEASE_NOTES=${{ github.event.inputs.notes }}" >> "$GITHUB_ENV
 
           node devscripts/generateReleaseNotes.js nightly
 
