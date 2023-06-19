@@ -205,20 +205,20 @@ module.exports = {
 
         proc.on(`close`, code => {
             console.log(`search closed with code ${code}`)
-            
-            if(code) {
+
+            try {
+                const d = JSON.parse(data);
+                //if(d.entries.filter(o => !o.title).length != d.entries.length) d.entries = d.entries.filter(o => o.title);
+                res(module.exports.parseInfo(d))
+                //console.log(d)
+            } catch(e) {
                 sendNotification({
                     type: `error`,
                     headingText: `Error getting media info`,
                     bodyText: `There was an issue retrieving the info. Please try again.`
                 })
                 return res(null);
-            };
-
-            const d = JSON.parse(data);
-            //if(d.entries.filter(o => !o.title).length != d.entries.length) d.entries = d.entries.filter(o => o.title);
-            res(module.exports.parseInfo(d))
-            //console.log(d)
+            }
         })
     }),
     listFormats: ({query, extraArguments}, disableFlatPlaylist) => new Promise(async res => {
@@ -250,49 +250,49 @@ module.exports = {
         proc.on(`close`, code => {
             console.log(`listFormats closed with code ${code}`)
 
-            if(code) {
+            try {
+                const d = JSON.parse(data);
+                if(d && d.formats) {
+                    console.log(`formats found! resolving...`);
+                    res(module.exports.parseInfo(d))
+                } else if(d && d.entries) {
+                    console.log(`entries found! adding time objects...`);
+    
+                    let anyNoTitle = false;
+    
+                    for (entry of d.entries) {
+                        if(!entry.title) {
+                            anyNoTitle = true;
+                            break;
+                        }
+                    };
+    
+                    if(anyNoTitle && !disableFlatPlaylist) {
+                        return module.exports.listFormats({query}, true).then(res)
+                    } else {
+                        res(module.exports.parseInfo(d))
+                    }
+                } else if(!disableFlatPlaylist) {
+                    updateStatus(`Restarting playlist search... (there were no formats returned!!)`)
+                    console.log(`no formats found! starting over...`);
+                    return module.exports.listFormats({query}, true).then(res)
+                } else {
+                    sendNotification({
+                        type: `error`,
+                        headingText: `Error getting media info`,
+                        bodyText: `Either the URL is invalid or the media is unavailable. Please try with a different link.`
+                    })
+                    return res(null);
+                }
+                //console.log(d)
+            } catch(e) {
                 sendNotification({
                     type: `error`,
                     headingText: `Error getting media info`,
                     bodyText: `There was an issue retrieving the info. Please try again.`
                 })
                 return res(null);
-            };
-
-            const d = JSON.parse(data);
-            if(d && d.formats) {
-                console.log(`formats found! resolving...`);
-                res(module.exports.parseInfo(d))
-            } else if(d && d.entries) {
-                console.log(`entries found! adding time objects...`);
-
-                let anyNoTitle = false;
-
-                for (entry of d.entries) {
-                    if(!entry.title) {
-                        anyNoTitle = true;
-                        break;
-                    }
-                };
-
-                if(anyNoTitle && !disableFlatPlaylist) {
-                    return module.exports.listFormats({query}, true).then(res)
-                } else {
-                    res(module.exports.parseInfo(d))
-                }
-            } else if(!disableFlatPlaylist) {
-                updateStatus(`Restarting playlist search... (there were no formats returned!!)`)
-                console.log(`no formats found! starting over...`);
-                return module.exports.listFormats({query}, true).then(res)
-            } else {
-                sendNotification({
-                    type: `error`,
-                    headingText: `Error getting media info`,
-                    bodyText: `Either the URL is invalid or the media is unavailable. Please try with a different link.`
-                })
-                return res(null);
             }
-            //console.log(d)
         })
     }),
     getFilename: (url, format, template) => new Promise(async res => {
