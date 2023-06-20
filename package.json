@@ -17,7 +17,7 @@
     "yargs": "^17.7.2"
   },
   "scripts": {
-    "start": "node build start --from-source",
+    "start": "node build start",
     "s": "electron .",
     "electron-builder": "electron-builder",
     "store": "node build store",

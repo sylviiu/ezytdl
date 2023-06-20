@@ -56,11 +56,17 @@ var createDownloadManager = (card, id) => {
             clearTimer();
             
             if(!otherProgBars[id]) {
-                otherProgBars[id] = { node: formatSubtext.cloneNode(true) }
-                otherProgBars[id].node.id = `formatSubtext-${id}`;
-                otherProgBars[id].node.style.marginTop = `8px`;
-                otherProgBars[id].node.style.fontWeight = `normal`;
-                otherProgBars[id].node.style.fontSize = `0.9em`;
+                const node = formatSubtext.cloneNode(true);
+
+                otherProgBars[id] = {
+                    node,
+                    remove: () => node.remove()
+                };
+
+                node.id = `formatSubtext-${id}`;
+                node.style.marginTop = `8px`;
+                node.style.fontWeight = `normal`;
+                node.style.fontSize = `0.9em`;
                 card.querySelector(`#leftContent`).appendChild(otherProgBars[id].node);
             };
 

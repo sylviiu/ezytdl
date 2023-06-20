@@ -22,6 +22,8 @@ sessions = {
             
             let ws = {
                 send: (c1) => {
+                    if(id != `default`) return;
+                    
                     if(!global.window) return;
             
                     let content = Object.assign({}, c1);
@@ -38,6 +40,8 @@ sessions = {
             
             let downloadStatusWs = {
                 send: (content) => {
+                    if(id != `default`) return;
+
                     if(!global.window) return;
             
                     if(typeof content == `object`) content = JSON.stringify(content);
@@ -193,13 +197,24 @@ sessions = {
             
                 if(queueModified) {
                     const conf = require(`../getConfig`)();
+
+                    let maxDownloads = conf.concurrentDownloads;
+
+                    if(sessions[id].concurrentDownloads) {
+                        maxDownloads = sessions[id].concurrentDownloads;
+                    } else if(sessions[id].concurrentDownloadsMult) {
+                        maxDownloads = conf.concurrentDownloads * sessions[id].concurrentDownloadsMult;
+                    }
+
+                    let i = 0;
             
-                    while((queue.active.length + queue.paused.length) < conf.concurrentDownloads && queue.queue.length > 0) {
+                    while((queue.active.length + queue.paused.length) < maxDownloads && queue.queue.length > 0) {
                         const next = queue.queue.shift();
                         queue.active.push(next);
-                        //console.log(next)
+                        //setTimeout(() => next.start(), i*450)
                         next.start();
-                    };
+                        i++;
+                    }
             
                     if(id == `default` && queue.complete.length > 0 && queue.active.length == 0 && queue.paused.length == 0 && queue.queue.length == 0 && !removedItems) sendNotification({
                         headingText: `Queue complete`,
@@ -284,9 +299,9 @@ sessions = {
             
                             if(obj.killed) obj.status = Object.assign({}, update, {status: `Cancelled`})
             
-                            obj.updateFunc({status: `Finished "${downloadFunc}"`, progressNum: 100})
+                            if(downloadFunc) obj.updateFunc({status: `Finished "${downloadFunc}"`, progressNum: 100})
 
-                            if(downloadFunc) rawUpdateFunc(update);
+                            if(downloadFunc && rawUpdateFunc) rawUpdateFunc(update);
             
                             //res(obj.status);
             
@@ -442,6 +457,10 @@ sessions = {
             }
         
             if(!sessions[id]) sessions[id] = {
+                config: {
+                    concurrentDownloadsMult: 1,
+                },
+                set: (conf) => Object.assign(sessions[id].config, conf),
                 queue,
                 createDownload,
                 refreshAll,

@@ -38,7 +38,7 @@ const getSaveOptions = (node, info, overrideDownloadObj) => {
                 convert: convert ? convertInfo : null,
                 filePath: node.querySelector(`#saveLocation`).value || null,
                 addMetadata,
-                info: e
+                info: Object.assign({}, info, e, { entries: null, formats: null })
             }, overrideDownloadObj && typeof overrideDownloadObj == `object` ? overrideDownloadObj : {})),
             info,
         }

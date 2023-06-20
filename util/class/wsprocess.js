@@ -44,12 +44,19 @@ class wsprocess extends events.EventEmitter {
         const bridge = require(`../pythonBridge`);
 
         const hook = (data) => {
-            if(data.type == `complete`) {
+            if(data.type == `infodump`) {
+                console.log(`-------------- INFODUMP (${data.content.length}) --------------`)
+                this.emit(`info`, data.content);
+            } else if(data.type == `complete`) {
                 this._complete();
             } else if(data.type == `info`) {
                 console.log(`[${this.processID}] info / ${data.content.length}`)
                 this.stdout.write(Buffer.from(data.content + `\n`));
             } else if(data.type == `warning` || data.type == `error`) {
+                if(data.trace && data.type == `error`) {
+                    this.lastTrace = data.trace;
+                } else this.lastTrace = null;
+
                 console.log(`[${this.processID}] err / ${data.content.length}`)
                 this.stderr.write(Buffer.from(data.content + `\n`));
             } else {

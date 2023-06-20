@@ -18,7 +18,7 @@ class writeStringWrapper:
             return
         self._printed_messages.add(s)
 
-        if out is not None and hasattr(out, 'name'):
+        if out is not None and hasattr(out, 'name') and type(out.name) is str:
             if 'stdout' in out.name:
                 logFunc = 'debug'
             elif 'stderr' in out.name:
@@ -33,7 +33,5 @@ class writeStringWrapper:
             buffer = out.buffer
             enc = encoding or getattr(out, 'encoding', None) or yt_dlp.preferredencoding()
 
-        output = s.encode(enc, 'ignore') if enc else s
-        
-        #buffer.write(s.encode(enc, 'ignore') if enc else s)
-        getattr(self.wsHook, logFunc)(json.dumps(output, ensure_ascii=False, default=lambda o: '<not serializable>') if type(output) is dict else output.decode('utf-8', 'ignore') if hasattr(output, 'decode') else output)
+            output = s.encode(enc, 'replace')
+            getattr(self.wsHook, logFunc)(json.dumps(output, ensure_ascii=False, default=lambda o: '<not serializable>') if type(output) is dict else output.decode(enc, 'replace') if hasattr(output, 'decode') else output)

@@ -119,7 +119,7 @@ const addNotification = container => {
 }
 
 const createNotification = (opt, providedClickFunc) => {
-    let { headingText, title, bodyText, content, redirect, type, stack } = opt;
+    let { headingText, title, bodyText, content, redirect, type, stack, stackType } = opt;
 
     const container = document.createElement(`div`);
 
@@ -224,7 +224,7 @@ const createNotification = (opt, providedClickFunc) => {
 
             if(headingText || title) reportStrings.push(`### Title: \n${headingText || title}`)
             if(bodyText || content) reportStrings.push(`### Content: \n${bodyText || content}`)
-            if(stack) reportStrings.push(`### Stack: \n\`\`\`js\n${stack}\n\`\`\``)
+            if(stack) reportStrings.push(`### Stack: \n\`\`\`${stackType || `js`}\n${stack}\n\`\`\``)
 
             button.href = `https://github.com/sylviiu/ezytdl/issues/new?labels=bug&body=${encodeURIComponent(reportStrings.join(`\n\n`) + `\n\n### Below this line, please describe what caused this error.\n----\n`)}`;
 
