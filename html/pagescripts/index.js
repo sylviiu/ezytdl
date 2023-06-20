@@ -280,8 +280,8 @@ const runSearch = async (url, initialMsg, func) => {
 
             let thumbnail = null;
 
-            if(info.thumbnails && info.thumbnails.length > 0) thumbnail = info.thumbnails[info.thumbnails.length - 1];
-            if(info.entries && info.entries.find(o => o.thumbnails && o.thumbnails.length > 0)) thumbnail = info.entries.find(o => o.thumbnails && o.thumbnails.length > 0).thumbnails[info.entries.find(o => o.thumbnails && o.thumbnails.length > 0).thumbnails.length - 1];
+            if(!thumbnail && info.thumbnails && info.thumbnails.length > 0) thumbnail = info.thumbnails[info.thumbnails.length - 1];
+            if(!thumbnail && info.entries && info.entries.find(o => o && o.thumbnails && o.thumbnails.length > 0)) thumbnail = info.entries.find(o => o.thumbnails && o.thumbnails.length > 0).thumbnails[info.entries.find(o => o.thumbnails && o.thumbnails.length > 0).thumbnails.length - 1];
 
             if(thumbnail) {
                 console.log(`thumbnail:`, thumbnail);
@@ -795,7 +795,7 @@ const runSearch = async (url, initialMsg, func) => {
         if(parseInt(resultsCountInput.value)) opt.count = parseInt(resultsCountInput.value);
     }
 
-    deselectAllSearchBtns();
+    //deselectAllSearchBtns();
 
     console.log(`selectionBox / hiding from parseinfo`)
     selectionBox.hide(false, true);
