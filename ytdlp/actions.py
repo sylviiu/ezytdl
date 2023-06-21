@@ -16,7 +16,7 @@ def parseOptions(opt, hook):
 
     returnOptions['options']['progress_hooks'] = [ progressHook(hook) ]
     returnOptions['options']['progress_with_newline'] = True
-    returnOptions['options']['no_color'] = True
+    #returnOptions['options']['no_color'] = True
 
     return returnOptions
 
