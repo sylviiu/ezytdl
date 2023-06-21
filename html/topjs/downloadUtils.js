@@ -117,11 +117,7 @@ var createDownloadManager = (card, id) => {
                 if(formatName.innerHTML != titleStr) formatName.innerHTML = titleStr
             };
 
-            //refreshProgBars();
-            
-            const updatedProgObjs = Object.keys(status).filter(k => k.startsWith(`progress-`));
-
-            if(updatedProgObjs.length > 0) setTimeout(() => updatedProgObjs.forEach(k => updateProg(k, m[k])), 50);
+            refreshProgBars();
 
             if(status.live) {
                 progress.setProgress(-1);
@@ -166,6 +162,8 @@ var createDownloadManager = (card, id) => {
         btn2.onclick = () => mainQueue.deleteFiles(id || ``);
 
         btn2.classList.remove(`d-none`);
+
+        refreshProgBars();
 
         if(!card.querySelector(`#eta`).classList.contains(`d-none`)) card.querySelector(`#eta`).classList.add(`d-none`);
         if(!card.querySelector(`#speed`).classList.contains(`d-none`)) card.querySelector(`#speed`).classList.add(`d-none`);

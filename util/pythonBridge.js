@@ -113,7 +113,7 @@ module.exports = {
 
                             if(str.length > 500) str = str.slice(0, 500) + `...`
 
-                            console.log(prefix + str.trim().split(`\n`).join(`\n` + prefix));
+                            //console.log(prefix + str.trim().split(`\n`).join(`\n` + prefix));
 
                             if(d.toString().trim().includes(`Bridge ready`) && !resolved) {
                                 resolved = true;
@@ -152,7 +152,7 @@ module.exports = {
                                             parse(`{` + msg.toString().trim().split(`{`).slice(1).join(`{`).split(`}`).slice(0, -1).join(`}`) + `}`)
                                         } catch(e) {
                                             //console.error(`-----------------------\nmsg: "${msg}"\nerr: ${e}\n-----------------------`)
-                                            console.log(`failed to parse msg -- adding to existingData`);
+                                            //console.log(`failed to parse msg -- adding to existingData`);
                                             existingData += msg.toString();
                                         }
                                     }

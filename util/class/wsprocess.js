@@ -46,7 +46,7 @@ class wsprocess extends events.EventEmitter {
         const hook = (data) => {
             if(data.type == `infodump`) {
                 console.log(`-------------- INFODUMP (${data.content.length}) --------------`)
-                this.emit(`info`, data.content);
+                this.emit(`info`, JSON.parse(data.content));
             } else if(data.type == `complete`) {
                 this._complete();
             } else if(data.type == `info`) {

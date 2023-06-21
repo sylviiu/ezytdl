@@ -28,7 +28,7 @@ const refreshVideoCodecs = () => {
         ffmpegRawVideoCodecsOutput = child_process.execFileSync(module.exports.ffmpegPath, [`-codecs`, `-hide_banner`, `loglevel`, `error`]).toString().trim();
         ffmpegVideoCodecs = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `V`).map(s => s.split(` `)[2]);
     
-        console.log(ffmpegVideoCodecs);
+        //console.log(ffmpegVideoCodecs);
     }
 }
 
@@ -62,7 +62,7 @@ const getCodec = (file) => {
                 return a.trim().split(`\n`)[0]
             } else return null;
         } catch(e) {
-            console.log(e);
+            //console.log(e);
             /*sendNotification({
                 headingText: `Error!`,
                 bodyText: `An error occured while trying to get the codec of a file! The download may be affected\n\nPath: ${file}\n\nError: ${e.toString()}`,
@@ -76,7 +76,7 @@ const getCodec = (file) => {
 const sendUpdates = (proc, initialMsg) => {
     //downloading item {num} of {num}
 
-    console.log(`sending updates...`);
+    //console.log(`sending updates...`);
 
     let firstUpdate = false;
 
@@ -151,7 +151,7 @@ module.exports = {
         parsed.filter(o => o[1]).forEach((o, i) => {
             if(o[0] != `$0` && o[0] != `_` && o[0].toLowerCase() == o[0]) {
                 const str = [`--${o[0]}`, `${o[1]}`];
-                console.log(str, o[0], o[1])
+                //console.log(str, o[0], o[1])
                 returnArgs.push(...str)
             }
         });
@@ -215,7 +215,7 @@ module.exports = {
                 console.log(`new info!`)
                 delete i.entries;
                 newInfo = i;
-            } else console.log(`info null?`, i)
+            } else badEntries++;
         }, `listFormats`);
 
         if(info.entries) for(const i in info.entries) {
@@ -225,17 +225,9 @@ module.exports = {
                 // to keep the same order of songs
                 if(e) {
                     console.log(`new info!`);
-
-                    for(const key of Object.entries(e).filter(o => !o[1]).map(o => o[0])) {
-                        delete e[key];
-                    }
-
                     Object.assign(info.entries[i], e);
                     console.log(`added "${e.title}" (id: ${e.id} / url: ${e.url}) to index ${i}`)
-                } else {
-                    badEntries++;
-                    console.log(`entry null?`, e)
-                }
+                } else badEntries++;
             }, `listFormats`);
         }
 
@@ -325,7 +317,7 @@ module.exports = {
 
         const additional = module.exports.additionalArguments(extraArguments);
 
-        console.log(`query "${query}"; count: ${count}; additional args: "${additional.join(`", "`)}"`)
+        //console.log(`query "${query}"; count: ${count}; additional args: "${additional.join(`", "`)}"`)
 
         let args = [`--dump-single-json`, `--quiet`, `--verbose`, `--flat-playlist`, `--playlist-end`, `${count}`, ...additional];
 
@@ -430,14 +422,14 @@ module.exports = {
 
         if(format) args.unshift(`-f`, format)
 
-        console.log(args)
+        //console.log(args)
 
         const proc = execYTDLP(args);
 
         let data = ``;
 
         proc.stderr.on(`data`, d => {
-            console.log(d.toString().trim())
+            //console.log(d.toString().trim())
 
             if(d.toString().trim().startsWith(`ERROR: `)) {
                 if(!format) {
@@ -458,9 +450,9 @@ module.exports = {
             data += d.toString().trim();
         });
 
-        proc.stderr.on(`data`, d => {
-            console.log(d.toString().trim())
-        })
+        //proc.stderr.on(`data`, d => {
+        //    console.log(d.toString().trim())
+        //})
         
         proc.on(`close`, code => {
             console.log(`getFilename closed with code ${code}`);
@@ -520,30 +512,34 @@ module.exports = {
                     findFiles = findFiles.split(`.part`).slice(0, -1).join(`.ytdl`)
                 }
 
-                if(findFiles && fs.existsSync(saveTo)) {
-                    const dir = fs.readdirSync(saveTo);
-    
-                    const prevFiles = dir.filter(f => f.startsWith(findFiles));
-                    console.log(`${from} / files:`, prevFiles, `from:`, dir, `starting with:`, findFiles);
-    
-                    prevFiles.forEach(f => {
-                        const file = require(`path`).join(saveTo, f);
-                        update({status: `Removing ${from} file ${file} ...`})
-                        console.log(`removing previous ${from} file ${file}`);
-                        try {
-                            if(fs.existsSync(file)) {
-                                console.log(`removing ${file}...`)
-                                fs.unlinkSync(file)
-                            } else console.log(`${file} nonexistent?`)
-                        } catch(e) {
-                            console.log(`failed removing ${file}: ${e}`)
+                if(findFiles) {
+                    fs.readdir(saveTo, (err, dir) => {
+                        if(err) {
+                            console.log(`failed to read directory ${saveTo}: ${err}`)
+                        } else {
+                            const prevFiles = dir.filter(f => f.startsWith(findFiles));
+                            //console.log(`${from} / files:`, prevFiles, `from:`, dir, `starting with:`, findFiles);
+            
+                            prevFiles.forEach(f => {
+                                const file = require(`path`).join(saveTo, f);
+                                update({status: `Removing ${from} file ${file} ...`})
+                                //console.log(`removing previous ${from} file ${file}`);
+                                try {
+                                    if(fs.existsSync(file)) {
+                                        //console.log(`removing ${file}...`)
+                                        fs.unlinkSync(file)
+                                    }// else console.log(`${file} nonexistent?`)
+                                } catch(e) {
+                                    console.log(`failed removing ${file}: ${e}`)
+                                }
+                            });
+            
+                            if(fs.existsSync(saveTo + filename)) {
+                                //console.log(`original file removing...`)
+                                fs.unlinkSync(saveTo + filename);
+                            } else console.log(`original file nonexistent?`)
                         }
                     });
-    
-                    if(fs.existsSync(saveTo + filename)) {
-                        console.log(`original file removing...`)
-                        fs.unlinkSync(saveTo + filename);
-                    } else console.log(`original file nonexistent?`)
                 }
             };
 
@@ -590,7 +586,7 @@ module.exports = {
             if(!info.webpage_url_domain && info.url) info.webpage_url_domain = info.url.split(`.`).slice(-2, 0)[0];
             if(!info.webpage_url_domain && url) info.webpage_url_domain = url.split(`.`).slice(-2, 0)[0];
 
-            console.log(`saveLocation: ${saveLocation}; webpage_url_domain: ${info.webpage_url_domain}; info`, info)
+            //console.log(`saveLocation: ${saveLocation}; webpage_url_domain: ${info.webpage_url_domain}; info`, info)
 
             //if(filePath) filePath = sanitizePath(saveLocation, filePath);
 
@@ -626,7 +622,7 @@ module.exports = {
     
             if(!module.exports.ffmpegPath || !ffmpegVideoCodecs) refreshFFmpeg();
     
-            console.log(saveLocation, filePath, ytdlpFilename)
+            //console.log(saveLocation, filePath, ytdlpFilename)
 
             const paths = [saveLocation];
 
@@ -653,7 +649,7 @@ module.exports = {
             let args = [...additionalArgs];
 
             const res = async (o) => {
-                console.log(o)
+                //console.log(o)
                 update(Object.assign({}, typeof o == `object` ? o : {}, { percentNum: 100 }));
                 const resolveStatus = obj.status;
                 const skipped = {};
@@ -738,8 +734,7 @@ module.exports = {
 
                                 if(!info.fullInfo) {
                                     setProgress(`tags`, {progressNum: -1, status: `Getting full metadata...`})
-                                    await fetchFullInfo()
-                                    parseTags();
+                                    await fetchFullInfo();
                                 }
 
                                 tags = [];
@@ -764,7 +759,7 @@ module.exports = {
         
                                 const args = [`-y`, `-ignore_unknown`, `-i`, target + `.ezytdl`, `-id3v2_version`, `3`, `-write_id3v1`, `1`, ...meta, `-c`, `copy`, target];
         
-                                console.log(args);
+                                ////console.log(args);
         
                                 const proc = child_process.execFile(module.exports.ffmpegPath, args);
 
@@ -802,7 +797,7 @@ module.exports = {
                             const foundCodec = getCodec(target);
                             const vcodec = typeof info.video == `boolean` ? info.video : (foundCodec && !`${foundCodec}`.includes(`jpeg`) && !`${foundCodec}`.includes(`png`))
 
-                            console.log(`--------------\nfoundCodec: ${foundCodec}\nvcodec: ${vcodec}\ninfo.video: ${info.video}\n--------------`)
+                            //console.log(`--------------\nfoundCodec: ${foundCodec}\nvcodec: ${vcodec}\ninfo.video: ${info.video}\n--------------`)
 
                             if(addMetadata.thumbnail && !vcodec) {
                                 if(!info.thumbnail && !info.fullInfo) {
@@ -830,16 +825,16 @@ module.exports = {
                     
                                             if(target.endsWith(`.mp3`)) args.splice(args.indexOf(`1:0`)+1, 0, `-id3v2_version`, `3`, `-write_id3v1`, `1`);
         
-                                            console.log(args);
+                                            ////console.log(args);
                     
                                             const proc = child_process.execFile(module.exports.ffmpegPath, [...args, target]);
                     
-                                            proc.stdout.on(`data`, d => {
-                                                console.log(d.toString().trim())
-                                            });
+                                            //proc.stdout.on(`data`, d => {
+                                            //    console.log(d.toString().trim())
+                                            //});
                                             
                                             proc.stderr.on(`data`, d => {
-                                                console.error(d.toString().trim())
+                                                //console.error(d.toString().trim())
                                                 progressNum += 1;
                                                 if(progressNum > 90) progressNum = 90;
                                                 setProgress(`thumbnail`, {progressNum})
@@ -913,11 +908,8 @@ module.exports = {
                                             })
                 
                                             req.once(`error`, e => {
-                                                console.log(e)
-                                                skipped.thumbnail = `Failed to download thumbnail`;
-                                                deleteProgress(`thumbnail`);
-                                                fs.renameSync(target + `.ezytdl`, target);
-                                                r()
+                                                //console.log(e)
+                                                res(1)
                                             });
                 
                                             req.once(`end`, () => {
@@ -933,9 +925,9 @@ module.exports = {
                                                     setProgress(`thumbnail`, {progressNum})
                                                 })
             
-                                                imgConvertProc.stderr.on(`data`, d => {
-                                                    console.error(d.toString().trim())
-                                                })
+                                                //imgConvertProc.stderr.on(`data`, d => {
+                                                //    console.error(d.toString().trim())
+                                                //})
             
                                                 imgConvertProc.once(`close`, c => {
                                                     successfulThumbnail = c == 0 ? thumbnail : successfulThumbnail;
@@ -978,7 +970,7 @@ module.exports = {
                 }).then(() => {
                     if(Object.keys(skipped).length == Object.keys(addMetadata || {}).filter(v => v).length) deleteProgress(`metadata`);
                     const status = resolveStatus + (Object.keys(skipped).length > 0 ? `<br><br>${Object.entries(skipped).map(s => `- Skipped ${s[0]} embed: ${s[1]}`).join(`<br>`)}` : ``);
-                    console.log(`-------------\n${status}\n-------------`)
+                    //console.log(`-------------\n${status}\n-------------`)
                     resolve(update({status, percentNum: 100}))
                 })
             }
@@ -1031,7 +1023,7 @@ module.exports = {
 
                     const mainArgs = [...inputArgs, ...outputArgs];
 
-                    console.log(`mainArgs: `, mainArgs)
+                    //console.log(`mainArgs: `, mainArgs)
     
                     const spawnFFmpeg = (args2, name) => new Promise((resolveFFmpeg, rej) => {
                         if(killAttempt > 0) {
@@ -1041,7 +1033,7 @@ module.exports = {
                             //return res(`Download canceled.`, true);
                         }
     
-                        console.log(`- ` + args2.join(`\n- `))
+                        //console.log(`- ` + args2.join(`\n- `))
     
                         update({status: `${replaceInputArgs ? `Streaming & converting to` : `Converting to`} ${`${ext}`.toUpperCase()} using ${name}...<br><br>- ${Object.keys(convert).map(s => `${s}: ${convert[s] || `(no conversion)`}`).join(`<br>- `)}`, percentNum: -1, eta: `--`});
     
@@ -1065,7 +1057,7 @@ module.exports = {
 
                             if(data.includes(`Duration:`)) {
                                 duration = time(data.trim().split(`Duration:`)[1].trim().split(`,`)[0]).units.ms;
-                                console.log(`duration: `, duration)
+                                //console.log(`duration: `, duration)
                             };
 
                             if(data.trim().startsWith(`ERROR: `)) {
@@ -1091,7 +1083,7 @@ module.exports = {
                         });
         
                         proc.stdout.on(`data`, data => {
-                            console.log(`STDOUT | ${data.toString().trim()}`)
+                            //console.log(`STDOUT | ${data.toString().trim()}`)
                             allLogs += data.toString().trim() + `\n`;
                         });
         
@@ -1116,24 +1108,24 @@ module.exports = {
     
                     const transcoders = await (require(`./determineGPUDecode`))()
     
-                    console.log(`Retrieving filename`);
+                    //console.log(`Retrieving filename`);
                     
                     obj.destinationFile = ytdlpFilename;
     
-                    console.log(`file extension was provided! continuing with ffmpeg...`, obj.destinationFile);
+                    //console.log(`file extension was provided! continuing with ffmpeg...`, obj.destinationFile);
     
                     const decoder = transcoders.use;
     
-                    console.log(`using decoder: `, decoder);
+                    //console.log(`using decoder: `, decoder);
     
                     const thisCodec = getCodec(saveTo + previousFilename);
     
                     if(thisCodec && !disableHWAcceleratedConversion && decoder) {
-                        console.log(`doing video conversion! onlyGPU: ${onlyGPUConversion}`);
+                        //console.log(`doing video conversion! onlyGPU: ${onlyGPUConversion}`);
                         
                         decoder.codecName = thisCodec + `_` + decoder.string;
     
-                        console.log(transcoders)
+                        //console.log(transcoders)
     
                         let compatibleTranscoders = Object.values(transcoders).filter(o => {
                             if(typeof o == `object`) {
@@ -1152,15 +1144,15 @@ module.exports = {
     
                             if(decoder && decoder.name) {
                                 spawnFFmpeg([...decoder.pre, ...inputArgs, ...decoder.post, ...outputArgs], `${thisCodec}_software/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`).then(res).catch(e => {
-                                    console.log(`FFmpeg failed converting -- ${e}; trying again...`)
+                                    //console.log(`FFmpeg failed converting -- ${e}; trying again...`)
                                     spawnFFmpeg([...inputArgs, ...decoder.post, `-c:v`, `h264`, ...outputArgs], `${thisCodec}_software/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`).then(res).catch(e => {
-                                        console.log(`FFmpeg failed converting -- ${e}; trying again...`)
+                                        //console.log(`FFmpeg failed converting -- ${e}; trying again...`)
                                         spawnFFmpeg([...decoder.pre, ...inputArgs, `-c:v`, `h264`, ...outputArgs], `${thisCodec}_software/Dec + ` + `h264_software/Enc`).then(res).catch(e => {
-                                            console.log(`FFmpeg failed converting -- ${e}; trying again...`);
+                                            //console.log(`FFmpeg failed converting -- ${e}; trying again...`);
                                             if(onlyGPUConversion) {
                                                 return fallback(`The video codec (${thisCodec}) provided by the downloaded format is not compatible with FFmpeg's GPU transcoding.`);
                                             } else spawnFFmpeg([...inputArgs, `-c:v`, `h264`, ...outputArgs], `${thisCodec}_software`).then(res).catch(e => {
-                                                console.log(`FFmpeg failed converting [1] -- ${e}; trying again...`)
+                                                //console.log(`FFmpeg failed converting [1] -- ${e}; trying again...`)
                                                 spawnFFmpeg([...inputArgs, ...outputArgs], `${thisCodec}_software`).then(res).catch(fallback);
                                             })
                                         })
@@ -1169,13 +1161,13 @@ module.exports = {
                             } else spawnFFmpeg(mainArgs, `${thisCodec}_software`).then(res).catch(fallback)
                         };
     
-                        console.log(compatibleTranscoders)
+                        //console.log(compatibleTranscoders)
     
                         if(compatibleTranscoders.length > 0) {
                             let done = false;
     
                             for(let transcoder of compatibleTranscoders) {
-                                console.log(`trying ${transcoder.name}...`);
+                                //console.log(`trying ${transcoder.name}...`);
                                 
                                 try {
                                     const conversionProc = await spawnFFmpeg([`-c:v`, transcoder.codecName, ...inputArgs, ...decoder.post, ...outputArgs], transcoder.codecName + `/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`);
@@ -1231,7 +1223,7 @@ module.exports = {
                 }
             };
 
-            console.log(`--- DOWNLOADING FORMAT (${format}) ---\n`, thisFormat)
+            //console.log(`--- DOWNLOADING FORMAT (${format}) ---\n`, thisFormat)
 
             if(/*thisFormat && thisFormat.protocol && thisFormat.protocol.toLowerCase().includes(`m3u8`) && fs.existsSync(module.exports.ffmpegPath)*/ false) {
             } else {
@@ -1273,7 +1265,7 @@ module.exports = {
                 if(!module.exports.ffmpegPath && addMetadata && addMetadata.tags) args.push(`--add-metadata`, `--no-write-playlist-metafiles`);
                 if(!module.exports.ffmpegPath && addMetadata && addMetadata.thumbnail) args.push(`--embed-thumbnail`, `--no-write-thumbnail`);
                 
-                console.log(`saveTo: ` + saveTo, `\n- ` + args.join(`\n- `))
+                //console.log(`saveTo: ` + saveTo, `\n- ` + args.join(`\n- `))
         
                 proc = execYTDLP(args);
         
@@ -1315,7 +1307,7 @@ module.exports = {
     
                     if(string.trim().startsWith(`ERROR: `)) {
                         if(string.toLowerCase().includes(`ffmpeg not found`) && string.toLowerCase().includes(`postprocessing`)) {
-                            console.log(`not doing anything with this error`, string.trim())
+                            //console.log(`not doing anything with this error`, string.trim())
                         } else if(string.toLowerCase().includes(`ffmpeg could not be found`)) {
                             fallbackToFFmpeg = true;
                         } else sendNotification({
@@ -1354,12 +1346,12 @@ module.exports = {
                             args = [...(disableHWAcceleratedConversion ? [] : [`-hwaccel`, `auto`]), `-i`, thisFormat.url || url, `-movflags`, `+faststart`, `-c`, `copy`, `-y`, require(`path`).join(saveTo, ytdlpFilename) + `.mkv`];
             
                             if(info.http_headers) {
-                                console.log(`using http headers:`, info.http_headers);
+                                //console.log(`using http headers:`, info.http_headers);
             
                                 args.unshift(`-headers`, Object.keys(info.http_headers).map(s => `${s}: ${info.http_headers[s]}`).join(`\r\n`))
                             }
             
-                            console.log(`saveTo: ` + saveTo, `\n- ` + args.join(`\n- `))
+                            //console.log(`saveTo: ` + saveTo, `\n- ` + args.join(`\n- `))
             
                             proc = child_process.execFile(module.exports.ffmpegPath, args);
                     
@@ -1375,7 +1367,7 @@ module.exports = {
                             const log = (data) => {
                                 const string = data.toString().trim();
             
-                                console.log(string)
+                                //console.log(string)
                                 
                                 let speed = [];
                 

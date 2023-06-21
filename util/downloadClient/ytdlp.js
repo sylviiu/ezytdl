@@ -56,7 +56,7 @@ module.exports = async () => new Promise(async res => {
 
         const log = (prefix, d) => {
             const str = d.toString().trim();
-            console.log(prefix + d.split(`\n`).join(`\n${prefix}`));
+            //console.log(prefix + d.split(`\n`).join(`\n${prefix}`));
             if(str.includes(`Collecting `)) {
                 updateFunc(str.split(`Collecting `).slice(-1)[0].split(`\n`)[0])
             } else if(str.includes(`Installing collected packages: `)) {

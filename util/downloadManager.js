@@ -300,16 +300,14 @@ sessions = {
                             obj.complete = true;
                             obj.ytdlpProc = null;
             
-                            if(obj.killed) obj.status.status = `Cancelled`;
-            
                             if(downloadFunc) {
                                 obj.updateFunc(Object.assign({}, obj.status, {status: `Finished "${downloadFunc}"`, progressNum: 100}));
                                 rawUpdateFunc(update);
                             }
+            
+                            if(obj.killed) obj.status.status = `Cancelled`;
 
                             obj.result = update;
-            
-                            //res(obj.status);
             
                             refreshQueue();
                         });
