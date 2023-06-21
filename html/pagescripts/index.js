@@ -229,7 +229,7 @@ const runSearch = async (url, initialMsg, func) => {
         } else {
             listbox.querySelector(`#mediaTitle`).innerHTML = ``;
 
-            let type = info.extractor_key || info.extractor || info.webpage_url_domain;
+            let type = `${info.extractor_key || info.extractor || info.webpage_url_domain}`;
             let icon;
 
             const setIcon = (name, original, extra) => {
@@ -307,7 +307,7 @@ const runSearch = async (url, initialMsg, func) => {
                 img.src = thumbnail.url;
             }
 
-            console.log(info)
+            console.log(info);
             
             qualityButtons({ card: listbox, node: listbox.querySelector(`#qualityButtons`), info, centerURLBox: info.entries ? centerURLBox : () => {} });
 
@@ -367,9 +367,6 @@ const runSearch = async (url, initialMsg, func) => {
                             location.href = entry.webpage_url || entry.url
                         })
                     } else card.querySelector(`#fileIcon`).classList.remove(`d-none`);
-
-                    if(!entry.title) entry.title = entry.webpage_url;
-                    if(!entry.title) entry.title = entry.url;
 
                     card.querySelector(`#formatName`).innerHTML = entry.title;
 
@@ -742,7 +739,7 @@ const runSearch = async (url, initialMsg, func) => {
                     appendCard(card);
 
                     if(i % 25 == 0) await new Promise((resolve) => setTimeout(resolve, 1));
-                }
+                };
             }
 
             wavesAnims.fadeOut();
@@ -777,6 +774,25 @@ const runSearch = async (url, initialMsg, func) => {
                 progressObj.remove();
                 progressObj = null;
             }
+
+            let disableAlbumSave = false;
+
+            const saveAsAlbum = listbox.querySelector(`#opt-saveAsAlbum`);
+
+            if(!info.entries) disableAlbumSave = true;
+            if(func == `search`) disableAlbumSave = true;
+            if(info.extractor.includes(`search`)) disableAlbumSave = true;
+
+            let n = 0;
+
+            if(disableAlbumSave && saveAsAlbum && saveAsAlbum.parentElement) listbox.querySelectorAll(`#opt-saveAsAlbum`).forEach(n => {
+                try {
+                    n.remove()
+                    n++;
+                } catch(e) {}
+            });
+
+            console.log(`disable album save: ${disableAlbumSave}; removed: ${n}`)
         }
     
         input.disabled = false;

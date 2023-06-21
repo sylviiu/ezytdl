@@ -1,5 +1,7 @@
 sessions = {
-    get: (id) => {
+    get: (id, opt={}) => {
+        const { staggered, noSendErrors } = opt;
+
         if(!id) id = `default`;
     
         if(!sessions[id]) {
@@ -67,7 +69,7 @@ sessions = {
                 if(!queueSizeWarningSent && totalItems > 50) {
                     queueSizeWarningSent = true;
             
-                    sendNotification({
+                    if(id == `default`) sendNotification({
                         headingText: `Warning!`,
                         bodyText: `There are ${totalItems} items in the queue.\n\nDepending on your computer, having too many items in the download queue may cause the UI to slow down and/or freeze, especially if you navigate to different pages while the queue is active. To ensure stability, stay on this screen while you finish this queue.`,
                         type: `warn`,
@@ -211,8 +213,9 @@ sessions = {
                     while((queue.active.length + queue.paused.length) < maxDownloads && queue.queue.length > 0) {
                         const next = queue.queue.shift();
                         queue.active.push(next);
-                        //setTimeout(() => next.start(), i*450)
-                        next.start();
+                        if(staggered) {
+                            setTimeout(() => next.start(), i*250)
+                        } else next.start();
                         i++;
                     }
             
@@ -297,11 +300,14 @@ sessions = {
                             obj.complete = true;
                             obj.ytdlpProc = null;
             
-                            if(obj.killed) obj.status = Object.assign({}, update, {status: `Cancelled`})
+                            if(obj.killed) obj.status.status = `Cancelled`;
             
-                            if(downloadFunc) obj.updateFunc({status: `Finished "${downloadFunc}"`, progressNum: 100})
+                            if(downloadFunc) {
+                                obj.updateFunc(Object.assign({}, obj.status, {status: `Finished "${downloadFunc}"`, progressNum: 100}));
+                                rawUpdateFunc(update);
+                            }
 
-                            if(downloadFunc && rawUpdateFunc) rawUpdateFunc(update);
+                            obj.result = update;
             
                             //res(obj.status);
             
@@ -377,9 +383,11 @@ sessions = {
             
             const createDownload = (opt, rawUpdateFunc, downloadFunc) => new Promise(async res => {
                 console.log(`Creating new download session: ${opt.entries ? opt.entries.length : 1} entries...`);
+
+                if(typeof rawUpdateFunc != `function`) rawUpdateFunc = () => {};
             
                 if(opt.entries && typeof opt.entries.map == `function`) {
-                    const objs = opt.entries.map(e => createDownloadObject(e, () => {}, downloadFunc));
+                    const objs = opt.entries.map(e => createDownloadObject(e, rawUpdateFunc, downloadFunc));
                     refreshQueue({ action: `add`, obj: objs })
                 } else {
                     const obj = createDownloadObject(opt, rawUpdateFunc, downloadFunc);

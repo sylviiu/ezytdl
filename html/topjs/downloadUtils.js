@@ -70,7 +70,7 @@ var createDownloadManager = (card, id) => {
                 card.querySelector(`#leftContent`).appendChild(otherProgBars[id].node);
             };
 
-            otherProgBars[id].node.innerHTML = obj;
+            if(otherProgBars[id].node.innerHTML != obj) otherProgBars[id].node.innerHTML = obj;
         } else {    
             if(typeof otherProgBars[id] != `undefined` && !otherProgBars[id].deleteTimer) otherProgBars[id].deleteTimer = setTimeout(() => {
                 console.log(`Removing other progress bar for ${id}`, obj)
@@ -98,7 +98,7 @@ var createDownloadManager = (card, id) => {
             progress.setProgress(status.percentNum);
             if(status.percentNum >= 0) {
                 if(fileFormat.classList.contains(`d-none`)) fileFormat.classList.remove(`d-none`);
-                fileFormat.innerHTML = `${status.percentNum}%`;
+                if(fileFormat.innerHTML != `${status.percentNum}%`) fileFormat.innerHTML = `${status.percentNum}%`;
             } else {
                 if(!fileFormat.classList.contains(`d-none`)) fileFormat.classList.add(`d-none`);
             }
@@ -125,13 +125,13 @@ var createDownloadManager = (card, id) => {
 
             if(status.live) {
                 progress.setProgress(-1);
-                fileFormat.innerHTML = `LIVE`;
+                if(fileFormat.innerHTML != `LIVE`) fileFormat.innerHTML = `LIVE`;
             } else if(m.percentNum) {
                 console.log(m.percentNum)
                 progress.setProgress(m.percentNum);
                 if(m.percentNum >= 0) {
                     if(fileFormat.classList.contains(`d-none`)) fileFormat.classList.remove(`d-none`);
-                    fileFormat.innerHTML = `${m.percentNum}%`;
+                    if(fileFormat.innerHTML != `${m.percentNum}%`) fileFormat.innerHTML = `${m.percentNum}%`;
                 } else {
                     if(!fileFormat.classList.contains(`d-none`)) fileFormat.classList.add(`d-none`);
                 }
@@ -144,10 +144,10 @@ var createDownloadManager = (card, id) => {
     
             if(m.eta) {
                 if(card.querySelector(`#eta`).classList.contains(`d-none`)) card.querySelector(`#eta`).classList.remove(`d-none`);
-                card.querySelector(`#eta`).innerHTML = m.eta
+                if(card.querySelector(`#eta`).innerHTML != m.eta) card.querySelector(`#eta`).innerHTML = m.eta
             };
     
-            if(m.status) card.querySelector(`#formatSubtext`).innerHTML = m.status;
+            if(m.status && card.querySelector(`#formatSubtext`).innerHTML != m.status) card.querySelector(`#formatSubtext`).innerHTML = m.status;
     
             if(m.destinationFile) destinationFile = m.destinationFile
         }

@@ -165,7 +165,7 @@ module.exports = {
 
         const instanceName = `unflatPlaylist-${id}`
 
-        const manager = downloadManager.get(instanceName);
+        const manager = downloadManager.get(instanceName, {staggered: true, noSendErrors: true});
 
         if(downloadManager[instanceName].timeout) clearTimeout(downloadManager[instanceName].timeout);
 
@@ -177,10 +177,9 @@ module.exports = {
 
         manager.queueEventEmitter.removeAllListeners(`queueUpdate`);
 
-        let newInfo = null;
+        let newInfo = {};
 
-        let addedKeys = 0;
-        let totalEntriesAddedKeys = 0;
+        let badEntries = 0;
 
         manager.queueEventEmitter.on(`queueUpdate`, (queue) => {
             const totalLength = Object.values(queue).reduce((a, b) => a + b.length, 0);
@@ -190,16 +189,17 @@ module.exports = {
             updateStatusPercent([queue.complete.length, totalLength]);
 
             if(queue.complete.length == totalLength) {
+                const failed = queue.complete.filter(o => o.failed);
+
+                badEntries = badEntries - failed.length;
+
                 console.log(`queue complete!`);
 
-                if(newInfo) for(const key of Object.keys(newInfo)) if(typeof info[key] == `undefined`) {
-                    addedKeys++;
-                    info[key] = newInfo[key];
-                };
+                newInfo = Object.assign(info, newInfo);
 
-                updateStatus(`Finished fetching info of ${queue.complete.length}/${totalLength} items! (${addedKeys} new keys added, ${totalEntriesAddedKeys} to entries)`)
+                updateStatus(`Finished fetching info of ${queue.complete.length}/${totalLength} items!` + (failed > 0 ? ` (${failed} entries failed to resolve)` : ``) + (badEntries > 0 ? ` (${badEntries} entries failed to resolve)` : ``))
 
-                res(module.exports.parseInfo(info, true));
+                res(module.exports.parseInfo(newInfo || info, true));
 
                 if(!customID) downloadManager[instanceName].timeout = setTimeout(() => {
                     if(downloadManager[instanceName]) {
@@ -210,16 +210,36 @@ module.exports = {
             }
         });
 
-        if(info.url) manager.createDownload([{query: info.url, extraArguments, ignoreStderr: true}, false], null, `listFormats`);
-
-        if(info.entries) for(const e of info.entries) manager.createDownload([{query: e.url, extraArguments, ignoreStderr: true}, false], (i) => {
-            if(i) for(const key of Object.keys(i)) if(typeof e[key] == `undefined`) {
-                totalEntriesAddedKeys++;
-                e[key] = i[key];
-            };
+        if(info.url) manager.createDownload([{query: info.url, extraArguments, ignoreStderr: true}, false], (i) => {
+            if(i) {
+                console.log(`new info!`)
+                delete i.entries;
+                newInfo = i;
+            } else console.log(`info null?`, i)
         }, `listFormats`);
 
-        if(Object.values(manager.queue).reduce((a, b) => a + b.length, 0)) manager.queueEventEmitter.emit(`queueUpdate`, manager.queue);
+        if(info.entries) for(const i in info.entries) {
+            const e = info.entries[i];
+
+            manager.createDownload([{query: e.url, extraArguments, ignoreStderr: true}, false], (e) => {
+                // to keep the same order of songs
+                if(e) {
+                    console.log(`new info!`);
+
+                    for(const key of Object.entries(e).filter(o => !o[1]).map(o => o[0])) {
+                        delete e[key];
+                    }
+
+                    Object.assign(info.entries[i], e);
+                    console.log(`added "${e.title}" (id: ${e.id} / url: ${e.url}) to index ${i}`)
+                } else {
+                    badEntries++;
+                    console.log(`entry null?`, e)
+                }
+            }, `listFormats`);
+        }
+
+        manager.queueEventEmitter.emit(`queueUpdate`, manager.queue);
     }),
     verifyPlaylist: (d, { extraArguments, disableFlatPlaylist, forceRun }) => new Promise(async res => {
         if(d && forceRun) {
@@ -261,15 +281,27 @@ module.exports = {
             return res(null);
         }
     }),
-    parseInfo: (d, full, root=true) => {
+    parseInfo: (d, full, root=true, rawInfo=d, entry_number, entry_total) => {
+        if(!d.title) d.title = d.webpage_url;
+        if(!d.title) d.title = d.url;
+
+        if(rawInfo && !root) {
+            const info = Object.assign({}, rawInfo, {entries: null, formats: null, requested_entries: null, requested_formats: null})
+
+            for(const key of Object.keys(info)) d[`playlist-${key}`] = info[key]
+        }
+
         let totalTime = 0;
 
         if(!d.originalDuration && d.duration) d.originalDuration = d.duration;
 
         if(full) d.fullInfo = true;
 
-        if(d.entries) d.entries = d.entries.map(o => module.exports.parseInfo(o, full, false));
-        if(d.formats) d.formats = d.formats.map(o => module.exports.parseInfo(o, full, false));
+        if(d.entries) d.entries = d.entries.map((o, i) => module.exports.parseInfo(o, full, false, rawInfo, i+1, d.entries.length));
+        if(d.formats) d.formats = d.formats.map((o, i) => module.exports.parseInfo(o, full, false, rawInfo, i+1, d.formats.length));
+
+        if(entry_number && !root) d.entry_number = entry_number;
+        if(entry_total && !root) d.entry_total = entry_total;
 
         if(d.duration && !root) totalTime += typeof d.duration == `object` ? d.duration.units.ms : d.duration*1000;
 
@@ -280,7 +312,7 @@ module.exports = {
         if(d.entries) totalTime += d.entries.filter(o => o.duration).reduce((a, b) => a + b.duration.units.ms, 0);
         if(d.formats) totalTime += d.formats.filter(o => o.duration).reduce((a, b) => a + b.duration.units.ms, 0);
 
-        d.duration = time(totalTime || typeof !d.originalDuration == `number` ? !d.originalDuration * 1000 : null)
+        d.duration = time(totalTime || typeof d.originalDuration == `number` ? d.originalDuration * 1000 : null)
 
         if(!d.thumbnail && d.thumbnails && d.thumbnails.length > 0) {
             d.thumbnail = typeof d.thumbnails[d.thumbnails.length - 1] == `object` ? d.thumbnails[d.thumbnails.length - 1].url : `${d.thumbnails[d.thumbnails.length - 1]}`
@@ -341,7 +373,7 @@ module.exports = {
             }
         })
     }),
-    listFormats: ({query, extraArguments, ignoreStderr}, disableFlatPlaylist) => new Promise(async res => {
+    listFormats: ({query, extraArguments, ignoreStderr}) => new Promise(async res => {
         let url = query;
 
         const additional = module.exports.additionalArguments(extraArguments);
@@ -375,12 +407,14 @@ module.exports = {
             try {
                 const d = JSON.parse(data);
 
+                d._request_url = url;
+
                 if(ignoreStderr) {
                     return res(d);
                 } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, }).then(res);
                 //console.log(d)
             } catch(e) {
-                sendNotification({
+                if(!ignoreStderr) sendNotification({
                     type: `error`,
                     headingText: `Error getting media info`,
                     bodyText: `There was an issue retrieving the info. Please try again.`
@@ -441,10 +475,23 @@ module.exports = {
 
         let proc;
 
+        let lastUpdate = 0;
+        let updateTimer = null;
+
         let update = (o) => {
             Object.assign(obj, o);
-            updateFunc({ latest: o, overall: obj }, proc);
-            return obj;
+
+            if(updateTimer) clearTimeout(updateTimer);
+
+            if(Date.now() - lastUpdate > 150) {
+                updateFunc({ latest: o, overall: obj }, proc);
+                lastUpdate = Date.now();
+            } else {
+                updateTimer = setTimeout(() => {
+                    updateFunc({ latest: o, overall: obj }, proc);
+                    lastUpdate = Date.now();
+                }, 150)
+            }
         };
 
         let setProgress = (key, o) => {
@@ -689,46 +736,37 @@ module.exports = {
     
                                 let tags = [];
 
-                                const parseTags = () => {
-                                    tags = [];
-
-                                    if(info.track) tags.push([`title`, info.track])
-                                    else if(info.title) tags.push([`title`, info.title]);
-                                    if(info.album) tags.push([`album`, info.album]);
-                                    if(info.artist || info.album_artist || info.creator || info.uploader || info.channel) tags.push([`artist`, info.artist || info.album_artist || info.creator || info.uploader || info.channel]);
-                                    if(info.track_number) tags.push([`track number`, info.track_number]);
-                                    if(info.genre) tags.push([`genre`, info.genre]);
-                                    if(info.license) tags.push([`copyright`, info.license]);
-                                    if(info.description) tags.push([`comment`, info.description]);
-                                }
-
-                                parseTags();
-
-                                if(!tags.find(t => t[0] == `title`) || !tags.find(t => t[0] == `artist`)) {
+                                if(!info.fullInfo) {
                                     setProgress(`tags`, {progressNum: -1, status: `Getting full metadata...`})
                                     await fetchFullInfo()
                                     parseTags();
                                 }
+
+                                tags = [];
+
+                                if(info.track || info.title) tags.push([`title`, info.track || info.title]);
+                                if(info.artist || info.album_artist || info.creator || info.uploader || info.channel) tags.push([`artist`, info.artist || info.album_artist || info.creator || info.uploader || info.channel]);
+
+                                if(addMetadata['opt-saveAsAlbum']) {
+                                    if(info.album || info['playlist-title']) tags.push([`album`, info.album || info['playlist-title']]);
+                                    if((info.entry_number) && (info[`playlist-playlist_count`] || info.entry_total)) tags.push([`track`, `${info.entry_number}/${info[`playlist-playlist_count`] || info.entry_total}`]);
+                                }
+
+                                if(info.genre) tags.push([`genre`, info.genre]);
+                                if(info.license) tags.push([`copyright`, info.license]);
+                                if(info.description) tags.push([`comment`, info.description]);
                                 
                                 setProgress(`tags`, {progressNum: 30, status: `Adding ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}...`})
     
                                 const meta = [];
     
-                                tags.forEach(t => meta.push(`-metadata`, `${t[0]}=${t[1].replace(/\n/g, `\r\n`)}`));
+                                tags.forEach(t => meta.push(`-metadata`, `${t[0]}=${`${t[1]}`.replace(/\n/g, `\r\n`)}`));
         
                                 const args = [`-y`, `-ignore_unknown`, `-i`, target + `.ezytdl`, `-id3v2_version`, `3`, `-write_id3v1`, `1`, ...meta, `-c`, `copy`, target];
         
                                 console.log(args);
         
                                 const proc = child_process.execFile(module.exports.ffmpegPath, args);
-        
-                                proc.stdout.on(`data`, d => {
-                                    console.log(d.toString().trim())
-                                });
-        
-                                proc.stderr.on(`data`, d => {
-                                    console.log(d.toString().trim())
-                                });
 
                                 proc.once(`spawn`, () => {
                                     setProgress(`tags`, {progressNum: 50, status: `Adding ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}... (FFmpeg spawned)`})
@@ -799,7 +837,7 @@ module.exports = {
                                             proc.stdout.on(`data`, d => {
                                                 console.log(d.toString().trim())
                                             });
-                    
+                                            
                                             proc.stderr.on(`data`, d => {
                                                 console.error(d.toString().trim())
                                                 progressNum += 1;
@@ -889,7 +927,7 @@ module.exports = {
                                                 const imgConvertProc = child_process.execFile(module.exports.ffmpegPath, [`-y`, `-i`, target + `.songcover`, `-update`, `1`, `-vf`, `crop=min(in_w\\,in_h):min(in_w\\,in_h)`, target + `.png`]);
             
                                                 imgConvertProc.stdout.on(`data`, d => {
-                                                    console.log(d.toString().trim())
+                                                    //console.log(d.toString().trim())
                                                     progressNum += 1;
                                                     if(progressNum > 60) progressNum = 60;
                                                     setProgress(`thumbnail`, {progressNum})
@@ -928,11 +966,11 @@ module.exports = {
                     } else {
                         console.log(`no metadata to add! (run: ${run}) (ffmpeg installed: ${module.exports.ffmpegPath ? true : false}) (file: ${file ? true : false})`);
                         if(!run && addMetadata) {
-                            Object.entries(addMetadata).filter(v => v[1]).forEach(k => skipped[k[0]] = `Download was cancelled.`);
+                            Object.entries(addMetadata).filter(v => v[1] && !v[0].startsWith(`opt-`)).forEach(k => skipped[k[0]] = `Download was cancelled.`);
                         } else if(!module.exports.ffmpegPath) {
-                            Object.entries(addMetadata).filter(v => v[1]).forEach(k => skipped[k[0]] = `FFmpeg wasn't found.`);
+                            Object.entries(addMetadata).filter(v => v[1] && !v[0].startsWith(`opt-`)).forEach(k => skipped[k[0]] = `FFmpeg wasn't found.`);
                         } else if(!file || !fs.existsSync(target)) {
-                            Object.entries(addMetadata).filter(v => v[1]).forEach(k => skipped[k[0]] = `File wasn't found.`);
+                            Object.entries(addMetadata).filter(v => v[1] && !v[0].startsWith(`opt-`)).forEach(k => skipped[k[0]] = `File wasn't found.`);
                         }
                     }
     
@@ -1024,8 +1062,7 @@ module.exports = {
                             const data = `${d}`;
 
                             allLogs += data.trim() + `\n`;
-        
-                            console.log(`STDERR | ${data.trim()}`);
+
                             if(data.includes(`Duration:`)) {
                                 duration = time(data.trim().split(`Duration:`)[1].trim().split(`,`)[0]).units.ms;
                                 console.log(`duration: `, duration)
