@@ -304,9 +304,9 @@ var initDownloadManager = () => {
                         if(o.opt.info) {
                             if(o.opt.info.webpage_url_domain) title += "[" + o.opt.info.webpage_url_domain + "]";
                             if(o.opt.info.title) title += o.opt.info.title;
-                        } else {
+                        }/* else {
                             title += o.opt.url;
-                        }
+                        }*/
         
                         card.querySelector(`#formatName`).innerHTML = title;
         

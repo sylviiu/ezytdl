@@ -244,7 +244,14 @@ sessions = {
                 let id = idGen(16);
                 const obj = {
                     id,
-                    opt,
+                    opt: Object.assign({}, opt, { 
+                        info: typeof opt.info == `object` ? {
+                            webpage_url_domain: opt.info.webpage_url_domain,
+                            title: opt.info.title,
+                            thumbnails: opt.info.thumbnails,
+                            thumbnail: opt.info.thumbnail,
+                        } : opt.info
+                    }),
                     ignoreUpdates: false,
                     complete: false,
                     failed: false,
