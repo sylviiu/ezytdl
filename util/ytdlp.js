@@ -102,7 +102,8 @@ const sendUpdates = (proc, initialMsg) => {
             sendNotification({
                 type: `error`,
                 headingText: `yt-dlp failed to complete [sendUpdates]`,
-                bodyText: `${string.trim().split(`ERROR: `)[1]}`
+                bodyText: `${string.trim().split(`ERROR: `)[1]}`,
+                stack: proc.lastTrace
             })
         }
 
