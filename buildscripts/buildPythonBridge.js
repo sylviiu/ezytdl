@@ -3,7 +3,7 @@ const path = require(`path`);
 const fs = require(`fs`);
 const which = require(`which`);
 
-module.exports = () => new Promise(async res => {
+module.exports = (config) => new Promise(async res => {
     const ytdlpPath = path.join(__dirname.split(`buildscripts`)[0], `ytdlp`);
     const venvLocation = path.join(ytdlpPath, `.venv`)
 
@@ -32,6 +32,11 @@ module.exports = () => new Promise(async res => {
 
     console.log(`installing packages...\n- bindir: ${bindir}\n- pip path: ${pipPath}`)
     child_process.execFileSync(pipPath, [`install`, `-r`, `requirements.txt`], {stdio: `inherit`, cwd: ytdlpPath});
+
+    const installVersion = config && config.productName.endsWith(`-nightly`) ? `https://github.com/yt-dlp/yt-dlp/archive/master.tar.gz` : `yt-dlp`;
+
+    console.log(`installing yt-dlp at ${installVersion}`);
+    child_process.execFileSync(pipPath, [`install`, installVersion, `--no-cache-dir`], {stdio: `inherit`, cwd: ytdlpPath});
 
     //console.log(`installing cxfreeze...`)
     //child_process.execFileSync(pipPath, [`install`, `cx_Freeze`], {stdio: `inherit`, cwd: ytdlpPath});
