@@ -263,8 +263,64 @@ const runSearch = async (url, initialMsg, func) => {
                 if(parse) info = await mainQueue.parseInfo(info);
 
                 let afterType = ``;
-                if(info.formats) afterType += ` entry`
-                if(info.creator || info.uploader || info.channel) afterType += ` by ${info.creator || info.uploader || info.channel}`;
+
+                if(info.entries && info.entries[0] && (info.entries[0].album || info.entries[0].track)) {
+                    afterType += ` album`
+                } else if(info.categories && info.categories.map(f => f.toString().toLowerCase()).find(f => f == `music`) || info.track || info.album) {
+                    afterType += ` song`
+                } else if(info._type) {
+                    afterType += ` ${info._type}`
+                } else if(info.formats) {
+                    afterType += ` entry`
+                } else if(info.entries) {
+                    afterType += ` playlist`
+                } else afterType += ` listing`;
+
+                if(info.webpage_url || info.url) {
+                    const a = document.createElement(`a`);
+
+                    a.href = info.webpage_url || info.url;
+                    a.innerHTML = afterType.trim();
+
+                    a.style.color = `white`;
+                    a.style.textDecoration = `none`;
+
+                    afterType = ` ` + a.outerHTML
+                }
+
+                const parseCreator = (entry) => {
+                    if(entry.created_url) {
+                        const a = document.createElement(`a`);
+
+                        a.href = entry.created_url;
+                        a.innerHTML = entry.created_by;
+
+                        a.style.color = `white`;
+                        a.style.textDecoration = `none`;
+
+                        return a.outerHTML;
+                    } else {
+                        return entry.created_by;
+                    }
+                }
+
+                if(info.created_by) afterType += ` by ${parseCreator(info)}`;
+                if(info.entries) {
+                    let artists = [];
+                    let parsableArtists = [];
+
+                    for (const entry of info.entries) {
+                        if(entry.created_by && entry.created_by != info.created_by && !artists.includes(entry.created_by)) {
+                            artists.push(entry.created_by);
+                            parsableArtists.push(parseCreator(entry));
+                        }
+                    };
+
+                    let more = parsableArtists.splice(2).length;
+
+                    if(artists.length > 0) afterType += ` including ${parsableArtists.join(`, `)}`;
+                    if(more > 0) afterType += `, and ${more} more`;
+                }
                 
                 let results;
 
