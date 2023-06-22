@@ -5,7 +5,8 @@ import sys
 import io
 import builtins
 
-enc = 'utf-8'
+enc = 'charmap'
+
 #sys.stdout = open(sys.stdout.fileno(), mode='w', encoding=enc, buffering=1)
 new_stdout = io.TextIOWrapper(sys.stdout.detach(), encoding=enc)
 sys.stdout = new_stdout
