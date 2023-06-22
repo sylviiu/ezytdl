@@ -278,6 +278,28 @@ module.exports = {
         if(!d.title) d.title = d.webpage_url;
         if(!d.title) d.title = d.url;
 
+        if(full) d.fullInfo = true;
+
+        if(d.artist) {
+            if(!d.created_by) d.created_by = d.artist;
+            if(!d.created_url) d.created_url = d.artist_url;
+        };
+        
+        if(d.creator) {
+            if(!d.created_by) d.created_by = d.creator;
+            if(!d.created_url) d.created_url = d.creator_url;
+        };
+        
+        if(d.channel) {
+            if(!d.created_by) d.created_by = d.channel;
+            if(!d.created_url) d.created_url = d.channel_url;
+        };
+        
+        if(d.uploader) {
+            if(!d.created_by) d.created_by = d.uploader;
+            if(!d.created_url) d.created_url = d.uploader_url;
+        }
+
         if(rawInfo && !root) {
             const info = Object.assign({}, rawInfo, {entries: null, formats: null, requested_entries: null, requested_formats: null})
 
@@ -287,8 +309,6 @@ module.exports = {
         let totalTime = 0;
 
         if(!d.originalDuration && d.duration) d.originalDuration = d.duration;
-
-        if(full) d.fullInfo = true;
 
         if(d.entries) d.entries = d.entries.map((o, i) => module.exports.parseInfo(o, full, false, rawInfo, i+1, d.entries.length));
         if(d.formats) d.formats = d.formats.map((o, i) => module.exports.parseInfo(o, full, false, rawInfo, i+1, d.formats.length));
@@ -302,8 +322,8 @@ module.exports = {
             d.released = time((Date.now()/60) - d.timestamp);
         }
 
-        if(d.entries) totalTime += d.entries.filter(o => o.duration).reduce((a, b) => a + b.duration.units.ms, 0);
-        if(d.formats) totalTime += d.formats.filter(o => o.duration).reduce((a, b) => a + b.duration.units.ms, 0);
+        if(d.entries) totalTime += d.entries.filter(o => o.duration).reduce((a, b) => a + typeof b.duration == `number` ? b.duration*1000 : b.duration.units.ms, 0);
+        if(d.formats) totalTime += d.formats.filter(o => o.duration).reduce((a, b) => a + typeof b.duration == `number` ? b.duration*1000 : b.duration.units.ms, 0);
 
         d.duration = time(totalTime || typeof d.originalDuration == `number` ? d.originalDuration * 1000 : null)
 
@@ -468,23 +488,10 @@ module.exports = {
 
         let proc;
 
-        let lastUpdate = 0;
-        let updateTimer = null;
-
         let update = (o) => {
             Object.assign(obj, o);
-
-            if(updateTimer) clearTimeout(updateTimer);
-
-            if(Date.now() - lastUpdate > 150) {
-                updateFunc({ latest: o, overall: obj }, proc);
-                lastUpdate = Date.now();
-            } else {
-                updateTimer = setTimeout(() => {
-                    updateFunc({ latest: o, overall: obj }, proc);
-                    lastUpdate = Date.now();
-                }, 150)
-            }
+            updateFunc({ latest: o, overall: obj }, proc);
+            return obj;
         };
 
         let setProgress = (key, o) => {
