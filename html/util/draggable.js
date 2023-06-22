@@ -92,6 +92,7 @@ class Draggable {
         node,
         targets=[],
         value=``,
+        enableClickRecognition=true,
         enableDrag=true,
         reanimate=true,
         animateDrop=true,
@@ -153,7 +154,12 @@ class Draggable {
             const startDrag = (e) => {
                 if(e && e.dataTransfer) {
                     e.dataTransfer.setDragImage(new Image(), 0, 0);
-                    e.dataTransfer.setData(`text`, value);
+                    if(!allowPopout) {
+                        e.dataTransfer.effectAllowed = `none`;
+                        e.dataTransfer.dropEffect = `none`;
+                    } else {
+                        e.dataTransfer.setData(`text`, value);
+                    }
                 };
 
                 const initiateDrag = (useCloned) => {
@@ -262,7 +268,7 @@ class Draggable {
                 }
             };
 
-            if(!node.onclick && !node.onmousedown) {
+            if(enableClickRecognition) {
                 let mousedown = false;
 
                 node.addEventListener(`mousedown`, (e) => {

@@ -381,12 +381,18 @@ const runSearch = async (url, initialMsg, func) => {
                     const a = document.createElement(`a`);
 
                     a.href = info.media_metadata.url.source_url;
-                    a.innerHTML = afterType.trim();
+                    a.innerHTML = ` ` + afterType.trim();
 
                     a.style.color = `white`;
                     a.style.textDecoration = `none`;
 
-                    afterType = ` ` + a.outerHTML
+                    new Draggable({
+                        node: a,
+                        enableClickRecognition: false,
+                        allowPopout: false,
+                    })
+
+                    afterType = a
                 }
 
                 const parseCreator = (entry, prefix=``) => {
@@ -510,7 +516,13 @@ const runSearch = async (url, initialMsg, func) => {
                     addMetaItem(`fa-play-circle`, info.formats.length + ` format${info.formats.length == 1 ? `` : `s`}`, `formats`)
                 }
 
-                listbox.querySelector(`#mediaSubtext`).innerHTML = ((type || iconExtra) + afterType).trim();
+                listbox.querySelector(`#mediaSubtext`).innerHTML = ((type || iconExtra)).trim();
+
+                if(typeof afterType == `string` && afterType.length > 0) {
+                    listbox.querySelector(`#mediaSubtext`).innerHTML += ` ${afterType}`;
+                } else if(afterType) {
+                    listbox.querySelector(`#mediaSubtext`).appendChild(afterType);
+                }
 
                 headingContainer.querySelectorAll(`.mediaMetaItem`).forEach(item => {
                     if(!ids.includes(item.id)) {
@@ -835,8 +847,6 @@ const runSearch = async (url, initialMsg, func) => {
 
                     new Draggable({
                         node: card,
-                        animateDrop: false,
-                        animateDropFail: false,
                         allowPopout: false,
                     })
 
