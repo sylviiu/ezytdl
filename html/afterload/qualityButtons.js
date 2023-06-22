@@ -24,6 +24,10 @@ const setDefaultSaveOptValues = (node, info) => {
         if(info.entries && info.entries.length > 0) {
             //if(!node.querySelector(`#saveLocation`).value.endsWith(navigator.platform.toLowerCase() == `win32` ? `\\` : `/`)) node.querySelector(`#saveLocation`).value += navigator.platform.toLowerCase() == `win32` ? `\\` : `/`
             node.querySelector(`#saveLocation`).value = info.title
+        } else if(info.album) {
+            node.querySelector(`#saveLocation`).value = info.album
+        } else if(info[`playlist-title`]) {
+            node.querySelector(`#saveLocation`).value = info[`playlist-title`]
         }
     } else console.log(`no saveLocation`)
 };
