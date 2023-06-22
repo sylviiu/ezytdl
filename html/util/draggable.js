@@ -1,20 +1,40 @@
 const dragEasing = anime.easing('easeOutExpo');
+const scrollEasing = anime.easing('easeInExpo');
 
 let cloned = null;
 let clonedTxt = null;
+
+let currentScrollBy = 0;
+
+let interval = null;
+
+let animationFrameID = null;
+
+const startInterval = () => {
+    if(!interval) interval = setInterval(() => {
+        if(currentScrollBy != 0) {
+            window.scrollTo({
+                top: window.scrollY + currentScrollBy,
+                behavior: `instant`
+            })
+        } else {
+            clearInterval(interval);
+            interval = null;
+        }
+    }, 15)
+}
 
 const pointerMoveEvent = (e) => {
     const scrollSpeed = 10;
 
     let difference = 0;
 
-    if(e.y < 250) difference = e.y - 250;
-    else if(e.y > window.innerHeight - 200) difference = e.y - (window.innerHeight - 200);
+    if(e.y < (150 + 90)) difference = e.y - 90 - 150;
+    else if(e.y > window.innerHeight - 150) difference = e.y - (window.innerHeight - 150);
 
-    const scrollBy = scrollSpeed * difference/20;
+    currentScrollBy = scrollSpeed * difference/20;
 
-    //if(difference != 0) window.scrollBy(0, scrollBy);
-    if(difference != 0) window.scrollTo(0, window.scrollY + scrollBy)
+    if(currentScrollBy != 0) startInterval();
 };
 
 let lastDragged = null;
@@ -164,6 +184,15 @@ class Draggable {
                 returnDrop(success, thisCloned);
                 clearCloned(success, ((success ? animateDrop : animateDropFail) || animateDrop), reanimate);
                 initialOffset = null;
+                currentScrollBy = 0;
+                if(animationFrameID) {
+                    cancelAnimationFrame(animationFrameID);
+                    animationFrameID = null;
+                }
+                if(interval) {
+                    clearInterval(interval);
+                    interval = null;
+                }
             };
 
             const startDrag = (e) => {
