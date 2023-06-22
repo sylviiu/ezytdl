@@ -5,16 +5,17 @@ let clonedTxt = null;
 
 let lastDragged = null;
 
-const clearCloned = (success, animateDrop, reanimate) => {
+const clearCloned = (success, animateDrop, reanimate=true) => {
     const thisButton = cloned;
     cloned = null;
 
     const thisTxt = clonedTxt;
     clonedTxt = null;
+    
+    const thisLastDragged = lastDragged;
+    lastDragged = null;
 
-    if(reanimate && lastDragged) {
-        const thisLastDragged = lastDragged;
-        lastDragged = null;
+    if(reanimate && thisLastDragged) {
         console.log(thisLastDragged.style.opacity)
         anime({
             targets: thisLastDragged,

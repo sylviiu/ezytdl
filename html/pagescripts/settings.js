@@ -69,6 +69,7 @@ const addFilenameFunctionality = () => {
             value: str,
             enableDrag: fileNameInput.value.includes(str) ? false : true,
             reanimate: false,
+            enableClickRecognition: false,
             dropHook
         });
     })
