@@ -224,6 +224,85 @@ const runSearch = async (url, initialMsg, func) => {
         
         document.body.style.overflowY = `scroll`;
 
+        const throwToURL = (node, card, url) => {
+            input.disabled = false;
+            button.disabled = false;
+            
+            if(config.disableAnimations) {
+                input.value = url;
+                runSearch(input.value, `Fetching info...`, `getInfo`)
+            } else {
+                const nodeBounds = node ? node.getBoundingClientRect() : null;
+
+                let style = node ? node.style : null;
+
+                const newCard = node || popout(card);
+
+                if(!style) style = newCard.style;
+
+                console.log(`modifying width`, JSON.parse(JSON.stringify(node ? node.style : style)));
+
+                const bounding = nodeBounds || (newCard).getBoundingClientRect();
+
+                //if(node && node.style.maxWidth) bounding.width += parseInt(node.style.maxWidth)/2;
+
+                let useScale = style.scale;
+
+                console.log(`modifying width -- usescale: ${useScale}; type: ${typeof useScale}`)
+
+                if(typeof useScale == `number` && useScale != 1) {
+                    console.log(`modifying width -- original: ${bounding.width} (${1/useScale} * ${bounding.width/2})`)
+                    bounding.width += ((1/useScale) * (bounding.width/2))
+                    console.log(`modifying width -- new: ${bounding.width}`)
+                }
+                //if(node && node.style.maxHeight) bounding.height = parseInt(node.style.maxHeight);
+
+                centerURLBox(null, 900);
+                runSearch(url, `Fetching info...`, `getInfo`)
+
+                window.scrollTo(0, 0);
+
+                anime.remove(newCard)
+
+                let initialTargets = [];
+
+                if(newCard.querySelector(`#formatCardBG`)) initialTargets.push(newCard.querySelector(`#formatCardBG`));
+                if(newCard.querySelector(`#innerFormatCard`)) initialTargets.push(newCard.querySelector(`#innerFormatCard`));
+                
+                anime({
+                    targets: initialTargets,
+                    easing: `easeOutCirc`,
+                    borderRadius: `${Math.floor(bounding.height, bounding.width)/2}px`,
+                    duration: 500,
+                });
+
+                anime({
+                    targets: newCard,
+                    //left: (1/parseInt(useScale)) * (bounding.width/2),
+                    left: innerUrlBox.getBoundingClientRect().left + `px`,
+                    marginLeft: 0,
+                    marginRight: 0,
+                    marginBottom: 0,
+                    marginTop: 0,
+                    margin: 0,
+                    top: (window.innerHeight - 90) + `px`,
+                    maxHeight: innerUrlBox.getBoundingClientRect().height + `px`,
+                    scale: 1,
+                    easing: `easeOutCirc`,
+                    borderRadius: `${Math.floor(bounding.height, bounding.width)/2}px`,
+                    duration: 400,
+                    complete: () => {
+                        console.log(`throwing node`)
+                        throwNode(newCard, innerUrlBox, true, true).then(() => {
+                            console.log(`parseInfo: node hit`)
+                            //input.value = entry.webpage_url || entry.url;
+                            //runSearch(input.value, `Fetching info...`, `getInfo`)
+                        })
+                    }
+                })
+            }
+        }
+
         if(!info || info.error) {
             console.log(`Errored. Doing nothing.`)
 
@@ -310,19 +389,44 @@ const runSearch = async (url, initialMsg, func) => {
                     afterType = ` ` + a.outerHTML
                 }
 
-                const parseCreator = (entry) => {
+                const parseCreator = (entry, prefix=``) => {
                     if(entry.media_metadata.url.artist_url) {
                         const a = document.createElement(`a`);
 
                         a.href = entry.media_metadata.url.artist_url;
-                        a.innerHTML = entry.media_metadata.general.artist;
+                        a.innerHTML = prefix + entry.media_metadata.general.artist;
 
                         a.style.color = `white`;
                         a.style.textDecoration = `none`;
 
-                        return a.outerHTML;
+                        a.style.margin = `0px`
+
+                        new Draggable({
+                            node: a,
+                            targets: [input, urlBox],
+                            value: entry.media_metadata.url.artist_url,
+                            targetScale: 1.1,
+                            animateDrop: false,
+                            animateDropFail: true,
+                            hint: `Drag to URL box to retrieve info!`,
+                            //hideOriginal: false,
+                            dropHook: (success, clone) => {
+                                if(success) {
+                                    console.log(`dropped! (${success})`);
+        
+                                    clone.style.top = `${window.innerHeight - parseInt(clone.style.bottom)}px`;
+                                    clone.style.bottom = `0px`
+        
+                                    throwToURL(clone, null, entry.media_metadata.url.artist_url);
+                                } else {
+                                    console.log(`did not hit target`)
+                                };
+                            }
+                        })
+
+                        return a;
                     } else {
-                        return entry.media_metadata.general.artist;
+                        return prefix + entry.media_metadata.general.artist;
                     }
                 };
 
@@ -334,18 +438,28 @@ const runSearch = async (url, initialMsg, func) => {
                     id = `meta-${id}`
                     items++;
                     console.log(`Meta item: ${icon} / ${content}`);
-                    const metaItem = headingContainer.querySelector(`#${id}`) ? headingContainer.querySelector(`#${id}`) : mediaMetaItem.cloneNode(true);
+                    if(headingContainer.querySelector(`#${id}`)) headingContainer.querySelector(`#${id}`).remove();
+                    const metaItem = mediaMetaItem.cloneNode(true);
                     ids.push(id);
                     metaItem.id = id;
                     metaItem.querySelector(`#icon`).classList.value = `fas ${icon}`;
-                    metaItem.querySelector(`#txt`).innerHTML = content;
+                    if(typeof content == `string`) {
+                        metaItem.querySelector(`#txt`).innerHTML = content;
+                    } else {
+                        metaItem.querySelector(`#txt`).replaceWith(content);
+                    }
                     return headingContainer.appendChild(metaItem);
                 }
 
-                if(info.media_metadata.general.artist) addMetaItem(`fa-user`, `by ${parseCreator(info)}`, `creator`);
+                if(info.media_metadata.general.artist) addMetaItem(`fa-user`, parseCreator(info, `by `), `creator`);
 
                 if(info.entries && func != `search`) {
-                    let str = ``;
+                    let str = mediaMetaItem.querySelector(`#txt`).cloneNode(true);
+
+                    str.innerHTML = ``;
+
+                    //str.style.margin = `0px`
+                    //str.classList.add(`d-flex`)
 
                     let artists = [];
                     let parsableArtists = [];
@@ -359,10 +473,31 @@ const runSearch = async (url, initialMsg, func) => {
 
                     let more = parsableArtists.splice(2).length;
 
-                    if(artists.length > 0) str += (artists.length == 1 ? `exclusively featuring` : `including`) + ` ${parsableArtists.join(`, `)}`;
-                    if(more > 0) str += `, and ${more} more`;
+                    if(artists.length > 0) str.innerHTML += (artists.length == 1 ? `exclusively featuring ` : `including `) + ` `// + ` ${parsableArtists.join(`, `)}`;
+                    parsableArtists.forEach((artist, i) => {
+                        if(i == 0) {
+                            if(typeof artist == `string`) {
+                                str.innerHTML += artist
+                            } else str.appendChild(artist);
+                        } else if(i == parsableArtists.length - 1) {
+                            str.innerHTML += ` and `
+                            if(typeof artist == `string`) {
+                                str.innerHTML += artist
+                            } else str.appendChild(artist);
+                        } else {
+                            str.innerHTML += `, `
+                            if(typeof artist == `string`) {
+                                str.innerHTML += artist
+                            } else str.appendChild(artist);
+                        }
+                        //if(i == 0) str += artist.outerHTML;
+                        //else if(i == parsableArtists.length - 1) str += ` and ${artist.outerHTML}`;
+                        //else str += `, ${artist.outerHTML}`;
+                    });
 
-                    if(str) addMetaItem(`fa-list`, str, `includes`);
+                    if(more > 0) str.innerHTML += `, and ${more} more`;
+
+                    if(str.innerHTML) addMetaItem(`fa-list`, str, `includes`);
                 };
 
                 if(info.duration && info.duration.string && info.duration.units.ms) addMetaItem(`fa-clock`, info.duration.string, `duration`);
@@ -469,80 +604,6 @@ const runSearch = async (url, initialMsg, func) => {
 
                     const card = formatCard.cloneNode(true);
 
-                    const throwToURL = (node) => {
-                        input.disabled = false;
-                        button.disabled = false;
-                        
-                        if(config.disableAnimations) {
-                            input.value = entry.media_metadata.url.source_url;
-                            runSearch(input.value, `Fetching info...`, `getInfo`)
-                        } else {
-                            const nodeBounds = node ? node.getBoundingClientRect() : null;
-
-                            let style = node ? node.style : null;
-
-                            const newCard = node || popout(card);
-
-                            if(!style) style = newCard.style;
-
-                            console.log(`modifying width`, JSON.parse(JSON.stringify(node ? node.style : style)));
-
-                            const bounding = nodeBounds || (newCard).getBoundingClientRect();
-
-                            //if(node && node.style.maxWidth) bounding.width += parseInt(node.style.maxWidth)/2;
-
-                            let useScale = style.scale;
-
-                            console.log(`modifying width -- usescale: ${useScale}; type: ${typeof useScale}`)
-
-                            if(typeof useScale == `number` && useScale != 1) {
-                                console.log(`modifying width -- original: ${bounding.width} (${1/useScale} * ${bounding.width/2})`)
-                                bounding.width += ((1/useScale) * (bounding.width/2))
-                                console.log(`modifying width -- new: ${bounding.width}`)
-                            }
-                            //if(node && node.style.maxHeight) bounding.height = parseInt(node.style.maxHeight);
-
-                            centerURLBox(null, 900);
-                            runSearch(entry.media_metadata.url.source_url, `Fetching info...`, `getInfo`)
-
-                            window.scrollTo(0, 0);
-
-                            anime.remove(newCard)
-                            
-                            anime({
-                                targets: [newCard.querySelector(`#formatCardBG`), newCard.querySelector(`#innerFormatCard`)],
-                                easing: `easeOutCirc`,
-                                borderRadius: `${Math.floor(bounding.height, bounding.width)/2}px`,
-                                duration: 500,
-                            });
-
-                            anime({
-                                targets: newCard,
-                                //left: (1/parseInt(useScale)) * (bounding.width/2),
-                                left: innerUrlBox.getBoundingClientRect().left + `px`,
-                                marginLeft: 0,
-                                marginRight: 0,
-                                marginBottom: 0,
-                                marginTop: 0,
-                                margin: 0,
-                                top: (window.innerHeight - 90) + `px`,
-                                maxHeight: innerUrlBox.getBoundingClientRect().height + `px`,
-                                scale: 1,
-                                easing: `easeOutCirc`,
-                                borderRadius: `${Math.floor(bounding.height, bounding.width)/2}px`,
-                                duration: 400,
-                                complete: () => {
-                                    console.log(`throwing node`)
-                                    throwNode(newCard, innerUrlBox, true, true).then(() => {
-                                        console.log(`parseInfo: node hit`)
-                                        //input.value = entry.webpage_url || entry.url;
-                                        //runSearch(input.value, `Fetching info...`, `getInfo`)
-                                    })
-                                }
-                            })
-                        }
-                    }
-
                     new Draggable({
                         node: card,
                         targets: [input, urlBox],
@@ -559,7 +620,7 @@ const runSearch = async (url, initialMsg, func) => {
                                 clone.style.top = `${window.innerHeight - parseInt(clone.style.bottom)}px`;
                                 clone.style.bottom = `0px`
 
-                                throwToURL(clone, 0.5);
+                                throwToURL(clone, null, entry.media_metadata.url.source_url);
                             } else {
                                 console.log(`did not hit target`)
                             };
@@ -637,7 +698,7 @@ const runSearch = async (url, initialMsg, func) => {
                     
                         //highlightButton(card.querySelector(`#formatDownload`))
 
-                        card.querySelector(`#formatDownload`).onclick = () => throwToURL();
+                        card.querySelector(`#formatDownload`).onclick = () => throwToURL(null, card, entry.media_metadata.url.source_url);
                     } else {
                         let fadeIn = () => null;
                         let fadeOut = () => null;
