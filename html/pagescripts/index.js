@@ -16,6 +16,9 @@ const button = document.getElementById(`urlEnter`);
 const formatListTemplate = listbox.querySelector(`#formatList`).cloneNode(true);
 const formatCard = document.getElementById(`formatCard`).cloneNode(true);
 
+const mediaMetaItem = document.getElementById(`mediaMetaItem`).cloneNode(true);
+document.getElementById(`mediaMetaItem`).parentNode.removeChild(document.getElementById(`mediaMetaItem`));
+
 const listboxTemplate = document.getElementById(`listbox`).cloneNode(true);
 const listboxParent = document.getElementById(`listbox`).parentElement;
 
@@ -212,6 +215,8 @@ const runSearch = async (url, initialMsg, func) => {
         const listbox = listboxTemplate.cloneNode(true);
         
         if(listbox.classList.contains(`d-none`)) listbox.classList.remove(`d-none`);
+
+        const headingContainer = listbox.querySelector(`#headingContainer`);
         
         const formatList = listbox.querySelector(`#formatList`);
 
@@ -229,7 +234,7 @@ const runSearch = async (url, initialMsg, func) => {
         } else {
             listbox.querySelector(`#mediaTitle`).innerHTML = ``;
 
-            let type = `${info.extractor_key || info.extractor || info.webpage_url_domain}`;
+            let type = `${info.extractor_key || info.extractor || info.webpage_url_domain}`.split(/(?=[A-Z])/)[0];
             let icon;
 
             const setIcon = (name, original, extra) => {
@@ -247,6 +252,23 @@ const runSearch = async (url, initialMsg, func) => {
                     console.log(`icon does not exist!`)
                     return false;
                 }
+            };
+
+            const getIcon = (entry) => {
+                switch(typeof entry == `object` ? entry.ezytdl_type : ``) {
+                    case `user`:
+                        return `fa-user-circle`;
+                    case `playlist`:
+                        return `fa-list`;
+                    case `video`:
+                        return `fa-video`;
+                    case `audio`:
+                        return `fa-music`;
+                    case `media`:
+                        return `fa-play-circle`;
+                    default:
+                        return `fa-link`;
+                }
             }
 
             if(!icon && info.webpage_url_domain) setIcon(info.webpage_url_domain.split(`.`).slice(-2, -1)[0].toLowerCase(), `webpage_url_domain`);
@@ -257,29 +279,29 @@ const runSearch = async (url, initialMsg, func) => {
 
             if(icon) listbox.querySelector(`#mediaTitle`).appendChild(icon);
 
-            listbox.querySelector(`#mediaTitle`).innerHTML += `${info.title}`;
+            listbox.querySelector(`#mediaTitle`).innerHTML += `${info.media_metadata.general.title}`;
 
             const updateMetadata = async (parse) => {
                 if(parse) info = await mainQueue.parseInfo(info);
 
                 let afterType = ``;
 
-                if(info.entries && info.entries[0] && (info.entries[0].album || info.entries[0].track)) {
+                if(func == `search`) {
+                    afterType += ` search`
+                } else if(info.entries && info.entries[0] && (info.entries[0].album || info.entries[0].track)) {
                     afterType += ` album`
                 } else if(info.categories && info.categories.map(f => f.toString().toLowerCase()).find(f => f == `music`) || info.track || info.album) {
                     afterType += ` song`
-                } else if(info._type) {
-                    afterType += ` ${info._type}`
-                } else if(info.formats) {
-                    afterType += ` entry`
-                } else if(info.entries) {
-                    afterType += ` playlist`
+                } else if(`${info.ezytdl_key_type}`.toLowerCase() != `${type}`.toLowerCase()) {
+                    afterType += ` ${info.ezytdl_key_type}`
+                } else if(info.ezytdl_type) {
+                    afterType += ` ${info.ezytdl_type}`
                 } else afterType += ` listing`;
 
-                if(info.webpage_url || info.url) {
+                if(info.media_metadata.url.source_url) {
                     const a = document.createElement(`a`);
 
-                    a.href = info.webpage_url || info.url;
+                    a.href = info.media_metadata.url.source_url;
                     a.innerHTML = afterType.trim();
 
                     a.style.color = `white`;
@@ -289,47 +311,89 @@ const runSearch = async (url, initialMsg, func) => {
                 }
 
                 const parseCreator = (entry) => {
-                    if(entry.created_url) {
+                    if(entry.media_metadata.url.artist_url) {
                         const a = document.createElement(`a`);
 
-                        a.href = entry.created_url;
-                        a.innerHTML = entry.created_by;
+                        a.href = entry.media_metadata.url.artist_url;
+                        a.innerHTML = entry.media_metadata.general.artist;
 
                         a.style.color = `white`;
                         a.style.textDecoration = `none`;
 
                         return a.outerHTML;
                     } else {
-                        return entry.created_by;
+                        return entry.media_metadata.general.artist;
                     }
+                };
+
+                let items = 0;
+
+                let ids = [];
+
+                const addMetaItem = (icon, content, id) => {
+                    id = `meta-${id}`
+                    items++;
+                    console.log(`Meta item: ${icon} / ${content}`);
+                    const metaItem = headingContainer.querySelector(`#${id}`) ? headingContainer.querySelector(`#${id}`) : mediaMetaItem.cloneNode(true);
+                    ids.push(id);
+                    metaItem.id = id;
+                    metaItem.querySelector(`#icon`).classList.value = `fas ${icon}`;
+                    metaItem.querySelector(`#txt`).innerHTML = content;
+                    return headingContainer.appendChild(metaItem);
                 }
 
-                if(info.created_by) afterType += ` by ${parseCreator(info)}`;
-                if(info.entries) {
+                if(info.media_metadata.general.artist) addMetaItem(`fa-user`, `by ${parseCreator(info)}`, `creator`);
+
+                if(info.entries && func != `search`) {
+                    let str = ``;
+
                     let artists = [];
                     let parsableArtists = [];
 
                     for (const entry of info.entries) {
-                        if(entry.created_by && entry.created_by != info.created_by && !artists.includes(entry.created_by)) {
-                            artists.push(entry.created_by);
+                        if(entry.media_metadata.general.artist && entry.media_metadata.general.artist != info.media_metadata.general.artist && !artists.includes(entry.media_metadata.general.artist)) {
+                            artists.push(entry.media_metadata.general.artist);
                             parsableArtists.push(parseCreator(entry));
                         }
                     };
 
                     let more = parsableArtists.splice(2).length;
 
-                    if(artists.length > 0) afterType += ` including ${parsableArtists.join(`, `)}`;
-                    if(more > 0) afterType += `, and ${more} more`;
+                    if(artists.length > 0) str += (artists.length == 1 ? `exclusively featuring` : `including`) + ` ${parsableArtists.join(`, `)}`;
+                    if(more > 0) str += `, and ${more} more`;
+
+                    if(str) addMetaItem(`fa-list`, str, `includes`);
+                };
+
+                if(info.duration && info.duration.string && info.duration.units.ms) addMetaItem(`fa-clock`, info.duration.string, `duration`);
+
+                if(info.entries && info.ezytdl_type == `user`) {
+                    addMetaItem(`fa-user-circle`, info.entries.length + ` upload${info.entries.length == 1 ? `` : `s`}`, `entries`)
+                } else if(info.entries) {
+                    addMetaItem(`fa-play-circle`, info.entries.length + ` entr${info.entries.length == 1 ? `y` : `ies`}`, `entries`)
+                } else if(info.formats) {
+                    addMetaItem(`fa-play-circle`, info.formats.length + ` format${info.formats.length == 1 ? `` : `s`}`, `formats`)
                 }
-                
-                let results;
 
-                if(info.entries) results = info.entries.length + ` entr${info.entries.length == 1 ? `y` : `ies`}`
-                else if(info.formats) results = info.formats.length + ` format${info.formats.length == 1 ? `` : `s`}`
+                listbox.querySelector(`#mediaSubtext`).innerHTML = ((type || iconExtra) + afterType).trim();
 
-                listbox.querySelector(`#mediaSubtext`).innerHTML = ((type || iconExtra) + afterType + (results ? (type || iconExtra || afterType ? ` | ` : ``) + `${results}` : ``)).trim();
-    
-                if(info.duration && info.duration.string && info.duration.units.ms) listbox.querySelector(`#mediaSubtext`).innerHTML += ` | ${info.duration.string}`;
+                headingContainer.querySelectorAll(`.mediaMetaItem`).forEach(item => {
+                    if(!ids.includes(item.id)) {
+                        const currentHeight = item.getBoundingClientRect().height;
+                        item.id += `-removed`;
+                        anime({
+                            targets: item,
+                            maxHeight: [currentHeight + `px`, `0px`],
+                            height: [currentHeight + `px`, `0px`],
+                            opacity: 0,
+                            duration: 500,
+                            easing: `easeOutCirc`,
+                            complete: () => {
+                                if(item.parentElement) item.parentElement.removeChild(item);
+                            }
+                        });
+                    }
+                });
             };
 
             updateMetadata();
@@ -345,7 +409,7 @@ const runSearch = async (url, initialMsg, func) => {
                 const img = new Image();
 
                 img.addEventListener(`load`, () => {
-                    if(currentInfo.webpage_url == info.webpage_url) {
+                    if(currentInfo.media_metadata.url.source_url == info.media_metadata.url.source_url) {
                         document.getElementById(`background`).style.backgroundImage = `url(${thumbnail.url})`;
 
                         anime.remove(background)
@@ -405,6 +469,103 @@ const runSearch = async (url, initialMsg, func) => {
 
                     const card = formatCard.cloneNode(true);
 
+                    const throwToURL = (node) => {
+                        input.disabled = false;
+                        button.disabled = false;
+                        
+                        if(config.disableAnimations) {
+                            input.value = entry.media_metadata.url.source_url;
+                            runSearch(input.value, `Fetching info...`, `getInfo`)
+                        } else {
+                            const nodeBounds = node ? node.getBoundingClientRect() : null;
+
+                            let style = node ? node.style : null;
+
+                            const newCard = node || popout(card);
+
+                            if(!style) style = newCard.style;
+
+                            console.log(`modifying width`, JSON.parse(JSON.stringify(node ? node.style : style)));
+
+                            const bounding = nodeBounds || (newCard).getBoundingClientRect();
+
+                            //if(node && node.style.maxWidth) bounding.width += parseInt(node.style.maxWidth)/2;
+
+                            let useScale = style.scale;
+
+                            console.log(`modifying width -- usescale: ${useScale}; type: ${typeof useScale}`)
+
+                            if(typeof useScale == `number` && useScale != 1) {
+                                console.log(`modifying width -- original: ${bounding.width} (${1/useScale} * ${bounding.width/2})`)
+                                bounding.width += ((1/useScale) * (bounding.width/2))
+                                console.log(`modifying width -- new: ${bounding.width}`)
+                            }
+                            //if(node && node.style.maxHeight) bounding.height = parseInt(node.style.maxHeight);
+
+                            centerURLBox(null, 900);
+                            runSearch(entry.media_metadata.url.source_url, `Fetching info...`, `getInfo`)
+
+                            window.scrollTo(0, 0);
+
+                            anime.remove(newCard)
+                            
+                            anime({
+                                targets: [newCard.querySelector(`#formatCardBG`), newCard.querySelector(`#innerFormatCard`)],
+                                easing: `easeOutCirc`,
+                                borderRadius: `${Math.floor(bounding.height, bounding.width)/2}px`,
+                                duration: 500,
+                            });
+
+                            anime({
+                                targets: newCard,
+                                //left: (1/parseInt(useScale)) * (bounding.width/2),
+                                left: innerUrlBox.getBoundingClientRect().left + `px`,
+                                marginLeft: 0,
+                                marginRight: 0,
+                                marginBottom: 0,
+                                marginTop: 0,
+                                margin: 0,
+                                top: (window.innerHeight - 90) + `px`,
+                                maxHeight: innerUrlBox.getBoundingClientRect().height + `px`,
+                                scale: 1,
+                                easing: `easeOutCirc`,
+                                borderRadius: `${Math.floor(bounding.height, bounding.width)/2}px`,
+                                duration: 400,
+                                complete: () => {
+                                    console.log(`throwing node`)
+                                    throwNode(newCard, innerUrlBox, true, true).then(() => {
+                                        console.log(`parseInfo: node hit`)
+                                        //input.value = entry.webpage_url || entry.url;
+                                        //runSearch(input.value, `Fetching info...`, `getInfo`)
+                                    })
+                                }
+                            })
+                        }
+                    }
+
+                    new Draggable({
+                        node: card,
+                        targets: [input, urlBox],
+                        value: entry.media_metadata.url.source_url,
+                        targetScale: 0.5,
+                        animateDrop: false,
+                        animateDropFail: true,
+                        hint: `Drag to URL box to retrieve info!`,
+                        //hideOriginal: false,
+                        dropHook: (success, clone) => {
+                            if(success) {
+                                console.log(`dropped! (${success})`);
+
+                                clone.style.top = `${window.innerHeight - parseInt(clone.style.bottom)}px`;
+                                clone.style.bottom = `0px`
+
+                                throwToURL(clone, 0.5);
+                            } else {
+                                console.log(`did not hit target`)
+                            };
+                        }
+                    })
+
                     card.querySelector(`#formatMetaList`).classList.add(`d-none`);
 
                     card.querySelector(`#buttonsDiv`).style.minHeight = `36px`;
@@ -416,15 +577,18 @@ const runSearch = async (url, initialMsg, func) => {
                     card.querySelector(`#audioIcon`).classList.add(`d-none`);
                     card.querySelector(`#videoIcon`).classList.add(`d-none`);
 
-                    if(entry.webpage_url || entry.url) {
+                    if(entry.media_metadata.url.source_url) {
+                        card.querySelector(`#linkIcon`).classList.remove(`fa-link`);
+                        card.querySelector(`#linkIcon`).classList.add(getIcon(entry));
                         card.querySelector(`#linkIcon`).classList.remove(`d-none`);
+
                         card.querySelector(`#nameDiv`).style.cursor = `pointer`;
                         card.querySelector(`#nameDiv`).addEventListener(`click`, () => {
-                            location.href = entry.webpage_url || entry.url
+                            location.href = entry.media_metadata.url.source_url
                         })
                     } else card.querySelector(`#fileIcon`).classList.remove(`d-none`);
 
-                    card.querySelector(`#formatName`).innerHTML = entry.title;
+                    card.querySelector(`#formatName`).innerHTML = entry.media_metadata.general.title;
 
                     if(entry.creator || entry.uploader || entry.channel) {
                         card.querySelector(`#formatSubtext`).innerHTML = `${entry.creator || entry.uploader || entry.channel}`;
@@ -437,7 +601,7 @@ const runSearch = async (url, initialMsg, func) => {
                         card.querySelector(`#formatSubtext`).classList.remove(`d-none`);
                     }
 
-                    if(entry.duration) {
+                    if(entry.duration && entry.duration.timestamp != `--:--`) {
                         card.querySelector(`#fileFormat`).innerHTML = `${entry.duration.timestamp}`;
                     } else {
                         card.querySelector(`#fileFormat`).classList.add(`d-none`)
@@ -446,12 +610,12 @@ const runSearch = async (url, initialMsg, func) => {
                     //card.querySelector(`#saveOptions`).innerHTML = ``;
 
                     const removeEntry = () => {
-                        const thisIndex = info.entries.findIndex(o => (o.id || o.webpage_url || o.url) == (entry.id || entry.webpage_url || entry.url));
+                        const thisIndex = info.entries.findIndex(o => o.media_metadata.url.source_url == entry.media_metadata.url.source_url);
                         if(thisIndex != -1) {
                             console.log(`Removing index ${thisIndex}`)
                             info.entries.splice(thisIndex, 1);
                             updateMetadata(true);
-                        } else console.log(`Failed to find index for ${entry.id || entry.webpage_url || entry.url}`)
+                        } else console.log(`Failed to find index for ${entry.media_metadata.url.source_url}`)
                     }
 
                     //console.log(`innerFormatCard`, card.querySelector(`#innerFormatCard`))
@@ -473,47 +637,7 @@ const runSearch = async (url, initialMsg, func) => {
                     
                         //highlightButton(card.querySelector(`#formatDownload`))
 
-                        card.querySelector(`#formatDownload`).onclick = () => {
-                            input.disabled = false;
-                            button.disabled = false;
-                            
-                            if(config.disableAnimations) {
-                                input.value = entry.webpage_url || entry.url;
-                                runSearch(input.value, `Fetching info...`, `getInfo`)
-                            } else {
-                                const newCard = popout(card);
-    
-                                const bounding = card.getBoundingClientRect();
-
-                                centerURLBox(null, 900);
-                                runSearch(entry.url, `Fetching info...`, `getInfo`)
-    
-                                window.scrollTo(0, 0);
-                                
-                                anime({
-                                    targets: [newCard.querySelector(`#formatCardBG`), newCard.querySelector(`#innerFormatCard`)],
-                                    easing: `easeOutCirc`,
-                                    borderRadius: `${Math.floor(bounding.height, bounding.width)/2}px`,
-                                    duration: 500,
-                                })
-    
-                                anime({
-                                    targets: newCard,
-                                    top: (window.innerHeight - 90) + `px`,
-                                    easing: `easeOutCirc`,
-                                    borderRadius: `${Math.floor(bounding.height, bounding.width)/2}px`,
-                                    duration: 400,
-                                    complete: () => {
-                                        console.log(`throwing node`)
-                                        throwNode(newCard, innerUrlBox, true, true).then(() => {
-                                            console.log(`parseInfo: node hit`)
-                                            //input.value = entry.webpage_url || entry.url;
-                                            //runSearch(input.value, `Fetching info...`, `getInfo`)
-                                        })
-                                    }
-                                })
-                            }
-                        }
+                        card.querySelector(`#formatDownload`).onclick = () => throwToURL();
                     } else {
                         let fadeIn = () => null;
                         let fadeOut = () => null;
@@ -586,7 +710,7 @@ const runSearch = async (url, initialMsg, func) => {
                             visible = true;
 
                             if(card && card.parentElement) {
-                                console.log(`card ${entry.id || entry.webpage_url || entry.url} visibility event`)
+                                console.log(`card ${entry.media_metadata.url.source_url} visibility event`)
     
                                 if(entry.thumbnails && entry.thumbnails.length > 0) {
                                     const thumbnail = entry.thumbnails[entry.thumbnails.length - 1];
@@ -635,38 +759,6 @@ const runSearch = async (url, initialMsg, func) => {
             if(info.formats) {
                 qualityButtons({ node: listbox, info });
 
-                info.formats = info.formats.map(format => {
-                    if(format.audio_ext != `none` || format.acodec != `none` || format.asr || format.audio_channels) {
-                        format.audio = true;
-                    } else {
-                        format.audio = false;
-                    }
-
-                    if(format.aspect_ratio || format.fps || format.height || format.width || format.resolution != `audio only` || format.vcodec != `none` || format.video_ext != `none`) {
-                        format.video = true;
-                    } else {
-                        format.video = false;
-                    };
-
-                    return format;
-                }).sort((a, b) => {
-                    if(a.audio && a.video) {
-                        return -1;
-                    } else if(b.audio && b.video) {
-                        return 1;
-                    } else if(a.audio && !a.video) {
-                        return -1;
-                    } else if(b.audio && !b.video) {
-                        return 1;
-                    } else if(a.video && !a.audio) {
-                        return -1;
-                    } else if(b.video && !b.audio) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                });
-
                 if(info.formats.filter(f => f.audio).length == 0 && listbox.querySelector(`#downloadBestAudio`)) listbox.querySelector(`#downloadBestAudio`).classList.add(`d-none`);
                 if(info.formats.filter(f => f.video).length == 0 && listbox.querySelector(`#downloadBestVideo`)) listbox.querySelector(`#downloadBestVideo`).classList.add(`d-none`);
                 
@@ -679,6 +771,13 @@ const runSearch = async (url, initialMsg, func) => {
                     const formatDownloadType = format.audio && format.video ? `both` : format.audio && !format.video ? `audio` : `video`;
 
                     const card = formatCard.cloneNode(true);
+
+                    new Draggable({
+                        node: card,
+                        animateDrop: false,
+                        animateDropFail: false,
+                        allowPopout: false,
+                    })
 
                     const saveOptions = listboxTemplate.querySelector(`#saveOptions`).cloneNode(true)
 

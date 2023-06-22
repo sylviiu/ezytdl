@@ -211,7 +211,7 @@ module.exports = {
             }
         });
 
-        if(info.url) manager.createDownload([{query: info.url, extraArguments, ignoreStderr: true}, false], (i) => {
+        if(info.url && !info.fullInfo) manager.createDownload([{query: info.url, extraArguments, ignoreStderr: true}, false], (i) => {
             if(i) {
                 console.log(`new info!`)
                 delete i.entries;
@@ -219,14 +219,14 @@ module.exports = {
             } else badEntries++;
         }, `listFormats`);
 
-        if(info.entries) for(const i in info.entries) {
+        if(info.entries) for(const i in info.entries.filter(e => !e.fullInfo)) {
             const e = info.entries[i];
 
             manager.createDownload([{query: e.url, extraArguments, ignoreStderr: true}, false], (e) => {
                 // to keep the same order of songs
                 if(e) {
                     console.log(`new info!`);
-                    Object.assign(info.entries[i], e);
+                    Object.assign(info.entries[i], module.exports.parseInfo(e, true));
                     console.log(`added "${e.title}" (id: ${e.id} / url: ${e.url}) to index ${i}`)
                 } else badEntries++;
             }, `listFormats`);
@@ -235,9 +235,13 @@ module.exports = {
         manager.queueEventEmitter.emit(`queueUpdate`, manager.queue);
     }),
     verifyPlaylist: (d, { extraArguments, disableFlatPlaylist, forceRun }) => new Promise(async res => {
+        if(typeof d == `object`) d = module.exports.parseInfo(d);
         if(d && forceRun) {
             console.log(`force run!`);
             module.exports.unflatPlaylist(extraArguments, d).then(res)
+        } else if(d && d.fullInfo == true) {
+            console.log(`full info found! resolving...`);
+            res(d);
         } else if(d && d.formats) {
             console.log(`formats found! resolving...`);
             res(module.exports.parseInfo(d, true))
@@ -247,7 +251,7 @@ module.exports = {
             let anyNoTitle = false;
 
             for (entry of d.entries) {
-                if(!entry.title || entry.title == entry.url) {
+                if(!entry.title || entry.title == entry.url || !entry) {
                     anyNoTitle = true;
                     break;
                 }
@@ -274,64 +278,125 @@ module.exports = {
             return res(null);
         }
     }),
+    parseMetadata: (d, playlistRoot=false) => {
+        const genericURLRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/i;
+
+        const general = {
+            title: d.title || d.webpage_url || d.url,
+            artist: d.artist || d.album_artist || d.creator || d.uploader || d.channel,
+            genre: d.genre,
+            copyright: d.license,
+            comment: d.description || (d['playlist-media_metadata'] && d['playlist-media_metadata'].general.comment ? d['playlist-media_metadata'].general.comment : null),
+        };
+
+        const url = {
+            source_url: d.webpage_url || d.url,
+            artist_url: d.artist_url || d.creator_url || d.channel_url || d.uploader_url,
+            thumbnail_url: d.thumbnails ? typeof d.thumbnails[d.thumbnails.length - 1] == `object` ? d.thumbnails[d.thumbnails.length - 1].url : `${d.thumbnails[d.thumbnails.length - 1]}` : null,
+        };
+
+        Object.entries(url).filter(o => typeof o[1] == `string` && !o[1].match(genericURLRegex)).forEach(o => { url[o[0]] = null; })
+
+        return Object.assign(d, {
+            media_metadata: {
+                general,
+                album: {
+                    album: d.album || d.playlist_title || d['playlist-playlist_title'] || d.playlist_name || d.playlist || (d['playlist-media_metadata'] && d['playlist-media_metadata'].album.album ? d['playlist-media_metadata'].album.album : null),
+                    album_artist: playlistRoot ? general.artist : (d['playlist-media_metadata'] && d['playlist-media_metadata'].general.artist ? d['playlist-media_metadata'].general.artist : null),
+                    track: playlistRoot ? null : (d.entry_number && (d['playlist-playlist_count'] || d.entry_total) ? `${d.entry_number}/${d['playlist-playlist_count'] || d.entry_total}` : null),
+                },
+                url,
+            }
+        })
+    },
     parseInfo: (d, full, root=true, rawInfo=d, entry_number, entry_total) => {
         if(!d.title) d.title = d.webpage_url;
         if(!d.title) d.title = d.url;
 
-        if(full) d.fullInfo = true;
-
-        if(d.artist) {
-            if(!d.created_by) d.created_by = d.artist;
-            if(!d.created_url) d.created_url = d.artist_url;
-        };
-        
-        if(d.creator) {
-            if(!d.created_by) d.created_by = d.creator;
-            if(!d.created_url) d.created_url = d.creator_url;
-        };
-        
-        if(d.channel) {
-            if(!d.created_by) d.created_by = d.channel;
-            if(!d.created_url) d.created_url = d.channel_url;
-        };
-        
-        if(d.uploader) {
-            if(!d.created_by) d.created_by = d.uploader;
-            if(!d.created_url) d.created_url = d.uploader_url;
-        }
-
-        if(rawInfo && !root) {
-            const info = Object.assign({}, rawInfo, {entries: null, formats: null, requested_entries: null, requested_formats: null})
-
-            for(const key of Object.keys(info)) d[`playlist-${key}`] = info[key]
-        }
-
-        let totalTime = 0;
+        if(full && root && !d.fullInfo) d.fullInfo = true;
 
         if(!d.originalDuration && d.duration) d.originalDuration = d.duration;
 
-        if(d.entries) d.entries = d.entries.map((o, i) => module.exports.parseInfo(o, full, false, rawInfo, i+1, d.entries.length));
-        if(d.formats) d.formats = d.formats.map((o, i) => module.exports.parseInfo(o, full, false, rawInfo, i+1, d.formats.length));
+        let totalTime = 0;
 
         if(entry_number && !root) d.entry_number = entry_number;
         if(entry_total && !root) d.entry_total = entry_total;
 
         if(d.duration && !root) totalTime += typeof d.duration == `object` ? d.duration.units.ms : d.duration*1000;
 
-        if(d.timestamp) {
-            d.released = time((Date.now()/60) - d.timestamp);
-        }
-
-        if(d.entries) totalTime += d.entries.filter(o => o.duration).reduce((a, b) => a + typeof b.duration == `number` ? b.duration*1000 : b.duration.units.ms, 0);
-        if(d.formats) totalTime += d.formats.filter(o => o.duration).reduce((a, b) => a + typeof b.duration == `number` ? b.duration*1000 : b.duration.units.ms, 0);
-
-        d.duration = time(totalTime || typeof d.originalDuration == `number` ? d.originalDuration * 1000 : null)
-
         if(!d.thumbnail && d.thumbnails && d.thumbnails.length > 0) {
             d.thumbnail = typeof d.thumbnails[d.thumbnails.length - 1] == `object` ? d.thumbnails[d.thumbnails.length - 1].url : `${d.thumbnails[d.thumbnails.length - 1]}`
         }
 
-        return d
+        module.exports.parseMetadata(d, root);
+
+        //d.created_by = d.media_metadata.general.artist;
+        //d.created_url = d.media_metadata.url.artist_url;
+
+        const parseList = (o, i, key) => {
+            totalTime += (o.originalDuration ? o.originalDuration * 1000 : 0) || (typeof o.duration == `number` ? o.duration*1000 : typeof o.duration == `object` && o.duration?.units?.ms ? o.duration.units.ms : 0) || 0;
+            return module.exports.parseInfo(o, full, false, rawInfo, i ? i+1 : null, i ? d[key].length : null);
+        }
+
+        if(d.entries) d.entries = d.entries.map((o, i) => parseList(o, i, `entries`));
+
+        if(d.formats) {
+            d.formats = d.formats.map(o => {
+                if(o.audio_ext != `none` || o.acodec != `none` || o.asr || o.audio_channels) {
+                    o.audio = true;
+                } else {
+                    o.audio = false;
+                }
+
+                if(o.aspect_ratio || o.fps || o.height || o.width || o.resolution != `audio only` || o.vcodec != `none` || o.video_ext != `none`) {
+                    o.video = true;
+                } else {
+                    o.video = false;
+                };
+
+                return parseList(o);
+            }).sort((a, b) => {
+                if(a.audio && a.video) {
+                    return -1;
+                } else if(b.audio && b.video) {
+                    return 1;
+                } else if(a.audio && !a.video) {
+                    return -1;
+                } else if(b.audio && !b.video) {
+                    return 1;
+                } else if(a.video && !a.audio) {
+                    return -1;
+                } else if(b.video && !b.audio) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            });
+        }
+
+        d.duration = time(totalTime || 0);
+
+        const key = d.ie_key || d.extractor_key || (d.extractor ? d.extractor.split(`:`).slice(-1)[0][0].toUpperCase() + d.extractor.split(`:`).slice(-1)[0].slice(1) : null) || ``;
+
+        d.ezytdl_key = key;
+
+        if(key.endsWith(`User`) && typeof d.originalDuration != `number`) {
+            d.ezytdl_type = `user`;
+        } else if(d.entries || d._type == `playlist`) {
+            d.ezytdl_type = `playlist`;
+        } else if(typeof d.originalDuration == `number`) {
+            if(d.formats && typeof d.formats == `object` && d.formats.filter(f => f.video).length > 0) {
+                d.ezytdl_type = `video`;
+            } else if(d.formats && typeof d.formats == `object` && d.formats.filter(f => f.audio).length > 0) {
+                d.ezytdl_type = `audio`;
+            } else d.ezytdl_type = `media`;
+        } else {
+            d.ezytdl_type = `link`;
+        };
+
+        d.ezytdl_key_type = key.split(/(?=[A-Z])/).slice(-1)[0];
+
+        return module.exports.parseMetadata(d, root);
     },
     search: ({query, count, from, extraArguments}) => new Promise(async res => {
         if(!count) count = 10;
@@ -342,12 +407,16 @@ module.exports = {
 
         let args = [`--dump-single-json`, `--quiet`, `--verbose`, `--flat-playlist`, `--playlist-end`, `${count}`, ...additional];
 
+        const encoded = encodeURIComponent(query);
+
         if(from == `youtubemusic`) {
-            args.unshift(`https://music.youtube.com/search?q=${encodeURIComponent(query)}`)
+            args.unshift(`https://music.youtube.com/search?q=${encoded}`)
         } else if(from == `soundcloud`) {
             args.unshift(`scsearch${count}:${query}`)
+            //args.unshift(`https://soundcloud.com/search?q=${encoded}`)
         } else {
-            args.unshift(`ytsearch${count}:${query}`)
+            //args.unshift(`ytsearch${count}:${query}`)
+            args.unshift(`https://www.youtube.com/results?search_query=${encoded}`)
         }
 
         console.log(`search args: "${args.map(s => s.includes(` `) ? `'${s}'` : s).join(` `)}"`)
@@ -372,11 +441,12 @@ module.exports = {
 
             try {
                 const d = JSON.parse(data);
+
+                d._request_url = query;
+
                 module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, extraArguments }).then(res);
-                //if(d.entries.filter(o => !o.title).length != d.entries.length) d.entries = d.entries.filter(o => o.title);
-                //res(module.exports.parseInfo(d))
-                //console.log(d)
             } catch(e) {
+                console.error(`${e}`)
                 sendNotification({
                     type: `error`,
                     headingText: `Error getting media info`,
@@ -387,13 +457,11 @@ module.exports = {
         })
     }),
     listFormats: ({query, extraArguments, ignoreStderr}) => new Promise(async res => {
-        let url = query;
-
         const additional = module.exports.additionalArguments(extraArguments);
 
-        console.log(`url "${url}"; additional args: "${additional.join(`", "`)}"`)
+        console.log(`url "${query}"; additional args: "${additional.join(`", "`)}"`)
 
-        let args = [url, `--dump-single-json`, `--flat-playlist`, `--quiet`, `--progress`, `--verbose`, ...additional];
+        let args = [query, `--dump-single-json`, `--flat-playlist`, `--quiet`, `--progress`, `--verbose`, ...additional];
 
         if(ignoreStderr) args.splice(args.indexOf(`--verbose`), 1);
 
@@ -403,7 +471,7 @@ module.exports = {
 
         let data = ``;
 
-        if(!ignoreStderr) sendUpdates(proc, `Starting info query of "${url}"`);
+        if(!ignoreStderr) sendUpdates(proc, `Starting info query of "${query}"`);
 
         proc.stdout.on(`data`, d => {
             //console.log(`output`, d.toString())
@@ -420,7 +488,7 @@ module.exports = {
             try {
                 const d = JSON.parse(data);
 
-                d._request_url = url;
+                d._request_url = query;
 
                 if(ignoreStderr) {
                     return res(d);

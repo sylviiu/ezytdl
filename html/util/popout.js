@@ -1,4 +1,4 @@
-const popout = (originalCard) => {
+const popout = (originalCard, deleteOriginal) => {
     const currentPosition = originalCard.getBoundingClientRect();
 
     console.log(`popout current pos`, currentPosition)
@@ -25,7 +25,11 @@ const popout = (originalCard) => {
     //card.parentNode.removeChild(card);
     document.body.appendChild(card);
 
-    originalCard.style.opacity = 0;
+    if(deleteOriginal) {
+        originalCard.parentNode.removeChild(originalCard);
+    } else {
+        originalCard.style.opacity = 0;
+    }
 
     return card;
 }

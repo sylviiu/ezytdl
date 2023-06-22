@@ -11,215 +11,66 @@ document.getElementById(`settingsBox`).parentNode.removeChild(document.getElemen
 const addFilenameFunctionality = () => {
     const fileNameInput = document.getElementById(`outputFilename`).querySelector(`#string`);
 
-    let cloned = null;
-
-    const clearCloned = (success) => {
-        if(cloned) {
-            const thisButton = cloned;
-            cloned = null;
-
-            anime.remove(thisButton)
-
-            if(success) {
-                anime({
-                    targets: thisButton,
-                    scale: 0,
-                    marginBottom: 0,
-                    duration: 100,
-                    easing: `easeOutQuad`,
-                    complete: () => {
-                        thisButton.parentNode.removeChild(thisButton);
-                    }
-                });
-            } else {
-                const duration = parseInt(window.innerHeight);
-                const maxRotation = (duration/540)*500
-                const rot = (Math.random() * maxRotation)-(maxRotation/2);
-
-                anime({
-                    targets: thisButton,
-                    marginBottom: 0,
-                    bottom: parseInt(thisButton.style.bottom) - parseInt(window.innerHeight),
-                    rotate: rot,
-                    opacity: [1, 1, 0],
-                    duration,
-                    easing: `easeInQuad`,
-                    complete: () => {
-                        thisButton.parentNode.removeChild(thisButton);
-                    }
-                });
-            }
-        };
-    }
-
-    let lastPos = []
-
-    document.body.onpointermove = (e) => {
-        lastPos = [e.x, e.y]
-    }
-
     document.getElementById(`fileNameOptions`).querySelectorAll(`.btn`).forEach((button) => {
         const str = `%(${button.id.replace(/-/g, `,`)})s`;
 
-        if(button.getAttribute(`dragEnabled`) != `true`) {
-            button.setAttribute(`dragEnabled`, `true`)
+        const dropHook = (first) => {
+            if(fileNameInput.value.includes(str) && button.style.opacity != `0.35`) {
+                //button.style.opacity = `0.35`;
+                button.setAttribute(`draggable`, `false`)
 
-            let buttonBounds = null;
-            let initialOffset = null;
-    
-            button.style.webkitUserDrag = `all`;
-    
-            button.ondrag = (e) => {
-                //console.log(e)
-                if(e.pageX && e.pageY) {
-                    if(cloned) {
-                        cloned.style.left = e.pageX - cloned.getBoundingClientRect().width/2 + `px`;
-                        cloned.style.bottom = (window.innerHeight - e.pageY) - cloned.getBoundingClientRect().height/2 + `px`;
-                    };
-                    if(button.getAttribute(`cloned`) != `true`) {
-                        if(button.style.position != `relative`) button.style.position = `relative`;
-                        if(!initialOffset) initialOffset = { x: e.x, y: e.y };
-                        let left = ((e.x - initialOffset.x)/12)
-                        let bottom = ((initialOffset.y - e.y)/12)
-    
-                        if(left > 24) left = 24
-                        else if(left < -24) left = -24
-    
-                        if(bottom > 12) bottom = 12
-                        else if(bottom < -12) bottom = -12
-    
-                        button.style.left = left + `px`
-                        button.style.bottom = bottom + `px`
-                        //console.log(button.style.left, button.style.bottom)
-                    }
-                }
-            }
-    
-            const refreshButton = (first) => {
-                if(fileNameInput.value.includes(str) && button.style.opacity != `0.35`) {
-                    //button.style.opacity = `0.35`;
-                    button.setAttribute(`draggable`, `false`)
-    
-                    //anime.remove(button);
-                    anime({
-                        targets: button,
-                        scale: button.style.opacity == 0 ? [0, 0.85] : 0.85,
-                        opacity: 0.35,
-                        left: 0,
-                        bottom: 0,
-                        duration: first ? 0 : 500,
-                        easing: `easeOutExpo`
-                    });
-                } else if(!fileNameInput.value.includes(str) && button.style.opacity != `1`) {
-                    //button.style.opacity = `1`;
-                    button.setAttribute(`draggable`, `true`)
-    
-                    //anime.remove(button);
-                    anime({
-                        targets: button,
-                        scale: button.style.opacity == 0 ? [0, 1] : 1,
-                        opacity: 1,
-                        left: 0,
-                        bottom: 0,
-                        duration: first ? 0 : 500,
-                        easing: `easeOutExpo`
-                    });
-                }
-            }
-    
-            refreshButton(true);
-    
-            fileNameInput.addEventListener(`input`, () => {
-                refreshButton();
-            });
-    
-            const onclick = () => {
-                if(fileNameInput.value.includes(str)) {
-                    fileNameInput.value = fileNameInput.value.replace(str, ``);
-                } else {
-                    fileNameInput.value += str;
-                };
-    
-                refreshButton();
-                fileNameInput.focus();
-            }; button.onclick = onclick;
-    
-            const ondragover = (e) => {
-                //console.log(`dragover`, e)
-                e.preventDefault();
-            }; button.ondragover = ondragover;
-    
-            const dragstart = (e) => {
-                console.log(`dragstart`, e)
-    
-                e.dataTransfer.setDragImage(new Image(), 0, 0);
-    
-                anime.remove(button);
-    
-                buttonBounds = button.getBoundingClientRect();
-                const style = window.getComputedStyle(button);
-                initialOffset = null;
-    
-                e.dataTransfer.setData(`text`, str);
-    
-                clearCloned();
-    
-                cloned = button.cloneNode(true);
-                
-                cloned.setAttribute(`cloned`, `true`)
-    
-                cloned.style.pointerEvents = `none`;
-                cloned.style.userSelect = `none`;
-                cloned.style.margin = `0px`;
-                cloned.style.position = `absolute`;
-                cloned.style.left = (e.pageX - buttonBounds.width/2 - parseInt(style.marginLeft)) + `px`;
-                cloned.style.bottom = (window.innerHeight - (e.pageY + buttonBounds.height/2 - parseInt(style.marginBottom))) + `px`;
-    
-                console.log(`starting pos`, lastPos, cloned.style.left, cloned.style.bottom)
-    
-                document.body.appendChild(cloned);
-    
-                const bottomOffset = ((buttonBounds.y - e.y + (buttonBounds.height/2)) * -1);
-                const leftOffset = ((buttonBounds.x - e.x + (buttonBounds.width/2)));
-    
-                console.log(`bottom offset: ${bottomOffset}; leftOffset: ${leftOffset}`)
-    
+                //anime.remove(button);
                 anime({
-                    targets: cloned,
-                    marginBottom: [bottomOffset, `50px`],
-                    marginLeft: [leftOffset, `0px`],
+                    targets: button,
+                    scale: button.style.opacity == 0 ? [0, 0.85] : 0.85,
+                    opacity: 0.35,
+                    left: 0,
+                    bottom: 0,
+                    duration: first ? 0 : 500,
+                    easing: `easeOutExpo`
+                });
+            } else if(!fileNameInput.value.includes(str) && button.style.opacity != `1`) {
+                //button.style.opacity = `1`;
+                button.setAttribute(`draggable`, `true`)
+
+                //anime.remove(button);
+                anime({
+                    targets: button,
+                    scale: button.style.opacity == 0 ? [0, 1] : 1,
                     opacity: 1,
-                    scale: 1.15,
-                    duration: 800,
-                    easing: `easeOutExpo`,
-                    begin: () => {
-                        button.style.opacity = 0;
-                    }
-                })
-    
-                //fileNameInput.focus();
-            }; button.addEventListener(`dragstart`, dragstart);
-    
-            const dragend = (e) => {
-                console.log(`dragend`, e);
-    
-                fileNameInput.focus();
-    
-                refreshButton();
-    
-                setTimeout(() => clearCloned(false), 50)
-            }; button.addEventListener(`dragend`, dragend);
-    
-            const ondrop = (e) => {
-                console.log(`ondrop`, e);
-    
-                fileNameInput.focus();
-    
-                refreshButton();
-    
-                clearCloned(true);
-            }; fileNameInput.ondrop = ondrop;
-        }
+                    left: 0,
+                    bottom: 0,
+                    duration: first ? 0 : 500,
+                    easing: `easeOutExpo`
+                });
+            }
+        };
+
+        dropHook(true);
+
+        fileNameInput.addEventListener(`input`, () => {
+            dropHook();
+        });
+
+        const onclick = () => {
+            if(fileNameInput.value.includes(str)) {
+                fileNameInput.value = fileNameInput.value.replace(str, ``);
+            } else {
+                fileNameInput.value += str;
+            };
+
+            dropHook();
+            fileNameInput.focus();
+        }; button.onclick = onclick;
+
+        new Draggable({
+            node: button,
+            targets: [fileNameInput],
+            value: str,
+            enableDrag: fileNameInput.value.includes(str) ? false : true,
+            reanimate: false,
+            dropHook
+        });
     })
 }
 
