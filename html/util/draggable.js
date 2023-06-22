@@ -3,6 +3,20 @@ const dragEasing = anime.easing('easeOutExpo');
 let cloned = null;
 let clonedTxt = null;
 
+const pointerMoveEvent = (e) => {
+    const scrollSpeed = 10;
+
+    let difference = 0;
+
+    if(e.y < 250) difference = e.y - 250;
+    else if(e.y > window.innerHeight - 200) difference = e.y - (window.innerHeight - 200);
+
+    const scrollBy = scrollSpeed * difference/20;
+
+    //if(difference != 0) window.scrollBy(0, scrollBy);
+    if(difference != 0) window.scrollTo(0, window.scrollY + scrollBy)
+};
+
 let lastDragged = null;
 
 const clearCloned = (success, animateDrop, reanimate=true) => {
@@ -295,7 +309,7 @@ class Draggable {
             }
     
             node.ondrag = (e) => {
-                //console.log(e)
+                pointerMoveEvent(e);
                 if(e.pageX && e.pageY) {
                     if(cloned) {
                         //cloned.style.left = e.pageX - cloned.getBoundingClientRect().width/2 + `px`;
