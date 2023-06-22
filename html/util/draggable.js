@@ -338,7 +338,7 @@ class Draggable {
             }
     
             node.ondrag = (e) => {
-                pointerMoveEvent(e);
+                if(cloned) pointerMoveEvent(e);
                 if(e.pageX && e.pageY) {
                     if(cloned) {
                         //cloned.style.left = e.pageX - cloned.getBoundingClientRect().width/2 + `px`;
