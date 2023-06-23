@@ -32,6 +32,7 @@ module.exports = {
     idHooks: [],
     active: false,
     bridgeVersions: null,
+    starting: false,
     resObj,
     resuscitate: true,
     create: (restarted) => new Promise(async res => {
@@ -44,7 +45,13 @@ module.exports = {
             module.exports.resuscitate = true;
             
             if(module.exports.bridgeProc) {
-                res(resObj);
+                if(module.exports.starting) {
+                    console.log(`bridge process is starting, waiting...`);
+                    return module.exports.bridgeProc.on(`ready`, () => res(resObj));
+                } else {
+                    console.log(`bridge process is active, returning`);
+                    return res(resObj);
+                }
             } else {
                 if(!module.exports.bridgeProc) {
                     console.log(`no bridge process!`);
@@ -52,7 +59,10 @@ module.exports = {
                     let busy = 1;
 
                     while(busy) await new Promise(async r => {
-                        require('fs').open(bridgepath, 'r', (err, fd) => {
+                        if(module.exports.bridgeProc) {
+                            busy = false;
+                            return r();
+                        } else require('fs').open(bridgepath, 'r', (err, fd) => {
                             if(err && err.code == `EBUSY`) {
                                 console.log(`bridge process busy (attempt ${busy}), waiting...`);
                                 busy++;
@@ -65,7 +75,13 @@ module.exports = {
                         });
                     });
 
-                    require(`./currentVersion/pybridge`)(true);
+                    if(module.exports.bridgeProc && module.exports.starting) {
+                        console.log(`bridge process is starting, waiting...`);
+                        return module.exports.bridgeProc.on(`ready`, () => res(resObj));
+                    } else if(module.exports.bridgeProc && !module.exports.starting) {
+                        console.log(`bridge process is active, returning`);
+                        return res(resObj);
+                    }
 
                     if(!process.platform.toLowerCase().includes(`win32`)) {
                         console.log(`CHMOD ${bridgepath}`);
@@ -76,6 +92,8 @@ module.exports = {
                             fs.chmodSync(bridgepath, 0o777)
                         }
                     };
+
+                    module.exports.starting = true;
 
                     module.exports.bridgeProc = child_process.execFile(bridgepath, {
                         maxBuffer: 1024 * 1024 * 1024, // 1GB
@@ -133,6 +151,10 @@ module.exports = {
                         //console.log(prefix + str.trim().split(`\n`).join(`\n` + prefix));
 
                         if(d.toString().trim().includes(`Bridge ready`) && !resolved) {
+                            module.exports.bridgeProc.emit(`ready`);
+
+                            module.exports.starting = false;
+
                             resolved = true;
 
                             console.log(`bridge process active`);

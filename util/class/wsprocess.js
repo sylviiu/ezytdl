@@ -71,9 +71,11 @@ class wsprocess extends events.EventEmitter {
             args: this.args,
         }
 
-        bridge.resObj.send(JSON.stringify(obj));
-
-        console.log(`spawned ${JSON.stringify(obj)}`)
+        console.log(`spawned ${JSON.stringify(obj)}`);
+        
+        bridge.create().then(() => {
+            bridge.resObj.send(JSON.stringify(obj));
+        });
     }
 }
 
