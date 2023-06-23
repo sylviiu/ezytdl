@@ -153,7 +153,7 @@ which(`npm`).then(async npm => {
             spawnProc(`npm`, __dirname, testrun)
         } else {
             if(process.platform == `darwin`) {
-                spawnProc(require(`path`).join(__dirname, `dist`, `mac`, `${config.productName + `-nightly`}.app`, `Contents`, `MacOS`, `ezytdl`), require(`path`).join(__dirname, `dist`), testrun)
+                spawnProc(require(`path`).join(__dirname, `dist`, `mac`, `${config.productName + `-nightly`}.app`, `Contents`, `MacOS`, `${config.productName + `-nightly`}`), require(`path`).join(__dirname, `dist`), testrun)
             } else {
                 const folder = fs.readdirSync(`./dist`).find(s => s.endsWith(`-unpacked`) && fs.existsSync(`./dist/` + s + `/`));
             
