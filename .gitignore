@@ -1,12 +1,7 @@
 node_modules/
-.venv/
-pybridge/
-constants.py
-__pycache__/
 dist/
 keys.json
 .DS_Store
 build.json
 release-notes.md
 build-*.json
-*.spec
