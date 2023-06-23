@@ -37,7 +37,7 @@ module.exports = (forceCheck, getBuildDate) => new Promise(async (res, rej) => {
                 if(dateString) {
                     let date = new Date(parseInt(dateString));
                     if(date.toString() !== `Invalid Date`) {
-                        let m = date.getMonth();
+                        let m = date.getMonth()+1;
                         let d = date.getDate();
                         let y = date.getFullYear();
 
