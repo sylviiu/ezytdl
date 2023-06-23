@@ -108,6 +108,8 @@ module.exports = {
                                 type: `warn`
                             });
                             module.exports.create(true);
+                        } else {
+                            module.exports.active = false;
                         }
                     });
 

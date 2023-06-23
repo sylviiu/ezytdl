@@ -113,8 +113,13 @@ module.exports = async () => new Promise(async res => {
                             fs.chmodSync(path, 0o777)
                         }
                     };
-    
-                    ws.close();
+
+                    console.log(`Spawning new bridge`);
+
+                    require(`../pythonBridge`).create().then(() => {
+                        console.log(`bridge created`)
+                        ws.close();
+                    });
                 })
             }
         }

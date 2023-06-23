@@ -5,7 +5,7 @@ const wsprocess = require(`./class/wsprocess`);
 module.exports = (...args) => {
     const bridge = require(`./pythonBridge`);
 
-    if(bridge.active) {
+    if(/*bridge.active*/ true) {
         return new wsprocess(...args)
     } else {
         return child_process.execFile(getPath(), ...args)

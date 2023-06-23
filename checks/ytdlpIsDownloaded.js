@@ -22,13 +22,12 @@ module.exports = (doNotCheckForUpdates) => new Promise(async res => {
             });
         })
 
-        if(!global.createdBridge) {
-            console.log(`creating bridge`)
-            require(`../util/pythonBridge`).create().then(() => {
-                console.log(`bridge created`)
-                return res(true)
-            })
-        } else return res(true)
+        console.log(`creating bridge`);
+        
+        require(`../util/pythonBridge`).create().then(() => {
+            console.log(`bridge created`)
+            return res(true)
+        })
     }
 
     if(path) {
