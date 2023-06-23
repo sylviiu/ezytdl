@@ -8,23 +8,24 @@ let currentVersion = null;
 module.exports = (forceCheck) => new Promise(async (res, rej) => {
     let path = getPath()
 
-    if(!forceCheck && currentVersion) {
+    if(!forceCheck && currentVersion && path) {
         return res(currentVersion);
     } else {
         const exists = path;
         console.log(`Exists? ${exists}`)
 
         if(exists) {
-            const proc = child_process.spawnSync(path, [`--version`]);
-            if(proc.stderr) console.log(`STDERR`, proc.stderr.toString());
-            if(proc.error) return rej(proc.error)
-            //const versionString = child_process.execSync(`${path} --version`).toString().trim();
-            if(!proc.stdout) return res(null);
-            const versionString = proc.stdout.toString().trim();
-    
-            currentVersion = versionString;
+            child_process.execFile(path, [`--version`], (err, stdout, stderr) => {
+                if(stderr) console.log(`STDERR`, stderr.toString());
+                if(err) return rej(err)
+                //const versionString = child_process.execSync(`${path} --version`).toString().trim();
+                if(!stdout) return res(null);
+                const versionString = stdout.toString().trim();
         
-            return res(currentVersion)
+                currentVersion = versionString;
+            
+                return res(currentVersion)
+            });
         } else {
             console.log(`File doesn't exist, returning null`);
             return res(null)

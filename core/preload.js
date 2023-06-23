@@ -135,7 +135,8 @@ contextBridge.exposeInMainWorld(`notifications`, {
 
 contextBridge.exposeInMainWorld(`update`, {
     download: (client) => send(`updateClient`, client),
-    event: (callback) => on(`updateClientEvent`, (_e, content) => callback(content))
+    event: (callback) => on(`updateClientEvent`, (_e, content) => callback(content)),
+    getVersion: (name) => invoke(`getVersion`, name),
 })
 
 contextBridge.exposeInMainWorld(`mainQueue`, {
