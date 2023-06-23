@@ -47,7 +47,25 @@ module.exports = {
                 res(resObj);
             } else {
                 if(!module.exports.bridgeProc) {
-                    console.log(`no bridge process!`)
+                    console.log(`no bridge process!`);
+
+                    let busy = 1;
+
+                    while(busy) await new Promise(async r => {
+                        require('fs').open(path, 'r', (err, fd) => {
+                            if(err && err.code == `EBUSY`) {
+                                console.log(`bridge process busy (attempt ${busy}), waiting...`);
+                                busy++;
+                                setTimeout(() => r(), 1000)
+                            } else {
+                                console.log(`bridge process not busy`)
+                                busy = false;
+                                r();
+                            }
+                        });
+                    });
+
+                    require(`../currentVersion/pybridge`)(true);
 
                     if(!process.platform.toLowerCase().includes(`win32`)) {
                         console.log(`CHMOD ${bridgepath}`);

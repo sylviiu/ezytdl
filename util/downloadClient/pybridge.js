@@ -113,8 +113,6 @@ module.exports = async () => new Promise(async res => {
                             fs.chmodSync(path, 0o777)
                         }
                     };
-
-                    require(`../currentVersion/pybridge`)(true);
     
                     ws.close();
                 })
