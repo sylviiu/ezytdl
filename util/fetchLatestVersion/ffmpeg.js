@@ -1,3 +1,3 @@
 module.exports = () => {
-    return require(`../githubReleasesRequest`)(`BtbN`, `FFmpeg-Builds`);
+    return require(`../githubReleasesRequest`)(`yt-dlp`, `FFmpeg-Builds`);
 }
