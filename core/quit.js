@@ -7,11 +7,13 @@ const quit = async (code) => {
 
     global.quitting = true;
 
-    const { bridgeProc } = require(`../util/pythonBridge`);
+    const bridge = require(`../util/pythonBridge`);
 
-    if(bridgeProc && bridgeProc.kill) await new Promise(r => {
-        bridgeProc.on(`close`, r);
-        bridgeProc.kill();
+    bridge.resuscitate = false;
+
+    if(bridge.bridgeProc && bridge.bridgeProc.kill) await new Promise(r => {
+        bridge.bridgeProc.on(`close`, r);
+        bridge.bridgeProc.kill();
     })
 
     app.quit();
