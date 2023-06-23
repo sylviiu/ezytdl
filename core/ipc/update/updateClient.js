@@ -9,6 +9,8 @@ module.exports = {
             return require(`../../../util/downloadClient/ffmpeg`)()
         } else if(arg == `ezytdl`) {
             return require(`../../../util/downloadClient/ezytdl`)()
+        } else if(arg == `pybridge`) {
+            return require(`../../../util/downloadClient/pybridge`)()
         }
     }
 }
