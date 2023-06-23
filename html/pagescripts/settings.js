@@ -276,8 +276,32 @@ if(paltform.toLowerCase() != `win32` && !paltform.toLowerCase().includes(`linux`
         btn.disabled = true;
         btn.style.background = btn.style.background.replace(`rgb(`, `rgba(`).replace(`)`, `, 0.5)`);
     });
-    ffmpegCard.querySelector(`#ffmpegDownloadTxt`).innerHTML = `FFmpeg downloading is not available on your platform.<br>If FFmpeg is installed system-wide, ezytdl will use that.`
-}
+
+    ffmpegCard.querySelector(`#txt`).innerHTML = `FFmpeg downloading is not available on your platform.<br>If FFmpeg is installed system-wide, ezytdl will use that.`
+};
+
+document.body.querySelector('#downloadables').childNodes.forEach(n => {
+    if(!n || !n.querySelector) return;
+
+    const txt = n.querySelector(`#thisVersion`);
+
+    if(n.id && txt) {
+        update.getVersion(n.id).then(v => {
+            txt.innerHTML = `installed: ${v}`;
+            if(txt.classList.contains(`d-none`)) {
+                txt.classList.remove(`d-none`);
+                txt.style.opacity = 0;
+                const bounds = txt.getBoundingClientRect();
+                txt.style.maxHeight = 0;
+                anime({
+                    targets: txt,
+                    opacity: 1,
+                    maxHeight: [`0px`, `100px`],
+                })
+            }
+        });
+    }
+})
 
 if(detailsStr) system.detailsStr().then(details => {
     const detailsStrConverter = new showdown.Converter({ parseImgDimensions: true });
