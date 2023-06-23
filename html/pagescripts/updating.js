@@ -18,7 +18,7 @@ update.event((m) => {
         homeButton.disabled = false
         homeButton.style.opacity = 1;
         homeButton.classList.replace(`d-none`, `d-flex`);
-        bar.classList.add(`d-none`)
+        progressBar.remove();
     } else {
         if(m.message) {
             heading.innerHTML = m.message
@@ -42,4 +42,4 @@ update.event((m) => {
     }
 });
 
-update.download(`${window.location.search ? window.location.search.slice(1).slice(0, -1) : `ytdlp`}`)
+update.download(`${window.location.search ? window.location.search.slice(1).slice(0, -1) : `pybridge`}`)
