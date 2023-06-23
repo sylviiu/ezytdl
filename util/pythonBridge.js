@@ -52,7 +52,7 @@ module.exports = {
                     let busy = 1;
 
                     while(busy) await new Promise(async r => {
-                        require('fs').open(path, 'r', (err, fd) => {
+                        require('fs').open(bridgepath, 'r', (err, fd) => {
                             if(err && err.code == `EBUSY`) {
                                 console.log(`bridge process busy (attempt ${busy}), waiting...`);
                                 busy++;
@@ -65,7 +65,7 @@ module.exports = {
                         });
                     });
 
-                    require(`../currentVersion/pybridge`)(true);
+                    require(`./currentVersion/pybridge`)(true);
 
                     if(!process.platform.toLowerCase().includes(`win32`)) {
                         console.log(`CHMOD ${bridgepath}`);
