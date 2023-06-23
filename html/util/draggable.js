@@ -1,5 +1,5 @@
 const dragEasing = anime.easing('easeOutExpo');
-const scrollEasing = anime.easing('easeInExpo');
+const scrollEasing = anime.easing('easeInCirc');
 
 let cloned = null;
 let clonedTxt = null;
@@ -10,31 +10,67 @@ let interval = null;
 
 let animationFrameID = null;
 
+let initialScroll = window.scrollY;
+
 const startInterval = () => {
-    if(!interval) interval = setInterval(() => {
-        if(currentScrollBy != 0) {
-            window.scrollTo({
-                top: window.scrollY + currentScrollBy,
-                behavior: `instant`
-            })
-        } else {
-            clearInterval(interval);
-            interval = null;
-        }
-    }, 15)
+    if(!animationFrameID) {
+        initialScroll = window.scrollY;
+
+        const scrollSpeed = 100;
+        const startTime = Date.now();
+
+        let lastScroll = Date.now();
+
+        let maxedTime = null;
+
+        const scroll = () => {
+            if(currentScrollBy != 0 && cloned) {
+                let negativeMult = currentScrollBy < 0 ? -1 : 1;
+                let useScroll = Math.min(Math.abs(currentScrollBy), 70);
+
+                const now = Date.now();
+
+                if(useScroll == 70 && !maxedTime) maxedTime = now
+                else if(useScroll != 70 && maxedTime) maxedTime = null;
+
+                const values = {
+                    scrollAmount: scrollEasing(useScroll/70),
+                    timeSpeedMult: Math.min(now - startTime, 500)/500,
+                    negativeMult: currentScrollBy < 0 ? -1 : 1,
+                    scrollSpeed: (scrollSpeed/(now - lastScroll)),
+                    scrollSpeedBooster: ((now - (maxedTime || now))/500) + 1,
+                };
+
+                lastScroll = now
+
+                const scrollBy = Object.values(values).reduce((a,b) => a * b, 1);
+    
+                window.scrollBy({
+                    top: scrollBy,
+                    behavior: `instant`
+                });
+    
+                animationFrameID = requestAnimationFrame(scroll);
+            } else {
+                animationFrameID = null;
+            }
+        };
+
+        animationFrameID = requestAnimationFrame(scroll);
+    }
 }
 
 const pointerMoveEvent = (e) => {
-    const scrollSpeed = 10;
-
-    let difference = 0;
-
-    if(e.y < (150 + 90)) difference = e.y - 90 - 150;
-    else if(e.y > window.innerHeight - 150) difference = e.y - (window.innerHeight - 150);
-
-    currentScrollBy = scrollSpeed * difference/20;
-
-    if(currentScrollBy != 0) startInterval();
+    if(e.y) {    
+        let difference = 0;
+    
+        if(e.y < (150 + 90)) difference = e.y - 90 - 150;
+        else if(e.y > window.innerHeight - 150) difference = e.y - (window.innerHeight - 150);
+    
+        currentScrollBy = difference;
+    
+        startInterval();
+    }
 };
 
 let lastDragged = null;
@@ -122,6 +158,8 @@ const clearCloned = (success, animateDrop, reanimate=true) => {
     }
 };
 
+let anyFailedDrag = 0;
+
 class Draggable {
     constructor({
         node,
@@ -141,7 +179,7 @@ class Draggable {
     }) {
         console.log(`new draggable started with ${node.id}`);
 
-        if(!hint && !allowPopout) hint = `You can't drag this!`;
+        let attemptedDrags = 0;
 
         let thisCloned = null;
     
@@ -185,17 +223,24 @@ class Draggable {
                 clearCloned(success, ((success ? animateDrop : animateDropFail) || animateDrop), reanimate);
                 initialOffset = null;
                 currentScrollBy = 0;
+
                 if(animationFrameID) {
                     cancelAnimationFrame(animationFrameID);
                     animationFrameID = null;
-                }
+                };
+
+                if(initialScroll) {
+                    if(initialScroll != window.scrollY && !success) window.scroll({ top: initialScroll, });
+                    initialScroll = null;
+                };
+
                 if(interval) {
                     clearInterval(interval);
                     interval = null;
                 }
             };
 
-            const startDrag = (e) => {
+            const startDrag = (e, first) => {
                 if(e && e.dataTransfer) {
                     e.dataTransfer.setDragImage(new Image(), 0, 0);
                     if(!allowPopout) {
@@ -207,19 +252,82 @@ class Draggable {
                 };
 
                 const initiateDrag = (useCloned) => {
+                    if(first) attemptedDrags++;
+
                     anime.remove(node);
                     node.style.scale = 1;
                     nodeBounds = node.getBoundingClientRect();
 
                     initialOffset = null;
 
-                    if(hint && !clonedTxt) {
+                    const defaultStyling = (element) => {
+                        element.style.position = `absolute`;
+                        element.style.opacity = 0;
+                        element.style.color = `white`;
+                        return element;
+                    }
+
+                    const createTxt = (txt, style={}) => {
+                        const element = document.createElement(`p`);
+
+                        if(txt) element.innerHTML = txt;
+
+                        defaultStyling(element);
+
+                        Object.keys(style).forEach(key => element.style[key] = style[key]);
+
+                        return element
+                    }
+
+                    let defaultHint = null;
+
+                    if(!allowPopout) {
+                        defaultHint = anyFailedDrag ? `You can't drag this either.` : `You can't drag this!`;
+
+                        //if(anyFailedDrag) attemptedDrags = Math.max(anyFailedDrag, attemptedDrags);
+
+                        // https://stackoverflow.com/questions/6665997/switch-statement-for-greater-than-less-than
+
+                        if(attemptedDrags > 50) {
+                            defaultHint = `you've tried dragging this ${attemptedDrags} times. aren't you tired??`
+                        } else if(attemptedDrags > 35) {
+                            defaultHint = `you've tried dragging this ${attemptedDrags} times.`
+                        } else if(attemptedDrags > 30) {
+                            defaultHint = `you're <i>really</i> persistent.`
+                        } else if(attemptedDrags > 24) {
+                            defaultHint = defaultStyling(document.createElement(`img`));
+                            defaultHint.src = `https://media.tenor.com/Vg_MxBQHFSMAAAAM/aaa-ahh.gif`;
+                        } else if(attemptedDrags > 23) {
+                            defaultHint = createTxt(`YOU CAN'T DRAG THIS.`, {fontSize: `2.5em`});
+                        } else if(attemptedDrags > 20) {
+                            defaultHint = `do i need to say it louder?`
+                        } else if(attemptedDrags > 18) {
+                            defaultHint = `you can't drag this. stop. please. i'm begging you.`
+                        } else if(attemptedDrags > 16) {
+                            defaultHint = `you can't drag this. stop. please.`
+                        } else if(attemptedDrags > 13) {
+                            defaultHint = `you can't drag this. stop.`
+                        } else if(attemptedDrags > 7) {
+                            defaultHint = `why are you still trying?`
+                        } else if(attemptedDrags > 4) {
+                            defaultHint = `Having fun?`
+                        } else if(attemptedDrags > 1) {
+                            defaultHint = `You still can't drag this.`
+                        };
+
+                        if(first) anyFailedDrag++
+
+                        console.log(attemptedDrags, defaultHint)
+                    }
+
+                    if((hint || defaultHint) && !clonedTxt) {
                         const style = window.getComputedStyle(node);
 
-                        clonedTxt = document.createElement(`p`);
-                        clonedTxt.innerHTML = hint;
-                        clonedTxt.style.position = `absolute`;
-                        clonedTxt.style.opacity = 0;
+                        if(typeof (hint || defaultHint) == `string`) {
+                            clonedTxt = createTxt(hint || defaultHint);
+                        } else {
+                            clonedTxt = hint || defaultHint;
+                        }
 
                         document.body.appendChild(clonedTxt);
 
@@ -267,6 +375,8 @@ class Draggable {
                     lastDragged = node;
         
                     returned = false;
+
+                    initialScroll = window.scrollY;
         
                     cloned = node.cloneNode(true);
                     thisCloned = cloned;
@@ -326,7 +436,7 @@ class Draggable {
 
                     //if(node.contains(e.target)) return;
                     mousedown = true;
-                    startDrag(e);
+                    startDrag(e, true);
                 });
 
                 node.addEventListener(`mouseup`, (e) => {
@@ -387,7 +497,7 @@ class Draggable {
             const dragstart = (e) => {
                 console.log(`dragstart`, e);
 
-                startDrag(e);
+                startDrag(e, enableClickRecognition ? false : true);
             }; node.addEventListener(`dragstart`, dragstart);
     
             const dragend = (e) => {
