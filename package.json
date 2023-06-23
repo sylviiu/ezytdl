@@ -27,14 +27,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sylviiu/ezytdl.git"
+    "url": "git+https://github.com/ezytdl/ezytdl.git"
   },
   "author": "Syl <hi@sylviiu.dev>",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/sylviiu/ezytdl/issues"
+    "url": "https://github.com/ezytdl/ezytdl/issues"
   },
-  "homepage": "https://github.com/sylviiu/ezytdl#readme",
+  "homepage": "https://github.com/ezytdl/ezytdl#readme",
   "devDependencies": {
     "electron": "^24.2.0",
     "electron-builder": "^24.4.0"

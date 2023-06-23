@@ -1,8 +1,8 @@
 <h1 align="center">
-  <img src="https://raw.githubusercontent.com/sylviiu/ezytdl/main/res/img/heading.png" height="128px"/><br>
-  <img src="https://github.com/sylviiu/ezytdl/actions/workflows/test-win.yml/badge.svg"/>
-  <img src="https://github.com/sylviiu/ezytdl/actions/workflows/test-mac.yml/badge.svg"/>
-  <img src="https://github.com/sylviiu/ezytdl/actions/workflows/test-linux.yml/badge.svg"/>
+  <img src="https://raw.githubusercontent.com/ezytdl/ezytdl/main/res/img/heading.png" height="128px"/><br>
+  <img src="https://github.com/ezytdl/ezytdl/actions/workflows/test-win.yml/badge.svg"/>
+  <img src="https://github.com/ezytdl/ezytdl/actions/workflows/test-mac.yml/badge.svg"/>
+  <img src="https://github.com/ezytdl/ezytdl/actions/workflows/test-linux.yml/badge.svg"/>
 </h1>
 
 Open source electron-based application acting as a wrapper of the YT-DLP client.
@@ -17,7 +17,7 @@ There are multiple ways you can get started with this! (at least on windows)
 
 You can either run the portable version, or install it to your system!
 
-- Head over to the [releases page](https://github.com/sylviiu/ezytdl/releases) and download either the setup or portable version of the latest release
+- Head over to the [releases page](https://github.com/ezytdl/ezytdl/releases) and download either the setup or portable version of the latest release
 - And just run. Done!
 
 -----

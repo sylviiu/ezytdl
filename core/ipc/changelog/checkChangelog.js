@@ -9,7 +9,7 @@ module.exports = {
         global.sendNotifs = true;
         //require(`../../sendNotification`)()
         if(!global.changelogResponse) await new Promise(async res => {
-            require(`../../../util/githubReleasesRequest`)(`sylviiu`, `ezytdl`).then(r => {
+            require(`../../../util/githubReleasesRequest`)(`ezytdl`, `ezytdl`).then(r => {
                 if(r && r.response) {
                     global.changelogResponse = r.response
                 } else {
