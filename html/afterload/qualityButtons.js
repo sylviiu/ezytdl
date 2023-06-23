@@ -58,7 +58,7 @@ const saveOptionsAnimations = {
     fadeIn: (btn, saveOptions, btnClick, node) => new Promise(res => {
         anime.remove(saveOptions)
         
-        if(node && node.parentNode && node.parentNode.parentNode && node.parentNode.parentNode.querySelector(`#formatCardBG`)) {
+        if(node && node.parentNode && node.parentNode.parentNode && node.parentNode.parentNode.id != `mainContainer` && node.parentNode.parentNode.querySelector(`#formatCardBG`)) {
             const bg = node.parentNode.parentNode.querySelector(`#formatCardBG`);
 
             anime.remove(bg);
