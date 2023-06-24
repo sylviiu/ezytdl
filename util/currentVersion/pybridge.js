@@ -54,7 +54,7 @@ module.exports = (forceCheck, getBuildDate) => new Promise(async (res, rej) => {
             });
         } else {
             console.log(`File doesn't exist, returning null`);
-            return res(null)
+            return res(false)
         }
     }
 })
