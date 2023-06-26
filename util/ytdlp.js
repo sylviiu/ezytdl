@@ -304,8 +304,11 @@ module.exports = {
                 if (info[key]) {
                     return info[key];
                 }
-            }
-            return match;
+            };
+
+            if(key.includes(`|`) && info.fullInfo) {
+                return key.split(`|`).slice(1).join(`|`).trim();
+            } else return match;
         });
 
         console.log(`--- OUTPUT TEMPLATE FOR "${originalTemplate}" ---\n${template}\n-----------------------`)
