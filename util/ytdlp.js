@@ -344,6 +344,8 @@ module.exports = {
         if(!d.title) d.title = d.webpage_url;
         if(!d.title) d.title = d.url;
 
+        if(!d._original_url) d._original_url = d.webpage_url || d.url || d._request_url;
+
         if(!d.playlist_count && d.entries) d.playlist_count = d.entries.length;
 
         if(full && root && !d.fullInfo) d.fullInfo = true;
@@ -752,7 +754,11 @@ module.exports = {
 
             const paths = [saveLocation];
 
-            if(downloadInWebsiteFolders && info.webpage_url_domain) paths.push(info.webpage_url_domain);
+            let parsedURL = require(`url`).parse(url);
+
+            let useURL = parsedURL.host ? parsedURL.host.split(`.`).slice(-2).join(`.`) : info.webpage_url_domain || null;
+
+            if(downloadInWebsiteFolders && useURL) paths.push(useURL);
 
             if(filePath) paths.push(filePath)
     
