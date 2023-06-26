@@ -709,7 +709,7 @@ module.exports = {
             const { onlyGPUConversion, disableHWAcceleratedConversion, outputFilename, downloadInWebsiteFolders } = currentConfig;
 
             //const saveLocation = downloadInWebsiteFolders && info.webpage_url_domain ? require(`path`).join(currentConfig.saveLocation, sanitize(`${info.webpage_url_domain}`)) : currentConfig.saveLocation;
-            let saveLocation = sanitizePath(currentConfig.saveLocation);
+            let saveLocation = sanitizePath(...currentConfig.saveLocation.split(`\\`).join(`/`).split(`/`));
 
             if(!info.webpage_url_domain && info.url) info.webpage_url_domain = info.url.split(`.`).slice(-2, 0)[0];
             if(!info.webpage_url_domain && url) info.webpage_url_domain = url.split(`.`).slice(-2, 0)[0];
