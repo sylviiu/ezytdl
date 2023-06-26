@@ -348,7 +348,7 @@ const createServices = () => {
                 connected.style.marginTop = `12px`;
                 connected.style.color = `rgba(255,255,255,0.85)`;
                 connected.appendChild(icon);
-                connected.innerHTML += ` Linked`;
+                connected.innerHTML += ` Connected`;
 
                 element.querySelector(`#strings`).insertBefore(connected, element.querySelector(`#description`));
 
@@ -365,7 +365,7 @@ const createServices = () => {
                 connected.style.marginTop = `12px`;
                 connected.style.color = `rgba(255,255,255,0.85)`;
                 connected.appendChild(icon);
-                connected.innerHTML += ` Not Linked`;
+                connected.innerHTML += ` Not Connected`;
 
                 element.querySelector(`#strings`).insertBefore(connected, element.querySelector(`#description`));
 
