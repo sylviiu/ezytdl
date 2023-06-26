@@ -3,6 +3,13 @@ const fs = require('fs');
 const yargs = require('yargs');
 const idGen = require(`../util/idGen`);
 const downloadManager = require(`./downloadManager`);
+const authentication = require(`../core/authentication`)
+
+const platforms = fs.readdirSync(require(`../util/getPath`)(`./util/platforms`)).map(f => (Object.assign(require(`../util/platforms/${f}`), {
+    name: f.split(`.`).slice(0, -1).join(`.`)
+})));
+
+console.log(`platforms:`, platforms)
 
 const execYTDLP = require(`./execYTDLP`);
 
@@ -334,8 +341,10 @@ module.exports = {
         //d.created_url = d.media_metadata.url.artist_url;
 
         const parseList = (o, i, key) => {
-            totalTime += (o.originalDuration ? o.originalDuration * 1000 : 0) || (typeof o.duration == `number` ? o.duration*1000 : typeof o.duration == `object` && o.duration?.units?.ms ? o.duration.units.ms : 0) || 0;
-            return module.exports.parseInfo(o, full, false, rawInfo, i ? i+1 : null, i ? d[key].length : null);
+            if(o && typeof o == `object`) {
+                totalTime += (o.originalDuration ? o.originalDuration * 1000 : 0) || (typeof o.duration == `number` ? o.duration*1000 : typeof o.duration == `object` && o.duration?.units?.ms ? o.duration.units.ms : 0) || 0;
+                return module.exports.parseInfo(o, full, false, rawInfo, i ? i+1 : null, i ? d[key].length : null);
+            } else return o;
         }
 
         if(d.entries) d.entries = d.entries.map((o, i) => parseList(o, i, `entries`));
@@ -440,9 +449,7 @@ module.exports = {
             console.log(`search closed with code ${code}`)
 
             try {
-                const d = JSON.parse(data);
-
-                d._request_url = query;
+                const d = Object.assign(JSON.parse(data), { _request_url: query });
 
                 module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, extraArguments }).then(res);
             } catch(e) {
@@ -486,15 +493,14 @@ module.exports = {
             console.log(`listFormats closed with code ${code} (${query})`)
 
             try {
-                const d = JSON.parse(data);
-
-                d._request_url = query;
+                const d = Object.assign(JSON.parse(data), { _request_url: query });
 
                 if(ignoreStderr) {
                     return res(d);
                 } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, }).then(res);
                 //console.log(d)
             } catch(e) {
+                console.error(`${e}`)
                 if(!ignoreStderr) sendNotification({
                     type: `error`,
                     headingText: `Error getting media info`,
@@ -1541,4 +1547,31 @@ module.exports = {
             update({ failed: true, status: `${e.toString()}` })
         }
     })
+};
+
+for(const entry of Object.entries(module.exports).filter(o => typeof o[1] == `function`)) {
+    const name = entry[0];
+    const func = entry[1];
+
+    module.exports[name] = (...args) => {
+        const authType = authentication.check(typeof args[0] == `object` && typeof args[0].query == `string` ? args[0].query : ``)
+        if(typeof args[0] == `object` && args[0].query && authType) {
+            const doFunc = platforms.find(p => p.name == authType)[name];
+            console.log(`authenticated request! (type: ${authType}) (function exists? ${doFunc ? true : false})`);
+            if(doFunc) {
+                console.log(`running function...`)
+                return new Promise(async (res, rej) => authentication.getToken(authType).then(token => {
+                    if(token) {
+                        doFunc(token, ...args).then(res).catch(rej);
+                    } else {
+                        console.log(`failed to auth`)
+                        return func(...args).then(res).catch(rej);
+                    }
+                }).catch(rej))
+            } else {
+                console.log(`no function found!`)
+                return func(...args)
+            }
+        } else return func(...args)
+    }
 }
