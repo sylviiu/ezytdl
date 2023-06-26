@@ -349,7 +349,7 @@ module.exports = {
 
         const paths = [ useSaveLocation ];
 
-        let parsedURL = require(`url`).parse(info._original_url || info.url || info.webpage_url || info._request_url);
+        let parsedURL = require(`url`).parse(info._original_url || info.url || info.webpage_url || info._request_url || ``);
 
         let useURL = parsedURL.host ? parsedURL.host.split(`.`).slice(-2).join(`.`) : info.webpage_url_domain || null;
 
@@ -364,8 +364,6 @@ module.exports = {
     parseInfo: (d, full, root=true, rawInfo=d, entry_number, entry_total) => {
         if(!d.title) d.title = d.webpage_url;
         if(!d.title) d.title = d.url;
-
-        d.saveLocation = module.exports.getSavePath(d);
 
         if(!d._original_url) d._original_url = d.webpage_url || d.url || d._request_url;
 
@@ -458,6 +456,8 @@ module.exports = {
                 if(rawInfo[key]) d[`playlist-${key}`] = rawInfo[key];
             }
         }
+
+        d.saveLocation = module.exports.getSavePath(d);
 
         return module.exports.parseMetadata(d, root);
     },
