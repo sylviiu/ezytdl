@@ -575,7 +575,7 @@ module.exports = {
 
         console.log(`getFilename / raw: "${useTempalte}"`)
 
-        useTempalte = module.exports.parseOutputTemplate(Object.assign({}, (format || {}), info), useTempalte);
+        useTempalte = module.exports.parseOutputTemplate(Object.assign({}, (typeof format == `object` ? format : {}), info), useTempalte);
 
         console.log(`getFilename / before: "${useTempalte}"`)
 
