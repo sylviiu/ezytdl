@@ -16,12 +16,21 @@ module.exports = {
 
         let calledBack = false;
 
-        const callback = (event, buttonID, response) => {
+        const callback = (event, id, response, inputs) => {
             if(!calledBack) {
-                calledBack = true;
-                dialogs[id].window.close();
-                res({ event, id: buttonID, response });
-                delete dialogs[id];
+                let btn = dialogs[id].buttons.find(b => b.id == response);
+
+                if(!btn.noResolve) {
+                    calledBack = true;
+                    dialogs[id].window.close();
+                    delete dialogs[id];
+                };
+                
+                if(btn.callback) {
+                    btn.callback({ event, id, response, inputs });
+                } else {
+                    res({ event, id, response, inputs });
+                }
             }
         }
 
