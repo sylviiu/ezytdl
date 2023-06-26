@@ -23,7 +23,7 @@ module.exports = {
     check: (arg) => {
         if(clients.find(c => c.name == arg)) return arg;
 
-        const parsed = require(`url`).parse(arg);
+        const parsed = require(`url`).parse(`${arg}`);
 
         if(websiteMap.has(parsed.host)) return websiteMap.get(parsed.host).name;
         if(websiteMap.has(parsed.hostname)) return websiteMap.get(parsed.hostname).name;
