@@ -88,6 +88,12 @@ contextBridge.exposeInMainWorld(`windowControls`, {
     enabled: () => invoke(`windowControlsEnabled`)
 })
 
+contextBridge.exposeInMainWorld(`authentication`, {
+    check: (arg) => invoke(`checkAuth`, arg),
+    getKey: (arg) => invoke(`getAuthKey`, arg),
+    getToken: (arg) => invoke(`getAuthToken`, arg),
+});
+
 contextBridge.exposeInMainWorld(`system`, {
     loading: () => invoke(`loading`),
     detailsStr: () => invoke(`detailsStr`),
@@ -99,7 +105,7 @@ contextBridge.exposeInMainWorld(`system`, {
 
 contextBridge.exposeInMainWorld(`dialog`, {
     get: (id) => invoke(`getDialog`, id),
-    send: (id, btnID) => invoke(`dialogButton`, {id, btnID}),
+    send: (id, btnID, inputs) => invoke(`dialogButton`, {id, btnID, inputs}),
     setHeight: (id, height) => invoke(`setDialogHeight`, {id, height})
 })
 
