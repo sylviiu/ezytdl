@@ -170,7 +170,7 @@ module.exports = {
 
         return returnArgs;
     },
-    unflatPlaylist: (extraArguments, info, customID) => new Promise(async res => {
+    unflatPlaylist: (extraArguments, info, customID, ignoreStderr) => new Promise(async res => {
         const id = customID || idGen(16);
 
         const instanceName = `unflatPlaylist-${id}`
@@ -194,9 +194,10 @@ module.exports = {
         manager.queueEventEmitter.on(`queueUpdate`, (queue) => {
             const totalLength = Object.values(queue).reduce((a, b) => a + b.length, 0);
 
-            updateStatus(`Fetching info of ${queue.active.length + queue.paused.length + queue.queue.length}/${totalLength} items...`)
-
-            updateStatusPercent([queue.complete.length, totalLength]);
+            if(!ignoreStderr) {
+                updateStatus(`Fetching info of ${queue.active.length + queue.paused.length + queue.queue.length}/${totalLength} items...`)
+                updateStatusPercent([queue.complete.length, totalLength]);
+            }
 
             if(queue.complete.length == totalLength) {
                 const failed = queue.complete.filter(o => o.failed);
@@ -207,7 +208,7 @@ module.exports = {
 
                 newInfo = Object.assign(info, newInfo);
 
-                updateStatus(`Finished fetching info of ${queue.complete.length}/${totalLength} items!` + (failed > 0 ? ` (${failed} entries failed to resolve)` : ``) + (badEntries > 0 ? ` (${badEntries} entries failed to resolve)` : ``))
+                if(!ignoreStderr) updateStatus(`Finished fetching info of ${queue.complete.length}/${totalLength} items!` + (failed > 0 ? ` (${failed} entries failed to resolve)` : ``) + (badEntries > 0 ? ` (${badEntries} entries failed to resolve)` : ``))
 
                 res(module.exports.parseInfo(newInfo || info, true));
 
@@ -243,11 +244,11 @@ module.exports = {
 
         manager.queueEventEmitter.emit(`queueUpdate`, manager.queue);
     }),
-    verifyPlaylist: (d, { extraArguments, disableFlatPlaylist, forceRun }) => new Promise(async res => {
+    verifyPlaylist: (d, { extraArguments, disableFlatPlaylist, forceRun, ignoreStderr }) => new Promise(async res => {
         if(typeof d == `object`) d = module.exports.parseInfo(d);
         if(d && forceRun) {
             console.log(`force run!`);
-            module.exports.unflatPlaylist(extraArguments, d).then(res)
+            module.exports.unflatPlaylist(extraArguments, d, null, ignoreStderr).then(res)
         } else if(d && d.fullInfo == true) {
             console.log(`full info found! resolving...`);
             res(d);
@@ -269,7 +270,7 @@ module.exports = {
             if(anyNoTitle) {
                 console.log(`Missing titles!`);
                 //return module.exports.listFormats({query, extraArguments}, true).then(res)
-                module.exports.unflatPlaylist(extraArguments, d).then(res)
+                module.exports.unflatPlaylist(extraArguments, d, null, ignoreStderr).then(res)
             } else {
                 res(module.exports.parseInfo(d, disableFlatPlaylist))
             }
@@ -277,7 +278,7 @@ module.exports = {
             updateStatus(`Restarting playlist search... (there were no formats returned!!)`)
             console.log(`no formats found! starting over...`);
             //return module.exports.listFormats({query, extraArguments}, true).then(res)
-            module.exports.unflatPlaylist(extraArguments, d).then(res)
+            module.exports.unflatPlaylist(extraArguments, d, null, ignoreStderr).then(res)
         } else {
             sendNotification({
                 type: `error`,
@@ -340,9 +341,31 @@ module.exports = {
             }
         })
     },
+    getSavePath: (info, filePath) => {
+        // sanitizePath(...currentConfig.saveLocation.split(`\\`).join(`/`).split(`/`))
+        const { saveLocation, downloadInWebsiteFolders } = require(`../getConfig`)();
+
+        const useSaveLocation = sanitizePath(...saveLocation.split(`\\`).join(`/`).split(`/`));
+
+        const paths = [ useSaveLocation ];
+
+        let parsedURL = require(`url`).parse(info._original_url || info.url || info.webpage_url || info._request_url);
+
+        let useURL = parsedURL.host ? parsedURL.host.split(`.`).slice(-2).join(`.`) : info.webpage_url_domain || null;
+
+        if(downloadInWebsiteFolders && useURL) paths.push(useURL);
+
+        if(filePath) paths.push(filePath)
+
+        const saveTo = sanitizePath(...paths) + (require('os').platform() == `win32` ? `\\` : `/`)
+
+        return saveTo
+    },
     parseInfo: (d, full, root=true, rawInfo=d, entry_number, entry_total) => {
         if(!d.title) d.title = d.webpage_url;
         if(!d.title) d.title = d.url;
+
+        d.saveLocation = module.exports.getSavePath(d);
 
         if(!d._original_url) d._original_url = d.webpage_url || d.url || d._request_url;
 
@@ -484,7 +507,7 @@ module.exports = {
 
                 if(noVerify) {
                     return res(d);
-                } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, extraArguments, forceRun: forceVerify }).then(res);
+                } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, extraArguments, forceRun: forceVerify, ignoreStderr }).then(res);
             } catch(e) {
                 console.error(`${e}`)
                 if(!ignoreStderr) sendNotification({
@@ -530,7 +553,7 @@ module.exports = {
 
                 if(ignoreStderr) {
                     return res(d);
-                } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, }).then(res);
+                } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, ignoreStderr }).then(res);
                 //console.log(d)
             } catch(e) {
                 console.error(`${e}`)
@@ -706,17 +729,7 @@ module.exports = {
 
         try {
             const currentConfig = require(`../getConfig`)();
-            const { onlyGPUConversion, disableHWAcceleratedConversion, outputFilename, downloadInWebsiteFolders } = currentConfig;
-
-            //const saveLocation = downloadInWebsiteFolders && info.webpage_url_domain ? require(`path`).join(currentConfig.saveLocation, sanitize(`${info.webpage_url_domain}`)) : currentConfig.saveLocation;
-            let saveLocation = sanitizePath(...currentConfig.saveLocation.split(`\\`).join(`/`).split(`/`));
-
-            if(!info.webpage_url_domain && info.url) info.webpage_url_domain = info.url.split(`.`).slice(-2, 0)[0];
-            if(!info.webpage_url_domain && url) info.webpage_url_domain = url.split(`.`).slice(-2, 0)[0];
-
-            //console.log(`saveLocation: ${saveLocation}; webpage_url_domain: ${info.webpage_url_domain}; info`, info)
-
-            //if(filePath) filePath = sanitizePath(saveLocation, filePath);
+            const { onlyGPUConversion, disableHWAcceleratedConversion, outputFilename } = currentConfig;
 
             let thisFormat;
 
@@ -752,19 +765,7 @@ module.exports = {
     
             //console.log(saveLocation, filePath, ytdlpFilename)
 
-            const paths = [saveLocation];
-
-            let parsedURL = require(`url`).parse(url);
-
-            let useURL = parsedURL.host ? parsedURL.host.split(`.`).slice(-2).join(`.`) : info.webpage_url_domain || null;
-
-            if(downloadInWebsiteFolders && useURL) paths.push(useURL);
-
-            if(filePath) paths.push(filePath)
-    
-            const saveTo = sanitizePath(...paths) + (require('os').platform() == `win32` ? `\\` : `/`)
-
-            console.log(`----------------------------\nsaveTo: ${saveTo}\n\nSaving to path structure:\n- ${paths.join(`\n- `)}\n----------------------------`)
+            const saveTo = info.saveLocation || module.exports.getSavePath(info, filePath);
 
             update({ deleteFiles: () => purgeLeftoverFiles(saveTo), live: info.is_live ? true : false, destinationFilename: ytdlpFilename, formatID: format })
     
@@ -1341,12 +1342,12 @@ module.exports = {
                         return res(obj)
                         //purgeLeftoverFiles(saveTo)
                     } else if(args.includes(`-S`) && ytdlpSaveExt == ext) {
-                        update({code, saveLocation, url, format, status: `Downloaded best quality provided for ${ext} format (no conversion done${reasonConversionNotDone ? ` -- ${reasonConversionNotDone}` : ``})`});
+                        update({code, saveLocation: saveTo, url, format, status: `Downloaded best quality provided for ${ext} format (no conversion done${reasonConversionNotDone ? ` -- ${reasonConversionNotDone}` : ``})`});
                     } else if(args.includes(`-S`) && ytdlpSaveExt != ext) {
-                        update({code, saveLocation, url, format, status: `${ext} was not provided by this website (downloaded ${ytdlpSaveExt} instead${reasonConversionNotDone ? ` -- ${reasonConversionNotDone}` : ``})`});
+                        update({code, saveLocation: saveTo, url, format, status: `${ext} was not provided by this website (downloaded ${ytdlpSaveExt} instead${reasonConversionNotDone ? ` -- ${reasonConversionNotDone}` : ``})`});
                     } else if(reasonConversionNotDone) {
-                        update({code, saveLocation, url, format, status: `Could not convert: ${reasonConversionNotDone}`});
-                    } else update({code, saveLocation, url, format, status: `Done!`});
+                        update({code, saveLocation: saveTo, url, format, status: `Could not convert: ${reasonConversionNotDone}`});
+                    } else update({code, saveLocation: saveTo, url, format, status: `Done!`});
                     res(obj)
                 } else {
                     if(killAttempt > 0) {
@@ -1354,7 +1355,7 @@ module.exports = {
                         return res(obj)
                         //purgeLeftoverFiles(saveTo)
                     } else {
-                        update({code, saveLocation, url, format, status: `Done!`})
+                        update({code, saveLocation: saveTo, url, format, status: `Done!`})
                         res(obj)
                     }
                 }
@@ -1571,7 +1572,7 @@ module.exports = {
                                         runThroughFFmpeg(code);
                                     } else {
                                         if(fs.existsSync(require(`path`).join(saveTo, ytdlpFilename) + `.mkv`)) fs.unlinkSync(require(`path`).join(saveTo, ytdlpFilename) + `.mkv`);
-                                        update({code, saveLocation, url, format, status: `Done!`})
+                                        update({code, saveLocation: saveTo, url, format, status: `Done!`})
                                         res(obj)
                                     }
                                 })
