@@ -469,6 +469,7 @@ const runSearch = async (url, initialMsg, func) => {
                         metaItem.addEventListener(`mouseover`, () => {
                             console.log(`secondaryText for ${id}: mouseover`)
 
+                            anime.remove(txt);
                             anime({
                                 targets: txt,
                                 opacity: [1, 0],
@@ -517,7 +518,7 @@ const runSearch = async (url, initialMsg, func) => {
                     return headingContainer.appendChild(metaItem);
                 }
 
-                if(info._off_platform) addMetaItem(`fa-info-circle`, `Off-platform.`, (`This content was found a platform not supported by yt-dlp. ` + (info.entries ? `ezytdl will attempt to find equivalent media on supported platforms during download, however there's no guarantees it'll be 100% accurate.` : `This is the most suitable equivalent ezytdl was able to find on another platform.`)), `off-platform`)
+                if(info._off_platform) addMetaItem(`fa-info-circle`, `Off-platform.`, (`This content was found on a platform not supported by yt-dlp. ` + (info.entries ? `ezytdl will attempt to find equivalent media on supported platforms during download, however there's no guarantees it'll be 100% accurate.` : `This is the most suitable equivalent ezytdl was able to find on another platform.`)), `off-platform`)
 
                 if(info.media_metadata.general.artist) addMetaItem(`fa-user`, parseCreator(info, `by `), null, `creator`);
 
@@ -979,7 +980,7 @@ const runSearch = async (url, initialMsg, func) => {
 
                     card.querySelector(`#formatConversionTextbox`).placeholder = `${format.ext}`;
                     //card.querySelector(`#saveLocation`).value = `${config && config.saveLocation ? config.saveLocation : `{default save location}`}`;
-                    card.querySelector(`#basedir`).innerText = `${config && config.saveLocation ? config.saveLocation : `Save Location`}`;
+                    card.querySelector(`#basedir`).innerText = `${info.saveLocation || (config && config.saveLocation ? config.saveLocation : `Save Location`)}`;
 
                     if(config.lastMediaConversionOutputs[formatDownloadType]) card.querySelector(`#formatConversionTextbox`).value = config.lastMediaConversionOutputs[formatDownloadType];
 

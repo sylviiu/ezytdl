@@ -312,7 +312,7 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
 
     const saveLocation = node.querySelector(`#saveLocation`)
 
-    node.querySelector(`#basedir`).innerText = `${config && config.saveLocation ? config.saveLocation : `Save Location`}`;
+    node.querySelector(`#basedir`).innerText = `${info.saveLocation || (config && config.saveLocation ? config.saveLocation : `Save Location`)}`;
     //saveLocation.value = `${config && config.saveLocation ? config.saveLocation : ``}`;
 
     if(info.entries && info.entries.length > 0) {
