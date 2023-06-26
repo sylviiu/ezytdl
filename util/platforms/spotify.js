@@ -16,8 +16,6 @@ module.exports = {
         let body = null;
 
         const parse = async () => {
-            console.log(body);
-
             let n = 0;
 
             if(body.tracks) while(body.tracks.next) {
@@ -30,10 +28,22 @@ module.exports = {
                 body.tracks.next = next.body.tracks.next;
             };
 
+            n = 0;
+
+            while(body.next) {
+                n++;
+                console.log(`next page (${n})`);
+                updateStatus(`Retrieving additional entries...`);
+                updateStatusPercent([body.items.length, body.total]);
+                const next = await superagent.get(body.next).set('Authorization', `${token_type} ${access_token}`);
+                body.items = body.items.concat(next.body.items);
+                body.next = next.body.next;
+            };
+
             res(body);
         };
 
-        const endpoints = [ `tracks`, `albums`, `artists`, `playlists` ];
+        let endpoints = [ `tracks`, `albums`, `artists`, `playlists` ];
 
         if(useEndpoint) {
             endpoints = [ useEndpoint ]
@@ -52,7 +62,7 @@ module.exports = {
             await new Promise(async res => {
                 const use = useEndpoint ? query : id;
 
-                const url = `https://api.spotify.com/v1/${endpoint}/${encodeURIComponent(use)}`;
+                let url = `https://api.spotify.com/v1/${endpoint.includes(`%(url)s`) ? endpoint.replace(`%(url)s`, encodeURIComponent(use)) : endpoint + `/${encodeURIComponent(use)}`}`;
 
                 updateStatus(`Resolving ${endpoint.endsWith(`s`) ? endpoint.slice(0, -1) : endpoint} with "${use}"...`);
                 updateStatusPercent([i+1, endpoints.length]);
@@ -76,37 +86,59 @@ module.exports = {
         } else res(null);
     }),
     listFormats: ({ access_token, token_type }, { query, ignoreStderr }) => new Promise(async res => {
-        module.exports.resolve({ access_token, token_type }, { query, ignoreStderr }).then(obj => {
+        module.exports.resolve({ access_token, token_type }, { query, ignoreStderr }).then(async obj => {
             if(!obj) return res(null);
 
             const retObj = {type: obj.type || `Listing`, thumbnails: []};
 
             if(obj.copyrights) retObj.license = obj.copyrights[0].text;
 
-            const parseTrack = (track) => {
+            const parseTrack = (track, extend) => {
                 const parsed = {
                     title: track.name,
-                    artist: (track.artists || (track.album && track.album.artists ? track.album.artists : obj.artists))[0].name,
-                    artist_url: (track.artists || (track.album && track.album.artists ? track.album.artists : obj.artists))[0].external_urls.spotify,
+                    artist: ((track.artists || (track.album && track.album.artists ? track.album.artists : obj.artists)) || [{name: null}])[0].name,
+                    artist_url: ((track.artists || (track.album && track.album.artists ? track.album.artists : obj.artists)) || [{external_urls: {spotify: null}}])[0].external_urls.spotify,
                     album: track.album ? track.album.name : null,
                     license: track.copyrights ? track.copyrights[0].text : null,
                     duration: track.duration_ms / 1000,
                     id: track.id,
-                    thumbnails: (track.album && track.album.images ? track.album.images : track.images ? track.images : obj.images ? obj.images : null).reverse(),
-                    url: track.external_urls.spotify,
+                    thumbnails: (track.album && track.album.images ? track.album.images : track.images ? track.images : obj.images ? obj.images : []).reverse(),
+                    url: track.external_urls ? track.external_urls.spotify : null,
+                    type: track.type,
+                    _type: track.type,
                 };
 
                 parsed.creator = parsed.artist;
                 parsed.creator_url = parsed.artist_url;
 
-                return parsed;
-            };
+                if(track.tracks && track.tracks.items && track.tracks.items.length > 0) {
+                    parsed.entries = obj.tracks.items.map(o => parseTrack(o));
+                } else if(track.items && track.items.length > 0) {
+                    parsed.entries = obj.items.map(o => parseTrack(o));
+                };
 
-            if(obj.tracks && obj.tracks.items && obj.tracks.items.length > 0) {
-                retObj.entries = obj.tracks.items.map(parseTrack);
-            };
+                if(extend) {
+                    return new Promise(async res => {
+                        console.log(`extending`)
 
-            Object.assign(retObj, parseTrack(obj));
+                        if(track.type == `artist`) {
+                            parsed.entries = (await module.exports.resolve({ access_token, token_type }, { query: track.id, ignoreStderr: true, useEndpoint: `artists/%(url)s/albums?include_groups=album` })).items.map(o => parseTrack(o));
+                        };
+
+                        res(parsed);
+                    })
+                } else {
+                    if(track.type == `album` || track.type == `playlist` && !parsed.entries) {
+                        parsed.entries = [{album: true}];
+                    }
+
+                    return parsed;
+                }
+            }
+
+            Object.assign(retObj, await parseTrack(obj, true));
+
+            console.log(retObj)
             
             res(retObj);
         });
