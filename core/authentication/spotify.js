@@ -3,7 +3,7 @@ const superagent = require(`superagent`);
 let token = null;
 
 module.exports = {
-    urls: [`spotify`, `spotify.com`, `open.spotify.com`, `www.spotify.com`, `play.spotify.com`],
+    urls: [`spotify.com`, `open.spotify.com`, `www.spotify.com`, `play.spotify.com`],
     getToken: ({ clientID, clientSecret }) => new Promise(async res => {
         if(!token) {
             if(!clientID || !clientSecret) return res({ value: null, message: `No Client ID or Secret was provided!` });

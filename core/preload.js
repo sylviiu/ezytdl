@@ -89,9 +89,11 @@ contextBridge.exposeInMainWorld(`windowControls`, {
 })
 
 contextBridge.exposeInMainWorld(`authentication`, {
-    check: (arg) => invoke(`checkAuth`, arg),
-    getKey: (arg) => invoke(`getAuthKey`, arg),
-    getToken: (arg) => invoke(`getAuthToken`, arg),
+    check: (...arg) => invoke(`checkAuth`, arg),
+    getKey: (...arg) => invoke(`getAuthKey`, arg),
+    getToken: (...arg) => invoke(`getAuthToken`, arg),
+    remove: (...arg) => invoke(`removeAuth`, arg),
+    list: () => invoke(`listAuths`),
 });
 
 contextBridge.exposeInMainWorld(`system`, {

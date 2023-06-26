@@ -2,7 +2,9 @@ const settingsCardMDConverter = new showdown.Converter({ parseImgDimensions: tru
 
 const cards = [];
 
-const detailsStr = document.getElementById(`detailsStr`)
+const bottomContent = document.getElementById(`bottomContent`);
+
+const detailsStr = document.getElementById(`detailsStr`);
 
 document.getElementById(`settingsBox`).querySelector(`#options`).childNodes.forEach(node => node.classList.add(`d-none`));
 const settingsBox = document.getElementById(`settingsBox`).cloneNode(true);
@@ -233,7 +235,145 @@ const createCards = (config) => {
 
     for (entry of Object.entries(strings)) createCard(entry[0], entry[1], descriptions[entry[0]], config, document.getElementById(`settingsList`), true, 0)
 
-    if(detailsStr) document.getElementById(`settingsList`).appendChild(detailsStr)
+    if(bottomContent) document.getElementById(`settingsList`).appendChild(bottomContent)
+}
+
+const createServices = () => {
+    const servicesBox = document.getElementById(`services`);
+
+    const list = servicesBox.querySelector(`#list`);
+
+    authentication.list().then(services => {
+        for(const name of Object.keys(services)) {
+            const obj = services[name];
+
+            if(!list.querySelector(`#auth-` + name)) {
+                const prettyName = name[0].toUpperCase() + name.slice(1);
+
+                const element = settingsBox.cloneNode(true);
+
+                element.querySelector(`#strings`).style.width = `100%`
+
+                element.style.margin = `0px`
+                element.style.borderRadius = (parseInt(list.style.borderRadius) - (parseInt(settingsBox.style.borderRadius) - parseInt(list.style.borderRadius))) + `px`;
+
+                element.id = `auth-` + name;
+
+                // name and schtuff
+
+                const nameDiv = element.querySelector(`#name`);
+                const icon = faIconExists('fab', name, true, { marginRight: `8px` });
+
+                console.log(`${name} icon:`, icon);
+
+                nameDiv.innerHTML = ``;
+
+                if(icon) nameDiv.appendChild(icon);
+                
+                nameDiv.innerHTML += prettyName;
+
+                const description = element.querySelector(`#description`);
+
+                if(obj.urls && obj.urls.length > 0) {
+                    const spliced = obj.urls.splice(3);
+
+                    description.innerHTML = `Handles ` + obj.urls.join(`, `);
+
+                    if(spliced.length > 0) {
+                        description.innerHTML = `Handles ` + obj.urls.join(`, `) + ` and ${spliced.length} more`;
+                    } else {
+                        description.innerHTML = `Handles ` + obj.urls.join(`, `).slice(0, -1) + `, and ` + obj.urls.slice(-1)[0];
+                    }
+                };
+
+                const btn = element.querySelector(`#save`).cloneNode(true);
+                element.querySelector(`#save`).remove();
+
+                btn.style.paddingRight = ``;
+                btn.style.borderRadius = btn.style.borderBottomRightRadius;
+                btn.innerHTML = ``;
+                btn.style.margin = `4px`;
+
+                // link / unlink button
+
+                const unlink = btn.cloneNode(true);
+                unlink.innerHTML = faIconExists(`fas`, `unlink`, true, { marginRight: `8px` }).outerHTML + ` Unlink`;
+                unlink.id = `unlink`;
+
+                unlink.onclick = () => {
+                    authentication.remove(name).then(() => {
+                        createServices();
+                        createNotification({
+                            headingText: `Unlinked ${prettyName} account.`,
+                            bodyText: `Your ${prettyName} account was unlinked successfully.`
+                        })
+                    })
+                }
+
+                element.querySelector(`#options`).appendChild(unlink);
+
+                const link = btn.cloneNode(true);
+                link.innerHTML = faIconExists(`fas`, `link`, true, { marginRight: `8px` }).outerHTML + ` Link`;
+                link.id = `link`;
+
+                link.onclick = () => {
+                    authentication.getKey(name).then(key => {
+                        if(key) {
+                            createServices();
+                            createNotification({
+                                headingText: `Linked ${prettyName} account.`,
+                                bodyText: `Your ${prettyName} account was linked successfully.`
+                            })
+                        }
+                    })
+                }
+
+                element.querySelector(`#options`).appendChild(link);
+
+                list.appendChild(element);
+            };
+
+            const element = list.querySelector(`#auth-` + name);
+
+            if(element.querySelector(`#connected`)) element.querySelector(`#connected`).remove();
+
+            if(obj.authSaved) {
+                const connected = settingsBox.querySelector(`#description`).cloneNode(true);
+                connected.id = `connected`;
+                connected.innerHTML = ``
+                
+                const icon = faIconExists(`fas`, `check`, true, { marginRight: `4px` });
+
+                connected.style.fontSize = `0.8em`;
+                connected.style.marginTop = `12px`;
+                connected.style.color = `rgba(255,255,255,0.85)`;
+                connected.appendChild(icon);
+                connected.innerHTML += ` Linked`;
+
+                element.querySelector(`#strings`).insertBefore(connected, element.querySelector(`#description`));
+
+                element.querySelector(`#link`).disabled = true;
+                element.querySelector(`#unlink`).disabled = false;
+            } else if(!obj.authSaved) {
+                const connected = settingsBox.querySelector(`#description`).cloneNode(true);
+                connected.id = `connected`;
+                connected.innerHTML = ``
+                
+                const icon = faIconExists(`fas`, `times`, true, { marginRight: `4px` });
+
+                connected.style.fontSize = `0.8em`;
+                connected.style.marginTop = `12px`;
+                connected.style.color = `rgba(255,255,255,0.85)`;
+                connected.appendChild(icon);
+                connected.innerHTML += ` Not Linked`;
+
+                element.querySelector(`#strings`).insertBefore(connected, element.querySelector(`#description`));
+
+                element.querySelector(`#link`).disabled = false;
+                element.querySelector(`#unlink`).disabled = true;
+            }
+        }
+    })
 }
 
 const toggleButtons = (enable) => {
@@ -251,6 +391,7 @@ const toggleButtons = (enable) => {
 const parse = (config) => {
     toggleButtons(true)
     createCards(config)
+    createServices();
 }
 
 const updateConfig = (json) => {

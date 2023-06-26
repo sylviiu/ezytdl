@@ -81,7 +81,7 @@
             </div>
         </div>
         <div class="d-flex justify-content-between align-items-center settingsBox" id="settingsBox" style="width: 100%;min-height: 50px;background: #282828;border-radius: 24px;padding: 8px 9px 8px 16px;margin-top: 12px;">
-            <div class="d-flex flex-column justify-content-center align-items-start">
+            <div class="d-flex flex-column justify-content-center align-items-start" id="strings">
                 <h6 id="name" style="color: rgb(255,255,255);margin-top: 5px;min-width: 30vw;margin-bottom: 0px;text-align: left;">name</h6>
                 <h6 id="description" style="color: rgba(255,255,255,0.44);margin-top: 0px;min-width: 30vw;text-align: left;">description</h6>
             </div>
@@ -107,7 +107,16 @@
                     </svg></a>
             </div>
         </div>
-        <h6 class="text-start" id="detailsStr" style="margin-top: 38px;margin-bottom: 26px;color: rgba(255,255,255,0.55);font-size: 12px;">the app's version details should be showing here, but apparently something went wrong lol</h6>
+        <div id="bottomContent" style="margin-top: 12px;">
+            <div class="d-flex flex-column justify-content-between align-items-start" id="services" style="width: 100%;min-height: 50px;background: #282828;border-radius: 24px;padding: 8px 8px 8px 8px;margin-top: 36px;">
+                <div class="d-flex flex-column justify-content-center align-items-start" style="margin-bottom: 15px;margin-left: 8px;">
+                    <h6 id="name" style="color: rgb(255,255,255);margin-top: 5px;min-width: 30vw;margin-bottom: 0px;text-align: left;">Connected Services</h6>
+                    <h6 id="description" style="color: rgba(255,255,255,0.44);margin-top: 0px;min-width: 30vw;text-align: left;">Connected third-party services that require specific authentication</h6>
+                </div>
+                <div class="d-flex flex-column justify-content-center align-items-start" id="list" style="width: 100%;padding: 16px;background: rgba(0,0,0,0.15);min-height: 42px;border-radius: 18px;"></div>
+            </div>
+            <h6 class="text-start" id="detailsStr" style="margin-bottom: 26px;color: rgba(255,255,255,0.55);font-size: 12px;margin-top: 36px;padding-bottom: 26px;">the app's version details should be showing here, but apparently something went wrong lol</h6>
+        </div>
     </div>
     <div class="d-flex justify-content-between align-items-center" id="navigationBar" style="width: 100vw;height: 80px;padding: 24px;background: rgba(0,0,0,0.5);position: fixed;margin-top: -80px;backdrop-filter: blur(15px);top: 80px;left: 0px;">
         <div class="container-fluid d-flex justify-content-start align-items-end" id="navbarLeft" style="padding: 0px;"><img style="width: 56px;margin-right: 16px;border-radius: 100%;height: 56px;" src="../res/icon.png">

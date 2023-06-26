@@ -79,7 +79,7 @@ module.exports = async () => new Promise(async res => {
         
         ws.send({ version, progress: 0 })
         
-        const currentVersion = await require(`../currentVersion/ytdlp`)(true);
+        const currentVersion = (await require(`../currentVersion/ytdlp`)(true)).toString();
 
         console.log(`Current version: ${currentVersion}`)
 

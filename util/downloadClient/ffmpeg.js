@@ -44,7 +44,7 @@ module.exports = async () => new Promise(async res => {
         
         ws.send({ version, progress: 0 })
         
-        const currentVersion = await require(`../currentVersion/ffmpeg`)(true);
+        const currentVersion = (await require(`../currentVersion/ffmpeg`)(true)).toString();
 
         console.log(`Current version: ${currentVersion}`)
 

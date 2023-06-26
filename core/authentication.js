@@ -21,16 +21,37 @@ console.log(`---------------------\n${clients.length} authentication clients fou
 
 module.exports = {
     check: (arg) => {
+        if(clients.find(c => c.name == arg)) return arg;
+
         const parsed = require(`url`).parse(arg);
 
-        if(websiteMap.has(parsed.host)) return true;
-        if(websiteMap.has(parsed.hostname)) return true;
-        if(websiteMap.has(parsed.href)) return true;
+        if(websiteMap.has(parsed.host)) return websiteMap.get(parsed.host).name;
+        if(websiteMap.has(parsed.hostname)) return websiteMap.get(parsed.hostname).name;
+        if(websiteMap.has(parsed.href)) return websiteMap.get(parsed.href).name;
 
         return false;
     },
-    getKey: (service, force) => new Promise(async res => {
-        console.log(`searching for auth service ${service}`)
+    list: () => {
+        const retObj = {};
+
+        clients.forEach(c => retObj[c.name] = {
+            urls: c.urls,
+            authSaved: fs.existsSync(path.join(global.configPath, `auth`, c.name))
+        });
+
+        return retObj;
+    },
+    remove: (rawService) => {
+        const service = module.exports.check(rawService);
+        
+        if(fs.existsSync(path.join(global.configPath, `auth`, service))) {
+            fs.unlinkSync(path.join(global.configPath, `auth`, service));
+            return true;
+        } else return false;
+    },
+    getKey: (rawService, force) => new Promise(async res => {
+        const service = module.exports.check(rawService);
+        console.log(`searching for auth service ${service} / ${rawService}`)
         if(clients.find(c => c.name == service)) {
             console.log(`using ${service} authentication client`);
     
@@ -78,7 +99,9 @@ module.exports = {
             };
         }
     }),
-    getToken: (service, force) => new Promise(async res => {
+    getToken: (rawService, force) => new Promise(async res => {
+        const service = module.exports.check(rawService);
+
         const key = await module.exports.getKey(service, force);
 
         if(key && clients.find(c => c.name == service)) {

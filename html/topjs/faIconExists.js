@@ -1,4 +1,4 @@
-var faIconExists = (faType, name) => {
+var faIconExists = (faType, name, returnIcon, iconStyle) => {
     const tempElement = document.createElement(`i`);
 
     tempElement.classList.add(`${faType}`);
@@ -12,6 +12,15 @@ var faIconExists = (faType, name) => {
     const exists = window.getComputedStyle(tempElement, '::before').getPropertyValue('content') != `none`;
 
     tempElement.remove();
-    
-    return exists;
+
+    if(returnIcon && exists) {
+        tempElement.style.display = ``;
+        tempElement.style.position = ``;
+
+        if(iconStyle) for(const key of Object.keys(iconStyle)) {
+            tempElement.style[key] = iconStyle[key];
+        }
+
+        return tempElement;
+    } else return exists;
 }
