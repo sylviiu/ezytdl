@@ -312,7 +312,7 @@ sessions = {
                                 rawUpdateFunc(update);
                             }
             
-                            if(obj.killed) obj.status.status = `Cancelled`;
+                            if(obj.killed) obj.status.status = `Canceled`;
 
                             obj.result = update;
             

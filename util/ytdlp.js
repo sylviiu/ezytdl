@@ -624,7 +624,7 @@ module.exports = {
                 purgeFiles(`${i}`, f)
             });
 
-            update({status: `Download cancelled.`})
+            update({status: `Download canceled.`})
 
             resolve(obj)
         }
@@ -1034,7 +1034,7 @@ module.exports = {
                     } else {
                         console.log(`no metadata to add! (run: ${run}) (ffmpeg installed: ${module.exports.ffmpegPath ? true : false}) (file: ${file ? true : false})`);
                         if(!run && addMetadata) {
-                            Object.entries(addMetadata).filter(v => v[1] && !v[0].startsWith(`opt-`)).forEach(k => skipped[k[0]] = `Download was cancelled.`);
+                            Object.entries(addMetadata).filter(v => v[1] && !v[0].startsWith(`opt-`)).forEach(k => skipped[k[0]] = `Download was canceled.`);
                         } else if(!module.exports.ffmpegPath) {
                             Object.entries(addMetadata).filter(v => v[1] && !v[0].startsWith(`opt-`)).forEach(k => skipped[k[0]] = `FFmpeg wasn't found.`);
                         } else if(!file || !fs.existsSync(target)) {
@@ -1476,7 +1476,7 @@ module.exports = {
                                     //proc.stdin.write(`q`)
                                     proc.kill(`SIGINT`);
             
-                                    // dont auto kill this process, because if the user cancelled the last one, chances are it was a 24/7 livestream.
+                                    // dont auto kill this process, because if the user canceled the last one, chances are it was a 24/7 livestream.
                                 }});
             
                                 const updateTime = (d) => {
