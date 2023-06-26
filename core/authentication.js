@@ -113,7 +113,7 @@ module.exports = {
             if(clients.find(c => c.name == service) && clients.find(c => c.name == service).getToken) {
                 clients.find(c => c.name == service).getToken(key).then(r => {
                     console.log(`got token`)
-                    res(r);
+                    res(r.value);
                 }).catch(e => {
                     console.log(`failed to get token: ${e}`)
                     res(null);

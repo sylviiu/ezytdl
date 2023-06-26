@@ -440,24 +440,86 @@ const runSearch = async (url, initialMsg, func) => {
 
                 let ids = [];
 
-                const addMetaItem = (icon, content, id) => {
+                const addMetaItem = (icon, content, secondaryText, id) => {
                     id = `meta-${id}`
                     items++;
                     console.log(`Meta item: ${icon} / ${content}`);
                     if(headingContainer.querySelector(`#${id}`)) headingContainer.querySelector(`#${id}`).remove();
                     const metaItem = mediaMetaItem.cloneNode(true);
+
+                    const txt = metaItem.querySelector(`#txt`);
+                    const iconEl = metaItem.querySelector(`#icon`);
+
                     ids.push(id);
                     metaItem.id = id;
-                    metaItem.querySelector(`#icon`).classList.value = `fas ${icon}`;
+                    iconEl.classList.value = `fas ${icon}`;
                     if(typeof content == `string`) {
-                        metaItem.querySelector(`#txt`).innerHTML = content;
+                        txt.innerHTML = content;
                     } else {
-                        metaItem.querySelector(`#txt`).replaceWith(content);
+                        txt.replaceWith(content);
+                    };
+
+                    if(secondaryText) {
+                        console.log(`secondaryText for ${id}: ${secondaryText}`)
+
+                        txt.style.textDecorationStyle = `dotted`;
+
+                        const originalContent = txt.innerHTML;
+
+                        metaItem.addEventListener(`mouseover`, () => {
+                            console.log(`secondaryText for ${id}: mouseover`)
+
+                            anime({
+                                targets: txt,
+                                opacity: [1, 0],
+                                scaleX: 1.5,
+                                duration: 300,
+                                easing: `easeInCirc`,
+                                complete: () => {
+                                    txt.innerHTML = secondaryText;
+                                    anime({
+                                        targets: txt,
+                                        opacity: [0, 1],
+                                        scaleX: [0.75, 1],
+                                        duration: 600,
+                                        easing: `easeOutCirc`,
+                                    })
+                                }
+                            })
+                        });
+
+                        metaItem.addEventListener(`mouseout`, () => {
+                            console.log(`secondaryText for ${id}: mouseout`)
+                            
+                            anime.remove(txt);
+                            if(txt.innerHTML == secondaryText) {
+                                anime({
+                                    targets: txt,
+                                    opacity: 0,
+                                    scaleX: 0.75,
+                                    duration: 300,
+                                    easing: `easeInCirc`,
+                                    complete: () => {
+                                        txt.innerHTML = originalContent;
+                                        anime({
+                                            targets: txt,
+                                            opacity: [0, 1],
+                                            scaleX: [0.75, 1],
+                                            duration: 600,
+                                            easing: `easeOutCirc`,
+                                        })
+                                    }
+                                })
+                            }
+                        })
                     }
+                    
                     return headingContainer.appendChild(metaItem);
                 }
 
-                if(info.media_metadata.general.artist) addMetaItem(`fa-user`, parseCreator(info, `by `), `creator`);
+                if(info._off_platform) addMetaItem(`fa-info-circle`, `Off-platform.`, (`This content was found a platform not supported by yt-dlp. ` + (info.entries ? `ezytdl will attempt to find equivalent media on supported platforms during download, however there's no guarantees it'll be 100% accurate.` : `This is the most suitable equivalent ezytdl was able to find on another platform.`)), `off-platform`)
+
+                if(info.media_metadata.general.artist) addMetaItem(`fa-user`, parseCreator(info, `by `), null, `creator`);
 
                 if(info.entries && func != `search`) {
                     let str = mediaMetaItem.querySelector(`#txt`).cloneNode(true);
@@ -503,17 +565,17 @@ const runSearch = async (url, initialMsg, func) => {
 
                     if(more > 0) str.innerHTML += `, and ${more} more`;
 
-                    if(str.innerHTML) addMetaItem(`fa-list`, str, `includes`);
+                    if(str.innerHTML) addMetaItem(`fa-list`, str, null, `includes`);
                 };
 
-                if(info.duration && info.duration.string && info.duration.units.ms) addMetaItem(`fa-clock`, info.duration.string, `duration`);
+                if(info.duration && info.duration.string && info.duration.units.ms) addMetaItem(`fa-clock`, info.duration.string, null, `duration`);
 
                 if(info.entries && info.ezytdl_type == `user`) {
-                    addMetaItem(`fa-user-circle`, info.entries.length + ` upload${info.entries.length == 1 ? `` : `s`}`, `entries`)
+                    addMetaItem(`fa-user-circle`, info.entries.length + ` upload${info.entries.length == 1 ? `` : `s`}`, null, `entries`)
                 } else if(info.entries) {
-                    addMetaItem(`fa-play-circle`, info.entries.length + ` entr${info.entries.length == 1 ? `y` : `ies`}`, `entries`)
+                    addMetaItem(`fa-play-circle`, info.entries.length + ` entr${info.entries.length == 1 ? `y` : `ies`}`, null, `entries`)
                 } else if(info.formats) {
-                    addMetaItem(`fa-play-circle`, info.formats.length + ` format${info.formats.length == 1 ? `` : `s`}`, `formats`)
+                    addMetaItem(`fa-play-circle`, info.formats.length + ` format${info.formats.length == 1 ? `` : `s`}`, null, `formats`)
                 }
 
                 listbox.querySelector(`#mediaSubtext`).innerHTML = ((type || iconExtra)).trim();

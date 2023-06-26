@@ -10,6 +10,7 @@
     "sanitize-filename": "^1.6.3",
     "sharp": "^0.32.1",
     "showdown": "^2.1.0",
+    "string-similarity": "^4.0.4",
     "superagent": "^8.0.9",
     "unzipper": "^0.10.14",
     "which": "^3.0.1",

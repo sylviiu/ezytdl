@@ -1,6 +1,7 @@
 const child_process = require('child_process');
 const fs = require('fs');
 const yargs = require('yargs');
+const { compareTwoStrings } = require('string-similarity');
 const idGen = require(`../util/idGen`);
 const downloadManager = require(`./downloadManager`);
 const authentication = require(`../core/authentication`)
@@ -145,6 +146,7 @@ const sendUpdates = (proc, initialMsg) => {
 
 module.exports = {
     ffmpegPath: null,
+    sendUpdates,
     hasFFmpeg: () => refreshFFmpeg(),
     sanitizePath: (...args) => sanitizePath(...args),
     additionalArguments: (args) => {
@@ -258,7 +260,7 @@ module.exports = {
             let anyNoTitle = false;
 
             for (entry of d.entries) {
-                if(!entry.title || entry.title == entry.url || !entry) {
+                if(!entry || !entry.title || entry.title == entry.url) {
                     anyNoTitle = true;
                     break;
                 }
@@ -285,6 +287,28 @@ module.exports = {
             return res(null);
         }
     }),
+    parseOutputTemplate: (info, template) => {
+        const originalTemplate = template;
+
+        const regex = /%\(\s*([^)]+)\s*\)s/g;
+      
+        if(!template) template = require(`../getConfig`)().outputFilename;
+      
+        template = template.replace(regex, (match, key) => {
+            const capturedKeys = key.split(`,`).map(s => s.trim())
+            for (const key of capturedKeys) {
+                console.log(match, key);
+                if (info[key]) {
+                    return info[key];
+                }
+            }
+            return match;
+        });
+
+        console.log(`--- OUTPUT TEMPLATE FOR "${originalTemplate}" ---\n${template}\n-----------------------`)
+      
+        return template;
+    },
     parseMetadata: (d, playlistRoot=false) => {
         const genericURLRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/i;
 
@@ -292,7 +316,7 @@ module.exports = {
             title: d.title || d.webpage_url || d.url,
             artist: d.artist || d.album_artist || d.creator || d.uploader || d.channel,
             genre: d.genre,
-            copyright: d.license,
+            copyright: d.license || (d['playlist-media_metadata'] ? d['playlist-media_metadata'].general.copyright : null),
             comment: d.description || (d['playlist-media_metadata'] && d['playlist-media_metadata'].general.comment ? d['playlist-media_metadata'].general.comment : null),
         };
 
@@ -308,9 +332,9 @@ module.exports = {
             media_metadata: {
                 general,
                 album: {
-                    album: d.album || d.playlist_title || d['playlist-playlist_title'] || d.playlist_name || d.playlist || (d['playlist-media_metadata'] && d['playlist-media_metadata'].album.album ? d['playlist-media_metadata'].album.album : null),
+                    album: d.album || d.playlist_title || d['playlist-title'] || d.playlist_name || d.playlist || (d['playlist-media_metadata'] && d['playlist-media_metadata'].album.album ? d['playlist-media_metadata'].album.album : null),
                     album_artist: playlistRoot ? general.artist : (d['playlist-media_metadata'] && d['playlist-media_metadata'].general.artist ? d['playlist-media_metadata'].general.artist : null),
-                    track: playlistRoot ? null : (d.entry_number && (d['playlist-playlist_count'] || d.entry_total) ? `${d.entry_number}/${d['playlist-playlist_count'] || d.entry_total}` : null),
+                    track: ((typeof d.entry_number == `number` && typeof (d['playlist-playlist_count'] || d.entry_total) == `number`) ? `${d.entry_number}/${d['playlist-playlist_count'] || d.entry_total}` : null),
                 },
                 url,
             }
@@ -320,14 +344,16 @@ module.exports = {
         if(!d.title) d.title = d.webpage_url;
         if(!d.title) d.title = d.url;
 
+        if(!d.playlist_count && d.entries) d.playlist_count = d.entries.length;
+
         if(full && root && !d.fullInfo) d.fullInfo = true;
 
         if(!d.originalDuration && d.duration) d.originalDuration = d.duration;
 
         let totalTime = 0;
 
-        if(entry_number && !root) d.entry_number = entry_number;
-        if(entry_total && !root) d.entry_total = entry_total;
+        if(typeof entry_number == `number` && !root) d.entry_number = entry_number;
+        if(typeof entry_total == `number` && !root) d.entry_total = entry_total;
 
         if(d.duration && !root) totalTime += typeof d.duration == `object` ? d.duration.units.ms : d.duration*1000;
 
@@ -337,13 +363,10 @@ module.exports = {
 
         module.exports.parseMetadata(d, root);
 
-        //d.created_by = d.media_metadata.general.artist;
-        //d.created_url = d.media_metadata.url.artist_url;
-
         const parseList = (o, i, key) => {
             if(o && typeof o == `object`) {
                 totalTime += (o.originalDuration ? o.originalDuration * 1000 : 0) || (typeof o.duration == `number` ? o.duration*1000 : typeof o.duration == `object` && o.duration?.units?.ms ? o.duration.units.ms : 0) || 0;
-                return module.exports.parseInfo(o, full, false, rawInfo, i ? i+1 : null, i ? d[key].length : null);
+                return module.exports.parseInfo(o, full, false, rawInfo, typeof i == `number` ? i+1 : null, i ? d[key].length : null);
             } else return o;
         }
 
@@ -405,9 +428,15 @@ module.exports = {
 
         d.ezytdl_key_type = key.split(/(?=[A-Z])/).slice(-1)[0];
 
+        if(!root && rawInfo) {
+            for(const key of Object.keys(rawInfo)) {
+                if(rawInfo[key]) d[`playlist-${key}`] = rawInfo[key];
+            }
+        }
+
         return module.exports.parseMetadata(d, root);
     },
-    search: ({query, count, from, extraArguments}) => new Promise(async res => {
+    search: ({query, count, from, extraArguments, noVerify, forceVerify, ignoreStderr}) => new Promise(async res => {
         if(!count) count = 10;
 
         const additional = module.exports.additionalArguments(extraArguments);
@@ -434,7 +463,7 @@ module.exports = {
 
         let data = ``;
 
-        sendUpdates(proc, `Starting search for "${query}"`);
+        if(!ignoreStderr) sendUpdates(proc, `Starting search for "${query}"`);
 
         proc.stdout.on(`data`, d => {
             //console.log(`output`, d.toString())
@@ -451,10 +480,12 @@ module.exports = {
             try {
                 const d = Object.assign(JSON.parse(data), { _request_url: query });
 
-                module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, extraArguments }).then(res);
+                if(noVerify) {
+                    return res(d);
+                } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, extraArguments, forceRun: forceVerify }).then(res);
             } catch(e) {
                 console.error(`${e}`)
-                sendNotification({
+                if(!ignoreStderr) sendNotification({
                     type: `error`,
                     headingText: `Error getting media info`,
                     bodyText: `There was an issue retrieving the info. Please try again.`
@@ -579,6 +610,19 @@ module.exports = {
             if(obj[`progress-${key}`]) delete obj[`progress-${key}`];
             return update({})
         }
+        
+        if(info && info._needs_original) {
+            console.log(`info needs original!`);
+            update({status: `Finding equivalent on supported platform...`});
+
+            const equiv = await module.exports.findEquivalent(Object.assign({}, info, { url }), true, true)
+
+            Object.assign(info, {
+                url: equiv.url || equiv.webpage_url || equiv._request_url
+            });
+
+            url = info.url;
+        }
 
         let filenames = [];
         
@@ -685,7 +729,7 @@ module.exports = {
                 } else thisFormat = info.formats.find(f => f.format_id == format) || info.formats[0]
             }
 
-            const fullYtdlpFilename = sanitize(await module.exports.getFilename(url, format, outputFilename + `.%(ext)s`))
+            const fullYtdlpFilename = sanitize(await module.exports.getFilename(url, format, (info._off_platform ? module.exports.parseOutputTemplate(info, outputFilename) : outputFilename) + `.%(ext)s`))
 
             const ytdlpSaveExt = fullYtdlpFilename.split(`.`).slice(-1)[0];
 
@@ -821,7 +865,15 @@ module.exports = {
 
                                 tags = [];
 
-                                if(info.track || info.title) tags.push([`title`, info.track || info.title]);
+                                const general = Object.entries(info.media_metadata.general).filter(v => v[1]);
+                                const album = Object.entries(info.media_metadata.album).filter(v => v[1]);
+                                //const url = Object.entries(info.media_metadata.url).filter(v => v[1]);
+
+                                for(const entry of general) tags.push([entry[0], entry[1]]);
+
+                                if(addMetadata['opt-saveAsAlbum']) for(const entry of album) tags.push([entry[0], entry[1]]);
+
+                                /*if(info.track || info.title) tags.push([`title`, info.track || info.title]);
                                 if(info.artist || info.album_artist || info.creator || info.uploader || info.channel) tags.push([`artist`, info.artist || info.album_artist || info.creator || info.uploader || info.channel]);
 
                                 if(addMetadata['opt-saveAsAlbum']) {
@@ -831,7 +883,7 @@ module.exports = {
 
                                 if(info.genre) tags.push([`genre`, info.genre]);
                                 if(info.license) tags.push([`copyright`, info.license]);
-                                if(info.description) tags.push([`comment`, info.description]);
+                                if(info.description) tags.push([`comment`, info.description]);*/
                                 
                                 setProgress(`tags`, {progressNum: 30, status: `Adding ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}...`})
     
@@ -882,15 +934,10 @@ module.exports = {
                             //console.log(`--------------\nfoundCodec: ${foundCodec}\nvcodec: ${vcodec}\ninfo.video: ${info.video}\n--------------`)
 
                             if(addMetadata.thumbnail && !vcodec) {
-                                if(!info.thumbnail && !info.fullInfo) {
-                                    await fetchFullInfo()
-                                    setProgress(`thumbnail`, {progressNum: -1, status: `Getting full metadata...`})
-                                };
-                                
-                                if(!info.thumbnail && info.fullInfo) {
+                                if(!(info.media_metadata.url.thumbnail_url || info.thumbnails) && info.fullInfo) {
                                     skipped.thumbnail = `No thumbnail found`;
                                     deleteProgress(`thumbnail`);
-                                } else if(info.thumbnail) await new Promise(async r => {
+                                } else if(info.thumbnails || info.media_metadata.url.thumbnail_url) await new Promise(async r => {
                                     let progressNum = 15;
     
                                     fs.renameSync(target, target + `.ezytdl`);
@@ -968,6 +1015,8 @@ module.exports = {
                                     }
 
                                     const thumbnails = (info.thumbnails || []).reverse();
+
+                                    if(info.media_metadata.url.thumbnail_url) thumbnails.unshift({ url: info.media_metadata.url.thumbnail_url, preference: 0, id: `metadata` });
 
                                     for(const thumbnail of thumbnails) {
                                         const code = await new Promise(async res => {
@@ -1381,7 +1430,7 @@ module.exports = {
 
                 proc.once('info', newInfo => {
                     console.log(`INFODUMP RECEIVED`);
-                    Object.assign(info, module.exports.parseInfo(newInfo, true));
+                    Object.assign(info, module.exports.parseInfo(newInfo, true), info._off_platform ? { media_metadata: info.media_metadata } : {});
                 })
         
                 proc.stderr.on(`data`, data => {
@@ -1546,12 +1595,133 @@ module.exports = {
             });
             update({ failed: true, status: `${e.toString()}` })
         }
+    }),
+    findEquivalent: (info, ignoreStderr, noVerify=false, forceVerify) => new Promise(async res => {
+        const instanceName = `findEquivalent-${info.extractor}-${info.id}-${idGen(16)}`;
+
+        const manager = downloadManager.get(instanceName, {staggered: true, noSendErrors: true});
+
+        manager.set({ concurrentDownloadsMult: 2 })
+
+        manager.queueAction(manager.queue.queue.map(o => o.id), `remove`);
+        manager.queueAction(manager.queue.complete.map(o => o.id), `remove`);
+        manager.queueAction(manager.queue.paused.map(o => o.id), `remove`);
+
+        manager.queueEventEmitter.removeAllListeners(`queueUpdate`);
+
+        if(downloadManager[instanceName].timeout) clearTimeout(downloadManager[instanceName].timeout);
+
+        let badEntries = 0;
+
+        manager.queueEventEmitter.on(`queueUpdate`, (queue) => {
+            const totalLength = Object.values(queue).reduce((a, b) => a + b.length, 0);
+
+            if(queue.complete.length == totalLength) {
+                console.log(`queue complete!`);
+
+                res(module.exports.parseInfo(info, true));
+
+                downloadManager[instanceName].timeout = setTimeout(() => {
+                    if(downloadManager[instanceName]) {
+                        console.log(`deleting instance ${instanceName}`)
+                        delete downloadManager[instanceName];
+                    }
+                }, 15000)
+            }
+        });
+
+        const match = (thisInfo, resultsInfo) => {
+            const originalTitle = thisInfo.media_metadata.general.title;
+            const originalArtist = thisInfo.media_metadata.general.artist;
+
+            resultsInfo.entries = resultsInfo.entries.map(result => {
+                const { title, artist } = result.media_metadata.general;
+
+                //console.log(result)
+                let modified = false;
+                if(originalTitle && title && originalArtist && artist) {
+                    const values = {
+                        lowercase: (compareTwoStrings(originalTitle.toLowerCase(), title.toLowerCase()) + compareTwoStrings(originalArtist.toLowerCase(), artist.toLowerCase())) * .4,
+                        uppercase: (compareTwoStrings(originalTitle, title) + compareTwoStrings(originalArtist, artist)) * .4
+                    };
+
+                    result.similarity = Math.max(...Object.values(values))
+                    console.log(`Similarity of ${title} & ${originalTitle} by ${artist} / ${originalArtist}: ${result.similarity}`)
+                    modified = true;
+                } else if(title && originalTitle) {
+                    const values = {
+                        lowercase: (compareTwoStrings(originalTitle.toLowerCase(), title.toLowerCase())) * .4,
+                        uppercase: (compareTwoStrings(originalTitle, title)) * .4
+                    };
+
+                    if(originalArtist) Object.assign(values, {
+                        lowercaseWithArtist: (compareTwoStrings(originalArtist.toLowerCase() + ` - ` + originalTitle.toLowerCase(), title.toLowerCase())) * .4,
+                        uppercaseWithArtist: (compareTwoStrings(originalArtist + ` - ` + originalTitle, title)) * .4
+                    });
+
+                    result.similarity = Math.max(...Object.values(values))
+                    console.log(`Similarity of ${title} & ${originalTitle}: ${result.similarity}`)
+                    modified = true;
+                };
+
+                if(modified) {
+                    const oldDuration = thisInfo.originalDuration;
+                    const newDuration = result.originalDuration;
+
+                    if(oldDuration && newDuration) {
+                        const durationDiff = Math.abs(oldDuration > newDuration ? oldDuration - newDuration : newDuration - oldDuration);
+
+                        result.similarity -= (durationDiff / 100);
+
+                        console.log(`duration difference: ${durationDiff} -- new similarity: ${result.similarity}`);
+
+                        return result;
+                    } else return result;
+                } else return undefined;
+            }).filter(a => a !== undefined).sort((a, b) => a.similarity < b.similarity ? 1 : -1);
+
+            Object.assign(thisInfo, {
+                url: resultsInfo.entries[0].url,
+                formats: resultsInfo.entries[0].formats,
+                _needs_original: false,
+            });
+
+            return module.exports.parseInfo(thisInfo, true);
+        }
+
+        if(info.entries) for(const i in info.entries) {
+            const entry = info.entries[i];
+
+            manager.createDownload([{query: `${e.artist} - ${e.title}`, from: `youtubemusic`, count: 5, noVerify, forceVerify, ignoreStderr}, false], (e) => {
+                if(e) {
+                    console.log(`new info!`);
+                    match(entry, module.exports.parseInfo(e));
+                    entry.searchResults = e;
+                    console.log(`added "${entry.title}" (id: ${entry.id} / url: ${entry.url}) to index ${i}`)
+                } else badEntries++;
+            }, `search`);
+        } else {
+            manager.createDownload([{query: `"${info.artist}" - "${info.title}"`, from: `youtubemusic`, count: 5, noVerify, forceVerify, ignoreStderr}, false], (e) => {
+                if(e) {
+                    console.log(`new info!`);
+                    match(info, module.exports.parseInfo(e));
+                    info.searchResults = e;
+                    console.log(`added "${info.title}" (id: ${info.id} / url: ${info.url})`)
+                } else badEntries++;
+            }, `search`);
+        }
+
+        manager.queueEventEmitter.emit(`queueUpdate`, manager.queue);
     })
 };
 
 for(const entry of Object.entries(module.exports).filter(o => typeof o[1] == `function`)) {
     const name = entry[0];
     const func = entry[1];
+
+    if(!module.exports.ytdlp) module.exports.ytdlp = {};
+
+    module.exports.ytdlp[name] = func;
 
     module.exports[name] = (...args) => {
         const authType = authentication.check(typeof args[0] == `object` && typeof args[0].query == `string` ? args[0].query : ``)
@@ -1562,7 +1732,19 @@ for(const entry of Object.entries(module.exports).filter(o => typeof o[1] == `fu
                 console.log(`running function...`)
                 return new Promise(async (res, rej) => authentication.getToken(authType).then(token => {
                     if(token) {
-                        doFunc(token, ...args).then(res).catch(rej);
+                        doFunc(token, ...args).then(o => {
+                            const parsed = module.exports.parseInfo(Object.assign(o, {
+                                extractor: authType.toLowerCase() + (o.type ? `:${o.type.toLowerCase()}` : ``),
+                                extractor_key: authType[0].toUpperCase() + authType.slice(1) + (o.type ? o.type[0].toUpperCase() + o.type.slice(1) : ``),
+                                _off_platform: true,
+                                _platform: authType,
+                                _needs_original: true,
+                            }));
+
+                            if(!parsed.entries) {
+                                module.exports.findEquivalent(parsed, false, false, true).then(res).catch(rej);
+                            } else res(parsed)
+                        }).catch(rej);
                     } else {
                         console.log(`failed to auth`)
                         return func(...args).then(res).catch(rej);
