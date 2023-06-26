@@ -360,6 +360,20 @@ const runSearch = async (url, initialMsg, func) => {
 
             listbox.querySelector(`#mediaTitle`).innerHTML += `${info.media_metadata.general.title}`;
 
+            const getType = (entry) => {
+                let type = `${entry.extractor_key || entry.extractor || entry.webpage_url_domain}`.split(/(?=[A-Z])/)[0];
+
+                if(entry.entries && entry.entries[0] && (entry.entries[0].album || entry.entries[0].track)) {
+                    return `album`
+                } else if(entry.categories && entry.categories.map(f => f.toString().toLowerCase()).find(f => f == `music`) || entry.track || entry.album) {
+                    return `song`
+                } else if(entry.ezytdl_key_type && `${entry.ezytdl_key_type}`.toLowerCase() != `${type}`.toLowerCase()) {
+                    return `${entry.ezytdl_key_type}`
+                } else if(entry.ezytdl_type) {
+                    return `${entry.ezytdl_type}`
+                } else return `listing`;
+            }
+
             const updateMetadata = async (parse) => {
                 if(parse) info = await mainQueue.parseInfo(info);
 
@@ -367,15 +381,7 @@ const runSearch = async (url, initialMsg, func) => {
 
                 if(func == `search`) {
                     afterType += ` search`
-                } else if(info.entries && info.entries[0] && (info.entries[0].album || info.entries[0].track)) {
-                    afterType += ` album`
-                } else if(info.categories && info.categories.map(f => f.toString().toLowerCase()).find(f => f == `music`) || info.track || info.album) {
-                    afterType += ` song`
-                } else if(`${info.ezytdl_key_type}`.toLowerCase() != `${type}`.toLowerCase()) {
-                    afterType += ` ${info.ezytdl_key_type}`
-                } else if(info.ezytdl_type) {
-                    afterType += ` ${info.ezytdl_type}`
-                } else afterType += ` listing`;
+                } else afterType += getType(info);
 
                 if(info.media_metadata.url.source_url) {
                     const a = document.createElement(`a`);
@@ -766,7 +772,7 @@ const runSearch = async (url, initialMsg, func) => {
                     const nested = (entry.entries || func == `search`) ? true : false;
 
                     if(nested) {
-                        if(entry.entries) card.querySelector(`#formatName`).innerHTML += ` (${entry.entries.length})`;
+                        if(entry.entries) card.querySelector(`#formatName`).innerHTML += ` (${info._off_platform ? getType(entry) : entry.entries.length})`;
 
                         card.querySelector(`#downloadicon`).style.transform = `rotate(270deg)`;
                         // make arrow point right
