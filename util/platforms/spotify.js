@@ -28,6 +28,8 @@ module.exports = {
                 body.tracks.next = next.body.tracks.next;
             };
 
+            if(body.tracks.items && body.tracks.items[0].track) body.tracks.items = body.tracks.items.map((o, i) => Object.assign(body.tracks.items[i], o.track, {track: null}));
+
             n = 0;
 
             while(body.next) {
@@ -40,10 +42,14 @@ module.exports = {
                 body.next = next.body.next;
             };
 
+            if(body.items && body.items[0].track) body.items = body.items.map((o, i) => Object.assign(body.items[i], o.track, {track: null}));
+
+            console.log(body)
+
             res(body);
         };
 
-        let endpoints = [ `tracks`, `albums`, `artists`, `playlists` ];
+        let endpoints = [ `tracks`, `albums`, `artists`, `playlists/%(url)s/tracks` ];
 
         if(useEndpoint) {
             endpoints = [ useEndpoint ]

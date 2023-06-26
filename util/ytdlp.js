@@ -765,7 +765,7 @@ module.exports = {
     
             //console.log(saveLocation, filePath, ytdlpFilename)
 
-            const saveTo = info.saveLocation || module.exports.getSavePath(info, filePath);
+            const saveTo = module.exports.getSavePath(info, filePath);
 
             update({ deleteFiles: () => purgeLeftoverFiles(saveTo), live: info.is_live ? true : false, destinationFilename: ytdlpFilename, formatID: format })
     
@@ -1699,7 +1699,7 @@ module.exports = {
         if(info.entries) for(const i in info.entries) {
             const entry = info.entries[i];
 
-            manager.createDownload([{query: `${e.artist} - ${e.title}`, from: `youtubemusic`, count: 5, noVerify, forceVerify, ignoreStderr}, false], (e) => {
+            manager.createDownload([{query: `${e.artist} - ${e.title}`, from: `youtubemusic`, count: 10, noVerify, forceVerify, ignoreStderr}, false], (e) => {
                 if(e) {
                     console.log(`new info!`);
                     match(entry, module.exports.parseInfo(e));
@@ -1708,7 +1708,7 @@ module.exports = {
                 } else badEntries++;
             }, `search`);
         } else {
-            manager.createDownload([{query: `"${info.artist}" - "${info.title}"`, from: `youtubemusic`, count: 5, noVerify, forceVerify, ignoreStderr}, false], (e) => {
+            manager.createDownload([{query: `"${info.artist}" - "${info.title}"`, from: `youtubemusic`, count: 10, noVerify, forceVerify, ignoreStderr}, false], (e) => {
                 if(e) {
                     console.log(`new info!`);
                     match(info, module.exports.parseInfo(e));
