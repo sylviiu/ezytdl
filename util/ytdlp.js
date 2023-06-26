@@ -6,6 +6,8 @@ const idGen = require(`../util/idGen`);
 const downloadManager = require(`./downloadManager`);
 const authentication = require(`../core/authentication`);
 
+const outputTemplateRegex = /%\(\s*([^)]+)\s*\)s/g;
+
 const durationCurve = require(`animejs`).easing(`easeInExpo`);
 
 const platforms = fs.readdirSync(require(`../util/getPath`)(`./util/platforms`)).map(f => (Object.assign(require(`../util/platforms/${f}`), {
@@ -292,12 +294,10 @@ module.exports = {
     }),
     parseOutputTemplate: (info, template) => {
         const originalTemplate = template;
-
-        const regex = /%\(\s*([^)]+)\s*\)s/g;
       
         if(!template) template = require(`../getConfig`)().outputFilename;
       
-        template = template.replace(regex, (match, key) => {
+        template = template.replace(outputTemplateRegex, (match, key) => {
             const capturedKeys = key.split(`,`).map(s => s.trim())
             for (const key of capturedKeys) {
                 console.log(match, key);
@@ -411,7 +411,7 @@ module.exports = {
                     o.video = false;
                 };
 
-                return parseList(o);
+                return o;
             }).sort((a, b) => {
                 if(a.audio && a.video) {
                     return -1;
@@ -460,6 +460,8 @@ module.exports = {
         }
 
         d.saveLocation = module.exports.getSavePath(d);
+
+        d.output_name = module.exports.getFilename(d._original_url, d, null, null, false);
 
         return module.exports.parseMetadata(d, root);
     },
@@ -566,51 +568,75 @@ module.exports = {
             }
         })
     }),
-    getFilename: (url, format, template) => new Promise(async res => {
+    getFilename: (url, info, format, template, fullParse) => {
         const { outputFilename } = require(`../getConfig`)();
 
-        const args = [url, `-o`, template || outputFilename, `--get-filename`, `--quiet`];
+        let useTempalte = template || outputFilename;
 
-        if(format) args.unshift(`-f`, format)
+        console.log(`getFilename / raw: "${useTempalte}"`)
 
-        //console.log(args)
+        useTempalte = module.exports.parseOutputTemplate(Object.assign({}, (format || {}), info), useTempalte);
 
-        const proc = execYTDLP(args);
+        console.log(`getFilename / before: "${useTempalte}"`)
 
-        let data = ``;
-
-        proc.stderr.on(`data`, d => {
-            //console.log(d.toString().trim())
-
-            if(d.toString().trim().startsWith(`ERROR: `)) {
-                if(!format) {
-                    sendNotification({
-                        type: `error`,
-                        headingText: `failed to retrieve filename of ${url}: ${d.toString().trim()}`,
-                        bodyText: `${d.toString().trim().split(`ERROR: `)[1]}`
-                    })
-                } else {
-                    proc.kill(`SIGKILL`);
-                    return module.exports.getFilename(url, null, template).then(res)
-                }
-            }
-        })
-
-        proc.stdout.on(`data`, d => {
-            //console.log(`output`, d.toString())
-            data += d.toString().trim();
-        });
-
-        //proc.stderr.on(`data`, d => {
-        //    console.log(d.toString().trim())
-        //})
+        if(outputTemplateRegex.test(useTempalte) && fullParse) {
+            return new Promise(async res => {
+                console.log(`getFilename / template needs to be parsed!`)
+    
+                const args = [url, `-o`, useTempalte, `--get-filename`, `--quiet`];
         
-        proc.on(`close`, code => {
-            console.log(`getFilename closed with code ${code}`);
-            console.log(data)
-            res(data)
-        })
-    }),
+                if(format && format.format_id) args.unshift(`-f`, format.format_id)
+                else if(typeof format == `string`) args.unshift(`-f`, format)
+        
+                //console.log(args)
+        
+                const proc = execYTDLP(args);
+        
+                let data = ``;
+        
+                proc.stderr.on(`data`, d => {
+                    //console.log(d.toString().trim())
+        
+                    if(d.toString().trim().startsWith(`ERROR: `)) {
+                        if(!format) {
+                            sendNotification({
+                                type: `error`,
+                                headingText: `failed to retrieve filename of ${url}: ${d.toString().trim()}`,
+                                bodyText: `${d.toString().trim().split(`ERROR: `)[1]}`
+                            })
+                        } else {
+                            proc.kill(`SIGKILL`);
+                            return module.exports.getFilename(url, info, null, template, noParse).then(res)
+                        }
+                    }
+                })
+        
+                proc.stdout.on(`data`, d => {
+                    //console.log(`output`, d.toString())
+                    data += d.toString().trim();
+                });
+        
+                //proc.stderr.on(`data`, d => {
+                //    console.log(d.toString().trim())
+                //})
+                
+                proc.on(`close`, code => {
+                    console.log(`getFilename / getFilename closed with code ${code}`);
+                    console.log(data)
+                    console.log(`getFilename / after: "${data}"`)
+                    res(data)
+                })
+            })
+        } else {
+            console.log(`getFilename / no need to parse template! (or noParse is true)`)
+
+            useTempalte = useTempalte.replace(outputTemplateRegex, () => `${`Unknown`}`)
+
+            console.log(`getFilename / after: "${useTempalte}"`)
+
+            return useTempalte
+        }
+    },
     download: ({url, format, ext, convert, filePath, addMetadata, info, extraArguments}, updateFunc) => new Promise(async resolve => {
         const temporaryFilename = `ezytdl-` + idGen(24);
         
@@ -744,7 +770,7 @@ module.exports = {
                 } else thisFormat = info.formats.find(f => f.format_id == format) || info.formats[0]
             }
 
-            const fullYtdlpFilename = sanitize(await module.exports.getFilename(url, format, (info._off_platform ? module.exports.parseOutputTemplate(info, outputFilename) : outputFilename) + `.%(ext)s`))
+            const fullYtdlpFilename = sanitize(await module.exports.getFilename(url, info, thisFormat, outputFilename + `.%(ext)s`, true))
 
             const ytdlpSaveExt = fullYtdlpFilename.split(`.`).slice(-1)[0];
 
@@ -756,7 +782,9 @@ module.exports = {
                 format_note: `unknown`,
                 format: `unknown`,
                 url
-            }
+            };
+
+            thisFormat.format_id = format || thisFormat.format_id;
             
             filenames.push(fullYtdlpFilename)
             filenames.push(temporaryFilename)
@@ -1136,7 +1164,7 @@ module.exports = {
 
                 filenames.push(ytdlpFilename)
     
-                if(!fs.existsSync(previousFilename)) previousFilename = await module.exports.getFilename(url, format, temporaryFilename + `.%(ext)s`);
+                if(!fs.existsSync(previousFilename)) previousFilename = await module.exports.getFilename(url, info, thisFormat, temporaryFilename + `.%(ext)s`, true);
     
                 filenames.push(previousFilename)
 

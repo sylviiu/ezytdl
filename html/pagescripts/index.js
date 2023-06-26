@@ -730,7 +730,7 @@ const runSearch = async (url, initialMsg, func) => {
                         })
                     } else card.querySelector(`#fileIcon`).classList.remove(`d-none`);
 
-                    card.querySelector(`#formatName`).innerHTML = entry.media_metadata.general.title;
+                    card.querySelector(`#formatName`).innerHTML = entry.output_name.includes(`Unknown`) ? entry.media_metadata.general.title : entry.output_name;
 
                     if(entry.creator || entry.uploader || entry.channel) {
                         card.querySelector(`#formatSubtext`).innerHTML = `${entry.creator || entry.uploader || entry.channel}`;
