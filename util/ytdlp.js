@@ -4,7 +4,9 @@ const yargs = require('yargs');
 const { compareTwoStrings } = require('string-similarity');
 const idGen = require(`../util/idGen`);
 const downloadManager = require(`./downloadManager`);
-const authentication = require(`../core/authentication`)
+const authentication = require(`../core/authentication`);
+
+const durationCurve = require(`animejs`).easing(`easeInExpo`);
 
 const platforms = fs.readdirSync(require(`../util/getPath`)(`./util/platforms`)).map(f => (Object.assign(require(`../util/platforms/${f}`), {
     name: f.split(`.`).slice(0, -1).join(`.`)
@@ -473,13 +475,11 @@ module.exports = {
         const encoded = encodeURIComponent(query);
 
         if(from == `youtubemusic`) {
-            args.unshift(`https://music.youtube.com/search?q=${encoded}`)
+            args.unshift(`https://music.youtube.com/search?q=${encoded}&sp=EgIQAQ%253D%253D`)
         } else if(from == `soundcloud`) {
             args.unshift(`scsearch${count}:${query}`)
-            //args.unshift(`https://soundcloud.com/search?q=${encoded}`)
         } else {
-            //args.unshift(`ytsearch${count}:${query}`)
-            args.unshift(`https://www.youtube.com/results?search_query=${encoded}`)
+            args.unshift(`https://www.youtube.com/results?search_query=${encoded}&sp=EgIQAQ%253D%253D`)
         }
 
         console.log(`search args: "${args.map(s => s.includes(` `) ? `'${s}'` : s).join(` `)}"`)
@@ -640,7 +640,7 @@ module.exports = {
             console.log(`info needs original!`);
             update({status: `Finding equivalent on supported platform...`});
 
-            const equiv = await module.exports.findEquivalent(Object.assign({}, info, { url }), true, true)
+            const equiv = await module.exports.findEquivalent(Object.assign({}, info, { url }), true, false)
 
             Object.assign(info, {
                 url: equiv.url || equiv.webpage_url || equiv._request_url
@@ -1603,7 +1603,7 @@ module.exports = {
             update({ failed: true, status: `${e.toString()}` })
         }
     }),
-    findEquivalent: (info, ignoreStderr, noVerify=false, forceVerify) => new Promise(async res => {
+    findEquivalent: (info, ignoreStderr) => new Promise(async res => {
         const instanceName = `findEquivalent-${info.extractor}-${info.id}-${idGen(16)}`;
 
         const manager = downloadManager.get(instanceName, {staggered: true, noSendErrors: true});
@@ -1672,15 +1672,19 @@ module.exports = {
                 };
 
                 if(modified) {
-                    const oldDuration = thisInfo.originalDuration;
+                    const targetDuration = thisInfo.originalDuration;
                     const newDuration = result.originalDuration;
 
-                    if(oldDuration && newDuration) {
-                        const durationDiff = Math.abs(oldDuration > newDuration ? oldDuration - newDuration : newDuration - oldDuration);
+                    if(targetDuration && newDuration) {
+                        let value = newDuration / targetDuration;
+                        
+                        if(value > 1) value = 1 / value;
 
-                        result.similarity -= (durationDiff / 100);
+                        let thisDurationCurve = durationCurve(value);
 
-                        console.log(`duration difference: ${durationDiff} -- new similarity: ${result.similarity}`);
+                        result.similarity += (thisDurationCurve - 0.6);
+
+                        console.log(`duration curve: ${thisDurationCurve} (${newDuration} / ${targetDuration}) -- new similarity: ${result.similarity}`);
 
                         return result;
                     } else return result;
@@ -1699,7 +1703,7 @@ module.exports = {
         if(info.entries) for(const i in info.entries) {
             const entry = info.entries[i];
 
-            manager.createDownload([{query: `${e.artist} - ${e.title}`, from: `youtubemusic`, count: 10, noVerify, forceVerify, ignoreStderr}, false], (e) => {
+            manager.createDownload([{query: `"${e.artist}" - "${e.title}"`, from: `youtube`, count: 20, noVerify: true, ignoreStderr}, false], (e) => {
                 if(e) {
                     console.log(`new info!`);
                     match(entry, module.exports.parseInfo(e));
@@ -1708,7 +1712,7 @@ module.exports = {
                 } else badEntries++;
             }, `search`);
         } else {
-            manager.createDownload([{query: `"${info.artist}" - "${info.title}"`, from: `youtubemusic`, count: 10, noVerify, forceVerify, ignoreStderr}, false], (e) => {
+            manager.createDownload([{query: `"${info.artist}" - "${info.title}"`, from: `youtube`, count: 20, noVerify: true, ignoreStderr}, false], (e) => {
                 if(e) {
                     console.log(`new info!`);
                     match(info, module.exports.parseInfo(e));
@@ -1749,7 +1753,11 @@ for(const entry of Object.entries(module.exports).filter(o => typeof o[1] == `fu
                             }));
 
                             if(!parsed.entries) {
-                                module.exports.findEquivalent(parsed, false, false, true).then(res).catch(rej);
+                                module.exports.findEquivalent(parsed, false, false, true).then(equivalent => {
+                                    module.exports.verifyPlaylist(Object.assign({}, equivalent, {fullInfo: false}), { forceRun: true }).then(o => res(Object.assign(parsed, {
+                                        formats: o.formats,
+                                    }))).catch(rej);
+                                }).catch(rej);
                             } else res(parsed)
                         }).catch(rej);
                     } else {
