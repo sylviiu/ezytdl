@@ -4,6 +4,11 @@ let token = null;
 
 module.exports = {
     urls: [`spotify.com`, `open.spotify.com`, `www.spotify.com`, `play.spotify.com`],
+    tokenTimeout: null,
+    reset: () => {
+        token = null;
+        if(module.exports.tokenTimeout) clearTimeout(module.exports.tokenTimeout);
+    },
     getToken: ({ clientID, clientSecret }) => new Promise(async res => {
         if(!token) {
             if(!clientID || !clientSecret) return res({ value: null, message: `No Client ID or Secret was provided!` });
@@ -20,7 +25,9 @@ module.exports = {
 
                     res({ value: token, message: null });
 
-                    if(r.body.expires_in) setTimeout(() => token = null, r.body.expires_in * 1000);
+                    if(module.exports.tokenTimeout) clearTimeout(module.exports.tokenTimeout);
+
+                    if(r.body.expires_in) module.exports.tokenTimeout = setTimeout(() => token = null, r.body.expires_in * 1000);
                 }
                 else return res({ value: null, message: `An unknown error occurred.` });
             }).catch(e =>  res({ value: null, message: `${e}` }));

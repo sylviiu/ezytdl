@@ -43,9 +43,14 @@ module.exports = {
     },
     remove: (rawService) => {
         const service = module.exports.check(rawService);
+        const client = clients.find(c => c.name == service);
         
         if(fs.existsSync(path.join(global.configPath, `auth`, service))) {
             fs.unlinkSync(path.join(global.configPath, `auth`, service));
+            if(client && client.reset) {
+                console.log(`resetting ${service} authentication`)
+                client.reset();
+            };
             return true;
         } else return false;
     },
@@ -97,7 +102,7 @@ module.exports = {
                     return module.exports(service, force).then(res);
                 }
             };
-        }
+        } else res(null);
     }),
     getToken: (rawService, force) => new Promise(async res => {
         const service = module.exports.check(rawService);
@@ -117,6 +122,6 @@ module.exports = {
                 console.log(`no getToken function found`)
                 res(key);
             }
-        }
+        } else res(null);
     })
 }
