@@ -66,10 +66,12 @@ module.exports = {
                             if(err && err.code == `EBUSY`) {
                                 console.log(`bridge process busy (attempt ${busy}), waiting...`);
                                 busy++;
+                                if(fd) require('fs').close(fd)
                                 setTimeout(() => r(), 1000)
                             } else {
                                 console.log(`bridge process not busy`)
                                 busy = false;
+                                if(fd) require('fs').close(fd)
                                 r();
                             }
                         });
@@ -107,7 +109,7 @@ module.exports = {
 
                     module.exports.bridgeProc.on(`close`, (code) => {
                         console.log(`bridge process closed; code: ${code}`);
-                        module.exports.bridgeProc.stdout.removeAllListeners();
+                        if(module.exports.bridgeProc) module.exports.bridgeProc.stdout.removeAllListeners();
 
                         try {
                             module.exports.idHooks.filter(h => !h.persist).forEach(h => {

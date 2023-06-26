@@ -67,6 +67,8 @@ module.exports = async () => new Promise(async res => {
                 pythonBridge.bridgeProc = null;
             } catch(e) {}
 
+            pythonBridge.resuscitate = false;
+
             ws.send({ progress: 0, version: versionStr })
     
             console.log(`Latest version: ${version}`);
@@ -78,6 +80,24 @@ module.exports = async () => new Promise(async res => {
                 const download = downloads.find(d => d.name === file);
     
                 console.log(`Found target file! (${file} / ${download.size} size); downloading ${download.name} from "${download.browser_download_url}"`);
+
+                let busy = 1;
+
+                while(busy) await new Promise(async r => {
+                    require('fs').open(path, 'w', (err, fd) => {
+                        if(err && err.code == `EBUSY`) {
+                            ws.send({ progress: -1, version: versionStr, message: `File locked... (attempt ${busy})` });
+                            busy++;
+                            if(fd) require('fs').close(fd)
+                            setTimeout(() => r(), 1000);
+                        } else {
+                            console.log(`bridge process not busy`)
+                            busy = false;
+                            if(fd) require('fs').close(fd)
+                            r();
+                        }
+                    });
+                });
     
                 const writeStream = fs.createWriteStream(path, { flags: `w` });
     
@@ -113,13 +133,9 @@ module.exports = async () => new Promise(async res => {
                             fs.chmodSync(path, 0o777)
                         }
                     };
-
-                    console.log(`Spawning new bridge`);
-
-                    require(`../pythonBridge`).create().then(() => {
-                        console.log(`bridge created`)
-                        ws.close();
-                    });
+                    
+                    ws.send({ progress: 1, version: versionStr, message: `Downloaded!` });
+                    ws.close()
                 })
             }
         }
