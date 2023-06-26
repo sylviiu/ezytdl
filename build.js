@@ -87,6 +87,7 @@ const config = {
         "core/*.js",
         "core/*.json",
         "core/ipc/*/*.js",
+        "core/authentication/*.js",
         "core/depcheck/*/*.js",
         "core/depcheck/*.js",
         "core/*.js",
