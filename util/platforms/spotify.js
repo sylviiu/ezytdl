@@ -28,7 +28,7 @@ module.exports = {
                 body.tracks.next = next.body.tracks.next;
             };
 
-            if(body.tracks.items && body.tracks.items[0].track) body.tracks.items = body.tracks.items.map((o, i) => Object.assign(body.tracks.items[i], o.track, {track: null}));
+            if(body.tracks && body.tracks.items && body.tracks.items[0].track) body.tracks.items = body.tracks.items.map((o, i) => Object.assign(body.tracks.items[i], o.track, {track: null}));
 
             n = 0;
 
@@ -108,7 +108,7 @@ module.exports = {
                     license: track.copyrights ? track.copyrights[0].text : null,
                     duration: track.duration_ms / 1000,
                     id: track.id,
-                    thumbnails: (track.album && track.album.images ? track.album.images : track.images ? track.images : obj.images ? obj.images : []).reverse(),
+                    thumbnails: (track.album && track.album.images ? track.album.images : track.images ? track.images : obj.images ? obj.images : []).sort((a, b) => a.width < b.width ? 1 : -1).reverse(),
                     url: track.external_urls ? track.external_urls.spotify : null,
                     type: track.type,
                     _type: track.type,
