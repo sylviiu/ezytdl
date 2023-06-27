@@ -137,9 +137,10 @@ module.exports = (notDefault, overrideArgs) => {
 
     if(firstRun) {
         require(`./ipcHandler`)();
-        require(`./lockdown`)();
         console.log(`-- FIRSTRUN TASKS COMPLETE`)
     };
+
+    require(`./lockdown`)(window, firstRun);
 
     firstRun = false;
 
