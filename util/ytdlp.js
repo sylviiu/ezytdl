@@ -293,8 +293,6 @@ module.exports = {
         }
     }),
     parseOutputTemplate: (info, template) => {
-        const originalTemplate = template;
-      
         if(!template) template = require(`../getConfig`)().outputFilename;
       
         template = template.replace(outputTemplateRegex, (match, key) => {
@@ -310,8 +308,6 @@ module.exports = {
                 return key.split(`|`).slice(1).join(`|`).trim();
             } else return match;
         });
-
-        console.log(`--- OUTPUT TEMPLATE FOR "${originalTemplate}" ---\n${template}\n-----------------------`)
       
         return template;
     },
