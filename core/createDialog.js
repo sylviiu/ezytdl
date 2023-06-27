@@ -17,7 +17,8 @@ module.exports = {
         let calledBack = false;
 
         const callback = (event, id, response, inputs) => {
-            if(!calledBack) {
+            console.log(`callabck: ${id} / ${response}`)
+            if(!calledBack && dialogs[id]) {
                 if(dialogs[id].buttons) {
                     let btn = dialogs[id].buttons.find(b => b.id == response);
 
@@ -73,7 +74,7 @@ module.exports = {
             resizable: false
         });
 
-        dialogs[id].window.on(`close`, (event) => callback(event, null, null));
+        dialogs[id].window.on(`close`, (event) => callback(event, id, null, null));
     
         dialogs[id].window.loadURL(path.join(__dirname.split(`core`).slice(0, -1).join(`core`), `html`, `dialog.html?${id}`));
     }),
