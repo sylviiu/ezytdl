@@ -103,10 +103,17 @@ contextBridge.exposeInMainWorld(`system`, {
     colors: () => systemColors,
     downloadReq: (cb) => on(`download`, cb),
     hasFFmpeg: () => invoke(`hasFFmpeg`),
-})
+});
+
+let dialogPromise = new Promise(r => {
+    on(`dialog`, (_e, obj) => {
+        r(obj);
+        console.log(`dialog`, obj);
+    })
+});
 
 contextBridge.exposeInMainWorld(`dialog`, {
-    get: (id) => invoke(`getDialog`, id),
+    get: () => dialogPromise,
     send: (id, btnID, inputs) => invoke(`dialogButton`, {id, btnID, inputs}),
     setHeight: (id, height) => invoke(`setDialogHeight`, {id, height})
 })

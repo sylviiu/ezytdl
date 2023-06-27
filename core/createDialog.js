@@ -17,17 +17,26 @@ module.exports = {
         let calledBack = false;
 
         const callback = (event, id, response, inputs) => {
-            if(!calledBack) {
-                let btn = dialogs[id].buttons.find(b => b.id == response);
+            console.log(`callabck: ${id} / ${response}`)
+            if(!calledBack && dialogs[id]) {
+                if(dialogs[id].buttons) {
+                    let btn = dialogs[id].buttons.find(b => b.id == response);
 
-                if(!btn.noResolve) {
-                    calledBack = true;
-                    dialogs[id].window.close();
-                    delete dialogs[id];
-                };
-                
-                if(btn.callback) {
-                    btn.callback({ event, id, response, inputs });
+                    if(btn) {
+                        if(!btn.noResolve) {
+                            calledBack = true;
+                            dialogs[id].window.close();
+                            delete dialogs[id];
+                        };
+                        
+                        if(btn.callback) {
+                            btn.callback({ event, id, response, inputs });
+                        } else {
+                            res({ event, id, response, inputs });
+                        }
+                    } else {
+                        res({ event, id, response, inputs });
+                    }
                 } else {
                     res({ event, id, response, inputs });
                 }
@@ -56,17 +65,33 @@ module.exports = {
         }
     
         dialogs[id] = Object.assign({}, content, dialogs[id], { title, body, buttons });
+
+        console.log(`creating window for ${id}`)
     
         dialogs[id].window = require(`./window`)(true, {
             width: 600,
             height: 250,
-            minWidth: 0,
-            minHeight: 0,
+            minWidth: 600,
+            minHeight: 250,
             resizable: false
         });
 
-        dialogs[id].window.on(`close`, (event) => callback(event, null, null));
-    
-        dialogs[id].window.loadURL(path.join(__dirname.split(`core`).slice(0, -1).join(`core`), `html`, `dialog.html?${id}`));
+        const loadURLPath = require(`../util/getPath`)(`html/dialog.html`)
+
+        console.log(`window created for ${id} -- ${dialogs[id].window}; loading ${loadURLPath}`)
+
+        dialogs[id].window.on(`close`, (event) => callback(event, id, null, null));
+
+        dialogs[id].window.loadFile(loadURLPath);
+
+        dialogs[id].window.webContents.on(`did-finish-load`, () => {
+            console.log(`finished loading ${loadURLPath}`);
+
+            const sendObj = JSON.parse(JSON.stringify(Object.assign({}, dialogs[id], { id })));
+
+            dialogs[id].window.webContents.send(`dialog`, sendObj);
+
+            console.log(`sent`, sendObj)
+        });
     }),
 }

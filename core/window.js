@@ -59,7 +59,7 @@ module.exports = (notDefault, overrideArgs) => {
             devTools: true,
             sandbox: false,
             scrollBounce: true,
-            //backgroundThrottling: false,
+            backgroundThrottling: false,
             preload: path.join(__dirname, `preload.js`)
         },
         icon: iconPath
@@ -75,41 +75,28 @@ module.exports = (notDefault, overrideArgs) => {
         args.titleBarStyle = `hidden-inset`
     } else console.log(`Using default window controls`);
 
-    if(/*app.isPackaged*/ true) {
-        console.log(`-------------\nSTARTING WITH PRODUCTION MODE\n-------------`)
-
-        /*args.webPreferences.devTools = false;
-
-        const setShortcuts = (enable) => {
-            const accelerators = [`CommandOrControl+Shift+I`, `F12`];
-
-            accelerators.forEach((accelerator) => {
-                if(enable) {
-                    console.log(`Disabled shortcut ${accelerator} (window is focused))`)
-                    globalShortcut.register(accelerator, () => false);
-                } else {
-                    console.log(`Re-enabled shortcut ${accelerator} (window is unfocused)`)
-                    globalShortcut.unregister(accelerator);
-                }
-            })
-        }
-
-        app.on('browser-window-blur', function () {
-            setShortcuts(false);
-        });
-
-        app.on('browser-window-focus', function () {
-            setShortcuts(true);
-        })*/
-    } else {
-        console.log(`-------------\nSTARTING WITH DEVELOPMENT MODE\n-------------`);
-
-        args.width = 1100;
-    }
-
     if(currentWindow && !notDefault) return currentWindow;
+
+    if(notDefault && currentWindow) {
+        Object.assign(args, {
+            parent: currentWindow,
+            modal: true,
+            frame: false,
+            titleBarStyle: `hidden`,
+            titleBarOverlay: {
+                color: `#0a0a0a`,
+                symbolColor: `white`,
+            },
+            fullscreenable: false,
+            //titleBarStyle: `hidden-inset`,
+        });
+    };
+
+    const useArgs = Object.assign({}, args, (overrideArgs || {}));
     
-    const window = new BrowserWindow(Object.assign({}, args, (overrideArgs || {})));
+    console.log(useArgs)
+    
+    const window = new BrowserWindow(useArgs);
 
     if(!notDefault) {
         global.window = window;
