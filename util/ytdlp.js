@@ -1671,52 +1671,77 @@ module.exports = {
             resultsInfo.entries = resultsInfo.entries.map(result => {
                 const { title, artist } = result.media_metadata.general;
 
-                //console.log(result)
-                let modified = false;
+                result.similarities = {};
+
                 if(originalTitle && title && originalArtist && artist) {
-                    const values = {
-                        lowercase: (compareTwoStrings(originalTitle.toLowerCase(), title.toLowerCase()) + compareTwoStrings(originalArtist.toLowerCase(), artist.toLowerCase())) * .4,
-                        uppercase: (compareTwoStrings(originalTitle, title) + compareTwoStrings(originalArtist, artist)) * .4
-                    };
-
-                    result.similarity = Math.max(...Object.values(values))
-                    console.log(`Similarity of ${title} & ${originalTitle} by ${artist} / ${originalArtist}: ${result.similarity}`)
-                    modified = true;
-                } else if(title && originalTitle) {
-                    const values = {
-                        lowercase: (compareTwoStrings(originalTitle.toLowerCase(), title.toLowerCase())) * .4,
-                        uppercase: (compareTwoStrings(originalTitle, title)) * .4
-                    };
-
-                    if(originalArtist) Object.assign(values, {
-                        lowercaseWithArtist: (compareTwoStrings(originalArtist.toLowerCase() + ` - ` + originalTitle.toLowerCase(), title.toLowerCase())) * .4,
-                        uppercaseWithArtist: (compareTwoStrings(originalArtist + ` - ` + originalTitle, title)) * .4
+                    Object.assign(result.similarities, {
+                        lowercaseTitleAndArtist: ((compareTwoStrings(originalTitle.toLowerCase(), title.toLowerCase()) * .25) + (compareTwoStrings(originalArtist.toLowerCase(), artist.toLowerCase()) * .175)),
+                        uppercaseTitleAndArtist: ((compareTwoStrings(originalTitle, title) * .35) + (compareTwoStrings(originalArtist, artist) * .25))
+                    });
+                };
+                
+                if(title && originalTitle) {
+                    Object.assign(result.similarities, {
+                        lowercaseTitle: ((compareTwoStrings(originalTitle.toLowerCase(), title.toLowerCase()) * .3)),
+                        uppercaseTitle: ((compareTwoStrings(originalTitle, title) * .5))
                     });
 
-                    result.similarity = Math.max(...Object.values(values))
-                    console.log(`Similarity of ${title} & ${originalTitle}: ${result.similarity}`)
-                    modified = true;
+                    if(title.split(`(`).length > originalTitle.split(`(`).length) Object.assign(result.similarities, {
+                        lowercaseTitleWithTrimmedParentheses: (compareTwoStrings(originalTitle.toLowerCase(), title.toLowerCase().split(`(`).slice(0, originalTitle.split(`(`).length).join(`(`)) * .3),
+                        uppercaseTitleWithTrimmedParentheses: (compareTwoStrings(originalTitle, title.split(`(`).slice(0, originalTitle.split(`(`).length).join(`(`)) * .5)
+                    });
+
+                    if(originalArtist) {
+                        Object.assign(result.similarities, {
+                            lowercaseFormattedTitle: (compareTwoStrings(`${originalArtist} - ${originalTitle}`.toLowerCase(), title.toLowerCase()) * .3),
+                            uppercaseFormattedTitle: (compareTwoStrings(`${originalArtist} - ${originalTitle}`, title) * .5),
+                        });
+
+                        Object.assign(result.similarities, {
+                            lowercaseTitleWithArtist: (compareTwoStrings(originalArtist.toLowerCase() + ` - ` + originalTitle.toLowerCase(), title.toLowerCase()) * .3),
+                            uppercaseTitleWithArtist: (compareTwoStrings(originalArtist + ` - ` + originalTitle, title) * .5)
+                        });
+                    }
                 };
 
-                if(modified) {
+                if(Object.keys(result.similarities).length > 0) {
+                    result.similarity = Math.max(...Object.values(result.similarities), 0)
+    
                     const targetDuration = thisInfo.originalDuration;
                     const newDuration = result.originalDuration;
 
                     if(targetDuration && newDuration) {
-                        let value = newDuration / targetDuration;
+                        let top = newDuration;
+                        let bottom = targetDuration;
+
+                        let value = top / bottom;
                         
-                        if(value > 1) value = 1 / value;
+                        if(value > 1) {
+                            top = bottom - (top - bottom);
+                            value = top / bottom;
+                        };
 
-                        let thisDurationCurve = durationCurve(value);
+                        if(value < 0) value = 0;
 
-                        result.similarity += (thisDurationCurve - 0.6);
+                        Object.assign(result.similarities, {
+                            originalDurationValues: [newDuration, targetDuration],
+                            durationValues: [top, bottom],
+                            durationValue: value,
+                            durationAddition: (durationCurve(value)*1.5) - 0.6
+                        });
 
-                        console.log(`duration curve: ${thisDurationCurve} (${newDuration} / ${targetDuration}) -- new similarity: ${result.similarity}`);
+                        result.similarity += result.similarities.durationAddition;
 
                         return result;
-                    } else return result;
+                    } else if(!targetDuration || resultsInfo.entries.filter(o => o.originalDuration).length == 0) { // if no results have a duration, go ahead and return this
+                        return result;
+                    } else return undefined; // if this result doesn't have a duration, AND other results have durations, don't return it
                 } else return undefined;
-            }).filter(a => a !== undefined).sort((a, b) => a.similarity < b.similarity ? 1 : -1);
+            }).filter(a => a !== undefined && a.similarity).sort((a, b) => a.similarity < b.similarity ? 1 : -1);
+            
+            resultsInfo.entries.forEach(a => {
+                console.log(`- ${a.media_metadata.general.title} - ${a.similarity}`, a.similarities)
+            })
 
             Object.assign(thisInfo, {
                 url: resultsInfo.entries[0].url,
