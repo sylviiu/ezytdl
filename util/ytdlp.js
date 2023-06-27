@@ -1772,30 +1772,33 @@ for(const entry of Object.entries(module.exports).filter(o => typeof o[1] == `fu
             console.log(`authenticated request! (type: ${authType}) (function exists? ${doFunc ? true : false})`);
             if(doFunc) {
                 console.log(`running function...`)
-                return new Promise(async (res, rej) => authentication.getToken(authType).then(token => {
-                    if(token) {
-                        doFunc(token, ...args).then(o => {
-                            const parsed = module.exports.parseInfo(Object.assign(o, {
-                                extractor: authType.toLowerCase() + (o.type ? `:${o.type.toLowerCase()}` : ``),
-                                extractor_key: authType[0].toUpperCase() + authType.slice(1) + (o.type ? o.type[0].toUpperCase() + o.type.slice(1) : ``),
-                                _off_platform: true,
-                                _platform: authType,
-                                _needs_original: true,
-                            }));
-
-                            if(!parsed.entries) {
-                                module.exports.findEquivalent(parsed, false, false, true).then(equivalent => {
-                                    module.exports.verifyPlaylist(Object.assign({}, equivalent, {fullInfo: false}), { forceRun: true }).then(o => res(Object.assign(parsed, {
-                                        formats: o.formats,
-                                    }))).catch(rej);
-                                }).catch(rej);
-                            } else res(parsed)
-                        }).catch(rej);
-                    } else {
-                        console.log(`failed to auth`)
-                        return func(...args).then(res).catch(rej);
-                    }
-                }).catch(rej))
+                return new Promise(async (res, rej) => {
+                    updateStatus(`Getting authentication token...`)
+                    authentication.getToken(authType).then(token => {
+                        if(token) {
+                            doFunc(token, ...args).then(o => {
+                                const parsed = module.exports.parseInfo(Object.assign(o, {
+                                    extractor: authType.toLowerCase() + (o.type ? `:${o.type.toLowerCase()}` : ``),
+                                    extractor_key: authType[0].toUpperCase() + authType.slice(1) + (o.type ? o.type[0].toUpperCase() + o.type.slice(1) : ``),
+                                    _off_platform: true,
+                                    _platform: authType,
+                                    _needs_original: true,
+                                }));
+    
+                                if(!parsed.entries) {
+                                    module.exports.findEquivalent(parsed, false, false, true).then(equivalent => {
+                                        module.exports.verifyPlaylist(Object.assign({}, equivalent, {fullInfo: false}), { forceRun: true }).then(o => res(Object.assign(parsed, {
+                                            formats: o.formats,
+                                        }))).catch(rej);
+                                    }).catch(rej);
+                                } else res(parsed)
+                            }).catch(rej);
+                        } else {
+                            console.log(`failed to auth`)
+                            return func(...args).then(res).catch(rej);
+                        }
+                    }).catch(rej)
+                })
             } else {
                 console.log(`no function found!`)
                 return func(...args)
