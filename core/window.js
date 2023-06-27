@@ -89,10 +89,14 @@ module.exports = (notDefault, overrideArgs) => {
             },
             fullscreenable: false,
             //titleBarStyle: `hidden-inset`,
-        })
-    }
+        });
+    };
+
+    const useArgs = Object.assign({}, args, (overrideArgs || {}));
     
-    const window = new BrowserWindow(Object.assign({}, args, (overrideArgs || {})));
+    console.log(useArgs)
+    
+    const window = new BrowserWindow(useArgs);
 
     if(!notDefault) {
         global.window = window;

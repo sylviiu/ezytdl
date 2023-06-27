@@ -30,6 +30,7 @@ module.exports = () => {
     });
 
     global.window.webContents.on(`new-window`, (e, url) => {
+        console.log(`new-window:`, url)
         e.stopImmediatePropagation();
         e.preventDefault();
         global.window.loadFile(url);
