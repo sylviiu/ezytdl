@@ -1199,8 +1199,12 @@ module.exports = {
                         }
     
                         //console.log(`- ` + args2.join(`\n- `))
+
+                        let status = `Converting to ${`${ext}`.toUpperCase()} using ${name}...`;
+
+                        //if(!require('electron').app.isPackaged) status += `<br><br>- ${Object.keys(convert).map(s => `${s}: ${convert[s] || `(no conversion)`}`).join(`<br>- `)}`
     
-                        update({status: `${replaceInputArgs ? `Streaming & converting to` : `Converting to`} ${`${ext}`.toUpperCase()} using ${name}...<br><br>- ${Object.keys(convert).map(s => `${s}: ${convert[s] || `(no conversion)`}`).join(`<br>- `)}`, percentNum: -1, eta: `--`});
+                        update({status, percentNum: -1, eta: `--`});
     
                         proc = child_process.execFile(module.exports.ffmpegPath, [`-y`, ...args2]);
                         
