@@ -63,17 +63,17 @@ class wsprocess extends events.EventEmitter {
                 console.log(`[${this.processID}] unknown (${data.type}) / ${data.content.length}`, data.content)
             }
         };
-
-        bridge.idHooks.push({ id: this.processID, func: hook, args: this.args, complete: (code) => this._complete(code) });
-
-        const obj = {
-            id: this.processID,
-            args: this.args,
-        }
-
-        console.log(`spawned ${JSON.stringify(obj)}`);
         
         bridge.create().then(() => {
+            bridge.idHooks.push({ id: this.processID, func: hook, args: this.args, complete: (code) => this._complete(code) });
+    
+            const obj = {
+                id: this.processID,
+                args: this.args,
+            }
+    
+            console.log(`spawned ${JSON.stringify(obj)}`);
+
             bridge.resObj.send(JSON.stringify(obj));
         });
     }
