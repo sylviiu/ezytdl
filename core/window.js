@@ -55,6 +55,7 @@ module.exports = (notDefault, overrideArgs) => {
         webPreferences: {
             nodeIntegration: true,
             nodeIntegrationInWorker: false,
+            nodeIntegrationInSubFrames: true,
             contextIsolation: true,
             devTools: true,
             sandbox: false,

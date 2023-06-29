@@ -3,6 +3,8 @@ document.querySelectorAll(`.btn`).forEach(btn => {
     btn.style.opacity = 0.5;
 });
 
+let noClose = true;
+
 const progressBar = addProgressBar(document.getElementById(`div`), `315px`, `20px`);
 
 const heading = document.getElementById(`heading`);
@@ -11,13 +13,33 @@ const homeButton = document.getElementById(`homeButton`);
 
 const percentageText = document.getElementById(`percentageText`);
 
-update.event((m) => {
+const systemUpdate = typeof parentWindow != `undefined` ? parentWindow.update : update
+
+systemUpdate.event((m) => {
+    console.log(`updatestr event: ${JSON.stringify(m, null, 4)}`)
+
     if(m.complete) {
         console.log(`WS CLOSED`);
+
+        noClose = false;
 
         homeButton.disabled = false
         homeButton.style.opacity = 1;
         homeButton.classList.replace(`d-none`, `d-flex`);
+        const href = homeButton.getAttribute(`href`);
+        homeButton.removeAttribute(`href`);
+        homeButton.onclick = () => {
+            anime({
+                targets: document.getElementById(`div`),
+                scale: 1.5,
+                opacity: 0,
+                duration: 150,
+                easing: `easeInCirc`,
+                complete: () => {
+                    window.location.href = `introAnimation.html?` + typeof parentUpdate == `undefined` ? `index.html` : `settings.html`
+                }
+            })
+        }
         progressBar.remove();
     } else {
         if(m.message) {
@@ -42,4 +64,8 @@ update.event((m) => {
     }
 });
 
-update.download(`${window.location.search ? window.location.search.slice(1).slice(0, -1) : `pybridge`}`)
+const updateStr = `${window.location.search ? window.location.search.slice(1).slice(0, -1) : `pybridge`}`;
+
+console.log(`updateStr: ${updateStr}`)
+
+systemUpdate.download(updateStr)

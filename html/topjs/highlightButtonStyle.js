@@ -15,10 +15,6 @@ const searchHighlights = (node) => {
 
 const highlightObserver = new MutationObserver(mutations => {
     if(mutations.target) searchHighlights(mutations.target)
-    /*mutations.forEach(mutation => {
-        const modify = mutation.target.classList.contains('btn') && mutation.target.classList.contains('highlight')
-        if(modify) filterFunc(mutation.target);
-    });*/
 });
 
 highlightObserver.observe(document, {

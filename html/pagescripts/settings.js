@@ -421,8 +421,20 @@ if(paltform.toLowerCase() != `win32` && !paltform.toLowerCase().includes(`linux`
     ffmpegCard.querySelector(`#txt`).innerHTML = `FFmpeg downloading is not available on your platform.<br>If FFmpeg is installed system-wide, ezytdl will use that.`
 };
 
-document.body.querySelector('#downloadables').childNodes.forEach(n => {
+const parseDownloadables = () => document.body.querySelector('#downloadables').childNodes.forEach(n => {
     if(!n || !n.querySelector) return;
+
+    const btn = n.querySelector(`#btn`);
+
+    if(btn) {
+        const href = btn.getAttribute(`href`);
+        btn.removeAttribute(`href`);
+
+        btn.onclick = (e) => {
+            e.preventDefault();
+            window.location.href = href;
+        }
+    }
 
     const txt = n.querySelector(`#thisVersion`);
 
@@ -442,7 +454,9 @@ document.body.querySelector('#downloadables').childNodes.forEach(n => {
             }
         });
     }
-})
+});
+
+parseDownloadables();
 
 if(detailsStr) system.detailsStr().then(details => {
     const detailsStrConverter = new showdown.Converter({ parseImgDimensions: true });

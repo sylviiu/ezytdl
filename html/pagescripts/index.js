@@ -1,3 +1,45 @@
+let previousConfig = Object.assign({}, config || {});
+
+const popoutButtons = createPopout({
+    buttons: [
+        {
+            heading: `Settings`,
+            element: document.getElementById(`settingsButton`),
+            href: `settings.html`
+        }
+    ],
+    navigateEvent: (e, href) => {
+        console.log(`redirecting window to "${href}"`)
+        e.preventDefault();
+        window.location.href = href;
+    },
+    completeHook: () => {
+        configuration.get().then(newConf => {
+            if(JSON.stringify(previousConfig) != JSON.stringify(newConf)) {
+                console.log(`config has changed!`);
+        
+                if(currentInfo) createNotification({
+                    headingText: `Config updated!`,
+                    bodyText: `The configuration has been updated. The changes will take effect next search / info retrieval.`,
+                })
+        
+                config = newConf;
+                previousConfig = newConf;
+            } else {
+                console.log(`config has NOT changed.`)
+            }
+        });
+    }
+});
+
+update.event(m => {
+    if(m && !m.complete) {
+        popoutButtons.setCloseable(false);
+    } else {
+        popoutButtons.setCloseable(true);
+    }
+})
+
 const mainContainer = document.getElementById(`mainContainer`);
 
 const searchBoxHeights = () => [`${window.innerHeight - 80}px`, `225px`]
