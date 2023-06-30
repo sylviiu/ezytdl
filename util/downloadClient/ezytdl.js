@@ -12,13 +12,11 @@ module.exports = async () => {
     if(activeDownload) return activeDownload;
 
     activeDownload = true;
-    global.activeDownload = true;
 
     const ws = {
         send: (args) => global.window ? global.window.webContents.send(`updateClientEvent`, args) : null,
         close: () => {
             activeDownload = null;
-            global.activeDownload = false;
             global.window ? global.window.webContents.send(`updateClientEvent`, {complete: true}) : null
         }
     }

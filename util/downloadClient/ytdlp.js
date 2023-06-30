@@ -15,7 +15,6 @@ module.exports = async () => new Promise(async res => {
     if(activeDownload) return activeDownload;
 
     activeDownload = true;
-    global.activeDownload = true;
 
     let obj = {};
 
@@ -33,7 +32,6 @@ module.exports = async () => new Promise(async res => {
         },
         close: () => {
             activeDownload = null;
-            global.activeDownload = false;
             obj = Object.assign(obj, {complete: true})
             global.window ? global.window.webContents.send(`updateClientEvent`, obj) : null;
             res()
