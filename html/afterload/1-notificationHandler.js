@@ -1,8 +1,8 @@
-const constantAddedHeight = 0;
+let constantAddedHeight = 0;
 
-const notificationMarkdownConverter = new showdown.Converter({ parseImgDimensions: true });
+let notificationMarkdownConverter = new showdown.Converter({ parseImgDimensions: true });
 
-const useDocument = window.parent != window ? window.parent.document : document;
+let useDocument = window.parent != window ? window.parent.document : document;
 
 //let repositionNotifications, addNotification, createNotification;
 
