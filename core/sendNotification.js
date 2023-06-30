@@ -17,7 +17,9 @@ module.exports = (content) => {
             while(notifQueue.length > 0) {
                 const c = notifQueue.shift();
                 console.log(c)
-                global.window.webContents.send(`notification`, c)
+                if(c.type != `error`) {
+                    global.window.webContents.send(`notification`, c)
+                }
             };
         }
     } else if(module.exports.systemNotificationsEnabled() && content.systemAllowed) {

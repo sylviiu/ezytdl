@@ -55,7 +55,7 @@ const createPopout = ({
 
         button.removeAttribute(`href`);
 
-        button.onclick = () => {
+        button.addEventListener(`click`, () => {
             console.log(`button ${name} clicked; popoutActive: ${popoutActive}`);
 
             const currentNotification = document.body.querySelector(`.notificationBox`);
@@ -405,7 +405,7 @@ const createPopout = ({
                 overlayDiv.after(h);
                 h.after(overlayCloseText);
             }
-        };
+        });
     };
 
     return {
