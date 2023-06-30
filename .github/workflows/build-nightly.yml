@@ -49,15 +49,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get the pre-release tag
-        id: get_tag
+      - name: Get release metadata
+        id: get_release_metadata
         run: |
           echo "TAG_NAME=$(node -e "console.log(require('./package.json').version)")-nightly.${{github.run_number}}" >> "$GITHUB_ENV"
           echo "RELEASE_NAME=[NIGHTLY] $(node -e "console.log(require('./package.json').version)")-nightly.${{github.run_number}}" >> "$GITHUB_ENV"
-
-          node devscripts/generateReleaseNotes.js nightly ${{ github.event.inputs.notes }}
-
           echo "BODY_PATH=$(echo "$(pwd)/release-notes.md")" >> "$GITHUB_ENV"
+
+      - name: Create release notes
+        id: create_notes
+        run: |
+          node devscripts/generateReleaseNotes.js nightly ${{ github.event.inputs.notes }}
+          
       - name: Create pre-release draft
         id: create_release
         uses: ncipollo/release-action@v1

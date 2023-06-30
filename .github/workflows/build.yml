@@ -1,9 +1,58 @@
 name: ezytdl distributable build
 run-name: ${{ github.actor }} - ${{ github.event_name }} - ${{ github.sha }}
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "Release Name"
+        required: false
+        default: 'Stable Release'
 
 jobs:
+  release_info:
+    runs-on: ubuntu-latest
+    name: Create release tag
+
+    permissions: write-all
+
+    outputs:
+      release_id: ${{ steps.create_release.outputs.id }}
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Get release metadata
+        id: get_release_metadata
+        run: |
+          echo "TAG_NAME=$(node -e "console.log(require('./package.json').version)")" >> "$GITHUB_ENV"
+          echo "RELEASE_TITLE=${{ inputs.name }}" >> "$GITHUB_ENV"
+          echo "RELEASE_NAME=$(node -e "console.log(require('./package.json').version)") - ${{ inputs.name }}" >> "$GITHUB_ENV"
+          echo "BODY_PATH=$(echo "$(pwd)/release-notes.md")" >> "$GITHUB_ENV"
+
+      - name: Create release notes
+        id: create_notes
+        run: |
+          node devscripts/generateReleaseNotes.js stable
+
+      - name: Create release draft
+        id: create_release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ env.TAG_NAME }}
+          name: ${{ env.RELEASE_NAME }}
+          commit: ${{ github.sha }}
+          draft: true
+          prerelease: false
+          makeLatest: true
+          bodyFile: ${{ env.BODY_PATH }}
+          omitBody: false
+          omitBodyDuringUpdate: true
+  
   linux-dist:
     runs-on: ubuntu-22.04
 

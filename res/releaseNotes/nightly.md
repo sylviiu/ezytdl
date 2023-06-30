@@ -11,3 +11,4 @@
 
 ### Changelog
 
+{commitList}
