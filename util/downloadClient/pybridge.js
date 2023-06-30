@@ -136,7 +136,8 @@ module.exports = async () => new Promise(async res => {
                         }
                     };
                     
-                    ws.send({ progress: 1, version: versionStr, message: `Downloaded!` });
+                    ws.send({ progress: 1, version: versionStr, message: `Retrieving new version...` });
+
                     ws.close()
                 })
             }

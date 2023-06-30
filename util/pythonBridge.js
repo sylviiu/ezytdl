@@ -138,12 +138,6 @@ module.exports = {
                     })
 
                     const parseLog = async (d, type) => {
-                        if(!module.exports.bridgeVersions) d.split(`\n\r`).forEach(msg => {
-                            try {
-                                module.exports.bridgeVersions = JSON.parse(msg.toString().trim());
-                            } catch(e) { }
-                        })
-
                         const prefix = `[BRIDGE] ${type} | `;
 
                         let str = d.toString().trim();
@@ -202,9 +196,7 @@ module.exports = {
                                 const data = JSON.parse(msg.toString().trim());
                                 if(data.id) {
                                     module.exports.idHooks.filter(h => h.id == data.id).forEach(h => h.func(data));
-                                } else if(!module.exports.bridgeVersions) {
-                                    module.exports.bridgeVersions = data;
-                                }
+                                };
                             }
 
                             data.toString().trim().split(`\n\r`).forEach((msg, i) => {

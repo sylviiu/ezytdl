@@ -20,7 +20,7 @@ module.exports = (forceCheck, getBuildDate, clear) => new Promise(async (res, re
         return res(currentVersion);
     } else {
         const exists = path;
-        console.log(`Exists? ${exists}`)
+        console.log(`Exists? ${exists}`);
 
         if(exists) {
             /*let busy = 1;
@@ -46,6 +46,8 @@ module.exports = (forceCheck, getBuildDate, clear) => new Promise(async (res, re
 
                 try {
                     let version = JSON.parse((stdout ? stdout.toString().trim() : `` || stderr ? stderr.toString().trim() : ``));
+
+                    require(`../pythonBridge`).bridgeVersions = version;
 
                     console.log(version);
 

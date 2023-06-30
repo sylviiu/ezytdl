@@ -26,6 +26,8 @@ module.exports = {
     func: (_e, d) => new Promise(async res => {
         const details = [];
 
+        await require(`../../../util/currentVersion/pybridge`)()
+
         const useObj = Object.assign({}, appVersions, require(`../../../util/pythonBridge`).bridgeVersions || {});
 
         console.log(useObj)
