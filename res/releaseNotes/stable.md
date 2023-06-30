@@ -3,13 +3,3 @@
     <strong>Release v{version}</strong>
 </h1>
 
-## {releaseTitle}
-
---------------
-
-### Release Highlights
-
---------------
-
-### Changelog
-
