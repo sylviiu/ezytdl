@@ -17,7 +17,7 @@
 </head>
 
 <body style="background: rgb(10,10,10);width: 100vw;height: 100vh;font-family: Alata, sans-serif;overflow-x: hidden;">
-    <div class="d-flex flex-column justify-content-start align-items-start" style="height: calc(100% - 80px);width: 100vw;padding: 40px 60px;padding-top: 120px;max-width: 100vw;">
+    <div class="d-flex flex-column justify-content-start align-items-start" style="height: calc(100% - 80px);width: 100vw;padding: 40px 60px;max-width: 100vw;">
         <div class="d-flex flex-column justify-content-center align-items-start">
             <h1 id="heading" style="color: rgb(255,255,255);text-align: left;">Changelog</h1>
             <h6 class="d-none" id="released" style="color: rgba(255,255,255,0.35);text-align: left;margin-bottom: 13px;">released</h6>
@@ -26,30 +26,6 @@
                 <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
                 <path d="M438.6 105.4C451.1 117.9 451.1 138.1 438.6 150.6L182.6 406.6C170.1 419.1 149.9 419.1 137.4 406.6L9.372 278.6C-3.124 266.1-3.124 245.9 9.372 233.4C21.87 220.9 42.13 220.9 54.63 233.4L159.1 338.7L393.4 105.4C405.9 92.88 426.1 92.88 438.6 105.4H438.6z"></path>
             </svg></a>
-    </div>
-    <div class="d-flex justify-content-between align-items-center" id="navigationBar" style="width: 100vw;height: 80px;padding: 24px;background: rgba(0,0,0,0.5);position: fixed;margin-top: -80px;backdrop-filter: blur(15px);top: 80px;left: 0px;">
-        <div class="container-fluid d-flex justify-content-start align-items-end" id="navbarLeft" style="padding: 0px;"><img style="width: 56px;margin-right: 16px;border-radius: 100%;height: 56px;" src="../res/icon.png">
-            <h1 style="color: rgb(255,255,255);font-size: 40px;">ezytdl</h1>
-            <h6 id="version" style="color: rgb(71,71,71);margin-bottom: 13px;">v0.0.0</h6><button class="btn btn-primary d-none justify-content-center align-items-center" id="updateAvailable" type="button" style="background: rgb(255,255,255);border-style: none;border-radius: 100px;margin: 0px 6px;height: 36px;width: 36px;padding: 2px;margin-bottom: 9px;color: rgb(0,0,0);font-size: 20px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" id="downloadsIcon-2">
-                    <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
-                    <path d="M256 0C114.6 0 0 114.6 0 256s114.6 256 256 256c141.4 0 256-114.6 256-256S397.4 0 256 0zM382.8 246.1C380.3 252.1 374.5 256 368 256h-64v96c0 17.67-14.33 32-32 32h-32c-17.67 0-32-14.33-32-32V256h-64C137.5 256 131.7 252.1 129.2 246.1C126.7 240.1 128.1 233.3 132.7 228.7l112-112c6.248-6.248 16.38-6.248 22.62 0l112 112C383.9 233.3 385.3 240.1 382.8 246.1z"></path>
-                </svg></button>
-        </div>
-        <div class="container-fluid d-flex justify-content-end align-items-center" id="navbarRight" style="padding: 0px;"><a class="btn btn-primary" role="button" style="background: rgba(25,25,25,0.3);border-style: none;border-radius: 100px;margin: 0px 6px;height: 36px;" href="settings.html"><i class="fas fa-cog" style="margin-right: 6px;"></i>Settings</a><button class="btn btn-primary d-flex justify-content-center align-items-center" id="downloadsList" type="button" style="background: rgba(25,25,25,0.3);border-style: none;border-radius: 100px;margin: 0px 6px;height: 36px;width: 36px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" id="downloadsIcon">
-                    <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
-                    <path d="M480 352h-133.5l-45.25 45.25C289.2 409.3 273.1 416 256 416s-33.16-6.656-45.25-18.75L165.5 352H32c-17.67 0-32 14.33-32 32v96c0 17.67 14.33 32 32 32h448c17.67 0 32-14.33 32-32v-96C512 366.3 497.7 352 480 352zM432 456c-13.2 0-24-10.8-24-24c0-13.2 10.8-24 24-24s24 10.8 24 24C456 445.2 445.2 456 432 456zM233.4 374.6C239.6 380.9 247.8 384 256 384s16.38-3.125 22.62-9.375l128-128c12.49-12.5 12.49-32.75 0-45.25c-12.5-12.5-32.76-12.5-45.25 0L288 274.8V32c0-17.67-14.33-32-32-32C238.3 0 224 14.33 224 32v242.8L150.6 201.4c-12.49-12.5-32.75-12.5-45.25 0c-12.49 12.5-12.49 32.75 0 45.25L233.4 374.6z"></path>
-                </svg></button>
-            <div class="d-flex" id="windowControls"><button class="btn btn-primary d-flex justify-content-center align-items-center" id="minimizeWindows" type="button" style="background: rgba(25,25,25,0.3);border-style: none;border-radius: 100px;margin: 0px 6px;height: 36px;width: 35px;border-top-right-radius: 0px;border-bottom-right-radius: 0px;margin-right: 0px;padding: 2px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-96 0 512 512" width="1em" height="1em" fill="currentColor" style="margin-bottom: 3px;">
-                        <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
-                        <path d="M310.6 246.6l-127.1 128C176.4 380.9 168.2 384 160 384s-16.38-3.125-22.63-9.375l-127.1-128C.2244 237.5-2.516 223.7 2.438 211.8S19.07 192 32 192h255.1c12.94 0 24.62 7.781 29.58 19.75S319.8 237.5 310.6 246.6z"></path>
-                    </svg></button><button class="btn btn-primary d-flex justify-content-center align-items-center" id="maximizeWindows" type="button" style="background: rgba(25,25,25,0.3);border-style: none;border-radius: 0px;margin: 0px;height: 36px;width: 30px;padding: 2px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-96 0 512 512" width="1em" height="1em" fill="currentColor" style="margin-top: 1px;">
-                        <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
-                        <path d="M9.39 265.4l127.1-128C143.6 131.1 151.8 128 160 128s16.38 3.125 22.63 9.375l127.1 128c9.156 9.156 11.9 22.91 6.943 34.88S300.9 320 287.1 320H32.01c-12.94 0-24.62-7.781-29.58-19.75S.2333 274.5 9.39 265.4z"></path>
-                    </svg></button><button class="btn btn-primary d-flex justify-content-center align-items-center" id="closeWindows" type="button" style="background: rgba(25,25,25,0.3);border-style: none;border-radius: 100px;height: 36px;width: 45px;padding: 2px;border-top-left-radius: 0px;border-bottom-left-radius: 0px;padding-right: 6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-96 0 512 512" width="1em" height="1em" fill="currentColor" style="margin-top: 1px;">
-                        <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
-                        <path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"></path>
-                    </svg></button></div>
-        </div>
     </div>
     <script src="assets/bootstrap/js/bootstrap.min.js"></script>
 </body>

@@ -185,12 +185,12 @@ which(`npm`).then(async npm => {
     const build = () => new Promise(async res => {
         if(process.argv.find(s => s == `--from-source`)) {
             console.log(`packing (not building)...`)
-            child_process.execFileSync(await which(`node`), [`build`, `nopack`, `nightly`, `--build-number`, `1`], { stdio: "inherit" });
+            child_process.execFileSync(await which(`node`), [`build`, `nopack`, /*`nightly`,*/ `--build-number`, `1`], { stdio: "inherit" });
             console.log(`packed!`);
             res();
         } else {
             console.log(`packing...`)
-            child_process.execFileSync(await which(`node`), [`build`, `pack`, `nightly`, `--build-number`, `1`], { stdio: "inherit" });
+            child_process.execFileSync(await which(`node`), [`build`, `pack`, /*`nightly`,*/ `--build-number`, `1`], { stdio: "inherit" });
             console.log(`packed!`);
             res();
         }

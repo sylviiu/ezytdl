@@ -5,10 +5,10 @@ const notifQueue = [];
 module.exports = (content) => {
     console.log(`sending notification ${global.window ? true : false}`, content);
 
-    if(!content.stack) {
+    if(content && !content.stack) {
         content.stack = `- ${new Error().stack.split(`\n`).slice(1).map(s => s.trim()).join(`\n- `)}`;
         content.stackType = `js`;
-    } else content.stackType = `py`;
+    } else if(content) content.stackType = `py`;
 
     if(!content) {
         console.log(`no content`, notifQueue)

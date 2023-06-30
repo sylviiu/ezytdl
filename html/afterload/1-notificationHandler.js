@@ -257,7 +257,19 @@ if(window.parent != window) {
     };
     
     if(!useDocument.getElementById(`disableNotifications`)) {
-        notifications.handler((content) => createNotification(content));
+        notifications.handler((content) => {
+            if(content.redirect == `changelog.html`) {
+                createPopout({
+                    buttons: [
+                        {
+                            element: createNotification(Object.assign({}, content, { redirect: null })),
+                            href: `changelog.html`
+                        }
+                    ],
+                    closeOnNavigate: true,
+                });
+            } else createNotification(content)
+        });
         notifications.setReady();
     }
 }
