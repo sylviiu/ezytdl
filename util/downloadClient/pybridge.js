@@ -83,6 +83,8 @@ module.exports = async () => new Promise(async res => {
     
                 console.log(`Found target file! (${file} / ${download.size} size); downloading ${download.name} from "${download.browser_download_url}"`);
 
+                require(`../currentVersion/pybridge`)(null, null, true);
+
                 let busy = 1;
 
                 while(busy) await new Promise(async r => {

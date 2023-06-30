@@ -40,13 +40,13 @@ module.exports = async () => new Promise(async res => {
     ghRequest().then(async r => {        
         const latest = r.response;
             
-        const version = latest.tag_name.replace(`b`, ``);
+        const version = latest.name.split(`(`)[1].split(` `)[0].replace(/-/g, ``);
 
         const downloads = latest.assets;
         
         ws.send({ version, progress: 0 })
         
-        const currentVersion = (await require(`../currentVersion/ffmpeg`)(true)).toString();
+        const currentVersion = (await require(`../currentVersion/ffmpeg`)(true, true)).toString();
 
         console.log(`Current version: ${currentVersion}`)
 
@@ -65,6 +65,8 @@ module.exports = async () => new Promise(async res => {
                 const download = downloads.find(d => d.name.startsWith(`ffmpeg-master-latest-${file}`));
     
                 console.log(`Found target file! (${file} / ${download.size} size); downloading ${download.name} from "${download.browser_download_url}"`);
+
+                require(`../currentVersion/ffmpeg`)(null, null, true);
 
                 let ext = `.zip`;
 
