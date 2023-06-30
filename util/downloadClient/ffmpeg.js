@@ -32,6 +32,8 @@ module.exports = async () => new Promise(async res => {
     }
 
     console.log(`downloadClient`)
+        
+    ws.send({ progress: -1, message: `Checking for updates...` })
 
     const ghRequest = require(`../fetchLatestVersion/ffmpeg`);
 
