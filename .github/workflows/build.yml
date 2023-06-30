@@ -56,6 +56,8 @@ jobs:
   linux-dist:
     runs-on: ubuntu-22.04
 
+    needs: release_info
+
     permissions:
       contents: write
 
@@ -79,6 +81,8 @@ jobs:
           npm run dist
   macos-dist:
     runs-on: macos-latest
+
+    needs: release_info
 
     permissions: write-all
 
@@ -104,6 +108,8 @@ jobs:
           npm run dist
   windows-dist:
     runs-on: windows-latest
+
+    needs: release_info
 
     permissions: write-all
 
