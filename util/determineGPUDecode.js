@@ -78,7 +78,7 @@ module.exports = () => {
                 Promise.allSettled(Object.values(tested)).then((results) => {
                     console.log(`-------\nFFMPEG TESTING COMPLETE\n-------`);
                     let o = {};
-                    results.map(o => o.value).forEach(result => {
+                    results.map(o => o.value).filter(o => o).forEach(result => {
                         let obj = result;
 
                         o[result.name] = obj;
