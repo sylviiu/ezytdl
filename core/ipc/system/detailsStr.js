@@ -3,6 +3,8 @@ const dayOfWeek = [`Sunday`, `Monday`, `Tuesday`, `Wednesday`, `Thursday`, `Frid
 
 const pkg = require(`../../../package.json`);
 
+console.log(pkg)
+
 const appVersions = {
     "ezytdl": {
         "Version": pkg.version,
@@ -16,8 +18,7 @@ const appVersions = {
         "Arch": process.arch,
     },
     "Electron": {
-        "Version": pkg.devDependencies.electron.replace(`^`, ``),
-        "Builder": pkg.devDependencies[`electron-builder`].replace(`^`, ``),
+        "Version": process.versions.electron,
     }
 }
 
@@ -53,6 +54,10 @@ module.exports = {
             });
         });
 
-        return res(details.slice(1))
+        const returnStr = details.slice(1);
+
+        console.log(returnStr)
+
+        return res(returnStr)
     })
 }
