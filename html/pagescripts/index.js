@@ -1020,17 +1020,17 @@ const runSearch = async (url, initialMsg, func) => {
 
                     if(format.video) {
                         card.querySelector(`#videoIcon`).style.opacity = `100%`;
-                        //card.querySelector(`#formatConversionTextbox`).classList.add(`d-none`);
+                        //card.querySelector(`#outputExtension`).classList.add(`d-none`);
                     } else {
                         card.querySelector(`#videoIcon`).style.opacity = `35%`;
                         saveOptions.querySelector(`#videoOptions`).classList.add(`d-none`)
                     }
 
-                    card.querySelector(`#formatConversionTextbox`).placeholder = `${format.ext}`;
+                    card.querySelector(`#outputExtension`).placeholder = `${format.ext}`;
                     //card.querySelector(`#saveLocation`).value = `${config && config.saveLocation ? config.saveLocation : `{default save location}`}`;
                     card.querySelector(`#basedir`).innerText = `${info.saveLocation || (config && config.saveLocation ? config.saveLocation : `Save Location`)}`;
 
-                    if(config.lastMediaConversionOutputs[formatDownloadType]) card.querySelector(`#formatConversionTextbox`).value = config.lastMediaConversionOutputs[formatDownloadType];
+                    if(config.lastMediaConversionOutputs[formatDownloadType]) card.querySelector(`#outputExtension`).value = config.lastMediaConversionOutputs[formatDownloadType];
 
                     const saveOptionsIcon = card.querySelector(`#downloadicon`)
 
@@ -1041,10 +1041,10 @@ const runSearch = async (url, initialMsg, func) => {
 
                         btn.disabled = true;
 
-                        if(card.querySelector(`#formatConversionTextbox`).value != config.lastMediaConversionOutputs[formatDownloadType]) {
+                        if(card.querySelector(`#outputExtension`).value != config.lastMediaConversionOutputs[formatDownloadType]) {
                             let j = {};
 
-                            j[formatDownloadType] = card.querySelector(`#formatConversionTextbox`).value;
+                            j[formatDownloadType] = card.querySelector(`#outputExtension`).value;
                         }
 
                         card.style.opacity = 0.5;
@@ -1057,7 +1057,7 @@ const runSearch = async (url, initialMsg, func) => {
                     //card.querySelector(`#convertDownload`).parentElement.removeChild(card.querySelector(`#convertDownload`));
                     //card.querySelector(`#confirmDownload`).style.width = `100%`
 
-                    card.querySelector(`#conversionDiv`).appendChild(card.querySelector(`#formatConversionTextbox`));
+                    card.querySelector(`#conversionDiv`).appendChild(card.querySelector(`#outputExtension`));
 
                     conversionOptions(card, format);
                     

@@ -865,12 +865,12 @@ module.exports = {
                                     if(restoreOriginal) {
                                         update({status: `Rolling back changes...`})
                                         console.log(`-- restoring ${target}...`)
-                                        fs.unlinkSync(target);
+                                        if(fs.existsSync(target)) fs.unlinkSync(target);
                                         fs.renameSync(target + `.ezytdl`, target);
                                     } else {
                                         update({status: `Removing temporary file...`})
                                         console.log(`-- removing ${target + `.ezytdl`}...`)
-                                        fs.unlinkSync(target + `.ezytdl`);
+                                        if(fs.existsSync(target + `.ezytdl`)) fs.unlinkSync(target + `.ezytdl`);
                                     }
                                 }
                                 
@@ -1147,9 +1147,9 @@ module.exports = {
                     try {
                         console.log(`ffmpeg did not save file, renaming temporary file`);
                         if(deleteFile) {
-                            fs.unlinkSync(saveTo + previousFilename)
+                            if(fs.existsSync(saveTo + previousFilename)) fs.unlinkSync(saveTo + previousFilename)
                         } else {
-                            fs.renameSync(saveTo + previousFilename, require(`path`).join(saveTo, ytdlpFilename) + `.` + previousFilename.split(`.`).slice(-1)[0]);
+                            if(fs.existsSync(saveTo + previousFilename)) fs.renameSync(saveTo + previousFilename, require(`path`).join(saveTo, ytdlpFilename) + `.` + previousFilename.split(`.`).slice(-1)[0]);
                         }
                     } catch(e) { console.log(e) }
                     if(msg && typeof msg == `string`) {
@@ -1172,10 +1172,18 @@ module.exports = {
                 filenames.push(...temporaryFiles)
 
                 if(convert) {
+                    for(const key of Object.keys(convert)) {
+                        if(typeof convert[key] != `boolean` && !convert[key]) delete convert[key] // remove any falsy values
+                    }
+
                     ext = `.${convert.ext || (thisFormat || {}).ext}`
 
                     const inputArgs = replaceInputArgs || [];
+
                     temporaryFiles.forEach(file => inputArgs.push(`-i`, require(`path`).join(saveTo, file)));
+
+                    if(convert.additionalInputArgs) inputArgs.unshift(...convert.additionalInputArgs);
+
                     const outputArgs = [require(`path`).join(saveTo, ytdlpFilename) + ext];
 
                     if(convert.audioBitrate) outputArgs.unshift(`-b:a`, convert.audioBitrate);
@@ -1183,6 +1191,8 @@ module.exports = {
                     if(convert.videoBitrate) outputArgs.unshift(`-b:v`, convert.videoBitrate);
                     if(convert.videoFPS) outputArgs.unshift(`-r`, convert.videoFPS);
                     if(convert.videoResolution) outputArgs.unshift(`-vf`, `scale=${convert.videoResolution.trim().replace(`x`, `:`)}`);
+
+                    if(convert.additionalOutputArgs) outputArgs.unshift(...convert.additionalOutputArgs);
 
                     //inputArgs.push(`--retries`, `10`, `--fragment-retries`, `10`)
 
@@ -1202,7 +1212,7 @@ module.exports = {
 
                         let status = `Converting to ${`${ext}`.toUpperCase()} using ${name}...`;
 
-                        //if(!require('electron').app.isPackaged) status += `<br><br>- ${Object.keys(convert).map(s => `${s}: ${convert[s] || `(no conversion)`}`).join(`<br>- `)}`
+                        status += `<br><br>- ${Object.keys(convert).map(s => `${s}: ${convert[s] || `(no conversion)`}`).join(`<br>- `)}`
     
                         update({status, percentNum: -1, eta: `--`});
     
@@ -1264,7 +1274,7 @@ module.exports = {
                                 //return res(`Download canceled.`, true);
                             } else if(code == 0) {
                                 console.log(`ffmpeg completed; deleting temporary file...`);
-                                fs.unlinkSync(saveTo + previousFilename);
+                                if(fs.existsSync(saveTo + previousFilename)) fs.unlinkSync(saveTo + previousFilename);
                                 update({percentNum: 100, status: `Done!`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`, url, format});
                                 resolveFFmpeg(obj)
                             } else {
@@ -1283,9 +1293,11 @@ module.exports = {
     
                     //console.log(`file extension was provided! continuing with ffmpeg...`, obj.destinationFile);
     
-                    const decoder = transcoders.use;
+                    const decoder = transcoders.use ? Object.assign({}, transcoders.use, {
+                        post: transcoders.use.post.map(s => s.startsWith(`h264_`) ? `${convert.videoCodec || `h264`}_${s.split(`_`).slice(1).join(`_`)}` : s)
+                    }) : null;
     
-                    //console.log(`using decoder: `, decoder);
+                    console.log(`using decoder: `, decoder, `original obj: `, transcoders.use);
     
                     const thisCodec = getCodec(saveTo + previousFilename);
     
@@ -1312,15 +1324,17 @@ module.exports = {
                             console.log(`fallback to decoder only`);
     
                             if(decoder && decoder.name) {
-                                spawnFFmpeg([...decoder.pre, ...inputArgs, ...decoder.post, ...outputArgs], `${thisCodec}_software/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`).then(res).catch(e => {
+                                if(convert.videoCodec == false) {
+                                    spawnFFmpeg([...inputArgs, ...outputArgs], `${thisCodec}_software`).then(res).catch(fallback);
+                                } else spawnFFmpeg([...decoder.pre, ...inputArgs, ...decoder.post, ...outputArgs], `${thisCodec}_software/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`).then(res).catch(e => {
                                     //console.log(`FFmpeg failed converting -- ${e}; trying again...`)
-                                    spawnFFmpeg([...inputArgs, ...decoder.post, `-c:v`, `h264`, ...outputArgs], `${thisCodec}_software/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`).then(res).catch(e => {
+                                    spawnFFmpeg([...inputArgs, ...decoder.post, `-c:v`, `${convert.videoCodec || `h264`}`, ...outputArgs], `${thisCodec}_software/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`).then(res).catch(e => {
                                         //console.log(`FFmpeg failed converting -- ${e}; trying again...`)
-                                        spawnFFmpeg([...decoder.pre, ...inputArgs, `-c:v`, `h264`, ...outputArgs], `${thisCodec}_software/Dec + ` + `h264_software/Enc`).then(res).catch(e => {
+                                        spawnFFmpeg([...decoder.pre, ...inputArgs, `-c:v`, `${convert.videoCodec || `h264`}`, ...outputArgs], `${thisCodec}_software/Dec + ` + `${convert.videoCodec || `h264`}_software/Enc`).then(res).catch(e => {
                                             //console.log(`FFmpeg failed converting -- ${e}; trying again...`);
                                             if(onlyGPUConversion) {
                                                 return fallback(`The video codec (${thisCodec}) provided by the downloaded format is not compatible with FFmpeg's GPU transcoding.`);
-                                            } else spawnFFmpeg([...inputArgs, `-c:v`, `h264`, ...outputArgs], `${thisCodec}_software`).then(res).catch(e => {
+                                            } else spawnFFmpeg([...inputArgs, `-c:v`, `${convert.videoCodec || `h264`}`, ...outputArgs], `${thisCodec}_software`).then(res).catch(e => {
                                                 //console.log(`FFmpeg failed converting [1] -- ${e}; trying again...`)
                                                 spawnFFmpeg([...inputArgs, ...outputArgs], `${thisCodec}_software`).then(res).catch(fallback);
                                             })
@@ -1332,7 +1346,7 @@ module.exports = {
     
                         //console.log(compatibleTranscoders)
     
-                        if(compatibleTranscoders.length > 0) {
+                        if(compatibleTranscoders.length > 0 && convert.videoCodec != false) {
                             let done = false;
     
                             for(let transcoder of compatibleTranscoders) {

@@ -1,5 +1,99 @@
 let hasFFmpeg = false;
 
+const animateHiddenOptions = (node, ffmpegOptions, {
+    expand=true, 
+    immediate=false
+}={}) => {
+    const displayNone = ffmpegOptions.classList.contains(`d-none`);
+    const originalMaxHeight = ffmpegOptions.style.maxHeight;
+
+    if(displayNone) ffmpegOptions.classList.remove(`d-none`);
+    ffmpegOptions.style.maxHeight = ``;
+
+    const ffmpegBoundingClientRect = ffmpegOptions.getBoundingClientRect()
+
+    if(displayNone) ffmpegOptions.classList.add(`d-none`)
+    ffmpegOptions.style.maxHeight = originalMaxHeight;
+
+    const doExpand = expand && (ffmpegOptions.hasAttribute(`hidden`) ? ffmpegOptions.getAttribute(`hidden`) == `true` : displayNone);
+    const doShrink = !expand && (ffmpegOptions.hasAttribute(`hidden`) ? ffmpegOptions.getAttribute(`hidden`) == `false` : !displayNone);
+
+    console.log(`${doExpand ? `Opening` : doShrink ? `Closing` : `(${expand ? `supposed to open` : `supposed to close`}) No action to`} hidden options "${ffmpegOptions.id}" ${immediate ? `immediately` : `with animation`}`)
+
+    const add = [
+        parseInt(window.getComputedStyle(ffmpegOptions).marginBottom),
+        parseInt(window.getComputedStyle(ffmpegOptions).marginTop),
+        parseInt(window.getComputedStyle(node).marginTop),
+    ]
+
+    const newHeight = (ffmpegBoundingClientRect.height + add.reduce((a, b) => a + b, 0));
+
+    if(doExpand) {
+        anime.remove(ffmpegOptions);
+
+        ffmpegOptions.setAttribute(`hidden`, `false`);
+
+        if(displayNone) ffmpegOptions.classList.remove(`d-none`);
+
+        if(immediate) {
+            ffmpegOptions.style.opacity = `100%`;
+        } else if(config.reduceAnimations) {
+            anime({
+                targets: ffmpegOptions,
+                opacity: [`0%`, `100%`],
+                duration: 500,
+                easing: `easeOutExpo`,
+            });
+        } else {
+            anime({
+                targets: ffmpegOptions,
+                maxHeight: [`0px`, newHeight + `px`],
+                opacity: [`0%`, `100%`],
+                duration: 500,
+                easing: `easeOutExpo`,
+                complete: () => {
+                    ffmpegOptions.style.maxHeight = ``;
+                }
+            });
+        }
+    } else if(doShrink) {
+        anime.remove(ffmpegOptions);
+
+        ffmpegOptions.setAttribute(`hidden`, `true`);
+
+        if(immediate) {
+            ffmpegOptions.style.opacity = `0%`;
+            if(!ffmpegOptions.classList.contains(`d-none`)) ffmpegOptions.classList.add(`d-none`);
+            if(ffmpegOptions.resetSelection) ffmpegOptions.resetSelection()
+        } else if(config.reduceAnimations) {
+            ffmpegOptions.style.maxHeight = `0px`;
+            anime({
+                targets: ffmpegOptions,
+                opacity: [`100%`, `0%`],
+                duration: 500,
+                easing: `easeOutExpo`,
+                complete: () => {
+                    if(!ffmpegOptions.classList.contains(`d-none`)) ffmpegOptions.classList.add(`d-none`);
+                    if(ffmpegOptions.resetSelection) ffmpegOptions.resetSelection()
+                }
+            });
+        } else {
+            anime({
+                targets: ffmpegOptions,
+                maxHeight: [ffmpegBoundingClientRect.height, `0px`],
+                opacity: [`100%`, `0%`],
+                duration: 500,
+                easing: `easeOutExpo`,
+                complete: () => {
+                    if(!ffmpegOptions.classList.contains(`d-none`)) ffmpegOptions.classList.add(`d-none`);
+                    if(ffmpegOptions.resetSelection) ffmpegOptions.resetSelection()
+                    ffmpegOptions.style.maxHeight = ``;
+                }
+            });
+        }
+    };
+};
+
 const conversionOptions = (node, info) => {
     //node.querySelector(`#saveLocation`).placeholder = `${config && config.saveLocation ? config.saveLocation : `{default save location}`}`;
     //node.querySelector(`#saveLocation`).value = `${config && config.saveLocation ? config.saveLocation : ``}`;
@@ -17,56 +111,141 @@ const conversionOptions = (node, info) => {
     if(info.abr) node.querySelector(`#audioBitrate`).placeholder = `Bitrate (${info.abr}k)`;
 
     const metaButtons = node.querySelector(`#metadataOptions`).querySelectorAll(`.btn`)
+
+    const presetButtonClone = node.querySelector(`#ffmpegOptions`) ? node.querySelector(`#ffmpegOptions`).querySelector(`#custom`).cloneNode(true) : null;
     
     if(hasFFmpeg) {
+        const conversionFormats = {
+            mp4: {
+                name: `MP4 / H.264`,
+                description: `Default Video Format`,
+                icon: `fa-video`,
+                options: {
+                    ext: `mp3`,
+                    videoCodec: `h264`
+                }
+            },
+            mp3: {
+                name: `MP3 / AAC`,
+                description: `Default Audio Format`,
+                icon: `fa-volume-up`,
+                options: {
+                    ext: `mp3`,
+                    videoCodec: false,
+                    audioCodec: `aac`
+                }
+            },
+            gif: {
+                name: `GIF`,
+                description: `it's pronounced gif btw`,
+                icon: `fa-image`,
+                options: {
+                    ext: `gif`,
+                    videoCodec: false,
+                }
+            },
+            custom: {
+                name: `Custom Format`,
+                description: `Customize your conversion!`,
+                icon: `fa-wrench`,
+            },
+        }
+
         node.querySelector(`#convertDownload`).onclick = () => {
             const ffmpegOptions = node.querySelector(`#ffmpegOptions`);
+
+            const customPresetButton = ffmpegOptions.querySelector(`#custom`);
+
+            for(const format of Object.entries(conversionFormats)) {
+                const key = format[0], options = format[1];
+
+                if(!ffmpegOptions.querySelector(`#${key}`)) {
+                    const thisNode = presetButtonClone.cloneNode(true);
+                    thisNode.id = `${key}`;
+                    thisNode.querySelector(`#name`).innerText = options.name;
+                    thisNode.querySelector(`#description`).innerText = options.description;
+                    thisNode.querySelector(`#icon`).className = `fas ${options.icon}`;
+                    customPresetButton.parentElement.appendChild(thisNode);
+                } else customPresetButton.parentElement.appendChild(ffmpegOptions.querySelector(`#${key}`))
+
+                const node = ffmpegOptions.querySelector(`#${key}`);
+                
+                if(options.options) node.setAttribute(`options`, JSON.stringify(options.options));
+            };
+
+            const buttons = ffmpegOptions.querySelectorAll(`.formatPreset`);
+
+            let currentSelected = null;
+
+            const setPreset = (node, instant) => {
+                if(node && currentSelected == node.id) {
+                    buttonDisabledAnim(node, {noRemove: true});
+                } else {
+                    const previousSelected = currentSelected;
+                    currentSelected = node ? node.id : null;
+                    info.selectedConversion = currentSelected && conversionFormats[currentSelected] ? Object.assign({}, conversionFormats[currentSelected], { key: currentSelected }) : null;
+                    buttons.forEach(btn => {
+                        if(btn.id && btn.style) {
+                            if(btn.id == currentSelected) {
+                                if(btn.id == previousSelected) return;
+
+                                anime.remove(btn);
+
+                                anime({
+                                    targets: btn,
+                                    scale: 1.1,
+                                    backgroundColor: `rgb(0, 0, 0)`,
+                                    color: `rgb(255, 255, 255)`,
+                                    duration: instant ? 0 : 300,
+                                    easing: `easeOutCirc`,
+                                });
+
+                                if(btn.id == `custom`) {
+                                    animateHiddenOptions(node, ffmpegOptions.querySelector(`#ffmpegCustomOptions`));
+                                } else {
+                                    animateHiddenOptions(node, ffmpegOptions.querySelector(`#ffmpegCustomOptions`), {expand: false});
+                                }
+                            } else if(btn.id == previousSelected || previousSelected == null) {
+                                anime.remove(btn);
+                                
+                                anime({
+                                    targets: btn,
+                                    scale: 0.94,
+                                    backgroundColor: presetButtonClone.style.backgroundColor,
+                                    color: presetButtonClone.style.color,
+                                    opacity: 0.9,
+                                    duration: instant ? 0 : 300,
+                                    easing: `easeOutCirc`,
+                                })
+                            }
+                        }
+                    })
+                }
+            };
+
+            ffmpegOptions.resetSelection = () => setPreset(null, true);
+
+            if(!ffmpegOptions.hasAttribute(`default`)) ffmpegOptions.setAttribute(`default`, `mp4`)
+
+            buttons.forEach(node => {
+                if(node.id) node.onclick = () => setPreset(node);
+            });
+
+            const defaultOption = ffmpegOptions.getAttribute(`default`);
+
+            const usableOption = conversionFormats[defaultOption] ? defaultOption : null;
+
+            console.log(`default option: ${defaultOption} -- parsed: ${usableOption}`)
+
+            setPreset(usableOption ? ffmpegOptions.querySelector(`#${usableOption}`) || null : null, true); // set default preset
     
-            ffmpegOptions.classList.remove(`d-none`);
-    
-            const ffmpegBoundingClientRect = ffmpegOptions.getBoundingClientRect()
-    
-            console.log(ffmpegBoundingClientRect.height);
-    
-            const formattxtbox = node.querySelector(`#formatConversionTextbox`);
+            const formattxtbox = node.querySelector(`#outputExtension`);
     
             formattxtbox.parentElement.removeChild(formattxtbox);
     
             node.querySelector(`#conversionDiv`).appendChild(formattxtbox);
-    
-            const add = [
-                parseInt(window.getComputedStyle(ffmpegOptions).marginBottom),
-                parseInt(window.getComputedStyle(ffmpegOptions).marginTop),
-                parseInt(window.getComputedStyle(node).marginTop),
-            ]
-    
-            const newHeight = (ffmpegBoundingClientRect.height + add.reduce((a, b) => a + b, 0));
-    
-            console.log(`newHeight`, newHeight)
-    
-            if(config.reduceAnimations) {
-                ffmpegOptions.style.maxHeight = newHeight + `px`;
-                anime({
-                    targets: ffmpegOptions,
-                    opacity: [`0%`, `100%`],
-                    duration: 500,
-                    easing: `easeOutExpo`,
-                    complete: () => {
-                        ffmpegOptions.style.maxHeight = ``;
-                    }
-                });
-            } else {
-                anime({
-                    targets: ffmpegOptions,
-                    maxHeight: [`0px`, newHeight + `px`],
-                    opacity: [`0%`, `100%`],
-                    duration: 500,
-                    easing: `easeOutExpo`,
-                    complete: () => {
-                        ffmpegOptions.style.maxHeight = ``;
-                    }
-                });
-            }
+
+            animateHiddenOptions(node, ffmpegOptions);
     
             anime({
                 targets: node.querySelector(`#convertDownload`),

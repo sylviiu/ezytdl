@@ -1,21 +1,25 @@
 const getSaveOptions = (node, info, overrideDownloadObj) => {
-    const formatConversionTextbox = node.querySelector(`#formatConversionTextbox`);
+    const formatConversionTextbox = node.querySelector(`#outputExtension`);
     const convertDownload = node.querySelector(`#convertDownload`);
 
     let convertInfo = { ext: formatConversionTextbox.value };
 
-    let convert = false;
+    let convert = info.selectedConversion && hasFFmpeg ? true : false;
 
-    if(convertDownload.style.width != `49%` && hasFFmpeg) {
+    if(convert) {
         convert = true;
 
-        node.querySelector(`#audioOptions`).childNodes.forEach(n => {
-            if(n && n.placeholder && n.id) convertInfo[n.id] = n.value;
-        });
-
-        node.querySelector(`#videoOptions`).childNodes.forEach(n => {
-            if(n && n.placeholder && n.id) convertInfo[n.id] = n.value;
-        });
+        if(info.selectedConversion.key == `custom`) {
+            node.querySelector(`#audioOptions`).childNodes.forEach(n => {
+                if(n && n.placeholder && n.id) convertInfo[n.id] = n.value;
+            });
+    
+            node.querySelector(`#videoOptions`).childNodes.forEach(n => {
+                if(n && n.placeholder && n.id) convertInfo[n.id] = n.value;
+            });
+        } else if(info.selectedConversion.options) {
+            convertInfo = info.selectedConversion.options;
+        } else throw new Error(`Invalid conversion option -- not custom and doesn't have options obj`, info.selectedConversion)
     };
 
     console.log(`convert? ${convert}`, convertInfo)

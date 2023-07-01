@@ -12,8 +12,8 @@ const getDirectChild = (node, id) => {
 }
 
 const setDefaultSaveOptValues = (node, info) => {
-    if(node.querySelector(`#formatConversionTextbox`)) {
-        node.querySelector(`#formatConversionTextbox`).placeholder = `ext`;
+    if(node.querySelector(`#outputExtension`)) {
+        node.querySelector(`#outputExtension`).placeholder = `ext`;
     } else console.log(`no formatConversionTextbox`)
 
     if(node.querySelector(`#saveLocation`)) {
@@ -143,10 +143,17 @@ const saveOptionsAnimations = {
         
                 formatCard.querySelector(`#audioOptions`).childNodes.forEach(clearInput)
                 formatCard.querySelector(`#videoOptions`).childNodes.forEach(clearInput)
+
+                animateHiddenOptions(node, formatCard.querySelector(`#ffmpegCustomOptions`), {expand: false, immediate: true});
+                animateHiddenOptions(node, formatCard.querySelector(`#ffmpegOptions`), {expand: false, immediate: true});
+                
+                /*if(!formatCard.querySelector(`#ffmpegCustomOptions`).classList.contains(`d-none`)) {
+                    formatCard.querySelector(`#ffmpegCustomOptions`).classList.add(`d-none`);
+                }
                 
                 if(!formatCard.querySelector(`#ffmpegOptions`).classList.contains(`d-none`)) {
                     formatCard.querySelector(`#ffmpegOptions`).classList.add(`d-none`);
-                }
+                }*/
         
                 if(formatCard.querySelector(`#convertDownload`).style.width != `49%` && hasFFmpeg) {
                     anime.remove(formatCard.querySelector(`#convertDownload`));
@@ -157,10 +164,15 @@ const saveOptionsAnimations = {
                     formatCard.querySelector(`#convertDownload`).style.maxWidth = null;
                 }
         
+                /*if(formatCard.querySelector(`#ffmpegCustomOptions`).style.maxHeight) {
+                    anime.remove(formatCard.querySelector(`#ffmpegCustomOptions`));
+                    formatCard.querySelector(`#ffmpegCustomOptions`).style.maxHeight = null;
+                }
+        
                 if(formatCard.querySelector(`#ffmpegOptions`).style.maxHeight) {
                     anime.remove(formatCard.querySelector(`#ffmpegOptions`));
                     formatCard.querySelector(`#ffmpegOptions`).style.maxHeight = null;
-                }
+                }*/
 
                 anime({
                     targets: saveOptions.parentNode.parentNode,
@@ -267,9 +279,10 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
 
     node = getQualityButtons(node);
 
-    const formatConversionTextbox = node.querySelector(`#formatConversionTextbox`);
+    const formatConversionTextbox = node.querySelector(`#outputExtension`);
 
-    const ffmpegOptions = node.querySelector(`#ffmpegOptions`);
+    const ffmpegOptions = node.querySelector(`#ffmpegCustomOptions`);
+    const ffmpegPresets = node.querySelector(`#ffmpegOptions`);
     const convertDownload = node.querySelector(`#convertDownload`);
     const confirmDownload = node.querySelector(`#confirmDownload`);
 
@@ -333,9 +346,21 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
         node.querySelector(`#audioOptions`).childNodes.forEach(clearInput)
         node.querySelector(`#videoOptions`).childNodes.forEach(clearInput)
         
-        if(!ffmpegOptions.classList.contains(`d-none`)) {
+        animateHiddenOptions(node, ffmpegOptions, {expand: false, immediate: true});
+        animateHiddenOptions(node, ffmpegPresets, {expand: false, immediate: true});
+
+        let fallbackAudio = (!node.querySelector(`#downloadBestAudio`) || node.querySelector(`#downloadBestAudio`).classList.contains(`d-none`)) ? null : `mp3`;
+        let fallbackVideo = (!node.querySelector(`#downloadBestVideo`) || node.querySelector(`#downloadBestVideo`).classList.contains(`d-none`)) ? null : `mp4`;
+
+        ffmpegPresets.setAttribute(`default`, currentSelected == 0 ? (fallbackVideo || fallbackAudio || `none`) : currentSelected == 1 ? `mp3` : `mp4`);
+        
+        /*if(!ffmpegOptions.classList.contains(`d-none`)) {
             ffmpegOptions.classList.add(`d-none`);
         }
+        
+        if(!ffmpegPresets.classList.contains(`d-none`)) {
+            ffmpegPresets.classList.add(`d-none`);
+        }*/
 
         if(convertDownload.style.width != `49%` && hasFFmpeg) {
             anime.remove(convertDownload);
@@ -346,10 +371,15 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
             convertDownload.style.maxWidth = null;
         }
 
-        if(ffmpegOptions.style.maxHeight) {
+        /*if(ffmpegOptions.style.maxHeight) {
             anime.remove(ffmpegOptions);
             ffmpegOptions.style.maxHeight = null;
         }
+
+        if(ffmpegPresets.style.maxHeight) {
+            anime.remove(ffmpegPresets);
+            ffmpegPresets.style.maxHeight = null;
+        }*/
     
         if(formatConversionTextbox.parentNode.id != `fileOptions`) {
             console.log(`formatConversionTextbox not in fileOptions`)

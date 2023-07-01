@@ -1,5 +1,5 @@
 const buttonDisabledAnim = (m, extraOpt) => {
-    anime.remove(m);
+    if(!extraOpt.noRemove) anime.remove(m);
     m.style.position = `relative`
     anime(Object.assign({}, {
         targets: m,
