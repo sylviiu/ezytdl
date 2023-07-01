@@ -2,8 +2,6 @@ const idGen = require(`../util/idGen`);
 
 const dialogs = {};
 
-const path = require('path')
-
 module.exports = {
     get: (id) => {
         console.log(`getting dialog ${id}`);

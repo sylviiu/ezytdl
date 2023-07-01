@@ -6,9 +6,13 @@
     "reduceAnimations": "Remove some animations that may perform poorly on some systems.",
     "disableAnimations": "Disables all of the animations in the app (in a crude manner). This will not disable smaller things like progress bars, but is still useful if you want to reduce the amount of resources ezytdl uses, though reducing the animations should have a similar effect.",
     "lastMediaConversionOutputs": "Set the format ezytdl should convert media files to.",
+    "lastMediaConversionOutputsExtended": {
+        "audio": "The audio format to convert to.",
+        "video": "The video format to convert to."
+    },
     "concurrentDownloads": "Set the maximum amount of yt-dlp downloads & FFmpeg conversions should be running at a time.",
+    "hardwareAcceleratedConversion": "Allow ezytdl to use your system's hardware to convert videos. This is useful if you want to speed up the conversion process.",
     "onlyGPUConversion": "Prevent ezytdl from converting a video if it cannot be accelerated by any of your system's hardware. This is useful if you want to prevent ezytdl from using your CPU to convert videos.",
-    "disableHWAcceleratedConversion": "Prevent ezytdl from using your system's hardware to convert videos. This is useful if you want to prevent ezytdl from using your GPU to convert videos.",
     "closeToTray": "Allow ezytdl to close to the system tray instead of exiting when the window is closed.",
     "logsEnabled": "Allows ezytdl to log information to the console. This is useful for debugging and/or bug reporting.",
     "defaultWindowControls": "If this is enabled, ezytdl will use your operating system's default window border & controls. This will only be applied on the next launch of ezytdl.",

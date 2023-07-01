@@ -41,7 +41,7 @@ const animateHiddenOptions = (node, ffmpegOptions, {
             } else if(config.advanced && ffmpegOptions.querySelector(`#additional`).classList.contains(`d-none`)) {
                 ffmpegOptions.querySelector(`#additional`).classList.remove(`d-none`);
             };
-            
+
             ffmpegOptions.querySelector(`#additional`).childNodes.forEach(n => {
                 if(n && n.placeholder && n.id) n.value = ``;
             });
@@ -133,7 +133,7 @@ const conversionOptions = (node, info) => {
                 description: `Default Video Format`,
                 icon: `fa-video`,
                 options: {
-                    ext: `mp3`,
+                    ext: `mp4`,
                     videoCodec: `h264`
                 }
             },

@@ -13,17 +13,17 @@ window.addEventListener("mouseup", (e) => {
 // i wish you can make the preload an array of scripts but NoOoO
 
 const invoke = (...args) => {
-    console.log(`invoke`, ...args);
+    console.log(`ipc invoke`, ...args);
     return ipcRenderer.invoke(...args);
 }
 
 const send = (...args) => {
-    console.log(`send`, ...args);
+    console.log(`ipc send`, ...args);
     return ipcRenderer.send(...args);
 }
 
 const on = (...args) => {
-    console.log(`on`, ...args);
+    console.log(`ipc on`, ...args);
     return ipcRenderer.on(...args);
 }
 
@@ -115,6 +115,7 @@ let dialogPromise = new Promise(r => {
 
 contextBridge.exposeInMainWorld(`dialog`, {
     get: () => dialogPromise,
+    create: (content) => invoke(`createDialog`, content),
     send: (id, btnID, inputs) => invoke(`dialogButton`, {id, btnID, inputs}),
     setHeight: (id, height) => invoke(`setDialogHeight`, {id, height})
 })
@@ -129,6 +130,8 @@ contextBridge.exposeInMainWorld(`version`, {
 const configHooks = [];
 
 contextBridge.exposeInMainWorld(`configuration`, {
+    action: (name) => invoke(`configAction`, name),
+    actionUpdate: (key, cb) => on(`configActionUpdate-${key}`, cb),
     get: () => new Promise(async res => {
         invoke(`getConfig`).then(data => {
             configHooks.forEach(cb => cb(data));

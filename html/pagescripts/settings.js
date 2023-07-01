@@ -1,5 +1,7 @@
 const settingsCardMDConverter = new showdown.Converter({ parseImgDimensions: true });
 
+const systemConfiguration = typeof parentWindow != `undefined` ? parentWindow.configuration : configuration
+
 const cards = [];
 
 const bottomContent = document.getElementById(`bottomContent`);
@@ -78,16 +80,15 @@ const addFilenameFunctionality = () => {
 }
 
 const createCard = (key, string, description, config, parentNode, showSaveButton, depth) => {
-    console.log(key, string);
+    console.log(`key`, key, `name / string`, string, `config / strings`, config && config.strings ? config.strings : null, `config / descriptions`, config && config.descriptions ? config.descriptions : null);
 
-    if(!parentNode.querySelector(`#` + key)) {
+    if(key.endsWith(`Extended`)) return;
+
+    if(!parentNode.querySelector(`#${key}`)) {
         const newCard = settingsBox.cloneNode(true);
         newCard.id = key;
 
         if(!showSaveButton) {
-            parentNode.style.background = `rgb(` + `${28 - ( depth+1 * 7 )}, `.repeat(3) + `)`
-            newCard.style.background = `rgb(` + `${28 - ( depth+1 * 7 )}, `.repeat(3) + `)`
-
             newCard.querySelector(`#options`).childNodes.forEach(node => {
                 node.style.removeProperty(`border-bottom-right-radius`)
                 node.style.removeProperty(`border-top-right-radius`)
@@ -102,6 +103,8 @@ const createCard = (key, string, description, config, parentNode, showSaveButton
             newCard.style.marginTop = `0px`
             newCard.style.minHeight = `0px`
             newCard.style.width = `100%`
+
+            newCard.style.backgroundColor = `rgba(0,0,0,0)`
         }
 
         parentNode.appendChild(newCard)
@@ -117,26 +120,126 @@ const createCard = (key, string, description, config, parentNode, showSaveButton
         card.querySelector(`#description`).innerHTML = settingsCardMDConverter.makeHtml(description);
         if(card.querySelector(`#description`).classList.contains(`d-none`)) card.querySelector(`#description`).classList.remove(`d-none`);
         card.querySelector(`#description`).style.marginBottom = `-10px`;
+        if(!showSaveButton) {
+            card.querySelector(`#description`).style.fontSize = `0.8em`;
+            card.querySelector(`#name`).style.marginBottom = `-15px`
+        }
     } else {
         if(!card.querySelector(`#description`).classList.contains(`d-none`)) card.querySelector(`#description`).classList.add(`d-none`);
+    }
+
+    if(config.actions[key]) {
+        if(!card.querySelector(`#action`).innerHTML.includes(config.actions[key].name)) card.querySelector(`#action`).innerHTML += config.actions[key].name;
+        if(!config.actions[key].manuallySavable && !card.querySelector(`#save`).classList.contains(`d-none`)) card.querySelector(`#save`).classList.add(`d-none`)
+        if(card.querySelector(`#action`).classList.contains(`d-none`)) {
+            card.querySelector(`#action`).classList.remove(`d-none`);
+
+            let progbar = null;
+
+            systemConfiguration.actionUpdate(key, (_e, {progress, message, complete}) => {
+                console.log(`actionUpdate: ${message} - ${progress} / ${complete}`)
+                if(progress) {
+                    if(!progbar) progbar = addProgressBar(card.querySelector(`#strings`), null, null, { align: `left` });
+                    progbar.setProgress(progress, message);
+                } else if(complete && progbar) {
+                    progbar.remove();
+                }
+            });
+        }
+        card.querySelector(`#action`).onclick = () => {
+            toggleButtons(false);
+
+            const run = () => systemConfiguration.action({key, config, args: config.actions[key].args}).then(newConfig => {
+                updateConfig(newConfig, { noUpdate: true, silent: true });
+            });
+
+            console.log(`key: ${key} -- clicked; confirm? ${config.actions[key].confirmation ? true : false}`)
+
+            if(config.actions[key].confirmation) {
+                dialog.create({
+                    title: config.actions[key].name,
+                    body: config.actions[key].confirmation + `\n\nAre you sure you want to continue?`,
+                    buttons: [
+                        {
+                            text: `Yes`,
+                            id: `yes`,
+                            icon: `check`
+                        },
+                        {
+                            text: `No`,
+                            id: `no`,
+                            primary: true,
+                            icon: `cross`
+                        }
+                    ]
+                }).then(({ response }) => {
+                    if(response == `yes`) {
+                        run();
+                    } else {
+                        toggleButtons(true);
+                    }
+                })
+            } else run();
+        }
     }
 
     console.log(`type: ${typeof config[key]}`)
 
     if(typeof config[key] == `object`) {
-        const opt = card.querySelector(`#options`);
+        //card.querySelector(`#strings`).style.width = `33%`;
+        card.querySelector(`#strings`).style.maxWidth = `33%`;
 
+        const disableInputs = config.disableInputs || (config.actions[key] && !config.actions[key].manuallySavable ? true : false);
+
+        const opt = card.querySelector(`#options`);
         opt.classList.add(`flex-column`);
 
-        for(e of Object.entries(config[key])) {
-            createCard(e[0], e[0][0].toUpperCase() + e[0].slice(1), null, { strings: config.strings[key], [e[0]]: e[1] }, card.querySelector(`#options`), false, depth+1)
+        if(!card.querySelector(`#optHolder`)) {
+            const newOptHolder = card.querySelector(`#options`).cloneNode(true);
+            newOptHolder.id = `optHolder`
+    
+            opt.replaceWith(newOptHolder);
+            newOptHolder.appendChild(opt);
         };
 
-        const height = opt.getBoundingClientRect().height;
+        const optHolder = card.querySelector(`#optHolder`);
 
-        console.log(height)
+        optHolder.style.maxWidth = `63%`
 
-        card.querySelector(`#save`).style.height = height + `px`;
+        const saveBtn = card.querySelector(`#save`);
+
+        for(e of Object.entries(config[key])) {
+            const name = config.strings[key + `Extended`] && config.strings[key + `Extended`][e[0]] ? config.strings[key + `Extended`][e[0]] : (e[0][0].toUpperCase() + e[0].slice(1));
+            const description = config.descriptions[key + `Extended`] && config.descriptions[key + `Extended`][e[0]] ? config.descriptions[key + `Extended`][e[0]] : null;
+            createCard(e[0], name, description, {
+                descriptions: config.descriptions[key + `Extended`] || {}, 
+                strings: config.strings[key + `Extended`] || {},
+                actions: config.actions[key + `Extended`] || {},
+                disableInputs,
+                [e[0]]: e[1] 
+            }, opt, false, depth+1)
+        };
+
+        saveBtn.style.borderBottomLeftRadius = saveBtn.style.borderBottomRightRadius;
+        saveBtn.style.borderTopLeftRadius = `0px`;
+        saveBtn.style.borderTopRightRadius = `0px`;
+        saveBtn.style.paddingRight = ``;
+
+        opt.style.padding = `4px 12px`;
+        opt.style.borderTopLeftRadius = saveBtn.style.borderBottomRightRadius;
+        opt.style.borderTopRightRadius = saveBtn.style.borderBottomRightRadius;
+        opt.style.borderBottomLeftRadius = disableInputs ? saveBtn.style.borderBottomRightRadius : `0px`;
+        opt.style.borderBottomRightRadius = disableInputs ? saveBtn.style.borderBottomRightRadius : `0px`;
+        opt.style.borderWidth = `2px`;
+        opt.style.borderColor = saveBtn.style.backgroundColor
+        opt.style.borderStyle = `solid`
+        optHolder.appendChild(saveBtn)
+        
+        const bgc = depth+1 % 2 == 1 ? `rgb(35,35,35)` : `rgb(40,40,40)`;
+
+        console.log(`bgc: ${bgc}`);
+
+        opt.style.backgroundColor = bgc;
 
         const getObject = (optionsObj) => {
             const obj = {};
@@ -162,7 +265,11 @@ const createCard = (key, string, description, config, parentNode, showSaveButton
         
         card.querySelector(`#save`).onclick = () => updateConfig({ [key]: getObject(opt) });
     } else {
-        if(card.querySelector(`#${typeof config[key]}`).classList.contains(`d-none`)) card.querySelector(`#${typeof config[key]}`).classList.remove(`d-none`);
+        if(card.querySelector(`#strings`)) card.querySelector(`#strings`).style.width = `100%`;
+
+        const input = card.querySelector(`#${typeof config[key]}`);
+
+        if(input.classList.contains(`d-none`)) input.classList.remove(`d-none`);
 
         if(typeof config[key] == `string`) {
             const elm = card.querySelector(`#string`);
@@ -220,10 +327,23 @@ const createCard = (key, string, description, config, parentNode, showSaveButton
         }
 
         if(showSaveButton) {
-            card.querySelector(`#save`).onclick = () => updateConfig({ [key]: card.querySelector(`#${typeof config[key]}`).value });
+            card.querySelector(`#save`).onclick = () => updateConfig({ [key]: input.value });
         } else if(card.querySelector(`#save`)) {
-            card.querySelector(`#save`).parentNode.removeChild(card.querySelector(`#save`))
-        }
+            card.querySelector(`#save`).parentNode.removeChild(card.querySelector(`#save`));
+            if(input) {
+                input.style.borderBottomRightRadius = input.style.borderBottomLeftRadius;
+                input.style.borderTopRightRadius = input.style.borderBottomLeftRadius;
+            }
+        };
+
+        if(input && config.disableInputs) {
+            //input.disabled = true;
+            input.style.cursor = `not-allowed`;
+            input.onclick = (e) => {
+                e.preventDefault();
+                buttonDisabledAnim(input, { noRemove: true })
+            }
+        };
     }
 
     parentNode.appendChild(card);
@@ -394,17 +514,23 @@ const parse = (config) => {
     createServices();
 }
 
-const updateConfig = (json) => {
-    let req = new XMLHttpRequest();
+const updateConfig = (json, {noUpdate, silent=false}={}) => {
     toggleButtons(false)
-    configuration.set(json).then(newConf => {
+
+    const run = (newConf) => {
         parse(newConf)
         addFilenameFunctionality(newConf)
-        createNotification({
+        if(!silent) createNotification({
             headingText: `Settings updated.`,
             bodyText: `Your settings were saved successfully.`,
         });
-    })
+    };
+
+    if(noUpdate && json) {
+        run(json);
+    } else {
+        systemConfiguration.set(json).then(run);
+    }
 }
 
 let paltform = navigator.platform.toLowerCase();
@@ -464,7 +590,7 @@ if(detailsStr) system.detailsStr().then(details => {
     detailsStr.classList.remove(`d-none`)
 })
 
-configuration.get().then(newConf => {
+systemConfiguration.get().then(newConf => {
     parse(newConf)
     addFilenameFunctionality(newConf)
     if(document.getElementById(`settingsList`).style.opacity == 0) {

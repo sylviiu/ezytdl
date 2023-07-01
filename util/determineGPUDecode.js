@@ -1,22 +1,20 @@
 const { getPath } = require(`./filenames/ffmpeg`)
 const { spawn } = require('child_process');
+const { app } = require(`electron`);
+const { Stream } = require('stream');
 
-const findPath = require(`./getPath`)
+const fs = require('fs');
 
-const sendNotification = require("../core/sendNotification.js");
+const findPath = require(`./getPath`);
+const idGen = require(`./idGen`);
+const superagent = require(`superagent`);
 
-let working = { "checked": false };
-
-let promise = null;
-
-const constructPromise = (name, accelArgs) => new Promise((res) => {
+const constructPromise = (name, accelArgs, file) => new Promise((res) => {
     let pre = (accelArgs.pre || []).slice(0);
     let post = (accelArgs.post || []).slice(0);
 
     if(post.indexOf(`-c:v`) == -1) post.push(`-c:v`, `h264`);
     if(post.indexOf(`-f`) == -1) post.push(`-f`, `null`);
-
-    let file = findPath(`./res/sample.mp4`);
 
     const proc = spawn(getPath(), [`-hide_banner`, `-loglevel`, `error`, ...pre, `-i`, file, `-threads`, `1`, ...post, `-`, `-benchmark`]);
 
@@ -40,7 +38,14 @@ const constructPromise = (name, accelArgs) => new Promise((res) => {
         if(!complete) {
             complete = true;
 
-            res({ name, works: code == 0 ? true : false, log: str, pre: accelArgs.pre || [], post: accelArgs.post || [], string: accelArgs.string })
+            res({ 
+                name, 
+                works: code == 0 ? true : false, 
+                log: str, 
+                pre: accelArgs.pre || [], 
+                post: accelArgs.post || [], 
+                string: accelArgs.string
+            })
         }
     })
 
@@ -49,63 +54,63 @@ const constructPromise = (name, accelArgs) => new Promise((res) => {
     })
 })
 
-module.exports = () => {
+module.exports = (link, platforms, setProgress) => {
     let path = getPath();
     
-    if(!working.checked) {
-        if(promise) {
-            return promise;
-        } else if(!path || !require('fs').existsSync(path)) {
-            return null;
-        } else {
-            promise = new Promise((res, rej) => {
-                const transcoders = require(`./ffmpegGPUArgs.json`);
+    if(!path || !require('fs').existsSync(path)) {
+        return null;
+    } else {
+        return new Promise((res, rej) => {
+            setProgress(`Downloading file...`, -1)
 
-                let tested = {};
+            const tempPath = app.getPath(`temp`);
 
-                for (let key of Object.keys(transcoders)) {
-                    const obj = transcoders[key];
-                    if(!obj.platform.find(s => s == process.platform)) {
-                        console.log(`[FFMPEG/HW -- NOT USING] ${key}`)
-                        delete transcoders[key]
-                    } else {
-                        console.log(`[FFMPEG/HW -- USING] ${key}`)
-                    }
-                }
+            const filename = link.split(`/`).slice(-1)[0];
 
-                for (transcoder of Object.keys(transcoders)) tested[transcoder] = constructPromise(transcoder, transcoders[transcoder])
+            const destination = require(`path`).join(tempPath, idGen(24) + `-` + filename);
 
-                Promise.allSettled(Object.values(tested)).then((results) => {
-                    console.log(`-------\nFFMPEG TESTING COMPLETE\n-------`);
-                    let o = {};
-                    results.map(o => o.value).filter(o => o).forEach(result => {
-                        let obj = result;
+            console.log(`destination: ${destination}`)
+    
+            const writeStream = fs.createWriteStream(destination, { flags: `w` });
+    
+            const pt = new Stream.PassThrough();
 
-                        o[result.name] = obj;
-                        if(result.works) {
-                            working[result.name] = obj;
-                            if(!working.use) working.use = obj;
-                        }
-                    });
-                    console.log(o);
+            pt.pipe(writeStream);
+    
+            const req = superagent.get(link).set(`User-Agent`, `node`);
 
-                    if(working.use) {
-                        let obj = Object.assign({}, working);
-                        delete obj.use;
-
-                        /*sendNotification({
-                            headingText: `GPU Acceleration Enabled!`,
-                            bodyText: `GPU acceleration has been enabled for your system. This will improve performance when converting videos.\n\nEnabled: ${Object.values(obj).filter(o => typeof o == `object` && o.name).map(o => o.name).join(`, `)}`,
-                        });*/
-                    }
-
-                    working.checked = true;
-
-                    res(working)
-                });
+            req.pipe(pt).on(`progress`, event => {
+                console.log(event)
+                if(event.progress) setProgress(`Downloading file...`, Math.round(event.progress))
             });
 
-            return promise;
-        }
-    } else return new Promise(r => r(working))
+            writeStream.once(`finish`, () => {
+                setProgress(`Running tests on ${platforms.length} platforms...`, -1)
+
+                const transcoders = require(`./ffmpegGPUArgs.json`);
+    
+                let tested = {};
+    
+                for(const transcoder of platforms) {
+                    console.log(`[FFMPEG/HW -- USING] ${transcoder}`)
+
+                    tested[transcoder] = constructPromise(transcoder, transcoders[transcoder], destination)
+                };
+
+                let i = 1;
+
+                for(const transcoder of platforms) tested[transcoder].then(() => setProgress(`Running tests on ${platforms.length} platforms...`, (i++ / platforms.length) * 100))
+    
+                Promise.allSettled(Object.values(tested)).then((results) => {
+                    let o = {};
+    
+                    results.map(o => o.value).filter(o => o).forEach(result => o[result.name] = result.works);
+    
+                    res(o);
+
+                    if(fs.existsSync(destination)) fs.unlinkSync(destination);
+                });
+            });
+        });
+    }
 }

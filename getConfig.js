@@ -11,7 +11,16 @@ let firstCheckDone = false;
 
 module.exports = (configObject) => {
     try {
-        const defaultConfig = require(`./defaultConfig.json`)
+        const defaultConfig = Object.assign({}, require(`./defaultConfig.json`));
+
+        const gpuArgs = require(`./util/ffmpegGPUArgs.json`);
+
+        // add ffmpeg hardware acceleration options to config
+        for(const key of Object.keys(gpuArgs)) {
+            if(gpuArgs[key].platform.includes(process.platform)) {
+                defaultConfig.hardwareAcceleratedConversion[key] = false;
+            }
+        }
     
         fs.mkdirSync(global.configPath, { recursive: true, failIfExists: false });
         
@@ -43,7 +52,6 @@ module.exports = (configObject) => {
                 if(addDefaults && typeof config[key] == `undefined`) {
                     if(!newSettingsNotifSent && !firstCheckDone) {
                         newSettingsNotifSent = true;
-                        console
                         sendNotification({
                             headingText: `New settings!`,
                             bodyText: `New settings have been added to the config! Please check your settings!`
@@ -115,7 +123,7 @@ module.exports = (configObject) => {
 
         let slashUsed = require('os').platform() == `win32` ? `\\` : `/`
 
-        if(!userConfig.saveLocation) userConfig.saveLocation = (fs.existsSync(os.homedir() + `${slashUsed}Downloads`) ? os.homedir() + `${slashUsed}Downloads` : os.homedir()) + `${slashUsed}ezytdl`;
+        if(!userConfig.saveLocation) userConfig.saveLocation = require(`path`).join((fs.existsSync(require(`path`).join(os.homedir(), `Downloads`)) ? require(`path`).join(os.homedir(), `Downloads`) : os.homedir()), `ezytdl`);
 
         if(userConfig.downloadFromClipboard) {
             global.downloadFromClipboard = true;
@@ -125,8 +133,49 @@ module.exports = (configObject) => {
 
         firstCheckDone = true;
 
-        userConfig.strings = require(`./configStrings.json`);
-        userConfig.descriptions = require(`./configDescriptions.json`);
+        userConfig.strings = Object.assign(require(`./configStrings.json`), {
+            hardwareAcceleratedConversionExtended: {}
+        });
+
+        // add ffmpeg hardware acceleration options to config strings
+        for(const key of Object.keys(gpuArgs)) {
+            if(gpuArgs[key].platform.includes(process.platform)) {
+                userConfig.strings.hardwareAcceleratedConversionExtended[key] = gpuArgs[key].name;
+            }
+        }
+
+        userConfig.descriptions = Object.assign(require(`./configDescriptions.json`), {
+            hardwareAcceleratedConversionExtended: {}
+        });
+
+        // add ffmpeg hardware acceleration options to config descriptions
+        for(const key of Object.keys(gpuArgs)) {
+            if(gpuArgs[key].platform.includes(process.platform)) {
+                userConfig.descriptions.hardwareAcceleratedConversionExtended[key] = gpuArgs[key].description;
+            }
+        }
+
+        userConfig.actions = {};
+
+        const parseAction = (key, obj, actionsObj) => {
+            if(obj.func) {
+                actionsObj[key] = {
+                    name: obj.name || `ooh fancy button :D`,
+                    args: obj.args || [],
+                    manuallySavable: typeof obj.manuallySavable == `boolean` ? obj.manuallySavable : true,
+                    confirmation: obj.confirmation || null,
+                };
+            } else {
+                if(key) {
+                    actionsObj[key + `Extended`] = {}
+                    for(const entry of Object.entries(obj)) parseAction(entry[0], entry[1], actionsObj[key + `Extended`]);
+                } else {
+                    for(const entry of Object.entries(obj)) parseAction(entry[0], entry[1], actionsObj);
+                }
+            }
+        };
+
+        parseAction(null, require(`./core/configActions.js`)(userConfig), userConfig.actions);
 
         return userConfig;
     } catch(e) {

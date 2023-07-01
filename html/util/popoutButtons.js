@@ -366,7 +366,7 @@ const createPopout = ({
 
                         h.contentWindow.useHref = typeof useHref != `undefined` ? useHref : closeOnNavigate;
 
-                        h.contentWindow.console.log = (...content) => content.forEach(c => console.log(`iframe ${name}: ${c}`));
+                        h.contentWindow.console.log = (...content) => console.log(`iframe ${name}:`, ...content);
 
                         if(o.heading) {
                             const headingTxt = document.createElement(`h1`);

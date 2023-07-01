@@ -10,12 +10,15 @@
         "video": "mp4"
     },
     "concurrentDownloads": 4,
+    "hardwareAcceleratedConversion": {},
     "onlyGPUConversion": true,
-    "disableHWAcceleratedConversion": false,
     "closeToTray": true,
     "logsEnabled": false,
     "defaultWindowControls": false,
     "advanced": false,
     "version": "v0.0.0",
-    "systemTrayNotifSent": false
+    "systemTrayNotifSent": false,
+    "system": {
+        "ffmpegTestMediaLink": "https://sylviiu.dev/ezytdl/assets/video/sample.mp4"
+    }
 }

@@ -754,7 +754,7 @@ module.exports = {
 
         try {
             const currentConfig = require(`../getConfig`)();
-            const { onlyGPUConversion, disableHWAcceleratedConversion, outputFilename } = currentConfig;
+            const { onlyGPUConversion, disableHWAcceleratedConversion, outputFilename, hardwareAcceleratedConversion } = currentConfig;
 
             let thisFormat;
 
@@ -1176,11 +1176,15 @@ module.exports = {
                         if(typeof convert[key] != `boolean` && !convert[key]) delete convert[key] // remove any falsy values
                     }
 
+                    console.log(`convert`, convert)
+
                     ext = `.${convert.ext || (thisFormat || {}).ext}`
 
                     const inputArgs = replaceInputArgs || [];
 
                     temporaryFiles.forEach(file => inputArgs.push(`-i`, require(`path`).join(saveTo, file)));
+
+                    console.log(inputArgs)
 
                     if(typeof convert.additionalInputArgs == `string`) {
                         const yargsResult = yargs(convert.additionalInputArgs.replace(/-(\w+)/g, '--$1')).argv
@@ -1310,7 +1314,10 @@ module.exports = {
                                 //return res(`Download canceled.`, true);
                             } else if(code == 0) {
                                 console.log(`ffmpeg completed; deleting temporary file...`);
-                                if(fs.existsSync(saveTo + previousFilename)) fs.unlinkSync(saveTo + previousFilename);
+                                //if(fs.existsSync(saveTo + previousFilename)) fs.unlinkSync(saveTo + previousFilename);
+                                temporaryFiles.forEach(f => {
+                                    if(fs.existsSync(saveTo + f)) fs.unlinkSync(saveTo + f);
+                                })
                                 update({percentNum: 100, status: `Done!`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`, url, format});
                                 resolveFFmpeg(obj)
                             } else {
@@ -1321,7 +1328,16 @@ module.exports = {
                         })
                     });
     
-                    const transcoders = await (require(`./determineGPUDecode`))()
+                    //const transcoders = await (require(`./determineGPUDecode`))()
+                    const transcoders = {};
+
+                    const transcodersArr = Object.entries(hardwareAcceleratedConversion).filter(v => v[1]).map(v => Object.assign({}, require(`./ffmpegGPUArgs.json`)[v[0]], { key: v[0] }));
+
+                    for(const transcoder of transcodersArr) transcoders[transcoder.key] = transcoder;
+
+                    transcoders.use = transcodersArr[0];
+
+                    console.log(`transcoders: `, transcoders)
     
                     //console.log(`Retrieving filename`);
                     
@@ -1335,8 +1351,12 @@ module.exports = {
                     }) : null;
     
                     console.log(`using decoder: `, decoder, `original obj: `, transcoders.use);
-    
-                    const thisCodec = getCodec(saveTo + previousFilename);
+
+                    let thisCodec = null;
+
+                    temporaryFiles.forEach(f => {
+                        if(fs.existsSync(saveTo + f) && !thisCodec) thisCodec = getCodec(saveTo + previousFilename)
+                    })
     
                     if(thisCodec && !disableHWAcceleratedConversion && decoder) {
                         //console.log(`doing video conversion! onlyGPU: ${onlyGPUConversion}`);

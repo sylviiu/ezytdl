@@ -6,9 +6,13 @@
     "reduceAnimations": "Reduce Animations",
     "disableAnimations": "Disable All Animations",
     "lastMediaConversionOutputs": "Default Media Conversion",
+    "lastMediaConversionOutputsExtended": {
+        "audio": "Audio Format",
+        "video": "Video Format"
+    },
     "concurrentDownloads": "Maximum Concurrent Downloads",
+    "hardwareAcceleratedConversion": "Enable Hardware-Accelerated Video Conversion",
     "onlyGPUConversion": "Only Allow Hardware-Accelerated Video Conversion",
-    "disableHWAcceleratedConversion": "Disable Hardware-Accelerated Video Conversion",
     "closeToTray": "Close to System Tray",
     "logsEnabled": "Enable Runtime Logs",
     "defaultWindowControls": "Use System Window Controls",
