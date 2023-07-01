@@ -8,11 +8,19 @@
     },
     "nvidia-nvenc-buffered": {
         "name": "Nvidia / NVENC (buffered)",
-        "description": "This includes the \"-extra_hw_frames\" FFmpeg option, which is required for some GPUs. Use this if auto doesn't work.",
+        "description": "This includes the \"extra hw frames\" FFmpeg option, which is required for some GPUs. Use this if auto doesn't work.",
         "platform": ["win32", "linux"],
         "string": "nvenc",
         "pre": ["-hwaccel", "auto", "-extra_hw_frames", "10"],
         "post": ["-c:v", "h264_nvenc"]
+    },
+    "nvidia-cuvid": {
+        "name": "Nvidia / CUVID",
+        "description": "This platform is deprecated by FFmpeg. Please use NVENC if possible.",
+        "platform": ["win32", "linux"],
+        "string": "nvenc",
+        "pre": ["-hwaccel", "auto"],
+        "post": ["-c:v", "h264_cuvid"]
     },
     "intel-qsv": {
         "name": "Intel / QSV",
