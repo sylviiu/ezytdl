@@ -54,8 +54,6 @@ ajax.onload = async () => {
         await system.addScript(`./topjs/vars.js`)
         await system.addScript(`./pagescripts/${htmlFile.split(`.`).slice(0, -1).join(`.`)}.js`)
         await system.addScript(`./afterload/downloadManager.js`)
-
-        if(!updateBridge) callback();
     
         if(typeof getVersion != `undefined`) getVersion()
         initDownloadManager();
@@ -79,6 +77,7 @@ ajax.onload = async () => {
     
         if(config.disableAnimations) {
             document.body.style.opacity = 1;
+            if(!updateBridge) callback();
             res();
         } else if(config.reduceAnimations) {
             anime({
@@ -86,6 +85,9 @@ ajax.onload = async () => {
                 opacity: [0, 1],
                 duration: 1500,
                 easing: `easeOutExpo`,
+                begin: () => {
+                    if(!updateBridge) callback();
+                },
                 complete: () => res(),
             });
             if(updateBridge) setTimeout(() => res(), 500);
@@ -111,6 +113,7 @@ ajax.onload = async () => {
                 easing: `easeOutExpo`,
                 begin: () => {
                     document.body.style.opacity = 1;
+                    if(!updateBridge) callback();
                 },
                 complete: () => {
                     console.log(`done`);
