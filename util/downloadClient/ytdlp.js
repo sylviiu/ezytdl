@@ -30,9 +30,10 @@ module.exports = async () => new Promise(async res => {
                 }
             }
         },
-        close: () => {
+        close: (noMessage) => {
             activeDownload = null;
             obj = Object.assign(obj, {complete: true})
+            if(!noMessage) obj.message = `Complete!`;
             global.window ? global.window.webContents.send(`updateClientEvent`, obj) : null;
             res()
         }
@@ -42,7 +43,7 @@ module.exports = async () => new Promise(async res => {
 
     if(fs.existsSync(require(`../pythonBridge`).bridgepath)) {
         ws.send({ progress: 1, message: `Python bridge exists -- no need to download a client!` });
-        ws.close()
+        ws.close(true);
     }
 
     const ghRequest = require(`../fetchLatestVersion/ytdlp`);
@@ -73,7 +74,7 @@ module.exports = async () => new Promise(async res => {
     ghRequest().then(async r => {      
         if(!r || r.error) {
             ws.send({progress: -1, message: `Failed to check for updates! (${r && r.error ? r.error : `(no response)`})`})
-            return ws.close();
+            return ws.close(true);
         }
         
         const latest = r.response;
@@ -90,7 +91,7 @@ module.exports = async () => new Promise(async res => {
 
         if(currentVersion == version) {
             ws.send({ message: `You're already on the latest version!`, version, progress: 1 });
-            ws.close()
+            ws.close(true)
         } else {
             ws.send({ progress: 0, version })
     

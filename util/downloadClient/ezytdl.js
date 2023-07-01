@@ -15,9 +15,11 @@ module.exports = async () => {
 
     const ws = {
         send: (args) => global.window ? global.window.webContents.send(`updateClientEvent`, args) : null,
-        close: () => {
+        close: (noMessage) => {
             activeDownload = null;
-            global.window ? global.window.webContents.send(`updateClientEvent`, {complete: true}) : null
+            const obj = {complete: true};
+            if(!noMessage) obj.message = `Complete!`;
+            global.window ? global.window.webContents.send(`updateClientEvent`, obj) : null
         }
     }
 
@@ -28,7 +30,7 @@ module.exports = async () => {
     ghRequest().then(async r => {  
         if(!r || r.error) {
             ws.send({progress: -1, message: `Failed to check for updates! (${r && r.error ? r.error : `(no response)`})`})
-            return ws.close();
+            return ws.close(true);
         }
         
         const latest = r.response;
@@ -45,7 +47,7 @@ module.exports = async () => {
 
         if(currentVersion == version) {
             ws.send({ message: `You're already on the latest version!`, version, progress: 1 });
-            ws.close()
+            ws.close(true)
         } else {
             ws.send({ progress: 0, version });
     
