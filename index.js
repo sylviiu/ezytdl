@@ -61,7 +61,7 @@ if(!locked) {
                 console.log(`Took [${Date.now() - startTime}ms] to finish init!`);
         
                 let redirect = `index.html`
-                if(!init.ytdlpDownloaded && !global.testrun) redirect = `updating.html`;
+                if(!init.ytdlpDownloaded && !global.testrun) redirect = `index.html`;
         
                 doneLoading = redirect;
                 res(redirect);
@@ -80,7 +80,7 @@ if(!locked) {
                 }
             }));
 
-            if(!app.isPackaged) window.webContents.openDevTools();
+            //if(!app.isPackaged) window.webContents.openDevTools();
             
             window.loadFile(`./html/loading.html`);
         };

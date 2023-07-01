@@ -103,6 +103,7 @@ contextBridge.exposeInMainWorld(`system`, {
     colors: () => systemColors,
     downloadReq: (cb) => on(`download`, cb),
     hasFFmpeg: () => invoke(`hasFFmpeg`),
+    bridgeNeedsDownload: () => invoke(`bridgeNeedsDownload`),
 });
 
 let dialogPromise = new Promise(r => {

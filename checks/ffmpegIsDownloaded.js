@@ -9,6 +9,8 @@ module.exports = () => new Promise(async res => {
         const latestVersion = require(`../util/fetchLatestVersion/ffmpeg`);
     
         latestVersion().then(async o => {
+            if(!o || o.error) return res(true);
+
             console.log(`Latest version available is ${o.version}`);
 
             const versionDownloaded = await require(`../util/currentVersion/ffmpeg`)(true);

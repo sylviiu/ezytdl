@@ -44,5 +44,7 @@ module.exports = () => new Promise(async res => {
 
     console.log(`Completed init scripts in ${Date.now() - initStart}ms`)
 
+    global.init = obj;
+
     return res(obj);
 })

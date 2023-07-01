@@ -1366,7 +1366,9 @@ resultsCountInput.addEventListener(`keyup`, (e) => {
 
 setTimeout(() => wavesAnims.fadeIn(), 50)
 
-changelog.check();
+if(typeof introAnimation != `undefined`) {
+    introAnimation.wait(() => changelog.check())
+} else changelog.check();
 
 if(window.location.search.slice(1)) {
     const str = window.location.search.slice(1);

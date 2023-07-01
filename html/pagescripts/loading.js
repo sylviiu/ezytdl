@@ -36,6 +36,8 @@ system.loading().then(link => {
         opacity: 1,
         duration: 250,
         easing: `easeInExpo`,
-        complete: () => window.location.href = `introAnimation.html` + `?` + (link || `index.html`)
+        complete: () => system.bridgeNeedsDownload().then(needsUpdate => {
+            window.location.href = `introAnimation.html` + `?` + (needsUpdate ? `updateBridge` : (link || `index.html`))
+        })
     })
 })

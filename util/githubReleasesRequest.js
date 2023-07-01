@@ -20,6 +20,6 @@ module.exports = (creator, repo) => new Promise(async (res, rej) => {
         })
     }).catch(e => {
         console.error(`GH request: ${e} @ ${e.stack}`);
-        res(null)
+        res({error: e.message || e});
     })
 })

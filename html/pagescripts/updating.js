@@ -26,19 +26,24 @@ systemUpdate.event((m) => {
         homeButton.disabled = false
         homeButton.style.opacity = 1;
         homeButton.classList.replace(`d-none`, `d-flex`);
-        const href = homeButton.getAttribute(`href`);
-        homeButton.removeAttribute(`href`);
-        homeButton.onclick = () => {
-            anime({
-                targets: document.getElementById(`div`),
-                scale: 1.5,
-                opacity: 0,
-                duration: 150,
-                easing: `easeInCirc`,
-                complete: () => {
-                    window.location.href = `introAnimation.html?` + typeof parentUpdate == `undefined` ? `index.html` : `settings.html`
-                }
-            })
+        if(typeof useHref == `boolean` && useHref) {
+            console.log(`using href: ${homeButton.getAttribute(`href`)}`)
+        } else {
+            console.log(`not using href`)
+            const href = homeButton.getAttribute(`href`);
+            homeButton.removeAttribute(`href`);
+            homeButton.onclick = () => {
+                anime({
+                    targets: document.getElementById(`div`),
+                    scale: 1.5,
+                    opacity: 0,
+                    duration: 150,
+                    easing: `easeInCirc`,
+                    complete: () => {
+                        window.location.href = `introAnimation.html?` + typeof parentUpdate == `undefined` ? `index.html` : `settings.html`
+                    }
+                })
+            }
         }
         progressBar.remove();
     } else {

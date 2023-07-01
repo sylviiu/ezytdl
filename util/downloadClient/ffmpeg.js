@@ -37,7 +37,12 @@ module.exports = async () => new Promise(async res => {
 
     const ghRequest = require(`../fetchLatestVersion/ffmpeg`);
 
-    ghRequest().then(async r => {        
+    ghRequest().then(async r => {   
+        if(!r || r.error) {
+            ws.send({progress: -1, message: `Failed to check for updates! (${r && r.error ? r.error : `(no response)`})`})
+            return ws.close();
+        }
+        
         const latest = r.response;
             
         const version = latest.name.split(`(`)[1].split(` `)[0].replace(/-/g, ``);

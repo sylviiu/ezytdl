@@ -8,17 +8,23 @@ const enableUpdateButton = () => {
     document.getElementById(`updateAvailable`).onclick = () => version.openUpdatePage()
 }
 
-let givenCB;
+let givenCB = [];
+
+let complete = false;
 
 const callback = () => {
-    if(givenCB) givenCB();
+    complete = true;
+    console.log(`introAnimation -- calling back ${givenCB.length} functions`)
+    givenCB.forEach(c => c())
 }
 
 const introAnimation = {
-    wait: (cb) => givenCB = cb
-}
+    wait: (cb) => typeof cb == `function` ? complete ? cb() : givenCB.push(cb) : false
+};
 
-const htmlFile = window.location.search.slice(1) || `index.html`
+const updateBridge = window.location.search.slice(1) == `updateBridge`
+
+const htmlFile = window.location.search.slice(1) == `updateBridge` ? `index.html` : window.location.search.slice(1) || `index.html`
 const path = `./${htmlFile}`
 
 history.pushState({ page: 1 }, "introAnimation", htmlFile);
@@ -33,76 +39,116 @@ ajax.onload = async () => {
     const h = document.createElement(`html`);
     h.innerHTML = ajax.responseText;
     
-    h.querySelector(`body`).style.opacity = 0;
-
     for (node of h.querySelectorAll(`head > *`)) {
         document.head.appendChild(node);
     }
 
-    searchHighlights(h.querySelector(`body`));
+    const finish = () => new Promise(async res => {
+        h.querySelector(`body`).style.opacity = 0;
 
-    document.body = h.querySelector(`body`);
+        searchHighlights(h.querySelector(`body`));
     
-    await system.addScript(`./pagescripts/${htmlFile.split(`.`).slice(0, -1).join(`.`)}.js`)
-    await system.addScript(`./topjs/feelLikeNativeApp.js`)
-    await system.addScript(`./topjs/vars.js`)
-    await system.addScript(`./afterload/downloadManager.js`)
+        document.body = h.querySelector(`body`);
+
+        await system.addScript(`./topjs/feelLikeNativeApp.js`)
+        await system.addScript(`./topjs/vars.js`)
+        await system.addScript(`./pagescripts/${htmlFile.split(`.`).slice(0, -1).join(`.`)}.js`)
+        await system.addScript(`./afterload/downloadManager.js`)
+
+        if(!updateBridge) callback();
     
-    console.log(`loaded scripts!`);
-
-    callback();
-
-    if(typeof getVersion != `undefined`) getVersion()
-    initDownloadManager();
-
-    const enableUpdateButton = () => {
-        document.getElementById(`updateAvailable`).classList.add(`d-flex`);
-        document.getElementById(`updateAvailable`).classList.remove(`d-none`);
-        document.getElementById(`updateAvailable`).onclick = () => send(`openUpdatePage`)
-    }
-
-    if(document.getElementById(`updateAvailable`)) {
-        console.log(`updateAvailable Enabled`)
-        version.checkForUpdates().then(r => r ? enableUpdateButton() : null);
-        version.onUpdate(enableUpdateButton)
-    }
-
-    const navigationBar = document.body.querySelector(`#navigationBar`);
-    const everythingElse = document.body.querySelectorAll(`body > div:not(#navigationBar)`);
-
-    if(config.disableAnimations) {
-        document.body.style.opacity = 1;
-    } else if(config.reduceAnimations) {
-        anime({
-            targets: document.body,
-            opacity: [0, 1],
-            duration: 1500,
-            easing: `easeOutExpo`,
-        })
-    } else {
-        anime({
-            targets: navigationBar,
-            top: [`0px`, navigationBar.style.top],
-            duration: 1500,
-            begin: () => {
-                document.body.style.opacity = 1;
-            },
-            easing: `easeOutExpo`,
-        });
+        if(typeof getVersion != `undefined`) getVersion()
+        initDownloadManager();
         
-        everythingElse.forEach(element => anime({
-            targets: element,
-            //scale: [0, 1],
-            marginTop: [`500vh`, element.style.marginTop || `0px`],
-            duration: 2500,
-            easing: `easeOutExpo`,
-            begin: () => {
-                document.body.style.opacity = 1;
-            },
-            complete: () => {
-                console.log(`done`)
-            }
-        }));
+        console.log(`loaded scripts!`);
+    
+        const enableUpdateButton = () => {
+            document.getElementById(`updateAvailable`).classList.add(`d-flex`);
+            document.getElementById(`updateAvailable`).classList.remove(`d-none`);
+            document.getElementById(`updateAvailable`).onclick = () => send(`openUpdatePage`)
+        }
+    
+        if(document.getElementById(`updateAvailable`)) {
+            console.log(`updateAvailable Enabled`)
+            version.checkForUpdates().then(r => r ? enableUpdateButton() : null);
+            version.onUpdate(enableUpdateButton)
+        }
+    
+        const navigationBar = document.body.querySelector(`#navigationBar`);
+        const everythingElse = document.body.querySelectorAll(`body > div:not(#navigationBar)`);
+    
+        if(config.disableAnimations) {
+            document.body.style.opacity = 1;
+            res();
+        } else if(config.reduceAnimations) {
+            anime({
+                targets: document.body,
+                opacity: [0, 1],
+                duration: 1500,
+                easing: `easeOutExpo`,
+                complete: () => res(),
+            });
+            if(updateBridge) setTimeout(() => res(), 500);
+        } else {
+            anime({
+                targets: navigationBar,
+                top: [`0px`, navigationBar.style.top],
+                duration: 1500,
+                begin: () => {
+                    document.body.style.opacity = 1;
+                },
+                complete: () => res(),
+                easing: `easeOutExpo`,
+            });
+
+            if(updateBridge) setTimeout(() => res(), 500);
+            
+            everythingElse.forEach(element => anime({
+                targets: element,
+                //scale: [0, 1],
+                marginTop: [`500vh`, element.style.marginTop || `0px`],
+                duration: 2500,
+                easing: `easeOutExpo`,
+                begin: () => {
+                    document.body.style.opacity = 1;
+                },
+                complete: () => {
+                    console.log(`done`);
+                    res();
+                }
+            }));
+        }
+    });
+
+    if(updateBridge) {
+        console.log(`updateBridge`);
+
+        const popout = createPopout({
+            buttons: [
+                {
+                    element: h.querySelector(`#urlBox`),
+                    href: `updating.html`
+                }
+            ],
+            closeOnNavigate: true,
+            addEventListeners: false,
+            completeHook: () => callback()
+        });
+
+        let inProgress = true;
+
+        update.event(m => {
+            if(m.complete) inProgress = false;
+            popout.setCloseable(!inProgress);
+        });
+
+        popout.setCloseable(false);
+
+        finish().then(() => {
+            popout.buttons[0].click();
+        });
+    } else {
+        finish();
     }
 };
 
