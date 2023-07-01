@@ -23,11 +23,18 @@
         "post": ["-c:v", "h264_cuvid"]
     },
     "intel-qsv": {
-        "name": "Intel / QSV",
+        "name": "Intel / Quick Sync Video",
         "platform": ["win32", "linux"],
         "string": "qsv",
         "pre": ["-hwaccel", "auto"],
         "post": ["-c:v", "h264_qsv"]
+    },
+    "amd-amf": {
+        "name": "AMD / Advanced Media Framework",
+        "platform": ["win32", "linux"],
+        "string": "amf",
+        "pre": ["-hwaccel", "auto"],
+        "post": ["-c:v", "h264_amf"]
     },
     "mesa-vaapi": {
         "name": "Mesa / VAAPI",
@@ -35,13 +42,6 @@
         "string": "vaapi",
         "pre": ["-hwaccel", "vaapi", "-hwaccel_output_format", "vaapi"],
         "post": ["-c:v", "h264_vaapi"]
-    },
-    "amd-amf": {
-        "name": "AMD / AMF",
-        "platform": ["win32", "linux"],
-        "string": "amf",
-        "pre": ["-hwaccel", "auto"],
-        "post": ["-c:v", "h264_amf"]
     },
     "apple-videotoolbox": {
         "name": "Apple / VideoToolbox",
