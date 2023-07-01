@@ -1182,7 +1182,7 @@ module.exports = {
 
                     const inputArgs = replaceInputArgs || [];
 
-                    temporaryFiles.forEach(file => inputArgs.push(`-i`, require(`path`).join(saveTo, file)));
+                    temporaryFiles.filter(f => fs.existsSync(require(`path`).join(saveTo, f))).forEach(file => inputArgs.push(`-i`, require(`path`).join(saveTo, file)));
 
                     console.log(inputArgs)
 
@@ -1316,7 +1316,7 @@ module.exports = {
                                 console.log(`ffmpeg completed; deleting temporary file...`);
                                 //if(fs.existsSync(saveTo + previousFilename)) fs.unlinkSync(saveTo + previousFilename);
                                 temporaryFiles.forEach(f => {
-                                    if(fs.existsSync(saveTo + f)) fs.unlinkSync(saveTo + f);
+                                    if(fs.existsSync(require(`path`).join(saveTo, f))) fs.unlinkSync(require(`path`).join(saveTo, f));
                                 })
                                 update({percentNum: 100, status: `Done!`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`, url, format});
                                 resolveFFmpeg(obj)
@@ -1355,8 +1355,27 @@ module.exports = {
                     let thisCodec = null;
 
                     temporaryFiles.forEach(f => {
-                        if(fs.existsSync(saveTo + f) && !thisCodec) thisCodec = getCodec(saveTo + previousFilename)
-                    })
+                        if(fs.existsSync(require(`path`).join(saveTo, f)) && !thisCodec) thisCodec = getCodec(require(`path`).join(saveTo, f))
+                    });
+
+                    const fallbackToSoftware = () => {
+                        if(onlyGPUConversion) {
+                            const quickResolve = `Are your conversion settings up to date? Visit settings and click the "Auto Detect" button under "${require(`../configStrings.json`).hardwareAcceleratedConversion}"`
+                            if(transcodersArr.length == 0) {
+                                return fallback(`Conversion failed: "${require(`../configStrings.json`).onlyGPUConversion}" is set to true, but all GPU transcoders are disabled in the settings.<br><br>` + quickResolve)
+                            } else {
+                                let msg = null;
+
+                                if(thisCodec) msg = `The video codec (${thisCodec}) provided by the downloaded format is not compatible with FFmpeg's GPU transcoding.`
+                                else msg = `Unable to convert using any of the hardware-acceleration methods enabled in settings.`
+
+                                return fallback(`The video codec (${thisCodec}) provided by the downloaded format is not compatible with FFmpeg's GPU transcoding.<br><br>` + quickResolve);
+                            }
+                        } else spawnFFmpeg([...inputArgs, (convert.videoCodec ? [`-c:v`, `${convert.videoCodec || `h264`}`] : []), ...outputArgs], `${thisCodec}_software`).then(res).catch(e => {
+                            //console.log(`FFmpeg failed converting [1] -- ${e}; trying again...`)
+                            spawnFFmpeg([...inputArgs, ...outputArgs], `${thisCodec}_software`).then(res).catch(fallback);
+                        })
+                    }
     
                     if(thisCodec && !disableHWAcceleratedConversion && decoder) {
                         //console.log(`doing video conversion! onlyGPU: ${onlyGPUConversion}`);
@@ -1389,12 +1408,7 @@ module.exports = {
                                         //console.log(`FFmpeg failed converting -- ${e}; trying again...`)
                                         spawnFFmpeg([...decoder.pre, ...inputArgs, (convert.videoCodec ? [`-c:v`, `${convert.videoCodec || `h264`}`] : []), ...outputArgs], `${thisCodec}_software/Dec + ` + `${convert.videoCodec || `h264`}_software/Enc`).then(res).catch(e => {
                                             //console.log(`FFmpeg failed converting -- ${e}; trying again...`);
-                                            if(onlyGPUConversion) {
-                                                return fallback(`The video codec (${thisCodec}) provided by the downloaded format is not compatible with FFmpeg's GPU transcoding.`);
-                                            } else spawnFFmpeg([...inputArgs, (convert.videoCodec ? [`-c:v`, `${convert.videoCodec || `h264`}`] : []), ...outputArgs], `${thisCodec}_software`).then(res).catch(e => {
-                                                //console.log(`FFmpeg failed converting [1] -- ${e}; trying again...`)
-                                                spawnFFmpeg([...inputArgs, ...outputArgs], `${thisCodec}_software`).then(res).catch(fallback);
-                                            })
+                                            fallbackToSoftware();
                                         })
                                     })
                                 })
@@ -1436,7 +1450,7 @@ module.exports = {
                             if(!done) fallbackToDecoderOnly();
                         } else fallbackToDecoderOnly();
                     } else {
-                        spawnFFmpeg(mainArgs, `software`).then(res).catch(fallback)
+                        fallbackToSoftware();
                     }
                 } else if(!convert) {
                     if(killAttempt > 0) {
