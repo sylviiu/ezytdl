@@ -1,5 +1,7 @@
 const { app, Menu, Tray, nativeImage, nativeTheme, ipcMain } = require('electron');
 const sharp = require('sharp');
+const fs = require('fs');
+const path = require(`path`);
 
 let current = `regular`;
 
@@ -36,11 +38,30 @@ const iconGetter = (type, alwaysUseLightIcon, maxRes) => {
     }
 };
 
-const iconToPNG = (icon, size, negate) => {
-    const sharpIcon = sharp(icon).resize(Math.round(size), Math.round(size));
-    if(negate) sharpIcon.negate({ alpha: false });
-    return sharpIcon.png().toBuffer();
-}
+const basePath = path.join(global.configPath, `ezytdl Download Icon Cache`);
+
+const createdFilenames = [];
+
+const iconToPNG = (icon, size, negate) => new Promise(async res => {
+    const fileName = path.parse(icon).name + `-${size}` + (negate ? `-negate` : `-no-negate`) + `.png`;
+
+    createdFilenames.push(fileName);
+
+    const filePath = path.join(basePath, fileName);
+
+    if(!fs.existsSync(basePath)) fs.mkdirSync(basePath, { recursive: true });
+
+    if(fs.existsSync(filePath)) {
+        return res(fs.readFileSync(filePath));
+    } else {
+        console.log(`creating icon ${filePath}`);
+        const sharpIcon = sharp(icon).resize(Math.round(size), Math.round(size));
+        if(negate) sharpIcon.negate({ alpha: false });
+        const buf = await sharpIcon.png().toBuffer();
+        fs.writeFileSync(filePath, buf);
+        return res(buf);
+    }
+})
 
 let getIconsPromise = null;
 let getIconsComplete = false;
@@ -156,6 +177,15 @@ module.exports = {
     
             res(icons);
         });
+
+        getIconsPromise.then(() => {
+            for(const filename of fs.readdirSync(basePath)) {
+                if(!createdFilenames.includes(filename)) {
+                    console.log(`Deleting unused icon ${filename}`)
+                    fs.unlinkSync(path.join(basePath, filename));
+                }
+            }
+        })
 
         return getIconsPromise;
     },
