@@ -1830,7 +1830,7 @@ module.exports = {
         if(info.entries) for(const i in info.entries) {
             const entry = info.entries[i];
 
-            manager.createDownload([{query: `"${e.artist}" - "${e.title}"`, from: `youtube`, count: 20, noVerify: true, ignoreStderr}, false], (e) => {
+            manager.createDownload([{query: `"${e.artist}" - "${e.title}"`, from: `youtube`, count: 15, noVerify: true, ignoreStderr}, false], (e) => {
                 if(e) {
                     console.log(`new info!`);
                     match(entry, module.exports.parseInfo(e));
@@ -1839,7 +1839,7 @@ module.exports = {
                 } else badEntries++;
             }, `search`);
         } else {
-            manager.createDownload([{query: `"${info.artist}" - "${info.title}"`, from: `youtube`, count: 20, noVerify: true, ignoreStderr}, false], (e) => {
+            manager.createDownload([{query: `"${info.artist}" - "${info.title}"`, from: `youtube`, count: 15, noVerify: true, ignoreStderr}, false], (e) => {
                 if(e) {
                     console.log(`new info!`);
                     match(info, module.exports.parseInfo(e));
