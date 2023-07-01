@@ -255,7 +255,7 @@ const createPopout = ({
                                     easing: `easeOutExpo`
                                 });
 
-                                overlayCloseText.innerText = `Unable to close now.`;
+                                overlayCloseText.innerText = `Cannot close now.`;
     
                                 anime({
                                     targets: overlayCloseText,
@@ -287,18 +287,22 @@ const createPopout = ({
                 overlayDiv.onmouseleave = () => {
                     console.log(`mouseleave`);
 
-                    closeableUpdate = () => {};
-
                     anime.remove(overlayDiv);
                     anime.remove(overlayCloseText);
                     anime.remove(h);
 
-                    anime({
-                        targets: overlayDiv,
-                        backgroundColor: `rgba(0,0,0,0.6)`,
-                        duration: 500,
-                        easing: `easeOutExpo`
-                    });
+                    const animate = (closeable) => {
+                        anime({
+                            targets: overlayDiv,
+                            backgroundColor: `rgba(0,0,0,${closeable ? 0.6 : 1})`,
+                            duration: 500,
+                            easing: `easeOutExpo`
+                        });
+                    }
+
+                    closeableUpdate = (val) => animate(val);
+
+                    animate(closeable);
 
                     anime({
                         targets: overlayCloseText,
