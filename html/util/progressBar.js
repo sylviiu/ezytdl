@@ -1,10 +1,8 @@
 const addProgressBar = (node, width, height, {
-    align=`center`,
+    align=`left`,
     usePercentText=false,
 } = {}) => {
     let animeFunc = (typeof rawAnimeFunc == `function` ? rawAnimeFunc : anime)
-
-    if(usePercentText) align = `right`
 
     const dotSize = height || `15px`;
 
