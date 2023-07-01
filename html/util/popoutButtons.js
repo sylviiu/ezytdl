@@ -113,7 +113,211 @@ const createPopout = ({
                             opacity: 1,
                             scale: [0.5, 1],
                             duration: 700,
-                            easing: `easeOutExpo`
+                            easing: `easeOutExpo`,
+                            complete: () => {
+                                overlayDiv.onmouseenter = async () => {
+                                    console.log(`mouseenter`);
+                
+                                    let entered = Math.max(Date.now() + 90);
+                
+                                    const animate = (closeable) => {
+                                        if(pendingCloses.length) {
+                                            closeWindow();
+                                        } else {
+                                            anime.remove(overlayDiv);
+                                            anime.remove(overlayCloseText);
+                                            anime.remove(h);
+
+                                            const delay = Math.max(0, (entered - Date.now()));
+            
+                                            console.log(`closeable update: ${closeable} -- delay: ${delay}`)
+                
+                                            if(closeable) {
+                                                anime({
+                                                    targets: overlayDiv,
+                                                    backgroundColor: `rgba(0,0,0,0.6)`,
+                                                    duration: 700,
+                                                    delay,
+                                                    easing: `easeOutExpo`
+                                                });
+                
+                                                overlayCloseText.innerText = `Click to close.`;
+                    
+                                                anime({
+                                                    targets: overlayCloseText,
+                                                    opacity: 0.75,
+                                                    duration: 700,
+                                                    delay,
+                                                    easing: `easeOutExpo`
+                                                });
+                    
+                                                anime({
+                                                    targets: h,
+                                                    scale: 0.75,
+                                                    opacity: 0.9,
+                                                    top: `${offsetPx/2}px`,
+                                                    right: `${offsetPx/2}px`,
+                                                    duration: 700,
+                                                    delay,
+                                                    easing: `easeOutExpo`
+                                                });
+                                            } else {
+                                                anime({
+                                                    targets: overlayDiv,
+                                                    backgroundColor: `rgba(0,0,0,1)`,
+                                                    duration: 700,
+                                                    delay,
+                                                    easing: `easeOutExpo`
+                                                });
+                
+                                                overlayCloseText.innerText = `Cannot close now.`;
+                    
+                                                anime({
+                                                    targets: overlayCloseText,
+                                                    opacity: 1,
+                                                    duration: 700,
+                                                    delay,
+                                                    easing: `easeOutExpo`
+                                                });
+                    
+                                                anime({
+                                                    targets: h,
+                                                    scale: 0.8,
+                                                    opacity: 0.9,
+                                                    top: `${offsetPx/2}px`,
+                                                    right: `${offsetPx/2}px`,
+                                                    duration: 700,
+                                                    delay,
+                                                    easing: `easeOutExpo`
+                                                });
+                                            }
+                                        }
+                                    }
+                
+                                    closeableUpdate = (val) => animate(val);
+                
+                                    animate(closeable);
+                                };
+                
+                                overlayDiv.onmouseleave = () => {
+                                    console.log(`mouseleave`);
+                
+                                    const animate = (closeable) => {
+                                        anime.remove(overlayDiv);
+                                        anime.remove(overlayCloseText);
+                                        anime.remove(h);
+                                        
+                                        anime({
+                                            targets: overlayDiv,
+                                            backgroundColor: `rgba(0,0,0,${closeable ? 0.6 : 1})`,
+                                            duration: 500,
+                                            easing: `easeOutExpo`
+                                        });
+                                    }
+                
+                                    closeableUpdate = (val) => animate(val);
+                
+                                    animate(closeable);
+                
+                                    anime({
+                                        targets: overlayCloseText,
+                                        opacity: 0,
+                                        duration: 500,
+                                        easing: `easeOutExpo`
+                                    });
+                
+                                    anime({
+                                        targets: h,
+                                        scale: 1,
+                                        opacity: 1,
+                                        top: `${offsetPx/2}px`,
+                                        right: `${offsetPx/2}px`,
+                                        duration: 500,
+                                        easing: `easeOutExpo`
+                                    });
+                                };
+                
+                                let pendingCloses = [];
+                
+                                closeWindow = (force) => new Promise(res => {
+                                    if(typeof force != `boolean`) force = false;
+                
+                                    console.log(`closeWindow: ${closeable || force} (closeable: ${closeable}) (force: ${force})`)
+                
+                                    if(closeable || force) {
+                                        popoutActive = false;
+                                        frame = null;
+                
+                                        closeWindow = () => new Promise(r => r());
+                
+                                        closeableUpdate = () => {};
+                
+                                        anime.remove(overlayDiv);
+                                        anime.remove(overlayCloseText);
+                                        anime.remove(h);
+                
+                                        overlayDiv.id += `-removed`;
+                
+                                        overlayDiv.onmouseenter = null;
+                                        overlayDiv.onmouseleave = null;
+                
+                                        anime({
+                                            targets: overlayDiv,
+                                            backgroundColor: `rgba(0,0,0,0)`,
+                                            duration: 500,
+                                            easing: `easeOutExpo`,
+                                            complete: () => overlayDiv.remove()
+                                        });
+                
+                                        anime({
+                                            targets: overlayCloseText,
+                                            opacity: 0,
+                                            duration: 500,
+                                            easing: `easeOutExpo`
+                                        });
+                
+                                        anime.remove(h);
+                                        anime({
+                                            targets: h,
+                                            scale: 0.35,
+                                            left: `${offsetPx}px`,
+                                            top: `${offsetPx*-1}px`,
+                                            opacity: 0,
+                                            duration: 350,
+                                            easing: `easeOutExpo`,
+                                            complete: () => h.remove()
+                                        });
+                        
+                                        const { x, y } = button.getBoundingClientRect();
+                
+                                        const newRight = (updatePosition && x ? `${x}px` : null) || right;
+                                        const newTop = (updatePosition && y ? `${y}px` : null) || top;
+                
+                                        console.log(`newRight: ${newRight} (from ${right}) -- newTop: ${newTop} (from ${top})`)
+                
+                                        anime.remove(clone);
+                                        anime({
+                                            targets: clone,
+                                            opacity: 1,
+                                            scale: 1,
+                                            right: newRight,
+                                            top: newTop,
+                                            duration: 650,
+                                            easing: `easeOutExpo`,
+                                            complete: () => {
+                                                clone.remove();
+                                                button.style.opacity = 1;
+                                                pendingCloses.push(res);
+                                                pendingCloses.forEach(r => r());
+                                            }
+                                        });
+                
+                                        completeHook();
+                                    } else pendingCloses.push(res);
+                                });
+                
+                                overlayDiv.onclick = closeWindow;
+                            }
                         });
                     } else ready = true;
                 }
@@ -197,215 +401,6 @@ const createPopout = ({
                 }
 
                 anime.remove(overlayDiv);
-
-                let openedTimeout = Date.now() + 350;
-                let leftTimeout = Date.now() + 500;
-
-                overlayDiv.onmouseenter = async () => {
-                    console.log(`mouseenter`);
-
-                    let entered = Math.max(Date.now() + 90);
-
-                    const animate = (closeable) => {
-                        if(pendingCloses.length) {
-                            closeWindow();
-                        } else {
-                            anime.remove(overlayDiv);
-                            anime.remove(overlayCloseText);
-                            anime.remove(h);
-
-                            const delay = Math.max(0, (entered - Date.now()), (leftTimeout - Date.now()));
-
-                            console.log(`closeable update: ${closeable} -- delay: ${delay}`)
-
-                            if(closeable) {
-                                anime({
-                                    targets: overlayDiv,
-                                    backgroundColor: `rgba(0,0,0,0.6)`,
-                                    duration: 700,
-                                    delay,
-                                    easing: `easeOutExpo`
-                                });
-
-                                overlayCloseText.innerText = `Click to close.`;
-    
-                                anime({
-                                    targets: overlayCloseText,
-                                    opacity: 0.75,
-                                    duration: 700,
-                                    delay,
-                                    easing: `easeOutExpo`
-                                });
-    
-                                anime({
-                                    targets: h,
-                                    scale: 0.75,
-                                    opacity: 0.9,
-                                    top: `${offsetPx/2}px`,
-                                    right: `${offsetPx/2}px`,
-                                    duration: 700,
-                                    delay,
-                                    easing: `easeOutExpo`
-                                });
-                            } else {
-                                anime({
-                                    targets: overlayDiv,
-                                    backgroundColor: `rgba(0,0,0,1)`,
-                                    duration: 700,
-                                    delay,
-                                    easing: `easeOutExpo`
-                                });
-
-                                overlayCloseText.innerText = `Cannot close now.`;
-    
-                                anime({
-                                    targets: overlayCloseText,
-                                    opacity: 1,
-                                    duration: 700,
-                                    delay,
-                                    easing: `easeOutExpo`
-                                });
-    
-                                anime({
-                                    targets: h,
-                                    scale: 0.8,
-                                    opacity: 0.9,
-                                    top: `${offsetPx/2}px`,
-                                    right: `${offsetPx/2}px`,
-                                    duration: 700,
-                                    delay,
-                                    easing: `easeOutExpo`
-                                });
-                            }
-                        }
-                    }
-
-                    closeableUpdate = (val) => animate(val);
-
-                    animate(closeable);
-                };
-
-                overlayDiv.onmouseleave = () => {
-                    console.log(`mouseleave`);
-
-                    anime.remove(overlayDiv);
-                    anime.remove(overlayCloseText);
-                    anime.remove(h);
-
-                    const animate = (closeable) => {
-                        const delay = Math.max(0, (leftTimeout - Date.now()));
-
-                        anime({
-                            targets: overlayDiv,
-                            backgroundColor: `rgba(0,0,0,${closeable ? 0.6 : 1})`,
-                            duration: 500,
-                            delay,
-                            easing: `easeOutExpo`
-                        });
-                    }
-
-                    closeableUpdate = (val) => animate(val);
-
-                    animate(closeable);
-
-                    anime({
-                        targets: overlayCloseText,
-                        opacity: 0,
-                        duration: 500,
-                        easing: `easeOutExpo`
-                    });
-
-                    anime({
-                        targets: h,
-                        scale: 1,
-                        opacity: 1,
-                        top: `${offsetPx/2}px`,
-                        right: `${offsetPx/2}px`,
-                        duration: 500,
-                        easing: `easeOutExpo`
-                    });
-                };
-
-                let pendingCloses = [];
-
-                closeWindow = (force) => new Promise(res => {
-                    if(typeof force != `boolean`) force = false;
-
-                    console.log(`closeWindow: ${closeable || force} (closeable: ${closeable}) (force: ${force})`)
-
-                    if(closeable || force) {
-                        popoutActive = false;
-                        frame = null;
-
-                        closeWindow = () => new Promise(r => r());
-
-                        closeableUpdate = () => {};
-
-                        anime.remove(overlayDiv);
-                        anime.remove(overlayCloseText);
-                        anime.remove(h);
-
-                        overlayDiv.id += `-removed`;
-
-                        overlayDiv.onmouseenter = null;
-                        overlayDiv.onmouseleave = null;
-
-                        anime({
-                            targets: overlayDiv,
-                            backgroundColor: `rgba(0,0,0,0)`,
-                            duration: 500,
-                            easing: `easeOutExpo`,
-                            complete: () => overlayDiv.remove()
-                        });
-
-                        anime({
-                            targets: overlayCloseText,
-                            opacity: 0,
-                            duration: 500,
-                            easing: `easeOutExpo`
-                        });
-
-                        anime.remove(h);
-                        anime({
-                            targets: h,
-                            scale: 0.35,
-                            left: `${offsetPx}px`,
-                            top: `${offsetPx*-1}px`,
-                            opacity: 0,
-                            duration: 350,
-                            easing: `easeOutExpo`,
-                            complete: () => h.remove()
-                        });
-        
-                        const { x, y } = button.getBoundingClientRect();
-
-                        const newRight = (updatePosition && x ? `${x}px` : null) || right;
-                        const newTop = (updatePosition && y ? `${y}px` : null) || top;
-
-                        console.log(`newRight: ${newRight} (from ${right}) -- newTop: ${newTop} (from ${top})`)
-
-                        anime.remove(clone);
-                        anime({
-                            targets: clone,
-                            opacity: 1,
-                            scale: 1,
-                            right: newRight,
-                            top: newTop,
-                            duration: 650,
-                            easing: `easeOutExpo`,
-                            complete: () => {
-                                clone.remove();
-                                button.style.opacity = 1;
-                                pendingCloses.push(res);
-                                pendingCloses.forEach(r => r());
-                            }
-                        });
-
-                        completeHook();
-                    } else pendingCloses.push(res);
-                });
-
-                overlayDiv.onclick = closeWindow;
 
                 anime({
                     targets: overlayDiv,
