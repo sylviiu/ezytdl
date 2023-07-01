@@ -1,4 +1,4 @@
-module.exports = async () => {
+module.exports = () => new Promise (async res => {
     const sendNotification = require(`../core/sendNotification`)
     
     const config = require(`../getConfig`)();
@@ -11,15 +11,15 @@ module.exports = async () => {
             bodyText: `Debug logs are enabled in the config. This most likely will slow down the app.`
         });
         //res(true);
-        return true
+        return res(true)
     } else if(require(`electron`).app.isPackaged) {
         console.log(`Packaged build -- disabling logs for higher speed. (You can still enable them in the config)`);
         console.log = () => {};
         //res(false);
-        return false
+        return res(false)
     } else {
         console.log(`Running from source -- keeping logs enabled.`);
         //res(true);
-        return true
+        return res(true)
     }
-}
+})

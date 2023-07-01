@@ -49,12 +49,17 @@ if(!locked) {
             const createWindow = require(`./core/window`)
         
             const window = createWindow();
-            
-            ipcMain.handle(`loading`, () => new Promise(async res => {
-                console.log(`[${Date.now() - startTime}ms] Loading requested!`);
 
-                if(startedLoading) return;
-                startedLoading = true;
+            let requestedLoading = Date.now();
+            
+            ipcMain.handle(`loading`, () => {
+                requestedLoading = Date.now();
+                if(doneLoading) return Promise.resolve(doneLoading)
+                else if(startedLoading) return startedLoading;
+            });
+
+            startedLoading = new Promise(async res => {
+                console.log(`[${Date.now() - startTime}ms] Loading requested!`);
 
                 const init = await require(`./init`)();
 
@@ -66,7 +71,7 @@ if(!locked) {
                 doneLoading = redirect;
                 res(redirect);
                 loadingPromise = null;
-                console.log(`[${Date.now() - startTime}ms] to finish loading app!`);
+                console.log(`[${Date.now() - startTime}ms] to finish loading app! (UI took ${Date.now() - requestedLoading}ms)`);
 
                 if(global.testrun) {
                     console.log(`[${Date.now() - startTime}ms] Waiting a few seconds before starting testrun...`);
@@ -78,7 +83,7 @@ if(!locked) {
                 } else {
                     console.log(`complete`)
                 }
-            }));
+            });
 
             //if(!app.isPackaged) window.webContents.openDevTools();
             
