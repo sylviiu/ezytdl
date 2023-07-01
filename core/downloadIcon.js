@@ -38,7 +38,7 @@ const iconGetter = (type, alwaysUseLightIcon, maxRes) => {
     }
 };
 
-const basePath = path.join(global.configPath, `ezytdl Download Icon Cache`);
+const basePath = path.join(global.configPath, `ezytdl System Icon Cache`);
 
 const createdFilenames = [];
 
