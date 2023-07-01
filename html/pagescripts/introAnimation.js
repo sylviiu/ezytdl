@@ -132,6 +132,7 @@ ajax.onload = async () => {
             ],
             closeOnNavigate: true,
             addEventListeners: false,
+            updatePosition: true,
             completeHook: () => callback()
         });
 

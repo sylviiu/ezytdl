@@ -6,6 +6,7 @@ const createPopout = ({
     navigateEvent = () => {},
     closeOnNavigate = false,
     addEventListeners = true,
+    updatePosition = false,
     offsetPx = 80,
 }={}) => {
     console.log(`closeOnNavigate: ${closeOnNavigate}`);
@@ -370,8 +371,8 @@ const createPopout = ({
         
                         const { x, y } = button.getBoundingClientRect();
 
-                        const newRight = x ? `${x}px` : null || right;
-                        const newTop = y ? `${y}px` : null || top;
+                        const newRight = (updatePosition && x ? `${x}px` : null) || right;
+                        const newTop = (updatePosition && y ? `${y}px` : null) || top;
 
                         console.log(`newRight: ${newRight} (from ${right}) -- newTop: ${newTop} (from ${top})`)
 
