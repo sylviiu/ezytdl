@@ -142,6 +142,7 @@ const conversionOptions = (node, info) => {
                 options: {
                     ext: `gif`,
                     videoCodec: false,
+                    additionalOutputArgs: [`-filter_complex`, `split[v1][v2]; [v1]palettegen=stats_mode=full [palette]; [v2][palette]paletteuse=dither=sierra2_4a`],
                 }
             },
             custom: {

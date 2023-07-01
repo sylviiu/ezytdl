@@ -1200,19 +1200,23 @@ module.exports = {
 
                     //console.log(`mainArgs: `, mainArgs)
     
-                    const spawnFFmpeg = (args2, name) => new Promise((resolveFFmpeg, rej) => {
+                    const spawnFFmpeg = (rawArgs2, name) => new Promise(async (resolveFFmpeg, rej) => {
+                        let args2 = rawArgs2.slice(0);
+
                         if(killAttempt > 0) {
                             update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`, url, format})
                             return res(obj)
                             //purgeLeftoverFiles(saveTo)
                             //return res(`Download canceled.`, true);
                         }
-    
-                        //console.log(`- ` + args2.join(`\n- `))
 
                         let status = `Converting to ${`${ext}`.toUpperCase()} using ${name}...`;
 
-                        status += `<br><br>- ${Object.keys(convert).map(s => `${s}: ${convert[s] || `(no conversion)`}`).join(`<br>- `)}`
+                        const additionalArgsFromConvert = [...(convert.additionalInputArgs || []), ...(convert.additionalOutputArgs || [])];
+
+                        const additionalOpts = additionalArgsFromConvert.filter(s => s.startsWith(`-`)).map(s => s.slice(1));
+
+                        status += (additionalArgsFromConvert.length > 0 ? `<br>(using extra processing: ${additionalOpts.join(`, `)})` : ``) + `<br><br>- ${Object.keys(convert).filter(s => convert[s]).map(s => `${s}: ${convert[s] || `(no conversion)`}`).join(`<br>- `)}`
     
                         update({status, percentNum: -1, eta: `--`});
     
@@ -1221,8 +1225,8 @@ module.exports = {
                         update({kill: () => {
                             console.log(`killing ffmpeg conversion...`)
                             killAttempt++
-                            proc.stdin.write(`q`)
-                            //proc.kill(`SIGINT`);
+                            //proc.stdin.write(`q`)
+                            proc.kill(`SIGINT`);
                         }})
         
                         let duration = null;
