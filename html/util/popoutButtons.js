@@ -199,11 +199,12 @@ const createPopout = ({
                 anime.remove(overlayDiv);
 
                 let openedTimeout = Date.now() + 350;
+                let leftTimeout = Date.now() + 500;
 
                 overlayDiv.onmouseenter = async () => {
                     console.log(`mouseenter`);
 
-                    let entered = Math.max(Date.now() + 90, openedTimeout);
+                    let entered = Math.max(Date.now() + 90);
 
                     const animate = (closeable) => {
                         if(pendingCloses.length) {
@@ -213,7 +214,7 @@ const createPopout = ({
                             anime.remove(overlayCloseText);
                             anime.remove(h);
 
-                            const delay = Math.max(0, (entered - Date.now()));
+                            const delay = Math.max(0, (entered - Date.now()), (leftTimeout - Date.now()));
 
                             console.log(`closeable update: ${closeable} -- delay: ${delay}`)
 
@@ -292,10 +293,13 @@ const createPopout = ({
                     anime.remove(h);
 
                     const animate = (closeable) => {
+                        const delay = Math.max(0, (leftTimeout - Date.now()));
+
                         anime({
                             targets: overlayDiv,
                             backgroundColor: `rgba(0,0,0,${closeable ? 0.6 : 1})`,
                             duration: 500,
+                            delay,
                             easing: `easeOutExpo`
                         });
                     }
