@@ -35,6 +35,18 @@ const animateHiddenOptions = (node, ffmpegOptions, {
 
         if(displayNone) ffmpegOptions.classList.remove(`d-none`);
 
+        if(ffmpegOptions.querySelector(`#additional`)) {
+            if(!config.advanced && !ffmpegOptions.querySelector(`#additional`).classList.contains(`d-none`)) {
+                ffmpegOptions.querySelector(`#additional`).classList.add(`d-none`);
+            } else if(config.advanced && ffmpegOptions.querySelector(`#additional`).classList.contains(`d-none`)) {
+                ffmpegOptions.querySelector(`#additional`).classList.remove(`d-none`);
+            };
+            
+            ffmpegOptions.querySelector(`#additional`).childNodes.forEach(n => {
+                if(n && n.placeholder && n.id) n.value = ``;
+            });
+        }
+
         if(immediate) {
             ffmpegOptions.style.opacity = `100%`;
         } else if(config.reduceAnimations) {
@@ -64,7 +76,7 @@ const animateHiddenOptions = (node, ffmpegOptions, {
         if(immediate) {
             ffmpegOptions.style.opacity = `0%`;
             if(!ffmpegOptions.classList.contains(`d-none`)) ffmpegOptions.classList.add(`d-none`);
-            if(ffmpegOptions.resetSelection) ffmpegOptions.resetSelection()
+            if(ffmpegOptions.resetSelection) ffmpegOptions.resetSelection();
         } else if(config.reduceAnimations) {
             ffmpegOptions.style.maxHeight = `0px`;
             anime({
@@ -74,7 +86,7 @@ const animateHiddenOptions = (node, ffmpegOptions, {
                 easing: `easeOutExpo`,
                 complete: () => {
                     if(!ffmpegOptions.classList.contains(`d-none`)) ffmpegOptions.classList.add(`d-none`);
-                    if(ffmpegOptions.resetSelection) ffmpegOptions.resetSelection()
+                    if(ffmpegOptions.resetSelection) ffmpegOptions.resetSelection();
                 }
             });
         } else {

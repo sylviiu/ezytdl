@@ -1182,6 +1182,22 @@ module.exports = {
 
                     temporaryFiles.forEach(file => inputArgs.push(`-i`, require(`path`).join(saveTo, file)));
 
+                    if(typeof convert.additionalInputArgs == `string`) {
+                        const yargsResult = yargs(convert.additionalInputArgs.replace(/-(\w+)/g, '--$1')).argv
+                
+                        const parsed = Object.entries(yargsResult);
+
+                        convert.additionalInputArgs = [];
+                
+                        parsed.filter(o => o[1]).forEach((o, i) => {
+                            if(o[0] != `$0` && o[0] != `_` && o[0].toLowerCase() == o[0]) {
+                                const str = [`-${o[0]}`, `${o[1]}`];
+                                //console.log(str, o[0], o[1])
+                                convert.additionalInputArgs.push(...str)
+                            }
+                        });
+                    }
+
                     if(convert.additionalInputArgs) inputArgs.unshift(...convert.additionalInputArgs);
 
                     const outputArgs = [require(`path`).join(saveTo, ytdlpFilename) + ext];
@@ -1192,13 +1208,29 @@ module.exports = {
                     if(convert.videoFPS) outputArgs.unshift(`-r`, convert.videoFPS);
                     if(convert.videoResolution) outputArgs.unshift(`-vf`, `scale=${convert.videoResolution.trim().replace(`x`, `:`)}`);
 
+                    if(typeof convert.additionalOutputArgs == `string`) {
+                        const yargsResult = yargs(convert.additionalOutputArgs.replace(/-(\w+)/g, '--$1')).argv
+                
+                        const parsed = Object.entries(yargsResult);
+
+                        convert.additionalOutputArgs = [];
+                
+                        parsed.filter(o => o[1]).forEach((o, i) => {
+                            if(o[0] != `$0` && o[0] != `_` && o[0].toLowerCase() == o[0]) {
+                                const str = [`-${o[0]}`, `${o[1]}`];
+                                //console.log(str, o[0], o[1])
+                                convert.additionalOutputArgs.push(...str)
+                            }
+                        });
+                    }
+
                     if(convert.additionalOutputArgs) outputArgs.unshift(...convert.additionalOutputArgs);
 
                     //inputArgs.push(`--retries`, `10`, `--fragment-retries`, `10`)
 
                     const mainArgs = [...inputArgs, ...outputArgs];
 
-                    //console.log(`mainArgs: `, mainArgs)
+                    if(convert.additionalInputArgs || convert.additionalOutputArgs) console.log(`mainArgs: `, mainArgs)
     
                     const spawnFFmpeg = (rawArgs2, name) => new Promise(async (resolveFFmpeg, rej) => {
                         let args2 = rawArgs2.slice(0);
@@ -1298,7 +1330,8 @@ module.exports = {
                     //console.log(`file extension was provided! continuing with ffmpeg...`, obj.destinationFile);
     
                     const decoder = transcoders.use ? Object.assign({}, transcoders.use, {
-                        post: transcoders.use.post.map(s => s.startsWith(`h264_`) ? `${convert.videoCodec || `h264`}_${s.split(`_`).slice(1).join(`_`)}` : s)
+                        pre: transcoders.use.pre.map(s => s.startsWith(`h264_`) ? `${convert.videoCodec || `h264`}_${s.split(`_`).slice(1).join(`_`)}` : s),
+                        post: transcoders.use.post.map(s => s.startsWith(`h264_`) ? `${convert.videoCodec || `h264`}_${s.split(`_`).slice(1).join(`_`)}` : s),
                     }) : null;
     
                     console.log(`using decoder: `, decoder, `original obj: `, transcoders.use);
@@ -1328,17 +1361,17 @@ module.exports = {
                             console.log(`fallback to decoder only`);
     
                             if(decoder && decoder.name) {
-                                if(convert.videoCodec == false) {
+                                if(convert.videoCodec === false) {
                                     spawnFFmpeg([...inputArgs, ...outputArgs], `${thisCodec}_software`).then(res).catch(fallback);
                                 } else spawnFFmpeg([...decoder.pre, ...inputArgs, ...decoder.post, ...outputArgs], `${thisCodec}_software/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`).then(res).catch(e => {
                                     //console.log(`FFmpeg failed converting -- ${e}; trying again...`)
-                                    spawnFFmpeg([...inputArgs, ...decoder.post, `-c:v`, `${convert.videoCodec || `h264`}`, ...outputArgs], `${thisCodec}_software/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`).then(res).catch(e => {
+                                    spawnFFmpeg([...inputArgs, ...decoder.post, (convert.videoCodec ? [`-c:v`, `${convert.videoCodec || `h264`}`] : []), ...outputArgs], `${thisCodec}_software/Dec + ` + `${decoder.post[decoder.post.indexOf(`-c:v`)+1]}` + `/Enc`).then(res).catch(e => {
                                         //console.log(`FFmpeg failed converting -- ${e}; trying again...`)
-                                        spawnFFmpeg([...decoder.pre, ...inputArgs, `-c:v`, `${convert.videoCodec || `h264`}`, ...outputArgs], `${thisCodec}_software/Dec + ` + `${convert.videoCodec || `h264`}_software/Enc`).then(res).catch(e => {
+                                        spawnFFmpeg([...decoder.pre, ...inputArgs, (convert.videoCodec ? [`-c:v`, `${convert.videoCodec || `h264`}`] : []), ...outputArgs], `${thisCodec}_software/Dec + ` + `${convert.videoCodec || `h264`}_software/Enc`).then(res).catch(e => {
                                             //console.log(`FFmpeg failed converting -- ${e}; trying again...`);
                                             if(onlyGPUConversion) {
                                                 return fallback(`The video codec (${thisCodec}) provided by the downloaded format is not compatible with FFmpeg's GPU transcoding.`);
-                                            } else spawnFFmpeg([...inputArgs, `-c:v`, `${convert.videoCodec || `h264`}`, ...outputArgs], `${thisCodec}_software`).then(res).catch(e => {
+                                            } else spawnFFmpeg([...inputArgs, (convert.videoCodec ? [`-c:v`, `${convert.videoCodec || `h264`}`] : []), ...outputArgs], `${thisCodec}_software`).then(res).catch(e => {
                                                 //console.log(`FFmpeg failed converting [1] -- ${e}; trying again...`)
                                                 spawnFFmpeg([...inputArgs, ...outputArgs], `${thisCodec}_software`).then(res).catch(fallback);
                                             })

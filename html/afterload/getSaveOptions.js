@@ -17,6 +17,10 @@ const getSaveOptions = (node, info, overrideDownloadObj) => {
             node.querySelector(`#videoOptions`).childNodes.forEach(n => {
                 if(n && n.placeholder && n.id) convertInfo[n.id] = n.value;
             });
+    
+            if(config.advanced) node.querySelector(`#additional`).childNodes.forEach(n => {
+                if(n && n.placeholder && n.id) convertInfo[n.id] = n.value;
+            });
         } else if(info.selectedConversion.options) {
             convertInfo = info.selectedConversion.options;
         } else throw new Error(`Invalid conversion option -- not custom and doesn't have options obj`, info.selectedConversion)
