@@ -238,7 +238,7 @@ const conversionOptions = (node, info) => {
 
             ffmpegOptions.resetSelection = () => setPreset(null, true);
 
-            if(!ffmpegOptions.hasAttribute(`default`)) ffmpegOptions.setAttribute(`default`, `mp4`)
+            if(!ffmpegOptions.hasAttribute(`default`)) ffmpegOptions.setAttribute(`default`, info.audio && !info.video ? `mp3` : `mp4`)
 
             buttons.forEach(node => {
                 if(node.id) node.onclick = () => setPreset(node);
