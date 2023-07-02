@@ -647,7 +647,7 @@ module.exports = {
         proc.on(`close`, () => {
             const resObj = {}
 
-            if(output.includes(`Muxer `)) resObj.name = output.split(`Muxer `)[1].split(` `)[0].trim().slice(0, -1);
+            if(output.includes(`Muxer `)) resObj.name = output.split(`Muxer `)[1].split(` `)[0].trim();
             if(output.includes(`Mime type: `)) resObj.mimeType = output.split(`Mime type: `)[1].split(`\n`)[0].trim().slice(0, -1);
             if(output.includes(`video codec: `)) resObj.videoCodec = output.split(`video codec: `)[1].split(`\n`)[0].trim().slice(0, -1);
             if(output.includes(`audio codec: `)) resObj.audioCodec = output.split(`audio codec: `)[1].split(`\n`)[0].trim().slice(0, -1);
