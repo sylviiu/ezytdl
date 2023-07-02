@@ -40,6 +40,10 @@ module.exports = (configObject, {
             for(const {key, defaultEnabled} of ffmpegPresets) {
                 defaultConfig.ffmpegPresets[key] = defaultEnabled || false;
             };
+
+            const removed = Object.keys(defaultConfig.ffmpegPresets).filter(key => !ffmpegPresets.map(preset => preset.key).includes(key));
+
+            for(const key of removed) delete defaultConfig.ffmpegPresets[key];
         }
     
         fs.mkdirSync(global.configPath, { recursive: true, failIfExists: false });
