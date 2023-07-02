@@ -13,6 +13,7 @@
     "concurrentDownloads": "Maximum Concurrent Downloads",
     "hardwareAcceleratedConversion": "Enable Hardware-Accelerated Video Conversion",
     "onlyGPUConversion": "Only Allow Hardware-Accelerated Video Conversion",
+    "ffmpegPresets": "Visible Conversion Presets",
     "closeToTray": "Close to System Tray",
     "logsEnabled": "Enable Runtime Logs",
     "defaultWindowControls": "Use System Window Controls",

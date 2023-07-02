@@ -1,0 +1,60 @@
+[
+    {
+        "key": "mp4",
+        "name": "MP4 / H.264",
+        "description": "most compatible video",
+        "defaultEnabled": true,
+        "icon": "fa-video",
+        "options": { "ext": "mp4", "videoCodec": "h264" }
+    },
+    {
+        "key": "mp4-hevc",
+        "name": "MP4 / H.265",
+        "description": "it's just hevc",
+        "defaultEnabled": true,
+        "icon": "fa-video",
+        "options": { "ext": "mp4", "videoCodec": "h265" }
+    },
+    {
+        "key": "mp3",
+        "name": "MP3 / AAC",
+        "description": "default audio format",
+        "defaultEnabled": true,
+        "icon": "fa-volume-up",
+        "options": { "ext": "mp3", "forceSoftware": true, "audioCodec": "aac" }
+    },
+    {
+        "key": "ogg-vorbis",
+        "name": "OGG / Vorbis",
+        "description": "alternative audio format",
+        "defaultEnabled": true,
+        "icon": "fa-volume-up",
+        "options": { "ext": "ogg", "forceSoftware": true, "audioCodec": "vorbis" }
+    },
+    {
+        "key": "gif-standard",
+        "name": "GIF",
+        "description": "it's pronounced gif btw",
+        "defaultEnabled": true,
+        "icon": "fa-image",
+        "options": {
+            "ext": "gif",
+            "forceSoftware": true
+        }
+    },
+    {
+        "key": "gif-palette",
+        "name": "GIF (but pretty)",
+        "description": "file size is larger",
+        "defaultEnabled": true,
+        "icon": "fa-image",
+        "options": {
+            "ext": "gif",
+            "forceSoftware": true,
+            "additionalOutputArgs": [
+                "-filter_complex",
+                "split[v1][v2]; [v1]palettegen=stats_mode=full [palette]; [v2][palette]paletteuse=dither=sierra2_4a"
+            ]
+        }
+    }
+]

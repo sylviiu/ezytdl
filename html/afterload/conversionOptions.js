@@ -127,50 +127,22 @@ const conversionOptions = (node, info) => {
     const presetButtonClone = node.querySelector(`#ffmpegOptions`) ? node.querySelector(`#ffmpegOptions`).querySelector(`#custom`).cloneNode(true) : null;
     
     if(hasFFmpeg) {
-        const conversionFormats = {
-            mp4: {
-                name: `MP4 / H.264`,
-                description: `Default Video Format`,
-                icon: `fa-video`,
-                options: {
-                    ext: `mp4`,
-                    videoCodec: `h264`
-                }
-            },
-            mp3: {
-                name: `MP3 / AAC`,
-                description: `Default Audio Format`,
-                icon: `fa-volume-up`,
-                options: {
-                    ext: `mp3`,
-                    forceSoftware: true,
-                    audioCodec: `aac`
-                }
-            },
-            gif: {
-                name: `GIF`,
-                description: `it's pronounced gif btw`,
-                icon: `fa-image`,
-                options: {
-                    ext: `gif`,
-                    forceSoftware: true,
-                    additionalOutputArgs: [`-filter_complex`, `split[v1][v2]; [v1]palettegen=stats_mode=full [palette]; [v2][palette]paletteuse=dither=sierra2_4a`],
-                }
-            },
-            custom: {
-                name: `Custom Format`,
-                description: `Customize your conversion!`,
-                icon: `fa-wrench`,
-            },
-        }
+        const conversionFormats = mainQueue.ffmpegPresets.slice().filter(o => config.ffmpegPresets[o.key]);
+
+        conversionFormats.push({
+            key: `custom`,
+            name: `Custom Format`,
+            description: `Customize your conversion!`,
+            icon: `fa-wrench`,
+        });
 
         node.querySelector(`#convertDownload`).onclick = () => {
             const ffmpegOptions = node.querySelector(`#ffmpegOptions`);
 
             const customPresetButton = ffmpegOptions.querySelector(`#custom`);
 
-            for(const format of Object.entries(conversionFormats)) {
-                const key = format[0], options = format[1];
+            for(const options of conversionFormats) {
+                const { key } = options;
 
                 if(!ffmpegOptions.querySelector(`#${key}`)) {
                     const thisNode = presetButtonClone.cloneNode(true);
@@ -196,7 +168,7 @@ const conversionOptions = (node, info) => {
                 } else {
                     const previousSelected = currentSelected;
                     currentSelected = node ? node.id : null;
-                    info.selectedConversion = currentSelected && conversionFormats[currentSelected] ? Object.assign({}, conversionFormats[currentSelected], { key: currentSelected }) : null;
+                    info.selectedConversion = currentSelected && conversionFormats.find(o => o.key == currentSelected) ? Object.assign({}, conversionFormats.find(o => o.key == currentSelected), { key: currentSelected }) : null;
                     buttons.forEach(btn => {
                         if(btn.id && btn.style) {
                             if(btn.id == currentSelected) {
@@ -246,7 +218,7 @@ const conversionOptions = (node, info) => {
 
             const defaultOption = ffmpegOptions.getAttribute(`default`);
 
-            const usableOption = conversionFormats[defaultOption] ? defaultOption : null;
+            const usableOption = conversionFormats.find(o => o.key == defaultOption) ? defaultOption : null;
 
             console.log(`default option: ${defaultOption} -- parsed: ${usableOption}`)
 
