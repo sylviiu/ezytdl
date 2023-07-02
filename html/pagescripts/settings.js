@@ -143,6 +143,7 @@ const createCard = (key, string, description, config, parentNode, showSaveButton
                     progbar.setProgress(progress, message);
                 } else if(complete && progbar) {
                     progbar.remove();
+                    progbar = null;
                 }
             });
         }
