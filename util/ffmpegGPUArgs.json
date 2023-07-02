@@ -18,7 +18,7 @@
         "name": "Nvidia / CUVID",
         "description": "This platform is deprecated by FFmpeg. Please use NVENC if possible.",
         "platform": ["win32", "linux"],
-        "string": "nvenc",
+        "string": "cuvid",
         "pre": ["-hwaccel", "auto"],
         "post": ["-c:v", "h264_cuvid"]
     },
