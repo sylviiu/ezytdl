@@ -38,6 +38,7 @@ var ffmpegRawVideoCodecsDecodeOutput = null;
 var ffmpegRawVideoCodecsEncodeOutput = null;
 
 var ffmpegVideoCodecs = null;
+var ffmpegAudioCodecs = null;
 
 const refreshVideoCodecs = () => {
     if(module.exports.ffmpegPath && fs.existsSync(module.exports.ffmpegPath)) {
@@ -47,6 +48,7 @@ const refreshVideoCodecs = () => {
         ffmpegRawVideoCodecsEncodeOutput = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `V` && s[2] == `E`);
 
         ffmpegVideoCodecs = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `V`).map(s => s.split(` `)[2]);
+        ffmpegAudioCodecs = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `A`).map(s => s.split(` `)[2]);
     
         //console.log(ffmpegVideoCodecs, `decode:`, ffmpegRawVideoCodecsDecodeOutput, `encode:`, ffmpegRawVideoCodecsEncodeOutput);
     }
@@ -70,21 +72,6 @@ const time = require(`../util/time`);
 const { updateStatus, updateStatusPercent } = downloadManager.default;
 
 const sendNotification = require(`../core/sendNotification`);
-
-const getCodec = (file, audio) => {
-    let ffprobePath = require(`./filenames/ffmpeg`).getFFprobe();
-    
-    if(ffprobePath && fs.existsSync(ffprobePath)) {
-        try {
-            let a = child_process.execFileSync(ffprobePath, [`-v`, `error`, `-select_streams`, `${audio ? `a` : `v`}:0`, `-show_entries`, `stream=codec_name`, `-of`, `default=noprint_wrappers=1:nokey=1`, file]).toString().trim();
-            if(a) {
-                return a.trim().split(`\n`)[0]
-            } else return null;
-        } catch(e) {
-            return null;
-        }
-    } else return null
-}
 
 const sendUpdates = (proc, initialMsg) => {
     //downloading item {num} of {num}
@@ -637,6 +624,20 @@ module.exports = {
             return useTempalte
         }
     },
+    getCodec: (file, audio) => {
+        let ffprobePath = require(`./filenames/ffmpeg`).getFFprobe();
+        
+        if(ffprobePath && fs.existsSync(ffprobePath)) {
+            try {
+                let a = child_process.execFileSync(ffprobePath, [`-v`, `error`, `-select_streams`, `${audio ? `a` : `v`}:0`, `-show_entries`, `stream=codec_name`, `-of`, `default=noprint_wrappers=1:nokey=1`, file]).toString().trim();
+                if(a) {
+                    return a.trim().split(`\n`)[0]
+                } else return null;
+            } catch(e) {
+                return null;
+            }
+        } else return null
+    },
     getMuxer: (ext) => new Promise(async res => {
         const proc = child_process.execFile(module.exports.ffmpegPath, [`-h`, `muxer=` + ext]);
 
@@ -695,7 +696,9 @@ module.exports = {
     
                         if(valid) break;
                     }
-                }
+                };
+
+                console.log(`found in ${useRegex.length > 0 ? `useRegex` : `use`} ${str} - ${valid}`)
 
                 return valid
             } else return false;
@@ -1031,7 +1034,7 @@ module.exports = {
                                 cleanup(true);
                             });
 
-                            const foundCodec = getCodec(target);
+                            const foundCodec = module.exports.getCodec(target);
                             const vcodec = typeof info.video == `boolean` ? info.video : (foundCodec && !`${foundCodec}`.includes(`jpeg`) && !`${foundCodec}`.includes(`png`))
 
                             //console.log(`--------------\nfoundCodec: ${foundCodec}\nvcodec: ${vcodec}\ninfo.video: ${info.video}\n--------------`)
@@ -1416,8 +1419,8 @@ module.exports = {
 
                     if(convert.videoCodec || destinationCodec.videoCodec) temporaryFiles.forEach(f => {
                         if(fs.existsSync(require(`path`).join(saveTo, f))) {
-                            if(!originalVideoCodec) originalVideoCodec = getCodec(require(`path`).join(saveTo, f))
-                            if(!originalAudioCodec) originalAudioCodec = getCodec(require(`path`).join(saveTo, f), true)
+                            if(!originalVideoCodec) originalVideoCodec = module.exports.getCodec(require(`path`).join(saveTo, f))
+                            if(!originalAudioCodec) originalAudioCodec = module.exports.getCodec(require(`path`).join(saveTo, f), true)
                         }
                     });
 
@@ -1427,10 +1430,18 @@ module.exports = {
 
                     const originalCodec = originalVideoCodec || originalAudioCodec || `unknown`;
                     const targetCodec = convert.videoCodec || destinationCodec.codec;
+
+                    if(convert.videoCodec && !ffmpegVideoCodecs.includes(convert.videoCodec)) {
+                        return fallback(`Could not convert the video stream to ${convert.videoCodec.toString().toUpperCase()} -- target codec not supported by installed build of FFmpeg.`, true);
+                    } else if(convert.audioCodec && !ffmpegVideoCodecs.includes(convert.audioCodec)) {
+                        return fallback(`Could not convert the audio stream to ${convert.audioCodec.toString().toUpperCase()} -- target codec not supported by installed build of FFmpeg.`, true);
+                    }
     
                     let compatibleDecoders = module.exports.getHardwareTranscoders(false, transcoders, originalVideoCodec);
     
                     let compatibleEncoders = module.exports.getHardwareTranscoders(true, transcoders, targetCodec);
+
+                    console.log(`compatible decoders for ${originalVideoCodec}: `, compatibleDecoders, `compatible encoders for ${targetCodec}: `, compatibleEncoders)
 
                     let attemptArgs = [];
 
@@ -1502,15 +1513,19 @@ module.exports = {
                         }
                     };
 
-                    if(attemptArgs.filter(o => o.encoder != `Software` && o.decoder != `Software`).length == 0 && transcodersArr.length > 0 && !convert.forceSoftware) {
-                        return fallback(`Conversion failed: "${require(`../configStrings.json`).onlyGPUConversion}" is set to true, but all GPU transcoders are disabled in the settings.<br><br>` + quickResolve)
+                    let quickResolve = `<br><br>Are your conversion settings up to date? Visit settings and click the "Auto Detect" button under "${require(`../configStrings.json`).hardwareAcceleratedConversion}"`;
+
+                    if(onlyGPUConversion) quickResolve += `<br><br>Or you can try again with "${require(`../configStrings.json`).onlyGPUConversion}" disabled in settings.`;
+
+                    if(transcodersArr.length == 0 && !convert.forceSoftware) {
+                        return fallback(`Conversion failed: "${require(`../configStrings.json`).onlyGPUConversion}" is set to true, but all GPU transcoders are disabled in the settings.` + quickResolve)
                     } else {
                         let msg = null;
 
                         if(originalVideoCodec) msg = `The video codec (${originalVideoCodec}) provided by the downloaded format is not compatible with FFmpeg's GPU transcoding.`
                         else msg = `Unable to convert using any of the hardware-acceleration methods enabled in settings.`
 
-                        return fallback(msg + `Are your conversion settings up to date? Visit settings and click the "Auto Detect" button under "${require(`../configStrings.json`).hardwareAcceleratedConversion}"`);
+                        return fallback(msg + quickResolve);
                     }
                 } else if(!convert) {
                     if(killAttempt > 0) {
