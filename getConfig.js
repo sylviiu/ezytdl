@@ -35,8 +35,6 @@ module.exports = (configObject, {
             // add ffmpeg conversion preset toggles to config
             const ffmpegPresets = fs.existsSync(`${global.configPath}/ffmpegPresets.json`) ? Object.values(JSON.parse(fs.readFileSync(`${global.configPath}/ffmpegPresets.json`).toString())) : require(`./util/ffmpegPresets.json`);
 
-            console.log(`ffmpegPresets`, ffmpegPresets)
-
             for(const {key, defaultEnabled} of ffmpegPresets) {
                 defaultConfig.ffmpegPresets[key] = defaultEnabled || false;
             };
@@ -131,7 +129,6 @@ module.exports = (configObject, {
             //console.log(config, checkedConfig)
             
             if(checked) {
-                console.log(`Updated config!`)
                 fs.writeFileSync(`${global.configPath}/${target}`, JSON.stringify(checkedConfig, null, 4), { encoding: `utf-8` });
             }
         };
@@ -163,7 +160,6 @@ module.exports = (configObject, {
             userConfig.descriptions = require(`./configDescriptions.json`);
     
             for(const extension of Object.entries(require(`./core/userConfExtensions.js`))) {
-                console.log(`adding userconf extension ${extension[0]}`);
                 extension[1](userConfig);
             }
     
@@ -188,8 +184,6 @@ module.exports = (configObject, {
             };
     
             parseAction(null, require(`./core/configActions.js`)(userConfig), userConfig.actions);
-
-            console.log(userConfig)
         }
 
         return userConfig;
