@@ -7,16 +7,23 @@ const fs = require('fs');
 
 const findPath = require(`./getPath`);
 const idGen = require(`./idGen`);
+const ytdlp = require(`./ytdlp`)
 const superagent = require(`superagent`);
 
-const constructPromise = (name, accelArgs, file) => new Promise((res) => {
+const constructPromise = (name, accelArgs, file, codec) => new Promise((res) => {
     let pre = (accelArgs.pre || []).slice(0);
     let post = (accelArgs.post || []).slice(0);
 
-    if(post.indexOf(`-c:v`) == -1) post.push(`-c:v`, `h264`);
+    if(post.indexOf(`-c:v`) == -1) post.push(`-c:v`, codec);
     if(post.indexOf(`-f`) == -1) post.push(`-f`, `null`);
+    
+    if(post.indexOf(`-c:v`) != -1) post[post.indexOf(`-c:v`) + 1] = codec + `_${accelArgs.string}`;
 
-    const proc = spawn(getPath(), [`-hide_banner`, `-loglevel`, `error`, ...pre, `-i`, file, `-threads`, `1`, ...post, `-`, `-benchmark`]);
+    const args = [`-hide_banner`, `-loglevel`, `error`, ...pre, `-i`, file, `-threads`, `1`, ...post, `-`, `-benchmark`]
+
+    console.log(`[FFMPEG/HW -- TESTING] ${name} with codec ${codec}: ${post[post.indexOf(`-c:v`) + 1]}`)
+
+    const proc = spawn(getPath(), args);
 
     let complete = false;
 
@@ -85,6 +92,12 @@ module.exports = (link, platforms, setProgress) => {
             });
 
             writeStream.once(`finish`, () => {
+                setProgress(`Getting video codec...`, 50);
+
+                const videoCodec = ytdlp.getCodec(destination);
+
+                if(!videoCodec) return rej(`Could not get video codec of "${destination}"`)
+
                 setProgress(`Running tests on ${platforms.length} platforms...`, -1)
 
                 const transcoders = require(`./ffmpegGPUArgs.json`);
@@ -94,7 +107,7 @@ module.exports = (link, platforms, setProgress) => {
                 for(const transcoder of platforms) {
                     console.log(`[FFMPEG/HW -- USING] ${transcoder}`)
 
-                    tested[transcoder] = constructPromise(transcoder, transcoders[transcoder], destination)
+                    tested[transcoder] = constructPromise(transcoder, transcoders[transcoder], destination, videoCodec)
                 };
 
                 let i = 1;
@@ -106,7 +119,10 @@ module.exports = (link, platforms, setProgress) => {
     
                     results.map(o => o.value).filter(o => o).forEach(result => o[result.name] = result.works);
     
-                    res(o);
+                    res({
+                        codec: videoCodec,
+                        results: o
+                    });
 
                     if(fs.existsSync(destination)) fs.unlinkSync(destination);
                 });

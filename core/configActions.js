@@ -46,23 +46,35 @@ module.exports = (config) => ({
                         complete: true
                     })
     
-                    if(hw) {
+                    if(hw && hw.results) {
                         console.log(`hardware acceleration:`, hw)
                         console.log(hw);
 
-                        const enabled = Object.entries(hw).filter(o => o[1]).map(o => o[0]);
-                        const disabled = Object.entries(hw).filter(o => !o[1]).map(o => o[0]);
+                        const enabled = Object.entries(hw.results).filter(o => o[1]).map(o => o[0]);
+                        const disabled = Object.entries(hw.results).filter(o => !o[1]).map(o => o[0]);
 
                         sendNotification({
                             headingText: `Hardware Acceleration ${enabled.length > 0 ? `Enabled` : `Disabled`}`,
-                            bodyText: `Hardware acceleration has been ${enabled.length > 0 ? `enabled for the following platforms: ${enabled.length > 0 ? enabled.join(`, `) : `none`}` : `disabled: ${disabled.length}/${platforms.length} have failed tests.`}`
+                            bodyText: `Hardware acceleration (tested with codec ${hw.codec}) has been ${enabled.length > 0 ? `enabled for the following platforms: ${enabled.length > 0 ? enabled.join(`, `) : `none`}` : `disabled: ${disabled.length}/${platforms.length} have failed tests.`}`
                         })
 
-                        res(require(`../getConfig`)({ hardwareAcceleratedConversion: hw }))
+                        res(require(`../getConfig`)({ hardwareAcceleratedConversion: hw.results }))
                     } else {
                         console.log(`hardware acceleration:`, null)
                         res(null);
                     }
+                }).catch(e => {
+                    console.log(`hardware acceleration:`, null)
+
+                    if(typeof e == `string`) {
+                        sendNotification({
+                            type: `error`,
+                            headingText: `Failed to determine hardware acceleration capabilities`,
+                            bodyText: e
+                        })
+                    }
+
+                    res(null);
                 })
             } else {
                 console.log(`hardware acceleration:`, false)
