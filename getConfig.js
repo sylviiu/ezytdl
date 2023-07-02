@@ -33,7 +33,7 @@ module.exports = (configObject, {
             };
 
             // add ffmpeg conversion preset toggles to config
-            const ffmpegPresets = fs.existsSync(`${global.configPath}/ffmpegPresets.json`) ? Object.values(JSON.parse(fs.readFileSync(`${global.configPath}/ffmpegPresets.json`).toString())) : require(`./util/ffmpegPresets.json`);
+            const ffmpegPresets = Object.values(require(`./util/configs`).ffmpegPresets());
 
             for(const {key, defaultEnabled} of ffmpegPresets) {
                 defaultConfig.ffmpegPresets[key] = defaultEnabled || false;
@@ -159,7 +159,7 @@ module.exports = (configObject, {
             userConfig.strings = require(`./configStrings.json`)
             userConfig.descriptions = require(`./configDescriptions.json`);
     
-            for(const extension of Object.entries(require(`./core/userConfExtensions.js`))) {
+            for(const extension of Object.entries(require(`./core/configExtensions.js`))) {
                 extension[1](userConfig);
             }
     
