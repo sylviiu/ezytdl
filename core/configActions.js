@@ -1,11 +1,34 @@
 const sendNotification = require(`./sendNotification`);
 
 module.exports = (config) => ({
+    saveLocation: {
+        name: `Choose Save Location`,
+        func: () => new Promise(async res => {
+            const { dialog } = require(`electron`);
+
+            dialog.showOpenDialog(global.window, {
+                properties: [`openDirectory`]
+            }).then(result => {
+                if(result.filePaths[0]) {
+                    sendNotification({
+                        headingText: `Updated Save Location`,
+                        bodyText: `Your save location has been updated to "${result.filePaths[0]}"`
+                    });
+
+                    res(require(`../getConfig`)({ saveLocation: result.filePaths[0] }))
+                } else {
+                    res(null)
+                }
+            }).catch(e => {
+                res(null);
+            })
+        })
+    },
     hardwareAcceleratedConversion: {
         name: `Auto-Detect`,
         confirmation: `This is going to send a request to **${config.system.ffmpegTestMediaLink}** download a video to test hardware acceleration. This may take a while.`,
         args: [config.system.ffmpegTestMediaLink],
-        func: (link) => new Promise(async (res, rej) => {
+        func: (link) => new Promise(async res => {
             const hasFFmpeg = require(`../util/ytdlp`).hasFFmpeg();
 
             if(hasFFmpeg) {
@@ -43,7 +66,13 @@ module.exports = (config) => ({
                 })
             } else {
                 console.log(`hardware acceleration:`, false)
-                rej(`You need FFmpeg to use hardware acceleration!`);
+
+                sendNotification({
+                    headingText: `Hardware Acceleration Disabled`,
+                    bodyText: `Your settings haven't been changed. FFmpeg is required for Hardware Acceleration to work.`
+                })
+
+                res(null);
             }
         })
     }
