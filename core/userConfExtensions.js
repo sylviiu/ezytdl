@@ -15,7 +15,7 @@ module.exports = {
         return userConfig;
     },
     ffmpegPresets: (userConfig) => {
-        const ffmpegPresets = require(`../util/ffmpegPresets.json`);
+        const ffmpegPresets = require(`fs`).existsSync(`${global.configPath}/ffmpegPresets.json`) ? Object.values(JSON.parse(require(`fs`).readFileSync(`${global.configPath}/ffmpegPresets.json`).toString())) : require(`./util/ffmpegPresets.json`);
 
         Object.assign(userConfig.strings, { ffmpegPresetsExtended: {}, });
         Object.assign(userConfig.descriptions, { ffmpegPresetsExtended: {}, });

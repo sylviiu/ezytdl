@@ -173,7 +173,7 @@ contextBridge.exposeInMainWorld(`mainQueue`, {
     formatStatusPercent: (callback) => on(`formatStatusPercent`, (_e, obj) => callback(obj)),
     queueUpdate: (callback) => on(`queueUpdate`, (_e, obj) => callback(obj)),
     queueProgress: (callback) => on(`queueProgress`, (_e, num) => callback(num)),
-    ffmpegPresets: require(`../util/ffmpegPresets.json`),
+    ffmpegPresets: () => invoke(`ffmpegPresets`),
 });
 
 contextBridge.exposeInMainWorld(`changelog`, {
