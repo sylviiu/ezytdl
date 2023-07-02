@@ -10,11 +10,6 @@ module.exports = (config) => ({
                 properties: [`openDirectory`]
             }).then(result => {
                 if(result.filePaths[0]) {
-                    sendNotification({
-                        headingText: `Updated Save Location`,
-                        bodyText: `Your save location has been updated to "${result.filePaths[0]}"`
-                    });
-
                     res(require(`../getConfig`)({ saveLocation: result.filePaths[0] }))
                 } else {
                     res(null)

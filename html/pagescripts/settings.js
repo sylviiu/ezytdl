@@ -150,7 +150,11 @@ const createCard = (key, string, description, config, parentNode, showSaveButton
             toggleButtons(false);
 
             const run = () => systemConfiguration.action({key, config, args: config.actions[key].args}).then(newConfig => {
-                updateConfig(newConfig, { noUpdate: true, silent: true });
+                if(newConfig && typeof newConfig == `object`) {
+                    updateConfig(newConfig, { noUpdate: true });
+                } else {
+                    toggleButtons(true);
+                }
             });
 
             console.log(`key: ${key} -- clicked; confirm? ${config.actions[key].confirmation ? true : false}`)
