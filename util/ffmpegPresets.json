@@ -24,12 +24,12 @@
         "options": { "ext": "mp3", "forceSoftware": true, "audioCodec": "aac" }
     },
     {
-        "key": "ogg-vorbis",
-        "name": "OGG / Vorbis",
+        "key": "ogg",
+        "name": "OGG",
         "description": "alternative audio format",
         "defaultEnabled": true,
         "icon": "fa-volume-up",
-        "options": { "ext": "ogg", "forceSoftware": true, "audioCodec": "vorbis" }
+        "options": { "ext": "ogg", "forceSoftware": true }
     },
     {
         "key": "gif-standard",
