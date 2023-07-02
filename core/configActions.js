@@ -24,6 +24,11 @@ module.exports = (config) => ({
         confirmation: `This is going to send a request to **${config.system.ffmpegTestMediaLink}** download a video to test hardware acceleration. This may take a while.`,
         args: [config.system.ffmpegTestMediaLink],
         func: (link) => new Promise(async res => {
+            if(global.window) global.window.webContents.send(`configActionUpdate-hardwareAcceleratedConversion`, {
+                message: `Downloading File...`,
+                progress: -1
+            });
+
             const hasFFmpeg = require(`../util/ytdlp`).hasFFmpeg();
 
             if(hasFFmpeg) {
@@ -61,6 +66,10 @@ module.exports = (config) => ({
                 })
             } else {
                 console.log(`hardware acceleration:`, false)
+
+                if(global.window) global.window.webContents.send(`configActionUpdate-hardwareAcceleratedConversion`, {
+                    complete: true
+                })
 
                 sendNotification({
                     headingText: `Hardware Acceleration Disabled`,
