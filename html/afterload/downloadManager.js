@@ -457,6 +457,14 @@ var initDownloadManager = () => {
             });
             
             let downloadsQueueToggled = false;
+
+            const documentClick = (e) => {
+                console.log(`click: ${downloadsQueueToggled} -- ${e.target == downloadsList || downloadsList.contains(e.target)}`)
+
+                if(downloadsQueueToggled && e.target != downloadsQueue && !downloadsQueue.contains(e.target)) {
+                    downloadsList.onclick();
+                }
+            }
             
             downloadsList.onclick = () => {
                 anime.remove(downloadsQueue);
@@ -477,12 +485,19 @@ var initDownloadManager = () => {
                     //downloadsList.style.background = `rgba(255,255,255,1)`;
                     highlightButton(downloadsList)
                     downloadsList.style.color = `rgba(0,0,0,1)`;
+                    
+                    console.log(`removing document click listener`)
+                    document.removeEventListener(`click`, documentClick);
             
                     anime({
                         targets: downloadsQueue,
                         top: arr,
                         duration: 500,
                         easing: `easeOutExpo`,
+                        begin: () => {
+                            console.log(`adding document click listener`)
+                            document.addEventListener(`click`, documentClick);
+                        }
                     });
                 } else {     
                     console.log(`sliding out`)       
@@ -501,6 +516,9 @@ var initDownloadManager = () => {
                         duration: 500,
                         easing: `easeOutExpo`,
                     });
+
+                    console.log(`removing document click listener`)
+                    document.removeEventListener(`click`, documentClick);
                 }
             
                 downloadsQueueToggled = !downloadsQueueToggled;
