@@ -828,7 +828,8 @@ module.exports = {
 
         try {
             const currentConfig = require(`../getConfig`)();
-            const { onlyGPUConversion, disableHWAcceleratedConversion, outputFilename, hardwareAcceleratedConversion } = currentConfig;
+
+            const { onlyGPUConversion, disableHWAcceleratedConversion, outputFilename, hardwareAcceleratedConversion, advanced } = currentConfig;
 
             let thisFormat;
 
@@ -1322,7 +1323,9 @@ module.exports = {
 
                         const additionalOpts = additionalArgsFromConvert.filter(s => s.startsWith(`-`)).map(s => s.slice(1));
 
-                        status += (additionalArgsFromConvert.length > 0 ? `<br>(using extra processing: ${additionalOpts.join(`, `)})` : ``) + `<br><br>- ${Object.keys(convert).filter(s => convert[s]).map(s => `${s}: ${convert[s] || `(no conversion)`}`).join(`<br>- `)}`
+                        if(advanced) {
+                            status += (additionalArgsFromConvert.length > 0 ? `<br>(using extra processing: ${additionalOpts.join(`, `)})` : ``) + `<br><br>- ${Object.keys(convert).filter(s => convert[s]).map(s => `${s}: ${convert[s] || `(no conversion)`}`).join(`<br>- `)}`
+                        }
     
                         update({status, percentNum: -1, eta: `--`});
 
