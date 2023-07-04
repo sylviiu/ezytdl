@@ -24,6 +24,12 @@ const getSaveOptions = (node, info, overrideDownloadObj) => {
         } else if(info.selectedConversion.options) {
             convertInfo = info.selectedConversion.options;
         } else throw new Error(`Invalid conversion option -- not custom and doesn't have options obj`, info.selectedConversion)
+
+        console.log(node.querySelector(`#trimContainer`), node.querySelector(`#trimContainer`).childNodes)
+
+        if(!node.querySelector(`#trimOptions`).classList.contains(`d-none`)) node.querySelector(`#trimContainer`).childNodes.forEach(n => {
+            if(n && n.id && n.value && n.max && n.value != n.max) convertInfo[n.id] = util.time(Number(n.value)*1000, null, {allowZero: true}).timestamp;
+        });
     };
 
     console.log(`convert? ${convert}`, convertInfo)

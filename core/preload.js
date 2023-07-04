@@ -181,6 +181,10 @@ contextBridge.exposeInMainWorld(`changelog`, {
     get: () => invoke(`getChangelog`),
 });
 
+contextBridge.exposeInMainWorld(`util`, {
+    time: require(`../util/time`),
+})
+
 window.onerror = (msg, url, line, col, error) => send(`uiError`, { msg, url, line, col, error });
 
 const name = window.location.pathname.split(`/`).slice(-1)[0].split(`.`).slice(0, -1).join(`.`);

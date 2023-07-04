@@ -404,7 +404,7 @@ module.exports = {
             d.formats = [...modifiedFormats.filter(o => o.audio && o.video), ...modifiedFormats.filter(o => o.audio && !o.video), ...modifiedFormats.filter(o => !o.audio && o.video), ...modifiedFormats.filter(o => !o.audio && !o.video)];
         }
 
-        d.duration = time(totalTime || 0);
+        d.duration = time(totalTime || (d.originalDuration ? d.originalDuration*1000 : 0) || 0);
 
         const key = d.ie_key || d.extractor_key || (d.extractor ? d.extractor.split(`:`).slice(-1)[0][0].toUpperCase() + d.extractor.split(`:`).slice(-1)[0].slice(1) : null) || ``;
 
@@ -832,9 +832,9 @@ module.exports = {
 
             const fullYtdlpFilename = sanitize(await module.exports.getFilename(url, info, thisFormat, outputFilename + `.%(ext)s`, true))
 
-            const ytdlpSaveExt = fullYtdlpFilename.split(`.`).slice(-1)[0];
+            let ytdlpSaveExt = fullYtdlpFilename.split(`.`).slice(-1)[0];
 
-            const ytdlpFilename = fullYtdlpFilename.split(`.`).slice(0, -1).join(`.`);
+            let ytdlpFilename = fullYtdlpFilename.split(`.`).slice(0, -1).join(`.`);
 
             if(!thisFormat) thisFormat = {
                 ext: ytdlpSaveExt,
@@ -1248,6 +1248,22 @@ module.exports = {
                     if(!destinationCodec.compatible) return fallback(`Could not convert to ${ext.toUpperCase()} -- unable to find muxer details.`, true);
 
                     const inputArgs = replaceInputArgs || [];
+
+                    let seek = [];
+
+                    if(convert.trimFrom) {
+                        inputArgs.push(`-ss`, convert.trimFrom);
+                        seek.push(Math.ceil(time(convert.trimFrom).units.ms/1000))
+                    } else seek.push(0);
+
+                    if(convert.trimTo) {
+                        inputArgs.push(`-to`, convert.trimTo);
+                        seek.push(Math.ceil(time(convert.trimTo).units.ms/1000))
+                    } else seek.push(Math.ceil(info.duration.units.ms/1000));
+
+                    if(seek[0] != 0 || seek[1] != Math.ceil(info.duration.units.ms/1000)) {
+                        ytdlpFilename = ytdlpFilename.trim() + `.trimmed (${seek[0]}-${seek[1]})`;
+                    }
 
                     temporaryFiles.filter(f => fs.existsSync(require(`path`).join(saveTo, f))).forEach(file => inputArgs.push(`-i`, require(`path`).join(saveTo, file)));
 

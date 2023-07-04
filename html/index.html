@@ -79,6 +79,13 @@
                                     <h6 id="formatConversionText" style="color: rgba(255,255,255,0.82);text-align: right;width: 100%;margin-right: 10px;margin-bottom: 3px;">Convert To</h6>
                                 </div>
                             </div>
+                            <h6 id="trimText" style="color: rgba(255,255,255,0.82);text-align: right;margin-bottom: 3px;width: 100%;">Trim Media</h6>
+                            <div class="d-flex flex-column justify-content-center align-items-end" id="trimOptions" style="margin-bottom: 8px;width: 100%;">
+                                <div class="d-flex flex-row justify-content-between align-items-center" id="trimInputs" style="margin-bottom: 6px;width: 100%;"><input type="text" id="trimFromInput" style="background: rgba(255,255,255,0.07);border-width: 0px;border-radius: 18px;padding: 6px 12px;color: rgb(255,255,255);height: 27px;width: 20%;text-align: left;font-size: 12px;" min="1" value="00:00">
+                                    <h6 style="color: rgb(255,255,255);margin: 0px;font-size: 0.8em;">to</h6><input type="text" id="trimToInput" style="background: rgba(255,255,255,0.07);border-width: 0px;border-radius: 18px;padding: 6px 12px;color: rgb(255,255,255);height: 27px;width: 20%;text-align: right;font-size: 12px;" min="1" value="00:00">
+                                </div>
+                                <div class="d-flex flex-column align-items-center" id="trimContainer" style="background: rgba(255,255,255,0.07);border-radius: 100px;height: 13px;padding-top: 4px;width: 460px;"><input class="form-range seek-range" type="range" id="trimFrom" min="0" max="100" value="0" style="width: 460px;"><input class="form-range seek-range" type="range" id="trimTo" min="0" max="100" value="100" style="width: 460px;"></div>
+                            </div>
                         </div>
                         <div class="d-flex justify-content-between" style="width: 100%;"><button class="btn btn-primary d-flex justify-content-center align-items-center" id="confirmDownload" type="button" style="height: 36px;border-width: 0px;background: rgba(255,255,255,0.85);color: rgb(0,0,0);border-radius: 100px;width: 49%;padding: 4px;min-height: 36px;max-height: 36px;margin-top: 8px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" id="icon-1" style="margin-right: 8px;margin-top: 2px;">
                                     <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->

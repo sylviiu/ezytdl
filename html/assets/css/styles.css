@@ -2,3 +2,32 @@ body {
   overflow-x: hidden;
 }
 
+.seek-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 2px;
+  width: 100%;
+  position: absolute;
+  pointer-events: none;
+}
+
+.seek-range::-webkit-slider-thumb:hover {
+  background: #f7f7f7;
+}
+
+.seek-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  pointer-events: all;
+  background-color: rgba(255,255,255,0.85);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.seek-range::-webkit-slider-runnable-track {
+  width: 300px;
+  height: 5px;
+  background: rgba(221,221,221,0);
+  border: none;
+  border-radius: 3px;
+}
+

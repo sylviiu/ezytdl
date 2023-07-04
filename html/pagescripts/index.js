@@ -953,6 +953,10 @@ const runSearch = async (url, initialMsg, func) => {
                 for (const i in info.formats) {
                     const format = info.formats[i];
 
+                    Object.assign(format, {
+                        duration: info.duration,
+                    })
+
                     parseProgress.setProgress((i/info.formats.length)*100, `Parsing format ${i}/${info.formats.length}`);
 
                     //console.log(format)
@@ -1063,7 +1067,7 @@ const runSearch = async (url, initialMsg, func) => {
 
                     card.querySelector(`#conversionDiv`).appendChild(card.querySelector(`#outputExtension`));
 
-                    conversionOptions(card, format);
+                    conversionOptions(card.querySelector(`#innerFormatCard`), format);
                     
                     card.querySelector(`#confirmDownload`).onclick = () => confirmDownload();
 
