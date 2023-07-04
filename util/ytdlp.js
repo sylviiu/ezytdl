@@ -1200,15 +1200,23 @@ module.exports = {
             }
 
             const runThroughFFmpeg = async (code, replaceInputArgs) => {
-                let previousFilename = obj.destinationFile ? `ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0] : temporaryFilename;
+                const temporaryFiles = fs.readdirSync(saveTo).filter(f => f.startsWith(temporaryFilename) && !f.endsWith(`.part`) && !f.endsWith(`.meta`));
+
+                filenames.push(...temporaryFiles)
+
+                let previousFilename = obj.destinationFile ? `ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0] : temporaryFilename + `.${ytdlpSaveExt}`;
 
                 const fallback = (msg, deleteFile) => {
                     try {
                         console.log(`ffmpeg did not save file, renaming temporary file`);
                         if(deleteFile) {
-                            if(fs.existsSync(saveTo + previousFilename)) fs.unlinkSync(saveTo + previousFilename)
+                            for(const file of temporaryFiles) {
+                                if(fs.existsSync(require(`path`).join(saveTo, file))) fs.unlinkSync(require(`path`).join(saveTo, file));
+                            }
                         } else {
-                            if(fs.existsSync(saveTo + previousFilename)) fs.renameSync(saveTo + previousFilename, require(`path`).join(saveTo, ytdlpFilename) + `.` + previousFilename.split(`.`).slice(-1)[0]);
+                            for(const file of temporaryFiles) {
+                                if(fs.existsSync(require(`path`).join(saveTo, file))) fs.renameSync(require(`path`).join(saveTo, file), require(`path`).join(saveTo, file.includes(temporaryFilename) ? file.replace(temporaryFilename, ytdlpFilename) : (ytdlpFilename + `.${file.split(`.`).slice(-1)[0]}`)));
+                            }
                         }
                     } catch(e) { console.log(e) }
                     if(msg && typeof msg == `string`) {
@@ -1225,10 +1233,6 @@ module.exports = {
                 if(!fs.existsSync(previousFilename)) previousFilename = await module.exports.getFilename(url, info, thisFormat, temporaryFilename + `.%(ext)s`, true);
     
                 filenames.push(previousFilename)
-
-                const temporaryFiles = fs.readdirSync(saveTo).filter(f => f.startsWith(temporaryFilename) && !f.endsWith(`.part`) && !f.endsWith(`.meta`));
-
-                filenames.push(...temporaryFiles)
 
                 if(convert) {
                     for(const key of Object.keys(convert)) {
@@ -1517,6 +1521,10 @@ module.exports = {
                         return fallback(msg + quickResolve);
                     }
                 } else if(!convert) {
+                    for(const file of temporaryFiles) {
+                        if(fs.existsSync(require(`path`).join(saveTo, file))) fs.renameSync(require(`path`).join(saveTo, file), require(`path`).join(saveTo, file.includes(temporaryFilename) ? file.replace(temporaryFilename, ytdlpFilename) : (ytdlpFilename + `.${file.split(`.`).slice(-1)[0]}`)));
+                    }
+
                     if(killAttempt > 0) {
                         update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`, url, format})
                         return res(obj)
@@ -1545,7 +1553,7 @@ module.exports = {
 
             if(/*thisFormat && thisFormat.protocol && thisFormat.protocol.toLowerCase().includes(`m3u8`) && fs.existsSync(module.exports.ffmpegPath)*/ false) {
             } else {
-                args = [`-f`, format, url, `-o`, require(`path`).join(saveTo, ytdlpFilename) + `.%(ext)s`, `--no-mtime`, ...additionalArgs];
+                args = [`-f`, format, url, `-o`, require(`path`).join(saveTo, temporaryFilename) + `.%(ext)s`, `--no-mtime`, ...additionalArgs];
 
                 if(!format) args.splice(0, 2)
     
@@ -1562,7 +1570,8 @@ module.exports = {
                 }
                 
                 if(convert && !ext) {
-                    args.splice(args.indexOf(`-o`)+1, 1, args[args.indexOf(`-o`)+1].replace(ytdlpFilename, temporaryFilename))
+                    // always downloads in temporary filename, just gets renamed later
+                    //args.splice(args.indexOf(`-o`)+1, 1, args[args.indexOf(`-o`)+1].replace(ytdlpFilename, temporaryFilename))
                     //args[4] = args[4].replace(ytdlpFilename, temporaryFilename);
                     //args.splice(5, 2);
                 } else {
@@ -1662,7 +1671,7 @@ module.exports = {
                         if(!convert) {
                             // download with FFmpeg instead of yt-dlp
             
-                            args = [...(disableHWAcceleratedConversion ? [] : [`-hwaccel`, `auto`]), `-i`, thisFormat.url || url, `-movflags`, `+faststart`, `-c`, `copy`, `-y`, require(`path`).join(saveTo, ytdlpFilename) + `.mkv`];
+                            args = [...(disableHWAcceleratedConversion ? [] : [`-hwaccel`, `auto`]), `-i`, thisFormat.url || url, `-movflags`, `+faststart`, `-c`, `copy`, `-y`, require(`path`).join(saveTo, temporaryFilename) + `.${ytdlpSaveExt}`];
             
                             if(info.http_headers) {
                                 //console.log(`using http headers:`, info.http_headers);
@@ -1712,7 +1721,7 @@ module.exports = {
                                     killAttempt++
                                 }, live: false, percentNum: 0});
             
-                                proc = child_process.execFile(module.exports.ffmpegPath, [`-i`, require(`path`).join(saveTo, ytdlpFilename) + `.mkv`, `-c`, `copy`, `-y`, require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`]);
+                                proc = child_process.execFile(module.exports.ffmpegPath, [`-i`, require(`path`).join(saveTo, temporaryFilename + `.${ytdlpSaveExt}`), `-c`, `copy`, `-y`, require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`]);
             
                                 update({status: `Remuxing to ${`${ytdlpSaveExt}`.toUpperCase()}`, kill: () => {
                                     killAttempt++
@@ -1752,7 +1761,7 @@ module.exports = {
                                     if(convert) {
                                         runThroughFFmpeg(code);
                                     } else {
-                                        if(fs.existsSync(require(`path`).join(saveTo, ytdlpFilename) + `.mkv`)) fs.unlinkSync(require(`path`).join(saveTo, ytdlpFilename) + `.mkv`);
+                                        if(fs.existsSync(require(`path`).join(saveTo, temporaryFilename + `.${ytdlpSaveExt}`))) fs.unlinkSync(require(`path`).join(saveTo, temporaryFilename + `.${ytdlpSaveExt}`));
                                         update({code, saveLocation: saveTo, url, format, status: `Done!`})
                                         res(obj)
                                     }
