@@ -960,10 +960,10 @@ const runSearch = async (url, initialMsg, func) => {
 
                     const card = formatCard.cloneNode(true);
 
-                    new Draggable({
+                    /*new Draggable({
                         node: card,
                         allowPopout: false,
-                    })
+                    })*/
 
                     const saveOptions = listboxTemplate.querySelector(`#saveOptions`).cloneNode(true)
 
