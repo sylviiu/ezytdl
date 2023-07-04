@@ -1,4 +1,5 @@
 let hasFFmpeg = false;
+let enabledConversionFormats = [];
 
 const animateHiddenOptions = (node, ffmpegOptions, {
     expand=true, 
@@ -23,7 +24,6 @@ const animateHiddenOptions = (node, ffmpegOptions, {
     const add = [
         parseInt(window.getComputedStyle(ffmpegOptions).marginBottom),
         parseInt(window.getComputedStyle(ffmpegOptions).marginTop),
-        parseInt(window.getComputedStyle(node).marginTop),
     ]
 
     const newHeight = (ffmpegBoundingClientRect.height + add.reduce((a, b) => a + b, 0));
@@ -127,168 +127,169 @@ const conversionOptions = (node, info) => {
     const presetButtonClone = node.querySelector(`#ffmpegOptions`) ? node.querySelector(`#ffmpegOptions`).querySelector(`#custom`).cloneNode(true) : null;
     
     if(hasFFmpeg) {
-        mainQueue.ffmpegPresets().then(o => {
-            const conversionFormats = Object.values(o).filter(o => config.ffmpegPresets[o.key]);
+        const conversionFormats = enabledConversionFormats.filter(o => config.ffmpegPresets[o.key]);
 
-            conversionFormats.push({
-                key: `custom`,
-                name: `Custom Format`,
-                description: `Customize your conversion!`,
-                icon: `fa-wrench`,
-            });
-    
-            node.querySelector(`#convertDownload`).onclick = () => {
-                const ffmpegOptions = node.querySelector(`#ffmpegOptions`);
-    
-                const customPresetButton = ffmpegOptions.querySelector(`#custom`);
-    
-                for(const options of conversionFormats) {
-                    const { key } = options;
-    
-                    if(!ffmpegOptions.querySelector(`#${key}`)) {
-                        const thisNode = presetButtonClone.cloneNode(true);
-                        thisNode.id = `${key}`;
-                        thisNode.querySelector(`#name`).innerText = options.name;
-                        thisNode.querySelector(`#description`).innerText = options.description;
-                        thisNode.querySelector(`#icon`).className = `fas ${options.icon}`;
-                        customPresetButton.parentElement.appendChild(thisNode);
-                    } else customPresetButton.parentElement.appendChild(ffmpegOptions.querySelector(`#${key}`))
-    
-                    const node = ffmpegOptions.querySelector(`#${key}`);
-                    
-                    if(options.options) node.setAttribute(`options`, JSON.stringify(options.options));
-                };
-    
-                const buttons = ffmpegOptions.querySelectorAll(`.formatPreset`);
-    
-                let currentSelected = null;
-    
-                const setPreset = (node, instant) => {
-                    if(node && currentSelected == node.id) {
-                        buttonDisabledAnim(node, {noRemove: true});
-                    } else {
-                        const previousSelected = currentSelected;
-                        currentSelected = node ? node.id : null;
-                        info.selectedConversion = currentSelected && conversionFormats.find(o => o.key == currentSelected) ? Object.assign({}, conversionFormats.find(o => o.key == currentSelected), { key: currentSelected }) : null;
-                        buttons.forEach(btn => {
-                            if(btn.id && btn.style) {
-                                if(btn.id == currentSelected) {
-                                    if(btn.id == previousSelected) return;
-    
-                                    anime.remove(btn);
-    
-                                    anime({
-                                        targets: btn,
-                                        scale: 1.1,
-                                        backgroundColor: `rgb(0, 0, 0)`,
-                                        color: `rgb(255, 255, 255)`,
-                                        duration: instant ? 0 : 300,
-                                        easing: `easeOutCirc`,
-                                    });
-    
-                                    if(btn.id == `custom`) {
-                                        animateHiddenOptions(node, ffmpegOptions.querySelector(`#ffmpegCustomOptions`));
-                                    } else {
-                                        animateHiddenOptions(node, ffmpegOptions.querySelector(`#ffmpegCustomOptions`), {expand: false});
-                                    }
-                                } else if(btn.id == previousSelected || previousSelected == null) {
-                                    anime.remove(btn);
-                                    
-                                    anime({
-                                        targets: btn,
-                                        scale: 0.94,
-                                        backgroundColor: presetButtonClone.style.backgroundColor,
-                                        color: presetButtonClone.style.color,
-                                        opacity: 0.9,
-                                        duration: instant ? 0 : 300,
-                                        easing: `easeOutCirc`,
-                                    })
+        conversionFormats.push({
+            key: `custom`,
+            name: `Custom Format`,
+            description: `Customize your conversion!`,
+            icon: `fa-wrench`,
+        });
+
+        node.querySelector(`#convertDownload`).onclick = () => {
+            const ffmpegOptions = node.querySelector(`#ffmpegOptions`);
+
+            const customPresetButton = ffmpegOptions.querySelector(`#custom`);
+
+            for(const options of conversionFormats) {
+                const { key } = options;
+
+                if(!ffmpegOptions.querySelector(`#${key}`)) {
+                    const thisNode = presetButtonClone.cloneNode(true);
+                    thisNode.id = `${key}`;
+                    thisNode.querySelector(`#name`).innerText = options.name;
+                    thisNode.querySelector(`#description`).innerText = options.description;
+                    thisNode.querySelector(`#icon`).className = `fas ${options.icon}`;
+                    customPresetButton.parentElement.appendChild(thisNode);
+                } else customPresetButton.parentElement.appendChild(ffmpegOptions.querySelector(`#${key}`))
+
+                const node = ffmpegOptions.querySelector(`#${key}`);
+                
+                if(options.options) node.setAttribute(`options`, JSON.stringify(options.options));
+            };
+
+            const buttons = ffmpegOptions.querySelectorAll(`.formatPreset`);
+
+            let currentSelected = null;
+
+            const setPreset = (node, instant) => {
+                if(node && currentSelected == node.id) {
+                    buttonDisabledAnim(node, {noRemove: true});
+                } else {
+                    const previousSelected = currentSelected;
+                    currentSelected = node ? node.id : null;
+                    info.selectedConversion = currentSelected && conversionFormats.find(o => o.key == currentSelected) ? Object.assign({}, conversionFormats.find(o => o.key == currentSelected), { key: currentSelected }) : null;
+                    buttons.forEach(btn => {
+                        if(btn.id && btn.style) {
+                            if(btn.id == currentSelected) {
+                                if(btn.id == previousSelected) return;
+
+                                anime.remove(btn);
+
+                                const targetColor = (typeof systemColors != `undefined` ? systemColors : system.colors()).light
+
+                                anime({
+                                    targets: btn,
+                                    scale: 1.1,
+                                    backgroundColor: `rgb(${targetColor.r}, ${targetColor.g}, ${targetColor.b})`,
+                                    //color: `rgb(255, 255, 255)`,
+                                    duration: instant ? 0 : 300,
+                                    easing: `easeOutCirc`,
+                                    //begin: () => highlightButton(btn)
+                                });
+
+                                if(btn.id == `custom`) {
+                                    animateHiddenOptions(node, ffmpegOptions.querySelector(`#ffmpegCustomOptions`));
+                                } else {
+                                    animateHiddenOptions(node, ffmpegOptions.querySelector(`#ffmpegCustomOptions`), {expand: false});
                                 }
+                            } else if(btn.id == previousSelected || previousSelected == null) {
+                                anime.remove(btn);
+                                
+                                anime({
+                                    targets: btn,
+                                    scale: 0.94,
+                                    backgroundColor: presetButtonClone.style.backgroundColor,
+                                    color: presetButtonClone.style.color,
+                                    opacity: 0.9,
+                                    duration: instant ? 0 : 300,
+                                    easing: `easeOutCirc`,
+                                })
                             }
-                        })
-                    }
-                };
-    
-                ffmpegOptions.resetSelection = () => setPreset(null, true);
-    
-                if(!ffmpegOptions.hasAttribute(`default`)) ffmpegOptions.setAttribute(`default`, info.audio && !info.video ? `mp3` : `mp4`)
-    
-                buttons.forEach(node => {
-                    if(node.id) node.onclick = () => setPreset(node);
-                });
-    
-                const defaultOption = ffmpegOptions.getAttribute(`default`);
-    
-                const usableOption = conversionFormats.find(o => o.key == defaultOption) ? defaultOption : null;
-    
-                console.log(`default option: ${defaultOption} -- parsed: ${usableOption}`)
-    
-                setPreset(usableOption ? ffmpegOptions.querySelector(`#${usableOption}`) || null : null, true); // set default preset
-        
-                const formattxtbox = node.querySelector(`#outputExtension`);
-        
-                formattxtbox.parentElement.removeChild(formattxtbox);
-        
-                node.querySelector(`#conversionDiv`).appendChild(formattxtbox);
-    
-                animateHiddenOptions(node, ffmpegOptions);
-        
-                anime({
-                    targets: node.querySelector(`#convertDownload`),
-                    width: [`49%`, `0%`],
-                    maxWidth: [`49%`, `0%`],
-                    padding: 0,
-                    opacity: [1, 0],
-                    duration: 500,
-                    easing: `easeOutExpo`,
-                });
-        
-                anime({
-                    targets: node.querySelector(`#confirmDownload`),
-                    width: [`49%`, `100%`],
-                    duration: 500,
-                    easing: `easeOutExpo`,
-                });
-            }
-    
-            metaButtons.forEach(m => {
-                const icon = m.querySelector(`#icon`);
-        
-                m.onclick = () => {
-                    if(m.getAttribute(`value`) == `true`) {
-                        m.setAttribute(`value`, `false`);
-                        if(icon.classList.contains(`fa-check-circle`)) {
-                            icon.classList.remove(`fa-check-circle`);
-                            icon.classList.add(`fa-times-circle`);
                         }
-        
-                        anime.remove(m);
-                        anime({
-                            targets: m,
-                            scale: 0.9,
-                            opacity: 0.65,
-                            duration: 300,
-                            easing: `easeOutExpo`,
-                        })
-                    } else {
-                        m.setAttribute(`value`, `true`);
-                        if(icon.classList.contains(`fa-times-circle`)) {
-                            icon.classList.remove(`fa-times-circle`);
-                            icon.classList.add(`fa-check-circle`);
-                        }
-        
-                        anime.remove(m);
-                        anime({
-                            targets: m,
-                            scale: 1,
-                            opacity: 1,
-                            duration: 300,
-                            easing: `easeOutExpo`,
-                        })
-                    }
+                    })
                 }
+            };
+
+            ffmpegOptions.resetSelection = () => setPreset(null, true);
+
+            if(!ffmpegOptions.hasAttribute(`default`)) ffmpegOptions.setAttribute(`default`, info.audio && !info.video ? `mp3` : `mp4`)
+
+            buttons.forEach(node => {
+                if(node.id) node.onclick = () => setPreset(node);
             });
-        })
+
+            const defaultOption = ffmpegOptions.getAttribute(`default`);
+
+            const usableOption = conversionFormats.find(o => o.key == defaultOption) ? defaultOption : null;
+
+            console.log(`default option: ${defaultOption} -- parsed: ${usableOption}`)
+
+            setPreset(usableOption ? ffmpegOptions.querySelector(`#${usableOption}`) || null : null, true); // set default preset
+    
+            const formattxtbox = node.querySelector(`#outputExtension`);
+    
+            formattxtbox.parentElement.removeChild(formattxtbox);
+    
+            node.querySelector(`#conversionDiv`).appendChild(formattxtbox);
+
+            animateHiddenOptions(node, ffmpegOptions);
+    
+            anime({
+                targets: node.querySelector(`#convertDownload`),
+                width: [`49%`, `0%`],
+                maxWidth: [`49%`, `0%`],
+                padding: 0,
+                opacity: [1, 0],
+                duration: 500,
+                easing: `easeOutExpo`,
+            });
+    
+            anime({
+                targets: node.querySelector(`#confirmDownload`),
+                width: [`49%`, `100%`],
+                duration: 500,
+                easing: `easeOutExpo`,
+            });
+        }
+
+        metaButtons.forEach(m => {
+            const icon = m.querySelector(`#icon`);
+    
+            m.onclick = () => {
+                if(m.getAttribute(`value`) == `true`) {
+                    m.setAttribute(`value`, `false`);
+                    if(icon.classList.contains(`fa-check-circle`)) {
+                        icon.classList.remove(`fa-check-circle`);
+                        icon.classList.add(`fa-times-circle`);
+                    }
+    
+                    anime.remove(m);
+                    anime({
+                        targets: m,
+                        scale: 0.9,
+                        opacity: 0.65,
+                        duration: 300,
+                        easing: `easeOutExpo`,
+                    })
+                } else {
+                    m.setAttribute(`value`, `true`);
+                    if(icon.classList.contains(`fa-times-circle`)) {
+                        icon.classList.remove(`fa-times-circle`);
+                        icon.classList.add(`fa-check-circle`);
+                    }
+    
+                    anime.remove(m);
+                    anime({
+                        targets: m,
+                        scale: 1,
+                        opacity: 1,
+                        duration: 300,
+                        easing: `easeOutExpo`,
+                    })
+                }
+            }
+        });
     } else {
         let sentNotif = false;
         metaButtons.forEach(m => {

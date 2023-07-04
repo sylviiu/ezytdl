@@ -153,6 +153,10 @@ const runSearch = async (url, initialMsg, func) => {
     system.hasFFmpeg().then(has => {
         hasFFmpeg = has;
     });
+
+    mainQueue.ffmpegPresets().then(o => {
+        enabledConversionFormats = Object.values(o);
+    });
     
     document.getElementById(`statusText`).innerHTML = initialMsg || `Fetching info...`;
     if(document.getElementById(`statusText`).classList.contains(`d-none`)) document.getElementById(`statusText`).classList.remove(`d-none`);
