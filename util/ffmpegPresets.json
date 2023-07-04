@@ -9,8 +9,8 @@
     },
     {
         "key": "mp4-hevc",
-        "name": "MP4 / H.265",
-        "description": "it's just hevc",
+        "name": "MP4 / HEVC",
+        "description": "also known as H.265",
         "defaultEnabled": true,
         "icon": "fa-video",
         "options": { "ext": "mp4", "videoCodec": "h265" }
