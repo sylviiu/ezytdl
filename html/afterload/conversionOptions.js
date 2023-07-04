@@ -262,6 +262,8 @@ const conversionOptions = (node, info) => {
                 trimToInput.onblur = () => modifyInput(trimTo, trimToInput, `to`, trimToInput.value);
 
                 trimFrom.max = Math.ceil(info.duration.units.ms/1000);
+                modifyInput(trimFrom, trimFromInput, `from`, 0);
+
                 trimTo.max = Math.ceil(info.duration.units.ms/1000);
                 modifyInput(trimTo, trimToInput, `to`, Math.ceil(info.duration.units.ms));
     
