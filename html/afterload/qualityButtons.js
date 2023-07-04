@@ -303,17 +303,34 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
         console.log(`setting value to ${configSelectionMap[currentSelected]} / ${config.lastMediaConversionOutputs[configSelectionMap[currentSelected]]}`)
         formatConversionTextbox.value = config.lastMediaConversionOutputs[configSelectionMap[currentSelected]] || ``;
     }
+    
+    const targetColor = (typeof systemColors != `undefined` ? systemColors : system.colors()).light
 
     let refreshQualityButtonSelection = () => {
         node.querySelectorAll(`.btn`).forEach((btn, i) => {
             if(currentSelected == i) {
-                btn.style.backgroundColor = `#000000`;
-                btn.style.color = `#ffffff`;
+                //btn.style.backgroundColor = `#000000`;
+                //btn.style.color = `#ffffff`;
+                highlightButton(btn)
+                anime.remove(btn);
+                anime({
+                    targets: btn,
+                    scale: 1.1,
+                    //backgroundColor: `rgb(${targetColor.r}, ${targetColor.g}, ${targetColor.b})`,
+                    duration: 300,
+                    easing: `easeOutCirc`,
+                });
             } else {
-                /*if(i == 0) {
-                    highlightButton(btn)
-                } else */btn.style.backgroundColor = defaultColors.background;
-                btn.style.color = defaultColors.color;
+                btn.style.backgroundColor = defaultColors.background;
+                //btn.style.color = defaultColors.color;
+                anime.remove(btn);
+                anime({
+                    targets: btn,
+                    scale: 1,
+                    //backgroundColor: defaultColors.background,
+                    duration: 300,
+                    easing: `easeOutCirc`,
+                });
             }
         });
     };
