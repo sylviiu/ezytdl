@@ -385,7 +385,7 @@ module.exports = {
         if(d.entries) d.entries = d.entries.map((o, i) => parseList(o, i, `entries`));
 
         if(d.formats) {
-            d.formats = d.formats.map(o => {
+            const modifiedFormats = d.formats.map(o => {
                 if(o.audio_ext != `none` || o.acodec != `none` || o.asr || o.audio_channels) {
                     o.audio = true;
                 } else {
@@ -399,23 +399,9 @@ module.exports = {
                 };
 
                 return o;
-            }).sort((a, b) => {
-                if(a.audio && a.video) {
-                    return -1;
-                } else if(b.audio && b.video) {
-                    return 1;
-                } else if(a.audio && !a.video) {
-                    return -1;
-                } else if(b.audio && !b.video) {
-                    return 1;
-                } else if(a.video && !a.audio) {
-                    return -1;
-                } else if(b.video && !b.audio) {
-                    return 1;
-                } else {
-                    return 0;
-                }
             });
+
+            d.formats = [...modifiedFormats.filter(o => o.audio && o.video), ...modifiedFormats.filter(o => o.audio && !o.video), ...modifiedFormats.filter(o => !o.audio && o.video), ...modifiedFormats.filter(o => !o.audio && !o.video)];
         }
 
         d.duration = time(totalTime || 0);
