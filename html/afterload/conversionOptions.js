@@ -227,7 +227,7 @@ const conversionOptions = (node, info) => {
 
             setPreset(usableOption ? ffmpegOptions.querySelector(`#${usableOption}`) || null : null, true); // set default preset
 
-            if(info.duration && info.duration.timestamp != `--:--`) {
+            if(!info.entries && info.duration && info.duration.timestamp != `--:--`) {
                 const trimFrom = node.querySelector(`#trimFrom`), trimFromInput = node.querySelector(`#trimFromInput`);
                 const trimTo = node.querySelector(`#trimTo`), trimToInput = node.querySelector(`#trimToInput`);
     
