@@ -32,7 +32,7 @@ const notifyWithInfo = (info, downloaded) => {
         if(downloaded) {
             autoUpdater.quitAndInstall(false, true);
         } else {
-            global.updateFunc = async () => shell.openExternal(`https://github.com/ezytdl/ezytdl/releases/tag/${info.version}`);
+            global.updateFunc = async () => shell.openExternal(`https://github.com/sylviiu/ezytdl/releases/tag/${info.version}`);
         }
     }
     

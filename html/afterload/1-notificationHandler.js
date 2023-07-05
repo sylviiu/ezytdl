@@ -237,7 +237,7 @@ if(window.parent != window) {
                 if(bodyText || content) reportStrings.push(`### Content: \n${bodyText || content}`)
                 if(stack) reportStrings.push(`### Stack: \n\`\`\`${stackType || `js`}\n${stack}\n\`\`\``)
     
-                button.href = `https://github.com/ezytdl/ezytdl/issues/new?labels=bug&body=${encodeURIComponent(reportStrings.join(`\n\n`) + `\n\n### Below this line, please describe what caused this error.\n----\n`)}`;
+                button.href = `https://github.com/sylviiu/ezytdl/issues/new?labels=bug&body=${encodeURIComponent(reportStrings.join(`\n\n`) + `\n\n### Below this line, please describe what caused this error.\n----\n`)}`;
     
                 const icon = useDocument.createElement(`i`);
                 icon.classList.add(`fab`);

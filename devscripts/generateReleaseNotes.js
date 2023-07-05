@@ -22,7 +22,7 @@ const variables = {
     releaseTitle: process.env["RELEASE_TITLE"] || null,
     commitList: child_process.execSync(`git log ${previousTagCommit}...${currentCommit}`).toString().trim().slice(7).split(`\n\ncommit `).map(s => {
         const hash = s.split(`\n`)[0];
-        const hashLink = `[**${hash.slice(0, 7)}**](https://github.com/ezytdl/ezytdl/commit/${hash})`;
+        const hashLink = `[**${hash.slice(0, 7)}**](https://github.com/sylviiu/ezytdl/commit/${hash})`;
         //console.log(hashLink);
     
         const author = s.split(`\n`)[1].trim().split(`: `).slice(1).join(`:`);

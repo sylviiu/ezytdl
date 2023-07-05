@@ -1,3 +1,3 @@
 module.exports = () => {
-    return require(`../githubReleasesRequest`)(`ezytdl`, `ezytdl`)
+    return require(`../githubReleasesRequest`)(`sylviiu`, `ezytdl`)
 }
