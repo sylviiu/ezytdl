@@ -12,6 +12,7 @@
     "showdown": "^2.1.0",
     "string-similarity": "^4.0.4",
     "superagent": "^8.0.9",
+    "tinycolor2": "^1.6.0",
     "unzipper": "^0.10.14",
     "which": "^3.0.1",
     "ws": "^8.13.0",
