@@ -15,9 +15,9 @@ const commitHash = child_process.execSync(`git rev-parse --short HEAD`).toString
 const config = {
     "appId": "dev.sylviiu.ezytdl",
     "productName": "ezytdl",
-    "artifactName": "${productName}-${platform}-${version}.${ext}",
+    "artifactName": "${productName}-${platform}.${ext}",
     "portable": {
-        "artifactName": "${productName}-${platform}-portable-${version}.${ext}"
+        "artifactName": "${productName}-${platform}-portable.${ext}"
     },
     "win": {
         "icon": "res/packageIcons/icon-512x512.ico",
