@@ -4,6 +4,8 @@ const { shell, app, ipcMain } = require(`electron`);
 
 let checkingForUpdates = false;
 
+let lastChecked = 0;
+
 const setProgress = (opt) => {
     if(!opt && !checkingForUpdates) return;
 
@@ -114,6 +116,9 @@ autoUpdater.on(`error`, (e) => {
 
 module.exports = async (manual) => {
     if(global.testrun) return null;
+
+    // if the last check was less than 15 minutes ago, don't check again unless it's a manual check
+    if(Date.now() - lastChecked > 900000 && !manual) return;
 
     const { nightlyUpdates } = require(`../getConfig`)()
 
