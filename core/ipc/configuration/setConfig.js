@@ -1,18 +1,16 @@
 module.exports = {
     type: `handle`,
-    func: (event, content) => {
+    func: (event, [name, content]) => {
         console.log(`Config request`)
-        
-        const config = require(`../../../getConfig`)();
-        
-        const { strings } = config;
 
-        console.log(typeof content)
+        if(name) {
+            return require(`../../../util/configs`)[name](content);
+        } else return require(`../../../getConfig`)(content);
 
-        const latestConfig = require(`../../../getConfig`)(content);
+        /*const latestConfig = require(`../../../getConfig`)(content);
     
         console.log(`Sending UPDATED config`, latestConfig)
 
-        return latestConfig;
+        return latestConfig;*/
     }
 }

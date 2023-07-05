@@ -132,16 +132,16 @@ const configHooks = [];
 contextBridge.exposeInMainWorld(`configuration`, {
     action: (name) => invoke(`configAction`, name),
     actionUpdate: (key, cb) => on(`configActionUpdate-${key}`, cb),
-    get: () => new Promise(async res => {
-        invoke(`getConfig`).then(data => {
-            configHooks.forEach(cb => cb(data));
+    get: (name) => new Promise(async res => {
+        invoke(`getConfig`, name).then(data => {
             res(data);
+            if(!name) configHooks.forEach(cb => cb(data));
         })
     }),
-    set: (newObj) => new Promise(async res => {
-        invoke(`setConfig`, newObj).then(data => {
-            configHooks.forEach(cb => cb(data));
+    set: (name, newObj) => new Promise(async res => {
+        invoke(`setConfig`, [name, newObj]).then(data => {
             res(data);
+            if(!name) configHooks.forEach(cb => cb(data));
         })
     }),
     hook: (cb) => configHooks.push(cb)
@@ -173,7 +173,6 @@ contextBridge.exposeInMainWorld(`mainQueue`, {
     formatStatusPercent: (callback) => on(`formatStatusPercent`, (_e, obj) => callback(obj)),
     queueUpdate: (callback) => on(`queueUpdate`, (_e, obj) => callback(obj)),
     queueProgress: (callback) => on(`queueProgress`, (_e, num) => callback(num)),
-    ffmpegPresets: () => invoke(`ffmpegPresets`),
 });
 
 contextBridge.exposeInMainWorld(`changelog`, {

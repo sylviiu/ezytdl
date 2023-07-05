@@ -1,10 +1,10 @@
 module.exports = {
     type: `handle`,
-    func: () => {
-        console.log(`Config request`)
-        
-        const config = require(`../../../getConfig`)();
+    func: (_e, name) => {
+        console.log(`Config request: ${name}`, name)
 
-        return config;
+        if(name) {
+            return require(`../../../util/configs`)[name]();
+        } else return require(`../../../getConfig`)();
     }
 }

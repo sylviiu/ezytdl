@@ -127,7 +127,7 @@ const conversionOptions = (node, info) => {
     const presetButtonClone = node.querySelector(`#ffmpegOptions`) ? node.querySelector(`#ffmpegOptions`).querySelector(`#custom`).cloneNode(true) : null;
     
     if(hasFFmpeg) {
-        const conversionFormats = enabledConversionFormats.filter(o => config.ffmpegPresets[o.key]);
+        const conversionFormats = enabledConversionFormats;
 
         conversionFormats.push({
             key: `custom`,

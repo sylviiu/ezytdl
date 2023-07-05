@@ -14,10 +14,8 @@ module.exports = (configObject, {
     target=`config.json`,
     allowNonexistentRemoval=true,
     allowChangedDefaults=true,
-    returnConfig=false
+    values=false,
 }={}) => {
-    if(returnConfig) return JSON.parse(fs.readFileSync(`${global.configPath}/${target}`));
-
     const custom = source != `./defaultConfig.json` && target != `config.json` ? true : false;
 
     try {
@@ -186,7 +184,7 @@ module.exports = (configObject, {
             parseAction(null, require(`./core/configActions.js`)(userConfig), userConfig.actions);
         }
 
-        return userConfig;
+        return values ? Object.values(userConfig) : userConfig;
     } catch(e) {
         errorHandler(e)
     }

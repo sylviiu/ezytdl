@@ -534,7 +534,7 @@ const updateConfig = (json, {noUpdate, silent=false}={}) => {
     if(noUpdate && json) {
         run(json);
     } else {
-        systemConfiguration.set(json).then(run);
+        systemConfiguration.set(null, json).then(run);
     }
 }
 

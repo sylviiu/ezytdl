@@ -4,5 +4,6 @@ module.exports = {
         target: `ffmpegPresets.json`,
         allowNonexistentRemoval: false,
         allowChangedDefaults: false,
+        values: true,
     }, o))
 }

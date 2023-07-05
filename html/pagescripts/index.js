@@ -24,7 +24,7 @@ const popoutButtons = createPopout({
                 })
         
                 config = newConf;
-                previousConfig = newConf;
+                previousConfig = Object.assign({}, newConf || {});;
             } else {
                 console.log(`config has NOT changed.`)
             }
@@ -154,8 +154,9 @@ const runSearch = async (url, initialMsg, func) => {
         hasFFmpeg = has;
     });
 
-    mainQueue.ffmpegPresets().then(o => {
-        enabledConversionFormats = Object.values(o);
+    configuration.get(`ffmpegPresets`).then(o => {
+        enabledConversionFormats = o.filter(o => config.ffmpegPresets[o.key]);
+        console.log(`enabled conversion formats`, enabledConversionFormats)
     });
     
     document.getElementById(`statusText`).innerHTML = initialMsg || `Fetching info...`;
@@ -1038,9 +1039,9 @@ const runSearch = async (url, initialMsg, func) => {
                     //card.querySelector(`#saveLocation`).value = `${config && config.saveLocation ? config.saveLocation : `{default save location}`}`;
                     card.querySelector(`#basedir`).innerText = `${info.saveLocation || (config && config.saveLocation ? config.saveLocation : `Save Location`)}`;
 
-                    if(config.lastMediaConversionOutputs[formatDownloadType]) card.querySelector(`#outputExtension`).value = config.lastMediaConversionOutputs[formatDownloadType];
+                    console.log(config, config.lastMediaConversionOutputs, formatDownloadType)
 
-                    const saveOptionsIcon = card.querySelector(`#downloadicon`)
+                    if(config.lastMediaConversionOutputs[formatDownloadType]) card.querySelector(`#outputExtension`).value = config.lastMediaConversionOutputs[formatDownloadType];
 
                     const btn = card.querySelector(`#formatDownload`);
                     
