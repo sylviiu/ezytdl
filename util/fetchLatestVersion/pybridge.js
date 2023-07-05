@@ -1,3 +1,3 @@
 module.exports = () => {
-    return require(`../githubReleasesRequest`)(`ezytdl`, `pybridge`);
+    return require(`../githubReleasesRequest`)(`sylviiu`, `ytdlp-pybridge`);
 }
