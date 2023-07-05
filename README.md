@@ -5,7 +5,7 @@
   <img src="https://github.com/sylviiu/ezytdl/actions/workflows/test-linux.yml/badge.svg"/>
 </h1>
 
-Open source electron-based application acting as a wrapper of the YT-DLP client.
+Advanced electron-based frontend for yt-dlp.
 
 ![Sequence 02_2-min](https://user-images.githubusercontent.com/95180094/236718122-e2252737-0b88-43e0-afba-3458e3bf6b9d.gif)
 
