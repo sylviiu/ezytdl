@@ -124,6 +124,12 @@ contextBridge.exposeInMainWorld(`version`, {
     get: () => invoke(`version`),
     checkForUpdates: () => invoke(`checkForUpdates`),
     onUpdate: (cb) => on(`updateAvailable`, cb),
+    onUpdateProgress: (cb) => {
+        invoke(`getUpdateStatus`).then(o => {
+            cb(o);
+            on(`updateProgress`, cb);
+        })
+    },
     openUpdatePage: () => send(`openUpdatePage`)
 });
 
@@ -197,25 +203,50 @@ contextBridge.exposeInMainWorld(`preload`, {
 });
 
 const libs = [`animejs`, `showdown`, `color-scheme`]
-const assets = require(`./build-assets.json`);
+
+const scriptsObj = {
+    libs: () => {
+        console.log(`-- ADDING libs`)
+        return Promise.all(libs.map(name => addScript(`${name}`, `lib`)));
+    },
+    util: () => new Promise(async res => {
+        fs.readdir(await getPath(`./html/util`), (e, util) => {
+            if(e) throw e;
+            console.log(`-- ADDING util: ${util.join(`, `)}`)
+            Promise.all(util.map(path => addScript(`./util/${path}`))).then(res)
+        });
+    }),
+    topjs: () => new Promise(async res => {
+        fs.readdir(await getPath(`./html/topjs`), (e, topjs) => {
+            if(e) throw e;
+            console.log(`-- ADDING topjs: ${topjs.join(`, `)}`)
+            Promise.all(topjs.map(path => addScript(`./topjs/${path}`))).then(res)
+        });
+    }),
+    pagescript: (useName=name) => {
+        console.log(`-- ADDING pagescript`)
+        return addScript(`./pagescripts/${useName.includes(`-`) ? useName.split(`-`)[0] : useName}.js`);
+    },
+    afterload: () => new Promise(async res => {
+        fs.readdir(await getPath(`./html/afterload`), (e, afterload) => {
+            if(e) throw e;
+            console.log(`-- ADDING afterload: ${afterload.join(`, `)}`)
+            Promise.all(afterload.map(path => addScript(`./afterload/${path}`))).then(res)
+        });
+    }),
+}
+
+contextBridge.exposeInMainWorld(`scripts`, scriptsObj)
 
 addEventListener(`DOMContentLoaded`, async () => {
-    console.log(assets);
+    await scriptsObj.libs();
+    await scriptsObj.util();
+    await scriptsObj.topjs();
+    await scriptsObj.pagescript();
 
-    console.log(`-- ADDING LIBS`)
-    await Promise.all(libs.map(name => addScript(`${name}`, `lib`)));
+    console.log(`name: ${name}`)
 
-    console.log(`-- ADDING UTIL`);
-    await Promise.all(assets.util.map(path => addScript(`./util/${path}`)));
-
-    console.log(`-- ADDING TOPJS`);
-    await Promise.all(assets.topjs.map(path => addScript(`./topjs/${path}`)));
-
-    console.log(`-- ADDING PAGESCRIPT`)
-    await addScript(`./pagescripts/${name.includes(`-`) ? name.split(`-`)[0] : name}.js`);
-
-    console.log(`-- ADDING AFTERLOAD`)
-    await Promise.all(assets.afterload.map(path => addScript(`./afterload/${path}`)));
+    if(!name.includes(`introAnimation`)) await scriptsObj.afterload();
 
     console.log(`Scripts added!`);
 

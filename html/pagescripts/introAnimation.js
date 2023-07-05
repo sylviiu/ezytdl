@@ -2,12 +2,6 @@ console.log(`introAnimation called`);
 
 document.body.style.opacity = 0;
 
-const enableUpdateButton = () => {
-    document.getElementById(`updateAvailable`).classList.add(`d-flex`);
-    document.getElementById(`updateAvailable`).classList.remove(`d-none`);
-    document.getElementById(`updateAvailable`).onclick = () => version.openUpdatePage()
-}
-
 let givenCB = [];
 
 let complete = false;
@@ -52,25 +46,14 @@ ajax.onload = async () => {
 
         await system.addScript(`./topjs/feelLikeNativeApp.js`)
         await system.addScript(`./topjs/vars.js`)
-        await system.addScript(`./pagescripts/${htmlFile.split(`.`).slice(0, -1).join(`.`)}.js`)
-        await system.addScript(`./afterload/downloadManager.js`)
+        //await system.addScript(`./pagescripts/${htmlFile.split(`.`).slice(0, -1).join(`.`)}.js`)
+        await scripts.pagescript(htmlFile.split(`.`).slice(0, -1).join(`.`))
+        await scripts.afterload();
     
         if(typeof getVersion != `undefined`) getVersion()
         initDownloadManager();
         
         console.log(`loaded scripts!`);
-    
-        const enableUpdateButton = () => {
-            document.getElementById(`updateAvailable`).classList.add(`d-flex`);
-            document.getElementById(`updateAvailable`).classList.remove(`d-none`);
-            document.getElementById(`updateAvailable`).onclick = () => send(`openUpdatePage`)
-        }
-    
-        if(document.getElementById(`updateAvailable`)) {
-            console.log(`updateAvailable Enabled`)
-            version.checkForUpdates().then(r => r ? enableUpdateButton() : null);
-            version.onUpdate(enableUpdateButton)
-        }
     
         const navigationBar = document.body.querySelector(`#navigationBar`);
         const everythingElse = document.body.querySelectorAll(`body > div:not(#navigationBar)`);
