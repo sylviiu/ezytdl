@@ -44,8 +44,6 @@ module.exports = {
 
             if(body.items && body.items[0].track) body.items = body.items.map((o, i) => Object.assign(body.items[i], o.track, {track: null}));
 
-            console.log(body)
-
             res(body);
         };
 
@@ -143,8 +141,6 @@ module.exports = {
             }
 
             Object.assign(retObj, await parseTrack(obj, true));
-
-            console.log(retObj)
             
             res(retObj);
         });
