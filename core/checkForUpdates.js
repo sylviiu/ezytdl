@@ -2,6 +2,8 @@ const sendNotification = require("./sendNotification.js");
 
 const { shell, app, ipcMain } = require(`electron`);
 
+let checkingForUpdates = false;
+
 const notifyWithInfo = (info, downloaded) => {
     global.updateAvailable = info.version;
 
@@ -52,6 +54,7 @@ const notifyWithInfo = (info, downloaded) => {
 };
 
 const { autoUpdater } = require(`electron-updater`);
+const { check } = require("yargs");
 
 autoUpdater.autoDownload = false;
 
@@ -61,15 +64,18 @@ if(process.platform == `win32`/* || process.platform == `darwin`*/) {
     // darwin removed because i have to sign the app with my deadname in order for that to work. fuck apple.
 
     autoUpdater.on(`update-downloaded`, (info) => {
+        checkingForUpdates = false;
         notifyWithInfo(info, true);
     });
 } else {
     autoUpdater.on(`update-available`, (info) => {
+        checkingForUpdates = false;
         notifyWithInfo(info, false);
     });
 };
 
 autoUpdater.on(`update-not-available`, (info) => {
+    checkingForUpdates = false;
     sendNotification({
         headingText: `Up to date!`,
         bodyText: `You're already on the latest version!`,
@@ -78,6 +84,7 @@ autoUpdater.on(`update-not-available`, (info) => {
 });
 
 autoUpdater.on(`error`, (e) => {
+    checkingForUpdates = false;
     console.error(e)
     sendNotification({
         headingText: `Update error!`,
@@ -97,11 +104,20 @@ module.exports = async (manual) => {
     }
 
     if(!autoUpdater.isUpdaterActive() && manual) {
+        checkingForUpdates = false;
         sendNotification({
             headingText: `Build is not updatable!`,
             bodyText: `This build is not updatable. Please download an auto-updatable build from the releases page.`,
         })
-    } else if(!global.updateAvailable || manual) {
+    };
+
+    if(checkingForUpdates) return sendNotification({
+        headingText: `Already checking for updates!`,
+        bodyText: `ezytdl is already checking for updates!`,
+    })
+    
+    if(!global.updateAvailable || manual) {
+        checkingForUpdates = true;
         autoUpdater.checkForUpdates();
     }
 };
