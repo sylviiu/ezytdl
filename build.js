@@ -95,13 +95,6 @@ const config = {
         "devscripts/*/*.js",
         "checks/*.js"
     ],
-    "extraResources": [
-        {
-            from: "./pybridge/",
-            to: "pybridge/",
-            filter: ["**/*"]
-        }
-    ],
     "extraMetadata": {
         commitHash,
         fullCommitHash: child_process.execSync(`git rev-parse HEAD`).toString().trim(),
