@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="https://raw.githubusercontent.com/sylviiu/ezytdl/main/res/img/heading.png" height="128px"/><br>
+  <img src="https://github.com/sylviiu/ezytdl/blob/master/.github/overlay.png" height="128px"/><br>
   <img src="https://github.com/sylviiu/ezytdl/actions/workflows/test-win.yml/badge.svg"/>
   <img src="https://github.com/sylviiu/ezytdl/actions/workflows/test-mac.yml/badge.svg"/>
   <img src="https://github.com/sylviiu/ezytdl/actions/workflows/test-linux.yml/badge.svg"/>
@@ -7,7 +7,7 @@
 
 Advanced electron-based frontend for yt-dlp.
 
-![Sequence 02_2-min](https://user-images.githubusercontent.com/95180094/236718122-e2252737-0b88-43e0-afba-3458e3bf6b9d.gif)
+![Sequence 02_2-min](https://github.com/sylviiu/ezytdl/blob/master/.github/ezytdl-intro.gif)
 
 -----
 
