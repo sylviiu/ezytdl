@@ -31,7 +31,7 @@ const getSaveOptions = (node, info, overrideDownloadObj, {
         console.log(node.querySelector(`#trimContainer`), node.querySelector(`#trimContainer`).childNodes)
 
         if(!node.querySelector(`#trimOptions`).classList.contains(`d-none`)) node.querySelector(`#trimContainer`).childNodes.forEach(n => {
-            if(n && n.id && n.value && n.max && n.value != n.max && !ignore.find(o => o == n.id)) convertInfo[n.id] = util.time(Number(n.value)*1000, null, {allowZero: true}).timestamp;
+            if(n && n.id && n.value && n.max && n.value != (n.id == `trimTo` ? n.max : n.min) && !ignore.find(o => o == n.id)) convertInfo[n.id] = util.time(Number(n.value)*1000, null, {allowZero: true}).timestamp;
         });
     };
 
