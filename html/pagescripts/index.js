@@ -1375,9 +1375,14 @@ resultsCountInput.addEventListener(`keyup`, (e) => {
 
 setTimeout(() => wavesAnims.fadeIn(), 50)
 
+const housekeeping = () => {
+    updateChecker();
+    changelog.check();
+}
+
 if(typeof introAnimation != `undefined`) {
-    introAnimation.wait(() => changelog.check())
-} else changelog.check();
+    introAnimation.wait(() => housekeeping())
+} else housekeeping();
 
 if(window.location.search.slice(1)) {
     const str = window.location.search.slice(1);

@@ -1,0 +1,96 @@
+let updateAvailableBtn = document.getElementById(`updateAvailable`);
+
+let currentProgressCircle = null;
+
+let updateAvailable = false;
+
+const setUpdateButton = (disable=false, func, createProgressCirc) => {
+    console.log(`setUpdateButton: ${disable ? `disable` : `enable`}; func? ${func ? true : false}`)
+
+    anime.remove(updateAvailableBtn)
+
+    if(disable) {
+        anime({
+            targets: updateAvailableBtn,
+            opacity: [1, 0],
+            scale: [1, 0.5],
+            duration: 500,
+            easing: `easeOutCirc`,
+            complete: () => {
+                if(updateAvailableBtn.classList.contains(`d-flex`)) updateAvailableBtn.classList.remove(`d-flex`);
+                if(!updateAvailableBtn.classList.contains(`d-none`)) updateAvailableBtn.classList.add(`d-none`);
+            }
+        });
+        updateAvailableBtn.onclick = null;
+        if(currentProgressCircle) {
+            currentProgressCircle.remove();
+            currentProgressCircle = null;
+        }
+    } else {
+        if(createProgressCirc && !currentProgressCircle) {
+            currentProgressCircle = addProgressCircle(updateAvailableBtn, 8, false, {
+                overrideWidth: updateAvailableBtn.style.width,
+                overrideHeight: updateAvailableBtn.style.height,
+            });
+        } else if(!createProgressCirc && currentProgressCircle) {
+            currentProgressCircle.remove();
+            currentProgressCircle = null;
+        }
+
+        anime({
+            targets: updateAvailableBtn,
+            opacity: [0, 1],
+            scale: [0.5, 1],
+            duration: 500,
+            easing: `easeOutCirc`,
+            begin: () => {
+                if(!updateAvailableBtn.classList.contains(`d-flex`)) updateAvailableBtn.classList.add(`d-flex`);
+                if(updateAvailableBtn.classList.contains(`d-none`)) updateAvailableBtn.classList.remove(`d-none`);
+            }
+        });
+        updateAvailableBtn.onclick = func ? func : () => send(`openUpdatePage`)
+    }
+}
+
+const updateChecker = () => {
+    updateAvailableBtn = document.getElementById(`updateAvailable`);
+
+    if(updateAvailableBtn) {
+        console.log(`updateAvailable Enabled`)
+
+        version.checkForUpdates();
+
+        version.onUpdate(() => {
+            updateAvailable = true;
+            updateAvailableBtn.style.backgroundColor = `#fff`;
+            updateAvailableBtn.style.color = `#000`;
+            setUpdateButton()
+        });
+    
+        version.onUpdateProgress(p => {
+            console.log(`version update: `, p);
+
+            if(updateAvailable) return;
+
+            if(p && typeof p.progress != `undefined`) {
+                updateAvailableBtn.style.backgroundColor = `rgba(255, 255, 255, 0.15)`;
+                updateAvailableBtn.style.color = `#fff`;
+    
+                console.log(`updateprogress`, p)
+    
+                const { progress, status } = p;
+    
+                const percent = Number(progress) < 0 ? `(pending)` : `${progress}%`
+
+                updateAvailableBtn.style.scale = 1;
+
+                setUpdateButton(false, () => createNotification({
+                    headingText: `Update Status ${percent}`,
+                    bodyText: status,
+                }), true);
+
+                currentProgressCircle.setProgress(progress);
+            } else setUpdateButton(true);
+        })
+    }
+}

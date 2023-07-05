@@ -127,7 +127,7 @@ contextBridge.exposeInMainWorld(`version`, {
     onUpdateProgress: (cb) => {
         invoke(`getUpdateStatus`).then(o => {
             cb(o);
-            on(`updateProgress`, cb);
+            on(`updateProgress`, (_e2, o2) => cb(o2));
         })
     },
     openUpdatePage: () => send(`openUpdatePage`)
@@ -258,7 +258,6 @@ addEventListener(`DOMContentLoaded`, async () => {
 
     if(document.getElementById(`updateAvailable`)) {
         console.log(`updateAvailable Enabled`)
-        invoke(`checkForUpdates`).then(r => r ? enableUpdateButton() : null);
         if(updateAvailable) enableUpdateButton()
     }
 });

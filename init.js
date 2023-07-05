@@ -3,8 +3,8 @@ module.exports = () => new Promise(async res => {
 
     console.log(`Initializing...`);
 
-    //const initScripts = require('fs').readdirSync(`./init/`);
-    const initScripts = require(`./build-init.json`)
+    const initScripts = require('fs').readdirSync(require(`./util/getPath`)(`./init`));
+    //const initScripts = require(`./build-init.json`)
 
     console.log(`Scripts: ${initScripts.join(`, `)}`)
 

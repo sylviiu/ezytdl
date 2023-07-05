@@ -4,10 +4,25 @@ const { shell, app, ipcMain } = require(`electron`);
 
 let checkingForUpdates = false;
 
+const setProgress = (opt) => {
+    if(!opt && !checkingForUpdates) return;
+
+    if(typeof opt == `object` && JSON.stringify(opt) == JSON.stringify(module.exports.progress)) return;
+
+    checkingForUpdates = opt ? true : false;
+
+    module.exports.progress = opt;
+    if(global.window) global.window.webContents.send(`updateProgress`, opt);
+
+    console.log(`sending update progress`, opt)
+}
+
 const notifyWithInfo = (info, downloaded) => {
     global.updateAvailable = info.version;
 
-    ipcMain.emit(`updateAvailable`)
+    if(global.window) global.window.webContents.send(`updateAvailable`);
+
+    //ipcMain.emit(`updateAvailable`)
 
     //console.log(info)
 
@@ -64,18 +79,22 @@ if(process.platform == `win32`/* || process.platform == `darwin`*/) {
     // darwin removed because i have to sign the app with my deadname in order for that to work. fuck apple.
 
     autoUpdater.on(`update-downloaded`, (info) => {
-        checkingForUpdates = false;
+        setProgress(null);
         notifyWithInfo(info, true);
     });
 } else {
     autoUpdater.on(`update-available`, (info) => {
-        checkingForUpdates = false;
+        setProgress(null);
         notifyWithInfo(info, false);
     });
 };
 
+autoUpdater.on(`download-progress`, ({bytesPerSecond, percent, total, transferred}) => {
+    setProgress({ percent, status: `Downloading update... (at ${bytesPerSecond / 1e-6}mb/s)` })
+});
+
 autoUpdater.on(`update-not-available`, (info) => {
-    checkingForUpdates = false;
+    setProgress(null);
     sendNotification({
         headingText: `Up to date!`,
         bodyText: `You're already on the latest version!`,
@@ -84,7 +103,7 @@ autoUpdater.on(`update-not-available`, (info) => {
 });
 
 autoUpdater.on(`error`, (e) => {
-    checkingForUpdates = false;
+    setProgress(null);
     console.error(e)
     sendNotification({
         headingText: `Update error!`,
@@ -104,20 +123,33 @@ module.exports = async (manual) => {
     }
 
     if(!autoUpdater.isUpdaterActive() && manual) {
-        checkingForUpdates = false;
-        sendNotification({
+        setProgress(null);
+
+        if(!app.isPackaged) {
+            setTimeout(() => {
+                setProgress(null);
+                sendNotification({
+                    headingText: `Build is not updatable!`,
+                    bodyText: `This build is not updatable. Please download an auto-updatable build from the releases page.`,
+                })
+            }, 5000)
+
+            setProgress({progress: -1, status: `Test run! (app not packaged)`});
+        } else sendNotification({
             headingText: `Build is not updatable!`,
             bodyText: `This build is not updatable. Please download an auto-updatable build from the releases page.`,
-        })
-    };
+        });
 
-    if(checkingForUpdates) return sendNotification({
+        return;
+    } else if(!autoUpdater.isUpdaterActive()) return;
+
+    if(checkingForUpdates && manual) return sendNotification({
         headingText: `Already checking for updates!`,
         bodyText: `ezytdl is already checking for updates!`,
     })
     
     if(!global.updateAvailable || manual) {
-        checkingForUpdates = true;
+        setProgress({ progress: -1, status: `Checking for updates...` });
         autoUpdater.checkForUpdates();
     }
 };

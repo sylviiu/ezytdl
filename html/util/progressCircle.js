@@ -1,11 +1,15 @@
 const svgns = `http://www.w3.org/2000/svg`;
 
-const addProgressCircle = (node, width, showBackground) => {
+const addProgressCircle = (node, width, showBackground, {
+    color = `rgba(255, 255, 255, 0.75)`,
+    overrideWidth = 0,
+    overrideHeight = 0,
+}={}) => {
     let animeFunc = (typeof rawAnimeFunc == `function` ? rawAnimeFunc : anime)
 
-    const nodeSize = Math.floor(node.getBoundingClientRect().width, node.getBoundingClientRect().height);
+    const nodeSize = Math.floor(parseInt(overrideWidth) || node.getBoundingClientRect().width, parseInt(overrideHeight) || node.getBoundingClientRect().height);
 
-    const dotSizeNum = parseInt(width || (nodeSize/7));
+    const dotSizeNum = parseInt(overrideWidth || overrideHeight ? (nodeSize/7) : (width || (nodeSize/7)));
 
     const dotSize = dotSizeNum + `px`;
 
@@ -47,17 +51,21 @@ const addProgressCircle = (node, width, showBackground) => {
     circleFG.style.strokeDasharray = fullCircle;
     //circleFG.style.transform = `rotate(-90 25 25)`;
     circleFG.style.fill = `transparent`;
-    circleFG.style.stroke = `rgba(255, 255, 255, 0.75)`;
+    circleFG.style.stroke = color || `rgba(255, 255, 255, 0.75)`;
     circleFG.style.strokeWidth = dotSize;
     circleFG.style.strokeLinecap = `round`;
     circleFG.style.strokeDashoffset = fullCircle;
     
     svg.appendChild(circleFG);
+
+    // here's the functions :D
+
+    let lastProgress = null;
+
+    let allowProgressChanges = true;
         
-    const startPendingAnimation = (noClearAnim) => {
-        if(!noClearAnim) animeFunc.remove(circle)
-        if(!noClearAnim) animeFunc.remove(circleFG)
-        if(!noClearAnim) animeFunc.remove(svg)
+    const startPendingAnimation = (first) => {
+        if((lastProgress) && first) return retObj.setProgress();
 
         animeFunc({
             targets: circleFG,
@@ -75,18 +83,108 @@ const addProgressCircle = (node, width, showBackground) => {
         opacity: [0, 1],
         duration: 500,
         easing: `easeOutCirc`,
+        /*begin: () => {
+            node.appendChild(svg);
+            if(lastProgress) {
+                retObj.setProgress(lastProgress);
+            }
+        }*/
         begin: () => {
             node.appendChild(svg);
+        
+            startPendingAnimation(true);
+        }
+    });
+
+    const retObj = {
+        node,
+        setProgress: (progress) => {
+            if(progress == lastProgress) progress = undefined;
+
+            if(typeof progress == `undefined`) return;
+
+            console.log(`progcirc: ${progress}%`)
+
+            if(!allowProgressChanges) return;
+
+            if(!svg.parentElement) node.appendChild(svg);
+
+            if(typeof progress == `number` && progress >= 0 && progress <= 100) {
+                animeFunc.remove(circleFG);
+                circleFG.style.opacity = 1;
+                animeFunc({
+                    targets: circleFG,
+                    strokeDashoffset: [fullCircle * lastProgress, fullCircle * (100 - (progress))/100],
+                    duration: 350,
+                    easing: `easeOutCirc`,
+                });
+            } else if(typeof progress != `undefined` && lastProgress != progress) {
+                startPendingAnimation();
+            }
+
+            lastProgress = typeof progress == `number` ? progress : lastProgress;
+        },
+        remove: () => {
+            if(!allowProgressChanges) return;
+
+            allowProgressChanges = false;
+
+            animeFunc.remove(circle)
+            animeFunc.remove(circleFG)
+            animeFunc.remove(svg)
+            
+            animeFunc({
+                targets: [circle, circleFG],
+                strokeWidth: [dotSize, 0],
+                duration: 350,
+                easing: `easeOutCirc`,
+                complete: () => {
+                    if(svg.parentNode) svg.parentNode.removeChild(svg);
+                }
+            });
+
+            return true;
+        }
+    };
+
+    return retObj
+        
+    /*const startPendingAnimation = (noClearAnim) => {
+        if(!noClearAnim) animeFunc.remove(circle)
+        if(!noClearAnim) animeFunc.remove(circleFG)
+        if(!noClearAnim) animeFunc.remove(svg)
+
+        animeFunc({
+            targets: circleFG,
+            loop: true,
+            duration: 1500,
+            opacity: [1, 0],
+            strokeDashoffset: [fullCircle, 0],
+            easing: `easeOutCirc`,
+        })
+    }
+
+    let lastProgress = 1;
+
+    animeFunc({
+        targets: [circle, circleFG],
+        strokeWidth: [0, dotSize],
+        opacity: [0, 1],
+        duration: 500,
+        easing: `easeOutCirc`,
+        begin: () => {
+            node.appendChild(svg);
+            if(lastProgress) {
+                retObj.setProgress(lastProgress);
+            }
         }
     });
 
     startPendingAnimation(true);
 
-    let lastProgress = 1;
-
     let allowProgressChanges = true;
 
-    return {
+    const retObj = {
         node,
         setProgress: (progress) => {
             if(!allowProgressChanges) return;
@@ -105,6 +203,7 @@ const addProgressCircle = (node, width, showBackground) => {
                 animeFunc.remove(circle)
                 animeFunc.remove(circleFG)
                 animeFunc.remove(svg)
+                if(!svg.parentNode) node.appendChild(svg);
                 circleFG.style.opacity = 1;
                 circle.style.opacity = 1;
                 circleFG.style.strokeWidth = dotSize;
@@ -143,4 +242,6 @@ const addProgressCircle = (node, width, showBackground) => {
             return true;
         }
     };
+
+    return retObj;*/
 }
