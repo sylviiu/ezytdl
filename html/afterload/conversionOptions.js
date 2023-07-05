@@ -232,15 +232,20 @@ const conversionOptions = (node, info) => {
                 const trimTo = node.querySelector(`#trimTo`), trimToInput = node.querySelector(`#trimToInput`);
     
                 const modifyInput = (range, input, source, value) => {
-                    const time = util.time(value, null, {allowZero: true})
+                    const useValue = typeof value == `string` && Number(value) && !value.includes(`:`) ? `00:${value}` : value;
+
+                    const time = util.time(useValue, null, {allowZero: true})
     
-                    if(source == `from` && (time.units.ms/1000)+1 > Number(trimTo.value)) return range.value = trimTo.value;
-                    if(source == `to` && (time.units.ms/1000)-1 < Number(trimFrom.value)) return range.value = trimFrom.value;
-    
-                    input.value = time.timestamp;
-                    range.value = (time.units.ms/1000);
-    
-                    console.log(`input value: ${time.timestamp} (raw: ${value}); target: ${input.id}`)
+                    if(source == `from` && (time.units.ms/1000)+1 > Number(trimTo.value)) {
+                        if(range) range.value = trimTo.value;
+                        if(input) input.value = util.time((Number(trimTo.value)-1)*1000, null, {allowZero: true}).timestamp;
+                    } else if(source == `to` && (time.units.ms/1000)-1 < Number(trimFrom.value)) {
+                        if(range) range.value = trimFrom.value;
+                        if(input) input.value = util.time((Number(trimFrom.value)+1)*1000, null, {allowZero: true}).timestamp;
+                    } else {
+                        if(range) range.value = (time.units.ms/1000);
+                        if(input) input.value = time.timestamp;
+                    }
                 };
 
                 const parentStyle = window.getComputedStyle(node);
@@ -256,8 +261,8 @@ const conversionOptions = (node, info) => {
                 trimFrom.oninput = () => modifyInput(trimFrom, trimFromInput, `from`, Number(trimFrom.value)*1000);
                 trimTo.oninput = () => modifyInput(trimTo, trimToInput, `to`, Number(trimTo.value)*1000);
 
-                //trimFromInput.oninput = () => modifyInput(trimFrom, trimFromInput, `from`, trimFromInput.value);
-                //trimToInput.oninput = () => modifyInput(trimTo, trimToInput, `to`, trimToInput.value);
+                trimFromInput.oninput = () => modifyInput(trimFrom, null, `from`, trimFromInput.value);
+                trimToInput.oninput = () => modifyInput(trimTo, null, `to`, trimToInput.value);
                 trimFromInput.onblur = () => modifyInput(trimFrom, trimFromInput, `from`, trimFromInput.value);
                 trimToInput.onblur = () => modifyInput(trimTo, trimToInput, `to`, trimToInput.value);
 
