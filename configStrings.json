@@ -17,5 +17,6 @@
     "closeToTray": "Close to System Tray",
     "logsEnabled": "Enable Runtime Logs",
     "defaultWindowControls": "Use System Window Controls",
+    "nightlyUpdates": "Nightly Updates",
     "advanced": "Show Advanced Options"
 }

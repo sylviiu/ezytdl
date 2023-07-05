@@ -89,14 +89,9 @@ autoUpdater.on(`error`, (e) => {
 module.exports = async (manual) => {
     if(global.testrun) return null;
 
-    const currentVersion = require(`../package.json`).version;
+    const { nightlyUpdates } = require(`../getConfig`)()
 
-    if(currentVersion.includes(`-nightly.`)) {
-        sendNotification({
-            headingText: `Nightly build!`,
-            bodyText: `You're using a nightly build! These are used for testing and may contain bugs.`
-        });
-
+    if(nightlyUpdates) {
         autoUpdater.allowPrerelease = true;
         //autoUpdater.allowDowngrade = true;
     }

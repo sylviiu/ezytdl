@@ -22,6 +22,8 @@ module.exports = (configObject, {
         const defaultConfig = Object.assign({}, require(source));
 
         if(!custom) {
+            defaultConfig.nightlyUpdates = require(`./package.json`).version.includes(`-nightly.`) ? true : false;
+
             // add ffmpeg hardware acceleration toggles to config
             const gpuArgs = require(`./util/ffmpegGPUArgs.json`);
             for(const key of Object.keys(gpuArgs)) {
