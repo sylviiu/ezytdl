@@ -129,23 +129,27 @@ contextBridge.exposeInMainWorld(`version`, {
 
 const configHooks = [];
 
-contextBridge.exposeInMainWorld(`configuration`, {
+const exposedConfiguration = {
     action: (name) => invoke(`configAction`, name),
     actionUpdate: (key, cb) => on(`configActionUpdate-${key}`, cb),
     get: (name) => new Promise(async res => {
         invoke(`getConfig`, name).then(data => {
-            res(data);
             if(!name) configHooks.forEach(cb => cb(data));
+            res(data);
         })
     }),
     set: (name, newObj) => new Promise(async res => {
         invoke(`setConfig`, [name, newObj]).then(data => {
-            res(data);
-            if(!name) configHooks.forEach(cb => cb(data));
+            if(!name) {
+                configHooks.forEach(cb => cb(data));
+                res(data);
+            } else exposedConfiguration.get().then(() => res(data));
         })
     }),
     hook: (cb) => configHooks.push(cb)
-});
+}
+
+contextBridge.exposeInMainWorld(`configuration`, exposedConfiguration);
 
 contextBridge.exposeInMainWorld(`notifications`, {
     handler: (callback) => on(`notification`, (_e, content) => callback(content)),

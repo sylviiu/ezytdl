@@ -1,25 +1,28 @@
-const getSaveOptions = (node, info, overrideDownloadObj) => {
+const getSaveOptions = (node, info, overrideDownloadObj, {
+    getConvertOnly = false,
+    ignore = [],
+}={}) => {
     const formatConversionTextbox = node.querySelector(`#outputExtension`);
     const convertDownload = node.querySelector(`#convertDownload`);
 
     let convertInfo = { ext: formatConversionTextbox.value };
 
-    let convert = info.selectedConversion && hasFFmpeg ? true : false;
+    let convert = (info.selectedConversion && hasFFmpeg) ? true : false;
 
     if(convert) {
         convert = true;
 
         if(info.selectedConversion.key == `custom`) {
             node.querySelector(`#audioOptions`).childNodes.forEach(n => {
-                if(n && n.placeholder && n.id) convertInfo[n.id] = n.value;
+                if(n && n.placeholder && n.id && !ignore.find(o => o == n.id)) convertInfo[n.id] = n.value;
             });
     
             node.querySelector(`#videoOptions`).childNodes.forEach(n => {
-                if(n && n.placeholder && n.id) convertInfo[n.id] = n.value;
+                if(n && n.placeholder && n.id && !ignore.find(o => o == n.id)) convertInfo[n.id] = n.value;
             });
     
             if(config.advanced) node.querySelector(`#additional`).childNodes.forEach(n => {
-                if(n && n.placeholder && n.id) convertInfo[n.id] = n.value;
+                if(n && n.placeholder && n.id && !ignore.find(o => o == n.id)) convertInfo[n.id] = n.value;
             });
         } else if(info.selectedConversion.options) {
             convertInfo = info.selectedConversion.options;
@@ -28,11 +31,13 @@ const getSaveOptions = (node, info, overrideDownloadObj) => {
         console.log(node.querySelector(`#trimContainer`), node.querySelector(`#trimContainer`).childNodes)
 
         if(!node.querySelector(`#trimOptions`).classList.contains(`d-none`)) node.querySelector(`#trimContainer`).childNodes.forEach(n => {
-            if(n && n.id && n.value && n.max && n.value != n.max) convertInfo[n.id] = util.time(Number(n.value)*1000, null, {allowZero: true}).timestamp;
+            if(n && n.id && n.value && n.max && n.value != n.max && !ignore.find(o => o == n.id)) convertInfo[n.id] = util.time(Number(n.value)*1000, null, {allowZero: true}).timestamp;
         });
     };
 
-    console.log(`convert? ${convert}`, convertInfo)
+    console.log(`convert? ${convert}`, convertInfo);
+
+    if(getConvertOnly) return convertInfo;
 
     let addMetadata = {};
 

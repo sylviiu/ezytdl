@@ -127,38 +127,12 @@ const conversionOptions = (node, info) => {
     const presetButtonClone = node.querySelector(`#ffmpegOptions`) ? node.querySelector(`#ffmpegOptions`).querySelector(`#custom`).cloneNode(true) : null;
     
     if(hasFFmpeg) {
-        const conversionFormats = enabledConversionFormats;
-
-        conversionFormats.push({
-            key: `custom`,
-            name: `Custom Format`,
-            description: `Customize your conversion!`,
-            icon: `fa-wrench`,
-        });
-
         node.querySelector(`#convertDownload`).onclick = () => {
             const ffmpegOptions = node.querySelector(`#ffmpegOptions`);
 
-            const customPresetButton = ffmpegOptions.querySelector(`#custom`);
+            const ffmpegCustomOptions = ffmpegOptions.querySelector(`#ffmpegCustomOptions`);
 
-            for(const options of conversionFormats) {
-                const { key } = options;
-
-                if(!ffmpegOptions.querySelector(`#${key}`)) {
-                    const thisNode = presetButtonClone.cloneNode(true);
-                    thisNode.id = `${key}`;
-                    thisNode.querySelector(`#name`).innerText = options.name;
-                    thisNode.querySelector(`#description`).innerText = options.description;
-                    thisNode.querySelector(`#icon`).className = `fas ${options.icon}`;
-                    customPresetButton.parentElement.appendChild(thisNode);
-                } else customPresetButton.parentElement.appendChild(ffmpegOptions.querySelector(`#${key}`))
-
-                const node = ffmpegOptions.querySelector(`#${key}`);
-                
-                if(options.options) node.setAttribute(`options`, JSON.stringify(options.options));
-            };
-
-            const buttons = ffmpegOptions.querySelectorAll(`.formatPreset`);
+            let buttons = ffmpegOptions.querySelectorAll(`.formatPreset`);
 
             let currentSelected = null;
 
@@ -168,7 +142,7 @@ const conversionOptions = (node, info) => {
                 } else {
                     const previousSelected = currentSelected;
                     currentSelected = node ? node.id : null;
-                    info.selectedConversion = currentSelected && conversionFormats.find(o => o.key == currentSelected) ? Object.assign({}, conversionFormats.find(o => o.key == currentSelected), { key: currentSelected }) : null;
+                    info.selectedConversion = currentSelected && enabledConversionFormats.find(o => o.key == currentSelected) ? Object.assign({}, enabledConversionFormats.find(o => o.key == currentSelected), { key: currentSelected }) : null;
                     buttons.forEach(btn => {
                         if(btn.id && btn.style) {
                             if(btn.id == currentSelected) {
@@ -189,9 +163,9 @@ const conversionOptions = (node, info) => {
                                 });
 
                                 if(btn.id == `custom`) {
-                                    animateHiddenOptions(node, ffmpegOptions.querySelector(`#ffmpegCustomOptions`));
+                                    animateHiddenOptions(node, ffmpegCustomOptions);
                                 } else {
-                                    animateHiddenOptions(node, ffmpegOptions.querySelector(`#ffmpegCustomOptions`), {expand: false});
+                                    animateHiddenOptions(node, ffmpegCustomOptions, {expand: false});
                                 }
                             } else if(btn.id == previousSelected || previousSelected == null) {
                                 anime.remove(btn);
@@ -211,17 +185,151 @@ const conversionOptions = (node, info) => {
                 }
             };
 
+            const resetPresetOptions = () => {
+                console.log(`resetting preset options:`, enabledConversionFormats)
+
+                const customPresetButton = ffmpegOptions.querySelector(`#custom`);
+    
+                for(const options of [...enabledConversionFormats, {
+                    key: `custom`,
+                    name: `Custom Format`,
+                    description: `Customize your conversion!`,
+                    icon: `fa-wrench`,
+                }]) {
+                    const { key } = options;
+    
+                    if(!ffmpegOptions.querySelector(`#${key}`)) {
+                        const thisNode = presetButtonClone.cloneNode(true);
+                        thisNode.id = `${key}`;
+                        thisNode.querySelector(`#name`).innerText = options.name;
+                        thisNode.querySelector(`#description`).innerText = options.description;
+                        thisNode.querySelector(`#icon`).className = `fas ${options.icon || `fa-wrench`}`;
+                        customPresetButton.parentElement.appendChild(thisNode);
+                    } else customPresetButton.parentElement.appendChild(ffmpegOptions.querySelector(`#${key}`))
+    
+                    const node = ffmpegOptions.querySelector(`#${key}`);
+                    
+                    if(options.options) node.setAttribute(`options`, JSON.stringify(options.options));
+
+                    node.onclick = () => setPreset(node);
+                };
+
+                buttons = ffmpegOptions.querySelectorAll(`.formatPreset`);
+            };
+
+            resetPresetOptions();
+
+            ffmpegCustomOptions.querySelector(`#saveAsPreset`).onclick = () => {
+                if(ffmpegCustomOptions.getAttribute(`hidden`) == `false`) {
+                    const opt = getSaveOptions(node, info, null, {
+                        getConvertOnly: true,
+                        ignore: [`trimFrom`, `trimTo`]
+                    });
+
+                    if(!opt.ext) return createNotification({
+                        type: `warn`,
+                        headingText: `No target extension!`,
+                        bodyText: `Please enter a target extension for your preset. (e.g. mp4, mp3, etc.)`
+                    });
+
+                    dialog.create({
+                        title: `Custom Preset`,
+                        body: `Enter a name & description for your custom preset.`,
+                        inputs: [ 
+                            { id: `name`, text: `Name` }, 
+                            { id: `description`, text: `Description` }
+                        ],
+                        buttons: [
+                            {
+                                text: `Cancel`,
+                                id: `no`,
+                                icon: `cross`
+                            },
+                            {
+                                text: `Save`,
+                                id: `yes`,
+                                icon: `check`,
+                                primary: true,
+                            },
+                        ]
+                    }).then(async ({ event, id, response, inputs }) => {
+                        if(response == `yes`) {
+                            console.log(inputs);
+
+                            const name = inputs.find(o => o.id == `name`).value;
+                            const description = inputs.find(o => o.id == `description`).value;
+
+                            if(!name) return createNotification({
+                                type: `warn`,
+                                headingText: `No name provided!`,
+                                bodyText: `Please enter a name for your preset.`
+                            });
+
+                            if(!description) return createNotification({
+                                type: `warn`,
+                                headingText: `No description provided!`,
+                                bodyText: `Please enter a description for your preset.`
+                            });
+
+                            console.log(`got response`, response, inputs);
+
+                            const key = ("custom-" + name + "-" + opt.ext).replace(/[^a-zA-Z0-9]/g, "-");
+
+                            const continueSave = await new Promise(res => {
+                                if(typeof config.ffmpegPresets[key] != 'undefined') {
+                                    dialog.create({
+                                        title: `Overwrite preset?`,
+                                        body: `A preset with the name "${name}" (${key}) already exists. Would you like to overwrite it?`,
+                                        buttons: [
+                                            {
+                                                text: `No`,
+                                                id: `no`,
+                                                icon: `cross`
+                                            },
+                                            {
+                                                text: `Yes`,
+                                                id: `yes`,
+                                                icon: `check`,
+                                                primary: true,
+                                            },
+                                        ]
+                                    }).then(({ event, id, response, inputs }) => {
+                                        res(response == `yes`);
+                                    })
+                                } else res(true);
+                            })
+                            
+                            if(continueSave) configuration.set(`ffmpegPresets`, {
+                                [key]: {
+                                    key,
+                                    name: name,
+                                    description: description,
+                                    defaultEnabled: true,
+                                    options: opt
+                                }
+                            }).then((o) => {
+                                enabledConversionFormats = o.filter(o => config.ffmpegPresets[o.key]);
+                                console.log(`enabled conversion formats`, enabledConversionFormats)
+
+                                resetPresetOptions();
+
+                                createNotification({
+                                    headingText: `Preset Saved!`,
+                                    bodyText: `Your preset has been saved!`,
+                                })
+                            })
+                        };
+                    });
+                }
+            }
+
             ffmpegOptions.resetSelection = () => setPreset(null, true);
 
             if(!ffmpegOptions.hasAttribute(`default`)) ffmpegOptions.setAttribute(`default`, info.audio && !info.video ? `mp3` : `mp4`)
 
-            buttons.forEach(node => {
-                if(node.id) node.onclick = () => setPreset(node);
-            });
-
             const defaultOption = ffmpegOptions.getAttribute(`default`);
 
-            const usableOption = conversionFormats.find(o => o.key == defaultOption) ? defaultOption : null;
+            const usableOption = enabledConversionFormats.find(o => o.key == defaultOption) ? defaultOption : null;
 
             console.log(`default option: ${defaultOption} -- parsed: ${usableOption}`)
 
