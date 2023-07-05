@@ -75,9 +75,8 @@ const { check } = require("yargs");
 
 autoUpdater.autoDownload = false;
 
-if(process.platform == `win32`/* || process.platform == `darwin`*/) {
+if(process.platform == `win32` || process.platform == `linux`/* || process.platform == `darwin`*/) {
     autoUpdater.autoDownload = true;
-    // linux also has auto app updates, but it just downloads a new appimage and deletes the old one. it's very inconvenient.
     // darwin removed because i have to sign the app with my deadname in order for that to work. fuck apple.
 
     autoUpdater.on(`update-downloaded`, (info) => {
