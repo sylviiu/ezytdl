@@ -17,11 +17,11 @@
     },
     {
         "key": "mp3",
-        "name": "MP3",
+        "name": "MP3 / AAC",
         "description": "default audio format",
         "defaultEnabled": true,
         "icon": "fa-volume-up",
-        "options": { "ext": "mp3", "forceSoftware": true }
+        "options": { "ext": "mp3", "audioCodec": "aac", "forceSoftware": true }
     },
     {
         "key": "ogg",
