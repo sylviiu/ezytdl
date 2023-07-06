@@ -75,6 +75,25 @@ const pointerMoveEvent = (e) => {
 
 let lastDragged = null;
 
+const fallAnim = (target, durationMult, opacity, maxRotationMult) => {
+    const duration = parseInt(window.innerHeight) * durationMult;
+    const maxRotation = (duration/540)*maxRotationMult
+    const rot = (Math.random() * maxRotation)-(maxRotation/2);
+
+    if(target.parentNode) anime({
+        targets: target,
+        //marginBottom: 0,
+        bottom: parseInt(target.style.bottom) - parseInt(window.innerHeight),
+        rotate: rot,
+        opacity,
+        duration,
+        easing: `easeInQuad`,
+        complete: () => {
+            if(target.parentNode) target.parentNode.removeChild(target);
+        }
+    });
+};
+
 const clearCloned = (success, animateDrop, reanimate=true) => {
     const thisButton = cloned;
     cloned = null;
@@ -131,25 +150,6 @@ const clearCloned = (success, animateDrop, reanimate=true) => {
 
             genericTxtFall();
         } else {
-            const fallAnim = (target, durationMult, opacity, maxRotationMult) => {
-                const duration = parseInt(window.innerHeight) * durationMult;
-                const maxRotation = (duration/540)*maxRotationMult
-                const rot = (Math.random() * maxRotation)-(maxRotation/2);
-    
-                anime({
-                    targets: target,
-                    marginBottom: 0,
-                    bottom: parseInt(target.style.bottom) - parseInt(window.innerHeight),
-                    rotate: rot,
-                    opacity,
-                    duration,
-                    easing: `easeInQuad`,
-                    complete: () => {
-                        if(target.parentNode) target.parentNode.removeChild(target);
-                    }
-                });
-            };
-
             fallAnim(thisButton, 1, [1,1,0], 500);
             if(thisTxt) fallAnim(thisTxt, 1.35, [1,0,0], 250)
         }
@@ -219,10 +219,15 @@ class Draggable {
             node.style.webkitUserDrag = `all`;
 
             const clearDrag = (success) => {
-                returnDrop(success, thisCloned);
                 clearCloned(success, ((success ? animateDrop : animateDropFail) || animateDrop), reanimate);
+                returnDrop(success, thisCloned);
                 initialOffset = null;
                 currentScrollBy = 0;
+
+                if(interval) {
+                    clearInterval(interval);
+                    interval = null;
+                };
 
                 if(animationFrameID) {
                     cancelAnimationFrame(animationFrameID);
@@ -230,14 +235,9 @@ class Draggable {
                 };
 
                 if(initialScroll) {
-                    if(initialScroll != window.scrollY && !success) window.scroll({ top: initialScroll, });
+                    if(initialScroll != window.scrollY && !success) setTimeout(() => window.scroll({ top: initialScroll, }), 150);
                     initialScroll = null;
                 };
-
-                if(interval) {
-                    clearInterval(interval);
-                    interval = null;
-                }
             };
 
             const startDrag = (e, first) => {
@@ -449,10 +449,11 @@ class Draggable {
     
             node.ondrag = (e) => {
                 if(cloned) pointerMoveEvent(e);
-                if(e.pageX && e.pageY) {
+                // it's not possible for the dragged element to go outside of the bounds
+                // for some reason when in iframe, the "ondrag" event would be called before drop with X being -40 (the padding of the settings page iframe)
+                // so we just check if the mouse is actually in the page before doing anything
+                if(e.pageX && e.pageX > 0 && e.pageY && e.pageY > 0) {
                     if(cloned) {
-                        //cloned.style.left = e.pageX - cloned.getBoundingClientRect().width/2 + `px`;
-                        //cloned.style.bottom = (window.innerHeight - e.pageY) - cloned.getBoundingClientRect().height/2 + `px`;
                         cloned.style.left = e.pageX - nodeBounds.width/2 + `px`;
                         cloned.style.bottom = (window.innerHeight - e.pageY) - nodeBounds.height/2 + `px`;
                     };
