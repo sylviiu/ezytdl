@@ -49,16 +49,22 @@ const iconToPNG = (icon, size, negate) => new Promise(async res => {
 
     const filePath = path.join(basePath, fileName);
 
-    if(!fs.existsSync(basePath)) fs.mkdirSync(basePath, { recursive: true });
+    //if(!fs.existsSync(basePath)) fs.mkdirSync(basePath, { recursive: true });
+    if(!fs.existsSync(basePath)) await new Promise(r => fs.mkdir(basePath, { recursive: true }, r));
 
     if(fs.existsSync(filePath)) {
-        return res(fs.readFileSync(filePath));
+        fs.readFile(filePath, (err, data) => {
+            if(err) {
+                fs.rmSync(filePath);
+                return iconToPNG(icon, size, negate).then(res);
+            } else return res(data);
+        })
     } else {
         console.log(`creating icon ${filePath}`);
         const sharpIcon = sharp(icon).resize(Math.round(size), Math.round(size));
         if(negate) sharpIcon.negate({ alpha: false });
         const buf = await sharpIcon.png().toBuffer();
-        fs.writeFileSync(filePath, buf);
+        fs.writeFile(filePath, buf, () => console.log(`icon ${filePath} created`));
         return res(buf);
     }
 })
