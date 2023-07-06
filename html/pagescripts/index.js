@@ -1381,7 +1381,6 @@ button.onclick = () => processURL();
 
 pasteButton.onclick = () => {
     if(!input.disabled) navigator.clipboard.readText().then(text => {
-        console.log(`clipboard text: ${text}`);
         input.value = text;
         input.oninput();
         input.focus();
