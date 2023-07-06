@@ -1383,6 +1383,8 @@ pasteButton.onclick = () => {
     if(!input.disabled) navigator.clipboard.readText().then(text => {
         console.log(`clipboard text: ${text}`);
         input.value = text;
+        input.oninput();
+        input.focus();
     });
 }
 
@@ -1402,11 +1404,17 @@ const refreshSelectionBox = () => {
 const inputs = [input, extraArguments];
 
 inputs.forEach(inp => {
-    inp.addEventListener(`input`, () => {
+    /*inp.addEventListener(`input`, () => {
         changesMadeToInput = true;
         centerURLBox(true);
         refreshSelectionBox();
-    });
+    });*/
+
+    inp.oninput = () => {
+        changesMadeToInput = true;
+        centerURLBox(true);
+        refreshSelectionBox();
+    }
     
     inp.addEventListener(`click`, refreshSelectionBox);
     inp.addEventListener(`blur`, () => setTimeout(() => !changesMadeToInput ? selectionBox.hide(null, true) : null, 100));
