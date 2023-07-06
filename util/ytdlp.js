@@ -703,7 +703,7 @@ module.exports = {
             })
         }) : [];
     },
-    download: ({url, format, ext, convert, filePath, addMetadata, info, extraArguments}, updateFunc) => new Promise(async resolve => {
+    download: ({url, format, ext, convert, filePath, addMetadata, info, extraArguments, onlyFFmpeg}, updateFunc) => new Promise(async resolve => {
         const temporaryFilename = `ezytdl-` + idGen(24);
         
         let obj = {};
@@ -1206,10 +1206,10 @@ module.exports = {
                 })
             }
 
-            const runThroughFFmpeg = async (code, replaceInputArgs) => {
-                const temporaryFiles = fs.readdirSync(saveTo).filter(f => f.startsWith(temporaryFilename) && !f.endsWith(`.part`) && !f.endsWith(`.meta`));
+            const runThroughFFmpeg = async (code, replaceInputArgs, ignoreTemporaryFiles=false) => {
+                const temporaryFiles = ignoreTemporaryFiles ? [] : fs.readdirSync(saveTo).filter(f => f.startsWith(temporaryFilename) && !f.endsWith(`.part`) && !f.endsWith(`.meta`));
 
-                filenames.push(...temporaryFiles)
+                filenames.push(...temporaryFiles);
 
                 let previousFilename = obj.destinationFile ? `ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0] : temporaryFilename + `.${ytdlpSaveExt}`;
 
@@ -1585,30 +1585,22 @@ module.exports = {
 
             //console.log(`--- DOWNLOADING FORMAT (${format}) ---\n`, thisFormat)
 
-            if(/*thisFormat && thisFormat.protocol && thisFormat.protocol.toLowerCase().includes(`m3u8`) && fs.existsSync(module.exports.ffmpegPath)*/ false) {
-            } else {
+            if(!onlyFFmpeg) {
                 args = [`-f`, format, url, `-o`, require(`path`).join(saveTo, temporaryFilename) + `.%(ext)s`, `--no-mtime`, ...additionalArgs];
 
                 if(!format) args.splice(0, 2)
     
                 args.push(`--ffmpeg-location`, ``);
         
-                if(fs.existsSync(module.exports.ffmpegPath)) {
-                    //args.push(`--ffmpeg-location`, module.exports.ffmpegPath);
-                } else {
+                if(!fs.existsSync(module.exports.ffmpegPath)) {
                     if(convert && convert.ext) {
                         ext = convert.ext
                         convert = false;
                         reasonConversionNotDone = `ffmpeg not installed`
                     };
-                }
+                };
                 
-                if(convert && !ext) {
-                    // always downloads in temporary filename, just gets renamed later
-                    //args.splice(args.indexOf(`-o`)+1, 1, args[args.indexOf(`-o`)+1].replace(ytdlpFilename, temporaryFilename))
-                    //args[4] = args[4].replace(ytdlpFilename, temporaryFilename);
-                    //args.splice(5, 2);
-                } else {
+                if(!convert && ext) {
                     if((format == `bv*+ba/b` || format == `bv`) && ext) {
                         if(format == `bv`) {
                             args.splice(2, 0, `-S`, `ext:${ext}`)
@@ -1816,6 +1808,10 @@ module.exports = {
                         }
                     } else runThroughFFmpeg(code);
                 })
+            } else {
+                if(!fs.existsSync(module.exports.ffmpegPath)) {
+                    resolve(update({ failed: true, status: `FFmpeg was not found on your system -- conversion aborted.` }))
+                }
             }
         } catch(e) {
             console.error(e);
@@ -1824,7 +1820,7 @@ module.exports = {
                 headingText: `Error downloading media (${format} / ${info && info.title ? info.title : `unknown`})`,
                 bodyText: `An error occured while trying to download the media.\n\nError: ${e.toString()}`
             });
-            update({ failed: true, status: `${e.toString()}` })
+            resolve(update({ failed: true, status: `${e.toString()}` }))
         }
     }),
     findEquivalent: (info, ignoreStderr) => new Promise(async res => {
