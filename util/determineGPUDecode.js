@@ -91,10 +91,10 @@ module.exports = (link, platforms, setProgress) => {
                 if(event.progress) setProgress(`Downloading file...`, Math.round(event.progress))
             });
 
-            writeStream.once(`finish`, () => {
+            writeStream.once(`finish`, async () => {
                 setProgress(`Getting video codec...`, 50);
 
-                const videoCodec = ytdlp.getCodec(destination);
+                const videoCodec = await ytdlp.getCodec(destination);
 
                 if(!videoCodec) return rej(`Could not get video codec of "${destination}"`)
 

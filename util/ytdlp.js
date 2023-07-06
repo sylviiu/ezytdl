@@ -610,20 +610,27 @@ module.exports = {
             return useTempalte
         }
     },
-    getCodec: (file, audio) => {
+    getCodec: (file, audio) => new Promise(async res => {
         let ffprobePath = require(`./filenames/ffmpeg`).getFFprobe();
         
-        if(ffprobePath && fs.existsSync(ffprobePath)) {
+        if(ffprobePath && fs.existsSync(ffprobePath) && file) {
             try {
-                let a = child_process.execFileSync(ffprobePath, [`-v`, `error`, `-select_streams`, `${audio ? `a` : `v`}:0`, `-show_entries`, `stream=codec_name`, `-of`, `default=noprint_wrappers=1:nokey=1`, file]).toString().trim();
-                if(a) {
-                    return a.trim().split(`\n`)[0]
-                } else return null;
+                child_process.execFile(ffprobePath, [`-v`, `error`, `-select_streams`, `${audio ? `a` : `v`}`, `-show_entries`, `stream=codec_name`, `-of`, `default=noprint_wrappers=1:nokey=1`, file], (err, stdout, stderr) => {
+                    if(err) {
+                        console.error(err);
+                        return res(null);
+                    } else {
+                        let a = stdout.toString().trim();
+                        if(a) {
+                            return res(a.trim().split(`\n`)[0])
+                        } else return res(null);
+                    }
+                });
             } catch(e) {
-                return null;
+                return res(null);
             }
-        } else return null
-    },
+        } else return res(null)
+    }),
     getMuxer: (ext) => new Promise(async res => {
         const proc = child_process.execFile(module.exports.ffmpegPath, [`-h`, `muxer=` + ext]);
 
@@ -1021,7 +1028,7 @@ module.exports = {
                                 cleanup(true);
                             });
 
-                            const foundCodec = module.exports.getCodec(target);
+                            const foundCodec = await module.exports.getCodec(target);
                             const vcodec = typeof info.video == `boolean` ? info.video : (foundCodec && !`${foundCodec}`.includes(`jpeg`) && !`${foundCodec}`.includes(`png`))
 
                             //console.log(`--------------\nfoundCodec: ${foundCodec}\nvcodec: ${vcodec}\ninfo.video: ${info.video}\n--------------`)
@@ -1426,12 +1433,23 @@ module.exports = {
                     let originalVideoCodec = null;
                     let originalAudioCodec = null;
 
-                    if(convert.videoCodec || destinationCodec.videoCodec) temporaryFiles.forEach(f => {
+                    if(convert.videoCodec || destinationCodec.videoCodec) for(const f of temporaryFiles) {
+                        let promises = [];
+
                         if(fs.existsSync(require(`path`).join(saveTo, f))) {
-                            if(!originalVideoCodec) originalVideoCodec = module.exports.getCodec(require(`path`).join(saveTo, f))
-                            if(!originalAudioCodec) originalAudioCodec = module.exports.getCodec(require(`path`).join(saveTo, f), true)
-                        }
-                    });
+                            if(!originalVideoCodec) promises.push(new Promise(async r => {
+                                originalVideoCodec = await module.exports.getCodec(require(`path`).join(saveTo, f));
+                                r();
+                            }));
+
+                            if(!originalAudioCodec) promises.push(new Promise(async r => {
+                                originalAudioCodec = await module.exports.getCodec(require(`path`).join(saveTo, f), true);
+                                r();
+                            }));
+                        };
+
+                        if(promises.length > 0) await Promise.all(promises);
+                    }
 
                     if(!originalVideoCodec && originalAudioCodec) convert.forceSoftware = true;
     
