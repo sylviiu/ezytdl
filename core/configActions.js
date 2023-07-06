@@ -7,6 +7,7 @@ module.exports = (config) => ({
             const { dialog } = require(`electron`);
 
             dialog.showOpenDialog(global.window, {
+                title: `Choose Save Location`,
                 properties: [`openDirectory`]
             }).then(result => {
                 if(result.filePaths[0]) {

@@ -14,7 +14,7 @@ const popoutButtons = createPopout({
         window.location.href = href;
     },
     completeHook: () => {
-        refreshButtons();
+        refreshConfig();
 
         configuration.get().then(newConf => {
             if(JSON.stringify(previousConfig) != JSON.stringify(newConf)) {
@@ -55,8 +55,65 @@ const innerSearchSelectionBox = document.getElementById(`innerSelectionBox`);
 const background = document.getElementById(`background`);
 
 const input = document.getElementById(`urlInput`);
-const pasteButton = document.getElementById(`urlPaste`);
 const button = document.getElementById(`urlEnter`);
+
+button.style.background = `rgb(${systemColors.light.r}, ${systemColors.light.g}, ${systemColors.light.b})`;
+
+const pasteButton = document.getElementById(`urlPaste`);
+const urlFilePick = document.getElementById(`urlFilePick`);
+
+const searchButtons = [pasteButton, urlFilePick];
+
+searchButtons.forEach(btn => {
+    const icon = btn.querySelector(`#icon`);
+
+    const backgroundColor = btn.style.backgroundColor;
+    const color = btn.style.color;
+
+    btn.onmouseover = () => {
+        anime.remove(btn);
+
+        btn.style.backgroundColor = `rgb(${systemColors.light.r}, ${systemColors.light.g}, ${systemColors.light.b})`;
+        btn.style.color = `rgb(0,0,0)`;
+
+        anime({
+            targets: btn,
+            duration: 500,
+            easing: `easeOutExpo`
+        })
+
+        anime.remove(icon);
+        anime({
+            targets: icon,
+            scale: 1.2,
+            duration: 500,
+            easing: `easeOutExpo`
+        })
+    };
+
+    btn.onmouseout = () => {
+        anime.remove(btn);
+
+        btn.style.backgroundColor = backgroundColor;
+        btn.style.color = color;
+
+        anime({
+            targets: btn,
+            duration: 500,
+            easing: `easeOutExpo`
+        })
+
+        anime.remove(icon);
+        anime({
+            targets: icon,
+            scale: 1,
+            duration: 500,
+            easing: `easeOutExpo`
+        })
+    };
+
+    btn.addEventListener(`click`, () => btn.onmouseout())
+})
 
 const formatListTemplate = listbox.querySelector(`#formatList`).cloneNode(true);
 const formatCard = document.getElementById(`formatCard`).cloneNode(true);
@@ -182,13 +239,13 @@ const mainInput = {
     }
 }
 
-const refreshButtons = () => {
-    // to be added
+const refreshConfig = () => {
+    system.hasFFmpeg().then(has => hasFFmpeg = has);
 }
 
 let existingCenterBoxPromise = null;
 let centerURLBox = () => existingCenterBoxPromise ? existingCenterBoxPromise : new Promise(r => {
-    refreshButtons();
+    refreshConfig();
     r(false)
 });
 
@@ -212,7 +269,7 @@ const runSearch = async (url, initialMsg, func) => {
     let info = null;
 
     centerURLBox = (removeListbox, duration) => {
-        refreshButtons();
+        refreshConfig();
         if(existingCenterBoxPromise) {
             console.log(`centerURLBox: existing promise found; returning...`)
             return existingCenterBoxPromise;
@@ -403,7 +460,7 @@ const runSearch = async (url, initialMsg, func) => {
         } else {
             listbox.querySelector(`#mediaTitle`).innerHTML = ``;
 
-            let type = `${info.extractor_key || info.extractor || info.webpage_url_domain}`.split(/(?=[A-Z])/)[0];
+            let type = `${info.extractor_key || info.extractor || info.webpage_url_domain}`.split(/(?=[A-Z])/).slice(0, -1).join(``);
             let icon;
 
             const setIcon = (name, original, extra) => {
@@ -453,7 +510,9 @@ const runSearch = async (url, initialMsg, func) => {
             const getType = (entry) => {
                 let type = `${entry.extractor_key || entry.extractor || entry.webpage_url_domain}`.split(/(?=[A-Z])/)[0];
 
-                if(entry.entries && entry.entries[0] && (entry.entries[0].album || entry.entries[0].track)) {
+                if(info._platform == `file`) {
+                    return `file`
+                } else if(entry.entries && entry.entries[0] && (entry.entries[0].album || entry.entries[0].track)) {
                     return `album`
                 } else if(entry.categories && entry.categories.map(f => f.toString().toLowerCase()).find(f => f == `music`) || entry.track || entry.album) {
                     return `song`
@@ -469,7 +528,9 @@ const runSearch = async (url, initialMsg, func) => {
 
                 let afterType = ``;
 
-                if(func == `search`) {
+                if(info._platform == `file`) {
+                    afterType += ` file`
+                } else if(func == `search`) {
                     afterType += ` search`
                 } else afterType += getType(info);
 
@@ -1341,6 +1402,14 @@ const selectionBox = {
 
 deselectAllSearchBtns();
 
+urlFilePick.onclick = () => system.pickFile({ title: `Convert File` }).then(file => {
+    if(file) {
+        console.log(`file:`, file)
+        input.value = file;
+        processURL();
+    }
+});
+
 const setCurrentSearch = (btn) => {
     changesMadeToInput = true;
     centerURLBox(true);
@@ -1433,7 +1502,7 @@ setTimeout(() => wavesAnims.fadeIn(), 50)
 const housekeeping = () => {
     updateChecker();
     changelog.check();
-    refreshButtons();
+    refreshConfig();
 }
 
 if(typeof introAnimation != `undefined`) {

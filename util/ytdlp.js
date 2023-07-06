@@ -439,59 +439,134 @@ module.exports = {
         return module.exports.parseMetadata(d, root);
     },
     search: ({query, count, from, extraArguments, noVerify, forceVerify, ignoreStderr}) => new Promise(async res => {
-        if(!count) count = 10;
+        let ffprobePath = require(`./filenames/ffmpeg`).getFFprobe();
 
-        const additional = module.exports.additionalArguments(extraArguments);
-
-        //console.log(`query "${query}"; count: ${count}; additional args: "${additional.join(`", "`)}"`)
-
-        let args = [`--dump-single-json`, `--quiet`, `--verbose`, `--flat-playlist`, `--playlist-end`, `${count}`, ...additional];
-
-        const encoded = encodeURIComponent(query);
-
-        if(from == `youtubemusic`) {
-            args.unshift(`https://music.youtube.com/search?q=${encoded}&sp=EgIQAQ%253D%253D`)
-        } else if(from == `soundcloud`) {
-            args.unshift(`scsearch${count}:${query}`)
+        if(fs.existsSync(query) && ffprobePath) {
+            console.log(`query is a file!`)
+            
+            return module.exports.ffprobeInfo(ffprobePath, query).then(res);
         } else {
-            args.unshift(`https://www.youtube.com/results?search_query=${encoded}&sp=EgIQAQ%253D%253D`)
+            console.log(`query is not a file!`)
+
+            if(!count) count = 10;
+    
+            const additional = module.exports.additionalArguments(extraArguments);
+    
+            //console.log(`query "${query}"; count: ${count}; additional args: "${additional.join(`", "`)}"`)
+    
+            let args = [`--dump-single-json`, `--quiet`, `--verbose`, `--flat-playlist`, `--playlist-end`, `${count}`, ...additional];
+    
+            const encoded = encodeURIComponent(query);
+    
+            if(from == `youtubemusic`) {
+                args.unshift(`https://music.youtube.com/search?q=${encoded}&sp=EgIQAQ%253D%253D`)
+            } else if(from == `soundcloud`) {
+                args.unshift(`scsearch${count}:${query}`)
+            } else {
+                args.unshift(`https://www.youtube.com/results?search_query=${encoded}&sp=EgIQAQ%253D%253D`)
+            }
+    
+            console.log(`search args: "${args.map(s => s.includes(` `) ? `'${s}'` : s).join(` `)}"`)
+    
+            const proc = execYTDLP(args, { persist: false });
+    
+            let data = ``;
+    
+            if(!ignoreStderr) sendUpdates(proc, `Starting search for "${query}"`);
+    
+            proc.stdout.on(`data`, d => {
+                //console.log(`output`, d.toString())
+                data += d.toString().trim();
+            });
+    
+            proc.on(`error`, e => {
+                console.log(e)
+            })
+    
+            proc.on(`close`, code => {
+                console.log(`search closed with code ${code}`)
+    
+                try {
+                    const d = Object.assign(JSON.parse(data), { _request_url: query });
+    
+                    if(noVerify) {
+                        return res(d);
+                    } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, extraArguments, forceRun: forceVerify, ignoreStderr }).then(res);
+                } catch(e) {
+                    console.error(`${e}`)
+                    if(!ignoreStderr) sendNotification({
+                        type: `error`,
+                        headingText: `Error getting media info`,
+                        bodyText: `There was an issue retrieving the info. Please try again.`
+                    })
+                    return res(null);
+                }
+            })
         }
+    }),
+    ffprobeInfo: (ffprobePath, path) => new Promise(async res => {
+        console.log(`getting info of "${path}"`);
 
-        console.log(`search args: "${args.map(s => s.includes(` `) ? `'${s}'` : s).join(` `)}"`)
+        const info = {};
 
-        const proc = execYTDLP(args, { persist: false });
+        const proc = child_process.execFile(ffprobePath, [`-v`, `quiet`, `-print_format`, `json`, `-show_format`, `-show_streams`, path]);
 
         let data = ``;
 
-        if(!ignoreStderr) sendUpdates(proc, `Starting search for "${query}"`);
+        proc.stdout.on(`data`, d => data += d.toString().trim());
 
-        proc.stdout.on(`data`, d => {
-            //console.log(`output`, d.toString())
-            data += d.toString().trim();
-        });
+        proc.on(`close`, (code) => {
+            console.log(`ffprobeInfo closed with code ${code}`);
 
-        proc.on(`error`, e => {
-            console.log(e)
-        })
+            const obj = JSON.parse(data);
 
-        proc.on(`close`, code => {
-            console.log(`search closed with code ${code}`)
+            if(obj.format) {
+                if(obj.format.tags) Object.assign(info, obj.format.tags);
+                if(obj.format.duration) info.duration = Number(obj.format.duration);
+            };
 
-            try {
-                const d = Object.assign(JSON.parse(data), { _request_url: query });
+            if(obj.streams) {
+                info.formats = [];
+                for(const stream of obj.streams) {
+                    console.log(`stream`, stream)
 
-                if(noVerify) {
-                    return res(d);
-                } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, extraArguments, forceRun: forceVerify, ignoreStderr }).then(res);
-            } catch(e) {
-                console.error(`${e}`)
-                if(!ignoreStderr) sendNotification({
-                    type: `error`,
-                    headingText: `Error getting media info`,
-                    bodyText: `There was an issue retrieving the info. Please try again.`
-                })
-                return res(null);
+                    const format = {
+                        format_id: `${stream.codec_type}-${stream.codec_name}-${stream.index}`,
+                        format_note: stream.codec_type,
+                        ext: stream.codec_name,
+                    };
+
+                    if(stream.codec_name && stream.codec_type == `audio`) {
+                        format.acodec = stream.codec_name;
+
+                        if(stream.sample_rate) format.asr = stream.sample_rate;
+                        if(stream.channels) format.audio_channels = stream.channels;
+                        if(stream.bit_rate) format.abr = stream.bit_rate;
+                    } else {
+                        format.vcodec = stream.codec_name;
+
+                        if(stream.width && stream.height) format.resolution = `${stream.width}x${stream.height}`;
+                        if(stream.width) format.width = stream.width;
+                        if(stream.height) format.height = stream.height;
+                        if(stream.bit_rate) format.vbr = stream.bit_rate;
+                        if(stream.fps) format.fps = stream.fps;
+                        if(stream.display_aspect_ratio) format.aspect_ratio = stream.display_aspect_ratio;
+                    };
+
+                    info.formats.push(format);
+                }
             }
+
+            Object.assign(info, {
+                url: path,
+                extractor: `system:file`,
+                extractor_key: `SystemFile`,
+                _platform: `file`,
+            })
+
+            console.log(`all`, obj, info);
+
+            res(module.exports.parseInfo(info, true));
         })
     }),
     listFormats: ({query, extraArguments, ignoreStderr}) => new Promise(async res => {
@@ -503,43 +578,51 @@ module.exports = {
 
         if(ignoreStderr) args.splice(args.indexOf(`--verbose`), 1);
 
-        //if(!disableFlatPlaylist) args.push(`--flat-playlist`);
+        let ffprobePath = require(`./filenames/ffmpeg`).getFFprobe();
 
-        const proc = execYTDLP(args, { persist: false });
+        if(fs.existsSync(query) && ffprobePath) {
+            console.log(`query is a file!`)
 
-        let data = ``;
+            return module.exports.ffprobeInfo(ffprobePath, query).then(res);
+        } else {
+            console.log(`query is not a file!`)
 
-        if(!ignoreStderr) sendUpdates(proc, `Starting info query of "${query}"`);
-
-        proc.stdout.on(`data`, d => {
-            //console.log(`output`, d.toString())
-            data += d.toString().trim();
-        });
-
-        proc.on(`error`, e => {
-            console.log(e)
-        })
-
-        proc.on(`close`, code => {
-            console.log(`listFormats closed with code ${code} (${query})`)
-
-            try {
-                const d = Object.assign(JSON.parse(data), { _request_url: query });
-
-                if(ignoreStderr) {
-                    return res(d);
-                } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, ignoreStderr }).then(res);
-                //console.log(d)
-            } catch(e) {
-                console.error(`${e}`)
-                if(!ignoreStderr) sendNotification({
-                    type: `error`,
-                    headingText: `Error getting media info`,
-                    bodyText: `There was an issue retrieving the info. Please try again.`
-                })
-                return res(null);
-            }
-        })
+            const proc = execYTDLP(args, { persist: false });
+    
+            let data = ``;
+    
+            if(!ignoreStderr) sendUpdates(proc, `Starting info query of "${query}"`);
+    
+            proc.stdout.on(`data`, d => {
+                //console.log(`output`, d.toString())
+                data += d.toString().trim();
+            });
+    
+            proc.on(`error`, e => {
+                console.log(e)
+            })
+    
+            proc.on(`close`, code => {
+                console.log(`listFormats closed with code ${code} (${query})`)
+    
+                try {
+                    const d = Object.assign(JSON.parse(data), { _request_url: query });
+    
+                    if(ignoreStderr) {
+                        return res(d);
+                    } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, ignoreStderr }).then(res);
+                    //console.log(d)
+                } catch(e) {
+                    console.error(`${e}`)
+                    if(!ignoreStderr) sendNotification({
+                        type: `error`,
+                        headingText: `Error getting media info`,
+                        bodyText: `There was an issue retrieving the info. Please try again.`
+                    })
+                    return res(null);
+                }
+            })
+        }
     }),
     getFilename: (url, info, format, template, fullParse) => {
         const { outputFilename } = require(`../getConfig`)();
@@ -837,7 +920,14 @@ module.exports = {
                 } else thisFormat = info.formats.find(f => f.format_id == format) || info.formats[0]
             }
 
-            const fullYtdlpFilename = sanitize(await module.exports.getFilename(url, info, thisFormat, outputFilename + `.%(ext)s`, true))
+            const fullYtdlpFilename = sanitize(await new Promise(res => {
+                if(onlyFFmpeg && convert) {
+                    const parsed = require(`path`).parse(url);
+                    res(`${parsed.name} - converted-${Date.now()}` + (convert.ext ? `.${convert.ext}` : parsed.ext))
+                } else {
+                    module.exports.getFilename(url, info, thisFormat, outputFilename + `.%(ext)s`, true).then(res);
+                }
+            }))
 
             let ytdlpSaveExt = fullYtdlpFilename.split(`.`).slice(-1)[0];
 
@@ -1206,10 +1296,10 @@ module.exports = {
                 })
             }
 
-            const runThroughFFmpeg = async (code, replaceInputArgs, ignoreTemporaryFiles=false) => {
-                const temporaryFiles = ignoreTemporaryFiles ? [] : fs.readdirSync(saveTo).filter(f => f.startsWith(temporaryFilename) && !f.endsWith(`.part`) && !f.endsWith(`.meta`));
+            const runThroughFFmpeg = async (code, replaceInputArgs, useFile=null) => {
+                const temporaryFiles = useFile ? [useFile] : fs.readdirSync(saveTo).filter(f => f.startsWith(temporaryFilename) && !f.endsWith(`.part`) && !f.endsWith(`.meta`));
 
-                filenames.push(...temporaryFiles);
+                if(!useFile) filenames.push(...temporaryFiles);
 
                 let previousFilename = obj.destinationFile ? `ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0] : temporaryFilename + `.${ytdlpSaveExt}`;
 
@@ -1235,11 +1325,11 @@ module.exports = {
     
                 if(killAttempt > 0) return fallback(`Download canceled.`, true);
 
-                filenames.push(ytdlpFilename)
+                if(!useFile) filenames.push(ytdlpFilename)
     
-                if(!fs.existsSync(previousFilename)) previousFilename = await module.exports.getFilename(url, info, thisFormat, temporaryFilename + `.%(ext)s`, true);
+                //if(!useFile && !fs.existsSync(previousFilename)) previousFilename = await module.exports.getFilename(url, info, thisFormat, temporaryFilename + `.%(ext)s`, true);
     
-                filenames.push(previousFilename)
+                //if(!useFile) filenames.push(previousFilename)
 
                 if(convert) {
                     for(const key of Object.keys(convert)) {
@@ -1809,9 +1899,10 @@ module.exports = {
                     } else runThroughFFmpeg(code);
                 })
             } else {
-                if(!fs.existsSync(module.exports.ffmpegPath)) {
-                    resolve(update({ failed: true, status: `FFmpeg was not found on your system -- conversion aborted.` }))
-                }
+                if(!fs.existsSync(module.exports.ffmpegPath)) return resolve(update({ failed: true, status: `FFmpeg was not found on your system -- conversion aborted.` }));
+                if(!fs.existsSync(url)) return resolve(update({ failed: true, status: `File not found -- conversion aborted.` }));
+
+                runThroughFFmpeg(0, null, url);
             }
         } catch(e) {
             console.error(e);

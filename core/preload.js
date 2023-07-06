@@ -104,6 +104,7 @@ contextBridge.exposeInMainWorld(`system`, {
     downloadReq: (cb) => on(`download`, cb),
     hasFFmpeg: () => invoke(`hasFFmpeg`),
     bridgeNeedsDownload: () => invoke(`bridgeNeedsDownload`),
+    pickFile: () => invoke(`pickFile`),
 });
 
 let dialogPromise = new Promise(r => {
