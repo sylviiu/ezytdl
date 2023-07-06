@@ -14,6 +14,8 @@ const popoutButtons = createPopout({
         window.location.href = href;
     },
     completeHook: () => {
+        refreshButtons();
+
         configuration.get().then(newConf => {
             if(JSON.stringify(previousConfig) != JSON.stringify(newConf)) {
                 console.log(`config has changed!`);
@@ -53,6 +55,7 @@ const innerSearchSelectionBox = document.getElementById(`innerSelectionBox`);
 const background = document.getElementById(`background`);
 
 const input = document.getElementById(`urlInput`);
+const pasteButton = document.getElementById(`urlPaste`);
 const button = document.getElementById(`urlEnter`);
 
 const formatListTemplate = listbox.querySelector(`#formatList`).cloneNode(true);
@@ -146,8 +149,48 @@ let selectedSearch = null;
 
 let resultsVisible = false;
 
+const mainInput = {
+    disable: () => {
+        input.disabled = true;
+        button.disabled = true;
+        pasteButton.disabled = true;
+
+        const pasteIcon = pasteButton.querySelector(`#icon`);
+
+        anime.remove(pasteIcon);
+        anime({
+            targets: pasteIcon,
+            scale: 0,
+            duration: 500,
+            easing: `easeOutCirc`
+        });
+    },
+    enable: () => {
+        input.disabled = false;
+        button.disabled = false;
+        pasteButton.disabled = false;
+
+        const pasteIcon = pasteButton.querySelector(`#icon`);
+
+        anime.remove(pasteIcon);
+        anime({
+            targets: pasteIcon,
+            scale: 1,
+            duration: 500,
+            easing: `easeOutCirc`
+        });
+    }
+}
+
+const refreshButtons = () => {
+    // to be added
+}
+
 let existingCenterBoxPromise = null;
-let centerURLBox = () => existingCenterBoxPromise ? existingCenterBoxPromise : new Promise(r => r(false));
+let centerURLBox = () => existingCenterBoxPromise ? existingCenterBoxPromise : new Promise(r => {
+    refreshButtons();
+    r(false)
+});
 
 const runSearch = async (url, initialMsg, func) => {
     system.hasFFmpeg().then(has => {
@@ -169,6 +212,7 @@ const runSearch = async (url, initialMsg, func) => {
     let info = null;
 
     centerURLBox = (removeListbox, duration) => {
+        refreshButtons();
         if(existingCenterBoxPromise) {
             console.log(`centerURLBox: existing promise found; returning...`)
             return existingCenterBoxPromise;
@@ -272,8 +316,7 @@ const runSearch = async (url, initialMsg, func) => {
         document.body.style.overflowY = `scroll`;
 
         const throwToURL = (node, card, url) => {
-            input.disabled = false;
-            button.disabled = false;
+            mainInput.enable();
             
             if(config.disableAnimations) {
                 input.value = url;
@@ -1141,8 +1184,7 @@ const runSearch = async (url, initialMsg, func) => {
             console.log(`disable album save: ${disableAlbumSave}; removed: ${n}`)
         }
     
-        input.disabled = false;
-        button.disabled = false;
+        mainInput.enable();
     }
 
     let parse = false;
@@ -1179,8 +1221,7 @@ const runSearch = async (url, initialMsg, func) => {
         runParse(`queue function`)
     })
     
-    input.disabled = true;
-    button.disabled = true;
+    mainInput.disable();
 
     if(!document.getElementById(`errorMsg`).classList.contains(`d-none`)) {
         document.getElementById(`errorMsg`).classList.add(`d-none`);
@@ -1333,15 +1374,22 @@ const processURL = () => {
         } else {
             runSearch(url, `Running search...`, `search`)
         }
-    }
+    };
 }
 
 button.onclick = () => processURL();
 
+pasteButton.onclick = () => {
+    if(!input.disabled) navigator.clipboard.readText().then(text => {
+        console.log(`clipboard text: ${text}`);
+        input.value = text;
+    });
+}
+
 const refreshSelectionBox = () => {
     if(!progressObj) {
         selectionBox.show(null, false);
-        if(input.value.match(genericUrlRegex) && input.value.length > 0) {
+        if(input.value.split(`?`)[0].match(genericUrlRegex) && input.value.length > 0) {
             console.log(`matches url`)
             selectionBox.hide(null, false);
         } else {
@@ -1378,6 +1426,7 @@ setTimeout(() => wavesAnims.fadeIn(), 50)
 const housekeeping = () => {
     updateChecker();
     changelog.check();
+    refreshButtons();
 }
 
 if(typeof introAnimation != `undefined`) {
