@@ -1433,7 +1433,7 @@ module.exports = {
                         }
                     });
 
-                    if(!originalVideoCodec) convert.forceSoftware = true;
+                    if(!originalVideoCodec && originalAudioCodec) convert.forceSoftware = true;
     
                     console.log(`original obj: `, transcoders.use, `originalVideoCodec: `, originalVideoCodec, `originalAudioCodec:`, originalAudioCodec, `muxer: `, destinationCodec);
 
@@ -1442,7 +1442,7 @@ module.exports = {
 
                     if(convert.videoCodec && !ffmpegVideoCodecs.includes(convert.videoCodec)) {
                         return fallback(`Could not convert the video stream to ${convert.videoCodec.toString().toUpperCase()} -- target codec not supported by installed build of FFmpeg.`, true);
-                    } else if(convert.audioCodec && !ffmpegVideoCodecs.includes(convert.audioCodec)) {
+                    } else if(convert.audioCodec && !ffmpegAudioCodecs.includes(convert.audioCodec)) {
                         return fallback(`Could not convert the audio stream to ${convert.audioCodec.toString().toUpperCase()} -- target codec not supported by installed build of FFmpeg.`, true);
                     }
     
