@@ -34,6 +34,8 @@ var process = (windowControlsEnabled) => {
         if(document.getElementById(`windowControls`)) {
             console.log(`windowControls present`);
             if(windowControlsEnabled) {
+                document.getElementById(`windowControls`).classList.remove(`d-none`)
+
                 document.getElementById(`minimizeWindows`).onclick = () => windowControls.minimize();
                 document.getElementById(`maximizeWindows`).onclick = () => windowControls.maximize();
                 document.getElementById(`closeWindows`).onclick = () => windowControls.close();
@@ -46,9 +48,7 @@ var process = (windowControlsEnabled) => {
                 }
         
                 document.getElementById(`navigationBar`).childNodes.forEach(element => disableDrag(element))
-            } else {
-                document.getElementById(`windowControls`).classList.add(`d-none`)
-            }
+            };
         }
     } else {
         //if(windowControlsEnabled) document.body.style[`-webkit-app-region`] = `drag`;
