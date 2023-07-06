@@ -4,7 +4,7 @@ global.changelogResponse = null;
 
 module.exports = {
     type: `on`,
-    func: () => new Promise(async res => {
+    func: async () => {
         console.log(`checking changelog`);
         global.sendNotifs = true;
         setTimeout(() => require(`../../sendNotification`)(), 50)
@@ -20,19 +20,16 @@ module.exports = {
             })
         });
 
-        if(!global.changelogResponse) return res(null);
-
         const lastVersionChecked = require(`../../../getConfig`)().version;
         const currentVersion = require(`../../../package.json`).version;
 
         if(lastVersionChecked !== currentVersion && currentVersion == global.changelogResponse.tag_name) {
-            res(true)
             const updated = require(`../../../getConfig`)({ version: global.changelogResponse.tag_name });
             sendNotification({
                 headingText: `ezytdl has been updated!`,
                 bodyText: `Click here to view the changelog.`,
                 redirect: `changelog.html`,
             })
-        } else res(false);
-    })
+        }
+    }
 }
