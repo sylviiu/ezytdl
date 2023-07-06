@@ -19,11 +19,11 @@ module.exports = ({ r, g, b }) => {
     .distance(0.9)
     .add_complement(false)
     .variation('pastel')
-    .web_safe(false)
+    .web_safe(true)
     .colors();
 
     const standard = colors[0];
-    const light = tinycolor(`#` + colors[4]).saturate(25).brighten(25).toHexString().replace(`#`, ``);
+    const light = tinycolor(`#` + colors[2]).toHexString().replace(`#`, ``);
     const dark = colors[1];
 
     const newColors = {
