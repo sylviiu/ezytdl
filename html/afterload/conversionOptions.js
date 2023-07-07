@@ -136,6 +136,14 @@ const setupConvertDownload = (node, info) => {
         if(!node.querySelector(`#saveOptions`).classList.contains(`d-none`)) node.querySelector(`#saveOptions`).classList.add(`d-none`);
         if(!node.querySelector(`#downloadButtons`).classList.contains(`d-none`)) node.querySelector(`#downloadButtons`).classList.add(`d-none`);
         if(node.querySelector(`#buttonsDiv`) && !node.querySelector(`#buttonsDiv`).classList.contains(`d-none`)) node.querySelector(`#buttonsDiv`).classList.add(`d-none`);
+        node.querySelector(`#saveOptions`).remove();
+    }
+
+    const customFormat = {
+        key: `custom`,
+        name: `Custom Format`,
+        description: `Customize your conversion!`,
+        icon: `fa-wrench`,
     }
 
     const setPreset = (node, instant) => {
@@ -144,7 +152,7 @@ const setupConvertDownload = (node, info) => {
         } else {
             const previousSelected = currentSelected;
             currentSelected = node ? node.id : null;
-            info.selectedConversion = currentSelected && enabledConversionFormats.find(o => o.key == currentSelected) ? Object.assign({}, enabledConversionFormats.find(o => o.key == currentSelected), { key: currentSelected }) : null;
+            info.selectedConversion = node.id == `custom` ? customFormat : (currentSelected && enabledConversionFormats.find(o => o.key == currentSelected)) ? Object.assign({}, enabledConversionFormats.find(o => o.key == currentSelected), { key: currentSelected }) : null;
             buttons.forEach(btn => {
                 if(btn.id && btn.style) {
                     if(btn.id == currentSelected) {
@@ -189,12 +197,7 @@ const setupConvertDownload = (node, info) => {
 
         const customPresetButton = ffmpegOptions.querySelector(`#custom`);
 
-        for(const options of [...enabledConversionFormats, {
-            key: `custom`,
-            name: `Custom Format`,
-            description: `Customize your conversion!`,
-            icon: `fa-wrench`,
-        }]) {
+        for(const options of [...enabledConversionFormats, customFormat]) {
             const { key } = options;
 
             if(!ffmpegOptions.querySelector(`#${key}`)) {

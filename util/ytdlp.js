@@ -533,6 +533,7 @@ module.exports = {
                     const format = {
                         format_id: `${stream.codec_type}-${stream.codec_name}-${stream.index}`,
                         format_note: stream.codec_type,
+                        format_index: stream.index,
                         ext: stream.codec_name,
                     };
 
@@ -704,7 +705,7 @@ module.exports = {
                         return res(null);
                     } else {
                         let a = stdout.toString().trim();
-                        if(a && !a.includes(`jpeg`) && !a.includes(`png`) && !a.includes(`gif`)) {
+                        if(a/* && !a.includes(`jpeg`) && !a.includes(`png`) && !a.includes(`gif`)*/) {
                             return res(a.trim().split(`\n`)[0])
                         } else return res(null);
                     }
@@ -905,7 +906,9 @@ module.exports = {
         try {
             const currentConfig = require(`../getConfig`)();
 
-            const { onlyGPUConversion, disableHWAcceleratedConversion, outputFilename, hardwareAcceleratedConversion, advanced } = currentConfig;
+            const { disableHWAcceleratedConversion, outputFilename, hardwareAcceleratedConversion, advanced } = currentConfig;
+
+            let { onlyGPUConversion } = currentConfig;
 
             let thisFormat;
 
@@ -1299,7 +1302,7 @@ module.exports = {
                 })
             }
 
-            const runThroughFFmpeg = async (code, replaceInputArgs, useFile=null) => {
+            const runThroughFFmpeg = async (code, replaceInputArgs, replaceOutputArgs, useFile=null) => {
                 const temporaryFiles = useFile ? [] : fs.readdirSync(saveTo).filter(f => f.startsWith(temporaryFilename) && !f.endsWith(`.part`) && !f.endsWith(`.meta`));
 
                 if(!useFile) filenames.push(...temporaryFiles);
@@ -1333,6 +1336,8 @@ module.exports = {
                 if(killAttempt > 0) return fallback(`Download canceled.`, true);
 
                 if(!useFile) filenames.push(ytdlpFilename)
+
+                if(useFile) onlyGPUConversion = false;
     
                 //if(!useFile && !fs.existsSync(previousFilename)) previousFilename = await module.exports.getFilename(url, info, thisFormat, temporaryFilename + `.%(ext)s`, true);
     
@@ -1345,11 +1350,15 @@ module.exports = {
 
                     console.log(`convert`, convert)
 
-                    ext = `.${convert.ext || (thisFormat || {}).ext}`
+                    const rawExt = convert.ext || info.ext || (thisFormat || {}).ext;
+
+                    if(!rawExt) return fallback(`Could not convert to ${`${convert ? convert.ext : `--`}`.toUpperCase()} -- unable to find extension. This shouldn't have happened.`, true)
+
+                    ext = `.${rawExt}`
 
                     const destinationCodec = await module.exports.getMuxer(ext.slice(1));
 
-                    if(!destinationCodec.compatible) return fallback(`Could not convert to ${ext.toUpperCase()} -- unable to find muxer details.`, true);
+                    //if(!destinationCodec.compatible) return fallback(`Could not convert to ${ext.toUpperCase()} -- unable to find muxer details.`, true);
 
                     const inputArgs = replaceInputArgs || [];
 
@@ -1393,7 +1402,7 @@ module.exports = {
 
                     if(convert.additionalInputArgs) inputArgs.unshift(...convert.additionalInputArgs);
 
-                    const outputArgs = [`-map`, `0`, require(`path`).join(saveTo, ytdlpFilename) + ext];
+                    const outputArgs = [...(replaceOutputArgs || []), require(`path`).join(saveTo, ytdlpFilename) + ext];
 
                     if(convert.audioBitrate) outputArgs.unshift(`-b:a`, convert.audioBitrate);
                     if(convert.audioSampleRate) outputArgs.unshift(`-ar`, convert.audioSampleRate);
@@ -1913,7 +1922,16 @@ module.exports = {
                 if(!fs.existsSync(module.exports.ffmpegPath)) return resolve(update({ failed: true, status: `FFmpeg was not found on your system -- conversion aborted.` }));
                 if(!fs.existsSync(url)) return resolve(update({ failed: true, status: `File not found -- conversion aborted.` }));
 
-                runThroughFFmpeg(0, null, url);
+                const inputArgs = [];
+                const outputArgs = [];
+
+                console.log(info, format, convert)
+
+                if(info.format_note && typeof info.format_index == `number`) outputArgs.push(`-map`, `0:${info.format_index}`)
+
+                console.log(`running raw conversion -- inputArgs`, inputArgs, `outputArgs`, outputArgs)
+
+                runThroughFFmpeg(0, inputArgs, outputArgs, url);
             }
         } catch(e) {
             console.error(e);

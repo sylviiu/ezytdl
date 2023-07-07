@@ -286,12 +286,7 @@ const runSearch = async (url, initialMsg, func) => {
             return existingCenterBoxPromise;
         } else {
             console.log(`centerURLBox: no existing promise found; creating new promise...`)
-            const promise = new Promise(async resolvPromise => {
-                const res = (...args) => {
-                    console.log(`centerURLBox: promise resolved; args:`, args)
-                    resolvPromise(...args);
-                }
-    
+            const promise = new Promise(async res => {    
                 console.log(`centerURLBox called; resultsVisible: ${resultsVisible}; doing anything? ${resultsVisible != false}`);
             
                 if(!resultsVisible) return res(false);
@@ -833,13 +828,6 @@ const runSearch = async (url, initialMsg, func) => {
                 formatList.appendChild(card);
             };
 
-            if(info._platform == `file`) {
-                setupConvertDownload(listbox.querySelector(`#qualityButtons`), info)
-                listbox.querySelector(`#confirmDownload-2`).onclick = () => send({ card: listbox, node: listbox.querySelector(`#qualityButtons`), info, centerURLBox })
-            } else {
-                qualityButtons({ card: listbox, node: listbox.querySelector(`#qualityButtons`), info, centerURLBox: info.entries ? centerURLBox : () => {} });
-            }
-
             if(info.entries) {
                 if(info.entries.filter(e => e.entries).length == info.entries.length || info.entries.length == 0) {
                     listbox.querySelector(`#qualityButtons`).classList.add(`d-none`);
@@ -1070,11 +1058,7 @@ const runSearch = async (url, initialMsg, func) => {
                 if(info.formats.filter(f => f.video).length == 0 && listbox.querySelector(`#downloadBestVideo`)) listbox.querySelector(`#downloadBestVideo`).classList.add(`d-none`);
                 
                 for (const i in info.formats) {
-                    const format = info.formats[i];
-
-                    Object.assign(format, {
-                        duration: info.duration,
-                    })
+                    const format = Object.assign({}, info, info.formats[i]);
 
                     parseProgress.setProgress((i/info.formats.length)*100, `Parsing format ${i}/${info.formats.length}`);
 
@@ -1093,7 +1077,6 @@ const runSearch = async (url, initialMsg, func) => {
                     card.querySelector(`#innerFormatCard`).appendChild(saveOptions)
 
                     const formatName = card.querySelector(`#formatName`);
-                    const formatSubtext = card.querySelector(`#formatSubtext`);
 
                     const list = card.querySelector(`#formatMetaList`);
 
@@ -1168,17 +1151,11 @@ const runSearch = async (url, initialMsg, func) => {
 
                         btn.disabled = true;
 
-                        if(card.querySelector(`#outputExtension`).value != config.lastMediaConversionOutputs[formatDownloadType]) {
-                            let j = {};
-
-                            j[formatDownloadType] = card.querySelector(`#outputExtension`).value;
-                        }
-
                         card.style.opacity = 0.5;
 
                         console.log(format.format_id)
 
-                        startDownload(card, getSaveOptions(card, Object.assign({}, info, format)))
+                        startDownload(card, getSaveOptions(card, format))
                     }
 
                     //card.querySelector(`#convertDownload`).parentElement.removeChild(card.querySelector(`#convertDownload`));
@@ -1186,9 +1163,13 @@ const runSearch = async (url, initialMsg, func) => {
 
                     card.querySelector(`#conversionDiv`).appendChild(card.querySelector(`#outputExtension`));
 
-                    conversionOptions(card.querySelector(`#innerFormatCard`), Object.assign({}, info, format));
+                    conversionOptions(card.querySelector(`#innerFormatCard`), format);
+
+                    //card.querySelector(`#confirmDownload-2`).onclick = () => send({ card, node: card.querySelector(`#qualityButtons`), info, centerURLBox })
+
+                    if(card.querySelector(`#confirmDownload-2`)) card.querySelector(`#confirmDownload-2`).onclick = () => confirmDownload();
                     
-                    card.querySelector(`#confirmDownload`).onclick = () => confirmDownload();
+                    if(card.querySelector(`#confirmDownload`)) card.querySelector(`#confirmDownload`).onclick = () => confirmDownload();
 
                     const btnClick = () => {
                         if(saveOptions.classList.contains(`d-none`)) {
@@ -1204,6 +1185,13 @@ const runSearch = async (url, initialMsg, func) => {
 
                     if(i % 25 == 0) await new Promise((resolve) => setTimeout(resolve, 1));
                 };
+            }
+
+            if(info._platform == `file`) {
+                setupConvertDownload(listbox.querySelector(`#qualityButtons`), info)
+                listbox.querySelector(`#confirmDownload-2`).onclick = () => send({ card: listbox, node: listbox.querySelector(`#qualityButtons`), info, centerURLBox })
+            } else {
+                qualityButtons({ card: listbox, node: listbox.querySelector(`#qualityButtons`), info, centerURLBox: info.entries ? centerURLBox : () => {} });
             }
 
             wavesAnims.fadeOut();
