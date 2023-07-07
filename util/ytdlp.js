@@ -188,7 +188,7 @@ module.exports = {
 
             if(!ignoreStderr) {
                 updateStatus(`Fetching info of ${queue.active.length + queue.paused.length + queue.queue.length}/${totalLength} items...`)
-                updateStatusPercent([queue.complete.length, totalLength]);
+                updateStatusPercent([queue.complete.length == 0 ? -1 : queue.complete.length, totalLength]);
             }
 
             if(queue.complete.length == totalLength) {
