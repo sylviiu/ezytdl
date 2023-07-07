@@ -378,7 +378,9 @@ const runSearch = async (url, initialMsg, func) => {
         
         document.body.style.overflowY = `scroll`;
 
-        const throwToURL = (node, card, url) => {
+        const throwToURL = (node, card, entry) => {
+            const url = entry.media_metadata.url.source_url;
+
             mainInput.enable();
             
             if(config.disableAnimations) {
@@ -411,7 +413,13 @@ const runSearch = async (url, initialMsg, func) => {
                 //if(node && node.style.maxHeight) bounding.height = parseInt(node.style.maxHeight);
 
                 centerURLBox(null, 900);
-                runSearch(url, `Fetching info...`, `getInfo`)
+
+                if(entry && entry.fullInfo) {
+                    console.log(`fullInfo already provided; replacing info with fullInfo`);
+                    runSearch(entry, `Reading entry...`, `getInfo`)
+                } else {
+                    runSearch(url, `Fetching info...`, `getInfo`)
+                }
 
                 window.scrollTo(0, 0);
 
@@ -448,6 +456,7 @@ const runSearch = async (url, initialMsg, func) => {
                         console.log(`throwing node`)
                         throwNode(newCard, innerUrlBox, true, true).then(() => {
                             console.log(`parseInfo: node hit`)
+                            //runSearch(entry, `Reading entry...`, `getInfo`)
                             //input.value = entry.webpage_url || entry.url;
                             //runSearch(input.value, `Fetching info...`, `getInfo`)
                         })
@@ -586,7 +595,7 @@ const runSearch = async (url, initialMsg, func) => {
                                     clone.style.top = `${window.innerHeight - parseInt(clone.style.bottom)}px`;
                                     clone.style.bottom = `0px`
         
-                                    throwToURL(clone, null, entry.media_metadata.url.artist_url);
+                                    throwToURL(clone, null, entry);
                                 } else {
                                     console.log(`did not hit target`)
                                 };
@@ -856,7 +865,7 @@ const runSearch = async (url, initialMsg, func) => {
                                 clone.style.top = `${window.innerHeight - parseInt(clone.style.bottom)}px`;
                                 clone.style.bottom = `0px`
 
-                                throwToURL(clone, null, entry.media_metadata.url.source_url);
+                                throwToURL(clone, null, entry);
                             } else {
                                 console.log(`did not hit target`)
                             };
@@ -934,7 +943,7 @@ const runSearch = async (url, initialMsg, func) => {
                     
                         //highlightButton(card.querySelector(`#formatDownload`))
 
-                        card.querySelector(`#formatDownload`).onclick = () => throwToURL(null, card, entry.media_metadata.url.source_url);
+                        card.querySelector(`#formatDownload`).onclick = () => throwToURL(null, card, entry);
                     } else {
                         let fadeIn = () => null;
                         let fadeOut = () => null;
@@ -1252,21 +1261,6 @@ const runSearch = async (url, initialMsg, func) => {
 
     let parse = false;
 
-    let opt = {
-        query: url,
-        extraArguments: extraArguments.value || ``
-    };
-
-    if(func == `search`) {
-        if(selectedSearch) opt.from = selectedSearch;
-        if(parseInt(resultsCountInput.value)) opt.count = parseInt(resultsCountInput.value);
-    }
-
-    //deselectAllSearchBtns();
-
-    console.log(`selectionBox / hiding from parseinfo`)
-    selectionBox.hide(false, true);
-
     const runParse = (from) => {
         console.log(`parseInfo: check completed: ${from}`)
         if(parse) {
@@ -1276,13 +1270,32 @@ const runSearch = async (url, initialMsg, func) => {
         }
     }
 
-    mainQueue[func || `getInfo`](opt).then(data => {
-        info = data;
-
-        console.log(`info received`)
-
-        runParse(`queue function`)
-    })
+    if(url && typeof url == `object`) {
+        info = url;
+        url = info._request_url || info.media_metadata.url.source_url || info.media_metadata.url || info.url;
+        runParse(`url is object`)
+    } else {
+        let opt = {
+            query: url,
+            extraArguments: extraArguments.value || ``
+        };
+    
+        if(func == `search`) {
+            if(selectedSearch) opt.from = selectedSearch;
+            if(parseInt(resultsCountInput.value)) opt.count = parseInt(resultsCountInput.value);
+        }
+    
+        console.log(`selectionBox / hiding from parseinfo`)
+        selectionBox.hide(false, true);
+    
+        mainQueue[func || `getInfo`](opt).then(data => {
+            info = data;
+    
+            console.log(`info received`)
+    
+            runParse(`queue function`)
+        })
+    }
     
     mainInput.disable();
 
