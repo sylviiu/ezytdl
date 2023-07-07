@@ -106,6 +106,300 @@ const animateHiddenOptions = (node, ffmpegOptions, {
     };
 };
 
+const setupConvertDownload = (node, info) => {
+    const presetButtonClone = node.querySelector(`#ffmpegOptions`) ? node.querySelector(`#ffmpegOptions`).querySelector(`#custom`).cloneNode(true) : null;
+
+    const ffmpegOptions = node.querySelector(`#ffmpegOptions`);
+
+    const ffmpegCustomOptions = ffmpegOptions.querySelector(`#ffmpegCustomOptions`);
+
+    let buttons = ffmpegOptions.querySelectorAll(`.formatPreset`);
+
+    let currentSelected = null;
+
+    if(info._platform == `file` && node.querySelector(`#saveOptions`) && !node.querySelector(`#confirmDownload-2`)) {
+        const confirmDownloadBtn = node.querySelector(`#saveOptions`).querySelector(`#confirmDownload`).cloneNode(true);
+        confirmDownloadBtn.id += `-2`
+        if(node.querySelector(`#innerQualityButtons`)) node.querySelector(`#innerQualityButtons`).remove();
+        ffmpegOptions.remove();
+        ffmpegOptions.classList.remove(`d-none`);
+
+        node.appendChild(ffmpegOptions);
+
+        confirmDownloadBtn.style.width = `100%`
+        confirmDownloadBtn.innerHTML = confirmDownloadBtn.innerHTML.replace(`Download`, `Convert`)
+        confirmDownloadBtn.querySelector(`#icon`).replaceWith(node.querySelector(`#saveOptions`).querySelector(`#convertDownload`).querySelector(`#icon`))
+        //node.querySelector(`#saveOptions`).querySelector(`#convertDownload`).remove();
+
+        node.appendChild(confirmDownloadBtn);
+
+        if(!node.querySelector(`#saveOptions`).classList.contains(`d-none`)) node.querySelector(`#saveOptions`).classList.add(`d-none`);
+        if(!node.querySelector(`#downloadButtons`).classList.contains(`d-none`)) node.querySelector(`#downloadButtons`).classList.add(`d-none`);
+        if(node.querySelector(`#buttonsDiv`) && !node.querySelector(`#buttonsDiv`).classList.contains(`d-none`)) node.querySelector(`#buttonsDiv`).classList.add(`d-none`);
+    }
+
+    const setPreset = (node, instant) => {
+        if(node && currentSelected == node.id) {
+            buttonDisabledAnim(node, {noRemove: true});
+        } else {
+            const previousSelected = currentSelected;
+            currentSelected = node ? node.id : null;
+            info.selectedConversion = currentSelected && enabledConversionFormats.find(o => o.key == currentSelected) ? Object.assign({}, enabledConversionFormats.find(o => o.key == currentSelected), { key: currentSelected }) : null;
+            buttons.forEach(btn => {
+                if(btn.id && btn.style) {
+                    if(btn.id == currentSelected) {
+                        if(btn.id == previousSelected) return;
+
+                        anime.remove(btn);
+
+                        const targetColor = (typeof systemColors != `undefined` ? systemColors : system.colors()).light
+
+                        anime({
+                            targets: btn,
+                            scale: 1.1,
+                            backgroundColor: `rgb(${targetColor.r}, ${targetColor.g}, ${targetColor.b})`,
+                            duration: instant ? 0 : 300,
+                            easing: `easeOutCirc`,
+                        });
+
+                        if(btn.id == `custom`) {
+                            animateHiddenOptions(node, ffmpegCustomOptions);
+                        } else {
+                            animateHiddenOptions(node, ffmpegCustomOptions, {expand: false});
+                        }
+                    } else if(btn.id == previousSelected || previousSelected == null) {
+                        anime.remove(btn);
+                        
+                        anime({
+                            targets: btn,
+                            scale: 0.94,
+                            backgroundColor: `rgba(255,255,255,0.85)`,
+                            opacity: 0.9,
+                            duration: instant ? 0 : 300,
+                            easing: `easeOutCirc`,
+                        })
+                    }
+                }
+            })
+        }
+    };
+
+    const resetPresetOptions = () => {
+        console.log(`resetting preset options:`, enabledConversionFormats)
+
+        const customPresetButton = ffmpegOptions.querySelector(`#custom`);
+
+        for(const options of [...enabledConversionFormats, {
+            key: `custom`,
+            name: `Custom Format`,
+            description: `Customize your conversion!`,
+            icon: `fa-wrench`,
+        }]) {
+            const { key } = options;
+
+            if(!ffmpegOptions.querySelector(`#${key}`)) {
+                const thisNode = presetButtonClone.cloneNode(true);
+                thisNode.style.transform = `scale(0.94)`;
+                thisNode.style.opacity = 0.9;
+                thisNode.style.backgroundColor = `rgba(255,255,255,0.85)`;
+                thisNode.style.color = `rgb(0,0,0)`;
+                thisNode.id = `${key}`;
+                thisNode.querySelector(`#name`).innerText = options.name;
+                thisNode.querySelector(`#description`).innerText = options.description;
+                thisNode.querySelector(`#icon`).className = `fas ${options.icon || `fa-wrench`}`;
+                customPresetButton.parentElement.appendChild(thisNode);
+            } else customPresetButton.parentElement.appendChild(ffmpegOptions.querySelector(`#${key}`))
+
+            const node = ffmpegOptions.querySelector(`#${key}`);
+            
+            if(options.options) node.setAttribute(`options`, JSON.stringify(options.options));
+
+            node.onclick = () => setPreset(node);
+        };
+
+        buttons = ffmpegOptions.querySelectorAll(`.formatPreset`);
+    };
+
+    resetPresetOptions();
+
+    ffmpegCustomOptions.querySelector(`#saveAsPreset`).onclick = () => {
+        if(ffmpegCustomOptions.getAttribute(`hidden`) == `false`) {
+            const opt = getSaveOptions(node, info, null, {
+                getConvertOnly: true,
+                ignore: [`trimFrom`, `trimTo`]
+            });
+
+            if(!opt.ext) return createNotification({
+                type: `warn`,
+                headingText: `No target extension!`,
+                bodyText: `Please enter a target extension for your preset. (e.g. mp4, mp3, etc.)`
+            });
+
+            dialog.create({
+                title: `Custom Preset`,
+                body: `Enter a name & description for your custom preset.`,
+                inputs: [ 
+                    { id: `name`, text: `Name` }, 
+                    { id: `description`, text: `Description` }
+                ],
+                buttons: [
+                    {
+                        text: `Cancel`,
+                        id: `no`,
+                        icon: `cross`
+                    },
+                    {
+                        text: `Save`,
+                        id: `yes`,
+                        icon: `check`,
+                        primary: true,
+                    },
+                ]
+            }).then(async ({ event, id, response, inputs }) => {
+                if(response == `yes`) {
+                    console.log(inputs);
+
+                    const name = inputs.find(o => o.id == `name`).value;
+                    const description = inputs.find(o => o.id == `description`).value;
+
+                    if(!name) return createNotification({
+                        type: `warn`,
+                        headingText: `No name provided!`,
+                        bodyText: `Please enter a name for your preset.`
+                    });
+
+                    if(!description) return createNotification({
+                        type: `warn`,
+                        headingText: `No description provided!`,
+                        bodyText: `Please enter a description for your preset.`
+                    });
+
+                    console.log(`got response`, response, inputs);
+
+                    const key = ("custom-" + name + "-" + opt.ext).replace(/[^a-zA-Z0-9]/g, "-");
+
+                    const continueSave = await new Promise(res => {
+                        if(typeof config.ffmpegPresets[key] != 'undefined') {
+                            dialog.create({
+                                title: `Overwrite preset?`,
+                                body: `A preset with the name "${name}" (${key}) already exists. Would you like to overwrite it?`,
+                                buttons: [
+                                    {
+                                        text: `No`,
+                                        id: `no`,
+                                        icon: `cross`
+                                    },
+                                    {
+                                        text: `Yes`,
+                                        id: `yes`,
+                                        icon: `check`,
+                                        primary: true,
+                                    },
+                                ]
+                            }).then(({ event, id, response, inputs }) => {
+                                res(response == `yes`);
+                            })
+                        } else res(true);
+                    })
+                    
+                    if(continueSave) configuration.set(`ffmpegPresets`, {
+                        [key]: {
+                            key,
+                            name: name,
+                            description: description,
+                            defaultEnabled: true,
+                            options: opt
+                        }
+                    }).then((o) => {
+                        enabledConversionFormats = o.filter(o => config.ffmpegPresets[o.key]);
+                        console.log(`enabled conversion formats`, enabledConversionFormats)
+
+                        resetPresetOptions();
+
+                        createNotification({
+                            headingText: `Preset Saved!`,
+                            bodyText: `Your preset has been saved!`,
+                        })
+                    })
+                };
+            });
+        }
+    }
+
+    ffmpegOptions.resetSelection = () => setPreset(null, true);
+
+    if(!ffmpegOptions.hasAttribute(`default`)) ffmpegOptions.setAttribute(`default`, info.audio && !info.video ? `mp3` : `mp4`)
+
+    const defaultOption = ffmpegOptions.getAttribute(`default`);
+
+    const usableOption = enabledConversionFormats.find(o => o.key == defaultOption) ? defaultOption : null;
+
+    console.log(`default option: ${defaultOption} -- parsed: ${usableOption}`)
+
+    setPreset(usableOption ? ffmpegOptions.querySelector(`#${usableOption}`) || null : null, true); // set default preset
+
+    if(!info.entries && info.duration && info.duration.timestamp != `--:--`) {
+        const trimFrom = node.querySelector(`#trimFrom`), trimFromInput = node.querySelector(`#trimFromInput`);
+        const trimTo = node.querySelector(`#trimTo`), trimToInput = node.querySelector(`#trimToInput`);
+
+        const modifyInput = (range, input, source, value) => {
+            const useValue = typeof value == `string` && Number(value) && !value.includes(`:`) ? `00:${value}` : value;
+
+            const time = util.time(useValue, null, {allowZero: true})
+
+            if(source == `from` && (time.units.ms/1000)+1 > Number(trimTo.value)) {
+                if(range) range.value = trimTo.value;
+                if(input) input.value = util.time((Number(trimTo.value)-1)*1000, null, {allowZero: true}).timestamp;
+            } else if(source == `to` && (time.units.ms/1000)-1 < Number(trimFrom.value)) {
+                if(range) range.value = trimFrom.value;
+                if(input) input.value = util.time((Number(trimFrom.value)+1)*1000, null, {allowZero: true}).timestamp;
+            } else {
+                if(range) range.value = (time.units.ms/1000);
+                if(input) input.value = time.timestamp;
+            }
+        };
+
+        const parentStyle = window.getComputedStyle(node);
+
+        console.log(formatCardBounds, formatCardComputed)
+
+        const targetWidth = parseInt(formatCardBounds.width) - parseInt(formatCardComputed.paddingLeft || parentStyle.paddingLeft || node.style.paddingLeft || 0) - parseInt(formatCardComputed.paddingRight || node.style.paddingRight || parentStyle.paddingRight || 0) + `px`;
+
+        console.log(`targetWidth`, targetWidth, `bounds width`, formatCardBounds.width, `padding`, formatCardComputed.paddingLeft || parentStyle.paddingLeft, formatCardComputed.paddingRight || parentStyle.paddingRight)
+
+        trimFrom.style.width = targetWidth;
+        trimTo.style.width = targetWidth;
+        node.querySelector(`#trimContainer`).style.width = targetWidth;
+
+        trimFrom.oninput = () => modifyInput(trimFrom, trimFromInput, `from`, Number(trimFrom.value)*1000);
+        trimTo.oninput = () => modifyInput(trimTo, trimToInput, `to`, Number(trimTo.value)*1000);
+
+        trimFromInput.oninput = () => modifyInput(trimFrom, null, `from`, trimFromInput.value);
+        trimToInput.oninput = () => modifyInput(trimTo, null, `to`, trimToInput.value);
+        trimFromInput.onblur = () => modifyInput(trimFrom, trimFromInput, `from`, trimFromInput.value);
+        trimToInput.onblur = () => modifyInput(trimTo, trimToInput, `to`, trimToInput.value);
+
+        trimFrom.max = Math.ceil(info.duration.units.ms/1000);
+        modifyInput(trimFrom, trimFromInput, `from`, 0);
+
+        trimTo.max = Math.ceil(info.duration.units.ms/1000);
+        modifyInput(trimTo, trimToInput, `to`, (Math.ceil(info.duration.units.ms/1000))*1000);
+
+        info.trim = {};
+    } else {
+        if(!node.querySelector(`#trimOptions`).classList.contains(`d-none`)) node.querySelector(`#trimOptions`).classList.add(`d-none`);
+        if(!node.querySelector(`#trimText`).classList.contains(`d-none`)) node.querySelector(`#trimText`).classList.add(`d-none`);
+    }
+    
+    const formattxtbox = node.querySelector(`#outputExtension`);
+
+    if(formattxtbox) {
+        formattxtbox.parentElement.removeChild(formattxtbox);
+    
+        node.querySelector(`#conversionDiv`).appendChild(formattxtbox);
+    }
+}
+
 const conversionOptions = (node, info) => {
     //node.querySelector(`#saveLocation`).placeholder = `${config && config.saveLocation ? config.saveLocation : `{default save location}`}`;
     //node.querySelector(`#saveLocation`).value = `${config && config.saveLocation ? config.saveLocation : ``}`;
@@ -123,276 +417,14 @@ const conversionOptions = (node, info) => {
     if(info.abr) node.querySelector(`#audioBitrate`).placeholder = `Bitrate (${info.abr}k)`;
 
     const metaButtons = node.querySelector(`#metadataOptions`).querySelectorAll(`.btn`)
-
-    const presetButtonClone = node.querySelector(`#ffmpegOptions`) ? node.querySelector(`#ffmpegOptions`).querySelector(`#custom`).cloneNode(true) : null;
     
     if(hasFFmpeg) {
-        node.querySelector(`#convertDownload`).onclick = () => {
-            const ffmpegOptions = node.querySelector(`#ffmpegOptions`);
+        if(info._platform == `file`) {
+            setupConvertDownload(node, info);
+        } else if(node.querySelector(`#convertDownload`)) node.querySelector(`#convertDownload`).onclick = () => {
+            setupConvertDownload(node, info);
 
-            const ffmpegCustomOptions = ffmpegOptions.querySelector(`#ffmpegCustomOptions`);
-
-            let buttons = ffmpegOptions.querySelectorAll(`.formatPreset`);
-
-            let currentSelected = null;
-
-            const setPreset = (node, instant) => {
-                if(node && currentSelected == node.id) {
-                    buttonDisabledAnim(node, {noRemove: true});
-                } else {
-                    const previousSelected = currentSelected;
-                    currentSelected = node ? node.id : null;
-                    info.selectedConversion = currentSelected && enabledConversionFormats.find(o => o.key == currentSelected) ? Object.assign({}, enabledConversionFormats.find(o => o.key == currentSelected), { key: currentSelected }) : null;
-                    buttons.forEach(btn => {
-                        if(btn.id && btn.style) {
-                            if(btn.id == currentSelected) {
-                                if(btn.id == previousSelected) return;
-
-                                anime.remove(btn);
-
-                                const targetColor = (typeof systemColors != `undefined` ? systemColors : system.colors()).light
-
-                                anime({
-                                    targets: btn,
-                                    scale: 1.1,
-                                    backgroundColor: `rgb(${targetColor.r}, ${targetColor.g}, ${targetColor.b})`,
-                                    //color: `rgb(255, 255, 255)`,
-                                    duration: instant ? 0 : 300,
-                                    easing: `easeOutCirc`,
-                                    //begin: () => highlightButton(btn)
-                                });
-
-                                if(btn.id == `custom`) {
-                                    animateHiddenOptions(node, ffmpegCustomOptions);
-                                } else {
-                                    animateHiddenOptions(node, ffmpegCustomOptions, {expand: false});
-                                }
-                            } else if(btn.id == previousSelected || previousSelected == null) {
-                                anime.remove(btn);
-                                
-                                anime({
-                                    targets: btn,
-                                    scale: 0.94,
-                                    backgroundColor: presetButtonClone.style.backgroundColor,
-                                    color: presetButtonClone.style.color,
-                                    opacity: 0.9,
-                                    duration: instant ? 0 : 300,
-                                    easing: `easeOutCirc`,
-                                })
-                            }
-                        }
-                    })
-                }
-            };
-
-            const resetPresetOptions = () => {
-                console.log(`resetting preset options:`, enabledConversionFormats)
-
-                const customPresetButton = ffmpegOptions.querySelector(`#custom`);
-    
-                for(const options of [...enabledConversionFormats, {
-                    key: `custom`,
-                    name: `Custom Format`,
-                    description: `Customize your conversion!`,
-                    icon: `fa-wrench`,
-                }]) {
-                    const { key } = options;
-    
-                    if(!ffmpegOptions.querySelector(`#${key}`)) {
-                        const thisNode = presetButtonClone.cloneNode(true);
-                        thisNode.id = `${key}`;
-                        thisNode.querySelector(`#name`).innerText = options.name;
-                        thisNode.querySelector(`#description`).innerText = options.description;
-                        thisNode.querySelector(`#icon`).className = `fas ${options.icon || `fa-wrench`}`;
-                        customPresetButton.parentElement.appendChild(thisNode);
-                    } else customPresetButton.parentElement.appendChild(ffmpegOptions.querySelector(`#${key}`))
-    
-                    const node = ffmpegOptions.querySelector(`#${key}`);
-                    
-                    if(options.options) node.setAttribute(`options`, JSON.stringify(options.options));
-
-                    node.onclick = () => setPreset(node);
-                };
-
-                buttons = ffmpegOptions.querySelectorAll(`.formatPreset`);
-            };
-
-            resetPresetOptions();
-
-            ffmpegCustomOptions.querySelector(`#saveAsPreset`).onclick = () => {
-                if(ffmpegCustomOptions.getAttribute(`hidden`) == `false`) {
-                    const opt = getSaveOptions(node, info, null, {
-                        getConvertOnly: true,
-                        ignore: [`trimFrom`, `trimTo`]
-                    });
-
-                    if(!opt.ext) return createNotification({
-                        type: `warn`,
-                        headingText: `No target extension!`,
-                        bodyText: `Please enter a target extension for your preset. (e.g. mp4, mp3, etc.)`
-                    });
-
-                    dialog.create({
-                        title: `Custom Preset`,
-                        body: `Enter a name & description for your custom preset.`,
-                        inputs: [ 
-                            { id: `name`, text: `Name` }, 
-                            { id: `description`, text: `Description` }
-                        ],
-                        buttons: [
-                            {
-                                text: `Cancel`,
-                                id: `no`,
-                                icon: `cross`
-                            },
-                            {
-                                text: `Save`,
-                                id: `yes`,
-                                icon: `check`,
-                                primary: true,
-                            },
-                        ]
-                    }).then(async ({ event, id, response, inputs }) => {
-                        if(response == `yes`) {
-                            console.log(inputs);
-
-                            const name = inputs.find(o => o.id == `name`).value;
-                            const description = inputs.find(o => o.id == `description`).value;
-
-                            if(!name) return createNotification({
-                                type: `warn`,
-                                headingText: `No name provided!`,
-                                bodyText: `Please enter a name for your preset.`
-                            });
-
-                            if(!description) return createNotification({
-                                type: `warn`,
-                                headingText: `No description provided!`,
-                                bodyText: `Please enter a description for your preset.`
-                            });
-
-                            console.log(`got response`, response, inputs);
-
-                            const key = ("custom-" + name + "-" + opt.ext).replace(/[^a-zA-Z0-9]/g, "-");
-
-                            const continueSave = await new Promise(res => {
-                                if(typeof config.ffmpegPresets[key] != 'undefined') {
-                                    dialog.create({
-                                        title: `Overwrite preset?`,
-                                        body: `A preset with the name "${name}" (${key}) already exists. Would you like to overwrite it?`,
-                                        buttons: [
-                                            {
-                                                text: `No`,
-                                                id: `no`,
-                                                icon: `cross`
-                                            },
-                                            {
-                                                text: `Yes`,
-                                                id: `yes`,
-                                                icon: `check`,
-                                                primary: true,
-                                            },
-                                        ]
-                                    }).then(({ event, id, response, inputs }) => {
-                                        res(response == `yes`);
-                                    })
-                                } else res(true);
-                            })
-                            
-                            if(continueSave) configuration.set(`ffmpegPresets`, {
-                                [key]: {
-                                    key,
-                                    name: name,
-                                    description: description,
-                                    defaultEnabled: true,
-                                    options: opt
-                                }
-                            }).then((o) => {
-                                enabledConversionFormats = o.filter(o => config.ffmpegPresets[o.key]);
-                                console.log(`enabled conversion formats`, enabledConversionFormats)
-
-                                resetPresetOptions();
-
-                                createNotification({
-                                    headingText: `Preset Saved!`,
-                                    bodyText: `Your preset has been saved!`,
-                                })
-                            })
-                        };
-                    });
-                }
-            }
-
-            ffmpegOptions.resetSelection = () => setPreset(null, true);
-
-            if(!ffmpegOptions.hasAttribute(`default`)) ffmpegOptions.setAttribute(`default`, info.audio && !info.video ? `mp3` : `mp4`)
-
-            const defaultOption = ffmpegOptions.getAttribute(`default`);
-
-            const usableOption = enabledConversionFormats.find(o => o.key == defaultOption) ? defaultOption : null;
-
-            console.log(`default option: ${defaultOption} -- parsed: ${usableOption}`)
-
-            setPreset(usableOption ? ffmpegOptions.querySelector(`#${usableOption}`) || null : null, true); // set default preset
-
-            if(!info.entries && info.duration && info.duration.timestamp != `--:--`) {
-                const trimFrom = node.querySelector(`#trimFrom`), trimFromInput = node.querySelector(`#trimFromInput`);
-                const trimTo = node.querySelector(`#trimTo`), trimToInput = node.querySelector(`#trimToInput`);
-    
-                const modifyInput = (range, input, source, value) => {
-                    const useValue = typeof value == `string` && Number(value) && !value.includes(`:`) ? `00:${value}` : value;
-
-                    const time = util.time(useValue, null, {allowZero: true})
-    
-                    if(source == `from` && (time.units.ms/1000)+1 > Number(trimTo.value)) {
-                        if(range) range.value = trimTo.value;
-                        if(input) input.value = util.time((Number(trimTo.value)-1)*1000, null, {allowZero: true}).timestamp;
-                    } else if(source == `to` && (time.units.ms/1000)-1 < Number(trimFrom.value)) {
-                        if(range) range.value = trimFrom.value;
-                        if(input) input.value = util.time((Number(trimFrom.value)+1)*1000, null, {allowZero: true}).timestamp;
-                    } else {
-                        if(range) range.value = (time.units.ms/1000);
-                        if(input) input.value = time.timestamp;
-                    }
-                };
-
-                const parentStyle = window.getComputedStyle(node);
-
-                const targetWidth = parseInt(parentStyle.width) - parseInt(parentStyle.paddingLeft) - parseInt(parentStyle.paddingRight) + `px`;
-
-                console.log(`targetWidth`, targetWidth, parentStyle.width, parentStyle.paddingLeft, parentStyle.paddingRight)
-
-                trimFrom.style.width = targetWidth;
-                trimTo.style.width = targetWidth;
-                node.querySelector(`#trimContainer`).style.width = targetWidth;
-    
-                trimFrom.oninput = () => modifyInput(trimFrom, trimFromInput, `from`, Number(trimFrom.value)*1000);
-                trimTo.oninput = () => modifyInput(trimTo, trimToInput, `to`, Number(trimTo.value)*1000);
-
-                trimFromInput.oninput = () => modifyInput(trimFrom, null, `from`, trimFromInput.value);
-                trimToInput.oninput = () => modifyInput(trimTo, null, `to`, trimToInput.value);
-                trimFromInput.onblur = () => modifyInput(trimFrom, trimFromInput, `from`, trimFromInput.value);
-                trimToInput.onblur = () => modifyInput(trimTo, trimToInput, `to`, trimToInput.value);
-
-                trimFrom.max = Math.ceil(info.duration.units.ms/1000);
-                modifyInput(trimFrom, trimFromInput, `from`, 0);
-
-                trimTo.max = Math.ceil(info.duration.units.ms/1000);
-                modifyInput(trimTo, trimToInput, `to`, (Math.ceil(info.duration.units.ms/1000))*1000);
-    
-                info.trim = {};
-            } else {
-                if(!node.querySelector(`#trimOptions`).classList.contains(`d-none`)) node.querySelector(`#trimOptions`).classList.add(`d-none`);
-                if(!node.querySelector(`#trimText`).classList.contains(`d-none`)) node.querySelector(`#trimText`).classList.add(`d-none`);
-            }
-    
-            const formattxtbox = node.querySelector(`#outputExtension`);
-    
-            formattxtbox.parentElement.removeChild(formattxtbox);
-    
-            node.querySelector(`#conversionDiv`).appendChild(formattxtbox);
-
-            animateHiddenOptions(node, ffmpegOptions);
+            animateHiddenOptions(node, node.querySelector(`#ffmpegOptions`));
     
             anime({
                 targets: node.querySelector(`#convertDownload`),

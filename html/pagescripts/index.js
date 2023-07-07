@@ -118,6 +118,9 @@ searchButtons.forEach(btn => {
 const formatListTemplate = listbox.querySelector(`#formatList`).cloneNode(true);
 const formatCard = document.getElementById(`formatCard`).cloneNode(true);
 
+const formatCardBounds = document.getElementById(`formatCard`).getBoundingClientRect();
+const formatCardComputed = window.getComputedStyle(document.getElementById(`formatCard`));
+
 const mediaMetaItem = document.getElementById(`mediaMetaItem`).cloneNode(true);
 document.getElementById(`mediaMetaItem`).parentNode.removeChild(document.getElementById(`mediaMetaItem`));
 
@@ -212,39 +215,47 @@ const mainInput = {
         button.disabled = true;
         pasteButton.disabled = true;
 
-        const pasteIcon = pasteButton.querySelector(`#icon`);
+        searchButtons.forEach(btn => {
+            btn.disabled = true;
 
-        anime.remove(pasteIcon);
-        anime({
-            targets: pasteIcon,
-            scale: 0,
-            duration: 500,
-            easing: `easeOutCirc`
+            const thisIcon = btn.querySelector(`#icon`);
+
+            anime.remove(thisIcon);
+            anime({
+                targets: thisIcon,
+                scale: 0,
+                duration: 500,
+                easing: `easeOutCirc`
+            });
         });
     },
     enable: () => {
         input.disabled = false;
         button.disabled = false;
-        pasteButton.disabled = false;
 
-        const pasteIcon = pasteButton.querySelector(`#icon`);
+        searchButtons.forEach(btn => {
+            btn.disabled = false;
 
-        anime.remove(pasteIcon);
-        anime({
-            targets: pasteIcon,
-            scale: 1,
-            duration: 500,
-            easing: `easeOutCirc`
+            const thisIcon = btn.querySelector(`#icon`);
+
+            anime.remove(thisIcon);
+            anime({
+                targets: thisIcon,
+                scale: 1,
+                duration: 500,
+                easing: `easeOutCirc`
+            });
         });
     }
-}
+};
 
 const refreshConfig = () => {
-    system.hasFFmpeg().then(has => hasFFmpeg = has);
+    
 }
 
 let existingCenterBoxPromise = null;
 let centerURLBox = () => existingCenterBoxPromise ? existingCenterBoxPromise : new Promise(r => {
+    if(!document.getElementById(`listbox`)) return r(false);
     refreshConfig();
     r(false)
 });
@@ -795,8 +806,6 @@ const runSearch = async (url, initialMsg, func) => {
             }
 
             console.log(info);
-            
-            qualityButtons({ card: listbox, node: listbox.querySelector(`#qualityButtons`), info, centerURLBox: info.entries ? centerURLBox : () => {} });
 
             let parseProgress = addProgressBar(document.getElementById(`urlBox`), `80%`);
 
@@ -822,6 +831,13 @@ const runSearch = async (url, initialMsg, func) => {
                 if(card.querySelector(`#confirmDownload`)) highlightButton(card.querySelector(`#confirmDownload`))
 
                 formatList.appendChild(card);
+            };
+
+            if(info._platform == `file`) {
+                setupConvertDownload(listbox.querySelector(`#qualityButtons`), info)
+                listbox.querySelector(`#confirmDownload-2`).onclick = () => send({ card: listbox, node: listbox.querySelector(`#qualityButtons`), info, centerURLBox })
+            } else {
+                qualityButtons({ card: listbox, node: listbox.querySelector(`#qualityButtons`), info, centerURLBox: info.entries ? centerURLBox : () => {} });
             }
 
             if(info.entries) {
@@ -993,7 +1009,7 @@ const runSearch = async (url, initialMsg, func) => {
 
                         //console.log(`running conversionOptions`)
     
-                        conversionOptions(card, entry)
+                        conversionOptions(card, Object.assign({}, info, entry))
                     }
 
                     let visible = false;
@@ -1050,8 +1066,6 @@ const runSearch = async (url, initialMsg, func) => {
             };
             
             if(info.formats) {
-                qualityButtons({ node: listbox, info });
-
                 if(info.formats.filter(f => f.audio).length == 0 && listbox.querySelector(`#downloadBestAudio`)) listbox.querySelector(`#downloadBestAudio`).classList.add(`d-none`);
                 if(info.formats.filter(f => f.video).length == 0 && listbox.querySelector(`#downloadBestVideo`)) listbox.querySelector(`#downloadBestVideo`).classList.add(`d-none`);
                 
@@ -1172,7 +1186,7 @@ const runSearch = async (url, initialMsg, func) => {
 
                     card.querySelector(`#conversionDiv`).appendChild(card.querySelector(`#outputExtension`));
 
-                    conversionOptions(card.querySelector(`#innerFormatCard`), format);
+                    conversionOptions(card.querySelector(`#innerFormatCard`), Object.assign({}, info, format));
                     
                     card.querySelector(`#confirmDownload`).onclick = () => confirmDownload();
 
@@ -1454,7 +1468,17 @@ pasteButton.onclick = () => {
         input.oninput();
         input.focus();
     });
-}
+};
+
+document.addEventListener(`drop`, e => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if(e.dataTransfer.files.length > 0) {
+        input.value = e.dataTransfer.files[0].path;
+        processURL();
+    };
+})
 
 const refreshSelectionBox = () => {
     if(!progressObj) {

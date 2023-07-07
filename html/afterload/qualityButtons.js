@@ -272,6 +272,18 @@ const saveOptionsAnimations = {
     })
 };
 
+const send = ({card, node, info, format, overrideDownloadObj, centerURLBox}) => {
+    node.querySelectorAll(`.btn`).forEach(btn => btn.disabled = true);
+
+    const saveOpt = getSaveOptions(card || node, info, Object.assign({}, {
+        format,
+    }, overrideDownloadObj));
+
+    startDownload(card || node, saveOpt);
+
+    if(centerURLBox) centerURLBox(false);
+}
+
 const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, removeEntry}) => {
     //console.log(`qualityButtons`, info)
 
@@ -335,10 +347,11 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
         });
     };
 
-    const qualityButtonsDropdown = node.querySelector(`#saveOptions`) || listboxTemplate.querySelector(`#saveOptions`).cloneNode(true);
-    if(!qualityButtonsDropdown.parentNode) node.appendChild(qualityButtonsDropdown);
-    setDefaultSaveOptValues(qualityButtonsDropdown, info);
-    node.appendChild(qualityButtonsDropdown);
+    const qualityButtonsDropdown = node.querySelector(`#saveOptions`);
+    if(qualityButtonsDropdown) {
+        setDefaultSaveOptValues(qualityButtonsDropdown, info);
+        node.appendChild(qualityButtonsDropdown);
+    }
 
     const saveLocation = node.querySelector(`#saveLocation`)
 
@@ -437,21 +450,9 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
     }
 
     //highlightButton(node.querySelector(`#downloadBest`))
-    node.querySelector(`#downloadBest`).onclick = () => btnClick(node.querySelector(`#downloadBest`), 0);
-    node.querySelector(`#downloadBestAudio`).onclick = () => btnClick(node.querySelector(`#downloadBestAudio`), 1);
-    node.querySelector(`#downloadBestVideo`).onclick = () => btnClick(node.querySelector(`#downloadBestVideo`), 2);
+    if(node.querySelector(`#downloadBest`)) node.querySelector(`#downloadBest`).onclick = () => btnClick(node.querySelector(`#downloadBest`), 0);
+    if(node.querySelector(`#downloadBestAudio`)) node.querySelector(`#downloadBestAudio`).onclick = () => btnClick(node.querySelector(`#downloadBestAudio`), 1);
+    if(node.querySelector(`#downloadBestVideo`)) node.querySelector(`#downloadBestVideo`).onclick = () => btnClick(node.querySelector(`#downloadBestVideo`), 2);
 
-    const send = () => {
-        node.querySelectorAll(`.btn`).forEach(btn => btn.disabled = true);
-
-        const saveOpt = getSaveOptions(card || node, info, Object.assign({}, {
-            format: qualities[currentSelected] || qualities[0],
-        }, overrideDownloadObj));
-
-        startDownload(card || node, saveOpt);
-
-        if(centerURLBox) centerURLBox(false);
-    }
-
-    node.querySelector(`#confirmDownload`).onclick = () => send();
+    node.querySelector(`#confirmDownload`).onclick = () => send({card, node, info, format: qualities[currentSelected] || qualities[0], overrideDownloadObj, centerURLBox});
 }

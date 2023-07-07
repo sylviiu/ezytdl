@@ -635,7 +635,7 @@ module.exports = {
 
         console.log(`getFilename / before: "${useTempalte}"`)
 
-        if(outputTemplateRegex.test(useTempalte) && fullParse) {
+        if(outputTemplateRegex.test(useTempalte) && fullParse && info._platform != `file`) {
             return new Promise(async res => {
                 console.log(`getFilename / template needs to be parsed!`)
     
@@ -704,7 +704,7 @@ module.exports = {
                         return res(null);
                     } else {
                         let a = stdout.toString().trim();
-                        if(a) {
+                        if(a && !a.includes(`jpeg`) && !a.includes(`png`) && !a.includes(`gif`)) {
                             return res(a.trim().split(`\n`)[0])
                         } else return res(null);
                     }
@@ -786,7 +786,7 @@ module.exports = {
             })
         }) : [];
     },
-    download: ({url, format, ext, convert, filePath, addMetadata, info, extraArguments, onlyFFmpeg}, updateFunc) => new Promise(async resolve => {
+    download: ({url, format, ext, convert, filePath, addMetadata, info, extraArguments}, updateFunc) => new Promise(async resolve => {
         const temporaryFilename = `ezytdl-` + idGen(24);
         
         let obj = {};
@@ -921,11 +921,14 @@ module.exports = {
             }
 
             const fullYtdlpFilename = sanitize(await new Promise(res => {
-                if(onlyFFmpeg && convert) {
+                if(info._platform == `file` && convert) {
                     const parsed = require(`path`).parse(url);
                     res(`${parsed.name} - converted-${Date.now()}` + (convert.ext ? `.${convert.ext}` : parsed.ext))
                 } else {
-                    module.exports.getFilename(url, info, thisFormat, outputFilename + `.%(ext)s`, true).then(res);
+                    const filename = module.exports.getFilename(url, info, thisFormat, outputFilename + `.%(ext)s`, true);
+                    if(filename.then) {
+                        return filename.then(res)
+                    } else return res(filename);
                 }
             }))
 
@@ -1297,7 +1300,7 @@ module.exports = {
             }
 
             const runThroughFFmpeg = async (code, replaceInputArgs, useFile=null) => {
-                const temporaryFiles = useFile ? [useFile] : fs.readdirSync(saveTo).filter(f => f.startsWith(temporaryFilename) && !f.endsWith(`.part`) && !f.endsWith(`.meta`));
+                const temporaryFiles = useFile ? [] : fs.readdirSync(saveTo).filter(f => f.startsWith(temporaryFilename) && !f.endsWith(`.part`) && !f.endsWith(`.meta`));
 
                 if(!useFile) filenames.push(...temporaryFiles);
 
@@ -1322,6 +1325,10 @@ module.exports = {
                     return res(obj)
                     //purgeLeftoverFiles(saveTo)
                 };
+
+                console.log(`temporary (target) files`, useFile)
+
+                if(temporaryFiles.length == 0 && !useFile) return fallback(`No files were found, aborting conversion.`, false);
     
                 if(killAttempt > 0) return fallback(`Download canceled.`, true);
 
@@ -1362,9 +1369,11 @@ module.exports = {
                         ytdlpFilename = ytdlpFilename.trim() + `.trimmed (${seek[0]}-${seek[1]})`;
                     }
 
-                    temporaryFiles.filter(f => fs.existsSync(require(`path`).join(saveTo, f))).forEach(file => inputArgs.push(`-i`, require(`path`).join(saveTo, file)));
+                    if(useFile) {
+                        inputArgs.push(`-i`, useFile);
+                    } else temporaryFiles.filter(f => fs.existsSync(require(`path`).join(saveTo, f))).forEach(file => inputArgs.push(`-i`, require(`path`).join(saveTo, file)));
 
-                    console.log(temporaryFiles, inputArgs)
+                    console.log(inputArgs)
 
                     if(typeof convert.additionalInputArgs == `string`) {
                         const yargsResult = yargs(convert.additionalInputArgs.replace(/-(\w+)/g, '--$1')).argv
@@ -1384,7 +1393,7 @@ module.exports = {
 
                     if(convert.additionalInputArgs) inputArgs.unshift(...convert.additionalInputArgs);
 
-                    const outputArgs = [require(`path`).join(saveTo, ytdlpFilename) + ext];
+                    const outputArgs = [`-map`, `0`, require(`path`).join(saveTo, ytdlpFilename) + ext];
 
                     if(convert.audioBitrate) outputArgs.unshift(`-b:a`, convert.audioBitrate);
                     if(convert.audioSampleRate) outputArgs.unshift(`-ar`, convert.audioSampleRate);
@@ -1409,6 +1418,8 @@ module.exports = {
                     }
 
                     if(convert.additionalOutputArgs) outputArgs.unshift(...convert.additionalOutputArgs);
+
+                    console.log(`ffmpeg arguments`, inputArgs, outputArgs)
     
                     const spawnFFmpeg = (rawArgs2, name) => new Promise(async (resolveFFmpeg, rej) => {
                         let args2 = rawArgs2.slice(0);
@@ -1541,7 +1552,7 @@ module.exports = {
                         if(promises.length > 0) await Promise.all(promises);
                     }
 
-                    if(!originalVideoCodec && originalAudioCodec) convert.forceSoftware = true;
+                    if(!originalVideoCodec) convert.forceSoftware = true;
     
                     console.log(`original obj: `, transcoders.use, `originalVideoCodec: `, originalVideoCodec, `originalAudioCodec:`, originalAudioCodec, `muxer: `, destinationCodec);
 
@@ -1675,7 +1686,7 @@ module.exports = {
 
             //console.log(`--- DOWNLOADING FORMAT (${format}) ---\n`, thisFormat)
 
-            if(!onlyFFmpeg) {
+            if(info._platform != `file`) {
                 args = [`-f`, format, url, `-o`, require(`path`).join(saveTo, temporaryFilename) + `.%(ext)s`, `--no-mtime`, ...additionalArgs];
 
                 if(!format) args.splice(0, 2)
