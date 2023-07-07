@@ -401,7 +401,25 @@ module.exports = {
                 return o;
             });
 
-            d.formats = [...modifiedFormats.filter(o => o.audio && o.video), ...modifiedFormats.filter(o => o.audio && !o.video), ...modifiedFormats.filter(o => !o.audio && o.video), ...modifiedFormats.filter(o => !o.audio && !o.video)];
+            const sortByQuality = (a, b) => {
+                // go by a.quality and b.quality, higher should go first
+                // if there is no quality, send before the ones with quality
+                if(a.quality && b.quality) {
+                    if(a.quality == b.quality) {
+                        return 0;
+                    } else if(a.quality > b.quality) {
+                        return -1;
+                    } else if(a.quality < b.quality) {
+                        return 1;
+                    }
+                } else if(a.quality) {
+                    return -1;
+                } else if(b.quality) {
+                    return 1;
+                } else return 0;
+            }
+
+            d.formats = [...modifiedFormats.filter(o => o.audio && o.video).sort(sortByQuality), ...modifiedFormats.filter(o => o.audio && !o.video).sort(sortByQuality), ...modifiedFormats.filter(o => !o.audio && o.video).sort(sortByQuality), ...modifiedFormats.filter(o => !o.audio && !o.video).sort(sortByQuality)];
         }
 
         d.duration = time(totalTime || (d.originalDuration ? d.originalDuration*1000 : 0) || 0);
