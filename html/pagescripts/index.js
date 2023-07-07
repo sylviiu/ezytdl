@@ -14,8 +14,6 @@ const popoutButtons = createPopout({
         window.location.href = href;
     },
     completeHook: () => {
-        refreshConfig();
-
         configuration.get().then(newConf => {
             if(JSON.stringify(previousConfig) != JSON.stringify(newConf)) {
                 console.log(`config has changed!`);
@@ -249,14 +247,9 @@ const mainInput = {
     }
 };
 
-const refreshConfig = () => {
-    
-}
-
 let existingCenterBoxPromise = null;
 let centerURLBox = () => existingCenterBoxPromise ? existingCenterBoxPromise : new Promise(r => {
     if(!document.getElementById(`listbox`)) return r(false);
-    refreshConfig();
     r(false)
 });
 
@@ -280,7 +273,6 @@ const runSearch = async (url, initialMsg, func) => {
     let info = null;
 
     centerURLBox = (removeListbox, duration) => {
-        refreshConfig();
         if(existingCenterBoxPromise) {
             console.log(`centerURLBox: existing promise found; returning...`)
             return existingCenterBoxPromise;
@@ -1529,7 +1521,6 @@ setTimeout(() => wavesAnims.fadeIn(), 50)
 const housekeeping = () => {
     updateChecker();
     changelog.check();
-    refreshConfig();
 }
 
 if(typeof introAnimation != `undefined`) {
