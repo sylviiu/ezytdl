@@ -459,6 +459,7 @@ module.exports = {
             const encoded = encodeURIComponent(query);
     
             if(from == `youtubemusic`) {
+                forceVerify = true;
                 args.unshift(`https://music.youtube.com/search?q=${encoded}&sp=EgIQAQ%253D%253D`)
             } else if(from == `soundcloud`) {
                 args.unshift(`scsearch${count}:${query}`)
@@ -935,7 +936,7 @@ module.exports = {
                 }
             }))
 
-            let ytdlpSaveExt = fullYtdlpFilename.split(`.`).slice(-1)[0];
+            const ytdlpSaveExt = fullYtdlpFilename.split(`.`).slice(-1)[0];
 
             let ytdlpFilename = fullYtdlpFilename.split(`.`).slice(0, -1).join(`.`);
 
@@ -1350,7 +1351,7 @@ module.exports = {
 
                     console.log(`convert`, convert)
 
-                    const rawExt = convert.ext || info.ext || (thisFormat || {}).ext;
+                    const rawExt = convert.ext || info.ext || ytdlpSaveExt || (thisFormat || {}).ext;
 
                     if(!rawExt) return fallback(`Could not convert to ${`${convert ? convert.ext : `--`}`.toUpperCase()} -- unable to find extension. This shouldn't have happened.`, true)
 
