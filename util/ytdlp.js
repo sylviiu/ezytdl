@@ -74,10 +74,6 @@ const { updateStatus, updateStatusPercent } = downloadManager.default;
 const sendNotification = require(`../core/sendNotification`);
 
 const sendUpdates = (proc, initialMsg) => {
-    //downloading item {num} of {num}
-
-    //console.log(`sending updates...`);
-
     let firstUpdate = false;
 
     let downloadingList = false;
@@ -133,6 +129,10 @@ const sendUpdates = (proc, initialMsg) => {
         if(!str.startsWith(`[debug]`)) {
             updateStatus(str.split(`]`).slice(1).join(`]`).trim())
         }
+    })
+
+    proc.on(`close`, () => {
+        string = null;
     })
 }
 
@@ -529,6 +529,8 @@ module.exports = {
         const info = {};
 
         const proc = child_process.execFile(ffprobePath, [`-v`, `quiet`, `-print_format`, `json`, `-show_format`, `-show_streams`, path]);
+        
+        updateStatus(`Retrieving file info for "${path}"`);
 
         let data = ``;
 
@@ -537,10 +539,13 @@ module.exports = {
         proc.on(`close`, (code) => {
             console.log(`ffprobeInfo closed with code ${code}`);
 
+            updateStatus(`Parsing data...`);
+
             const obj = JSON.parse(data);
 
             if(obj.format) {
                 if(obj.format.tags) Object.assign(info, obj.format.tags);
+                if(obj.format.tags.comment) info.description = obj.format.tags.comment;
                 if(obj.format.duration) info.duration = Number(obj.format.duration);
             };
 
