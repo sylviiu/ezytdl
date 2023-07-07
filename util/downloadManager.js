@@ -1,7 +1,5 @@
 sessions = {
-    get: (id, opt={}) => {
-        const { staggered, noSendErrors } = opt;
-
+    get: (id, { staggered, noSendErrors }={}) => {
         if(!id) id = `default`;
     
         if(!sessions[id]) {
@@ -124,6 +122,8 @@ sessions = {
                     data: sendObj
                 })
             }
+
+            let addTimeout = 0;
             
             const refreshQueue = (opt) => {    
                 let queueModified = false;
@@ -214,7 +214,10 @@ sessions = {
                         const next = queue.queue.shift();
                         queue.active.push(next);
                         if(staggered) {
-                            setTimeout(() => next.start(), i*250)
+                            const delay = Math.max(0, addTimeout - Date.now());
+                            addTimeout = Date.now() + delay + 150;
+                            console.log(`delay:`, delay, `addTimeout:`, addTimeout)
+                            setTimeout(() => next.start(), delay);
                         } else next.start();
                         i++;
                     }
