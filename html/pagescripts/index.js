@@ -1198,9 +1198,11 @@ const runSearch = async (url, initialMsg, func) => {
 
             if(info._platform == `file`) {
                 setupConvertDownload(listbox.querySelector(`#qualityButtons`), info)
-                listbox.querySelector(`#confirmDownload-2`).onclick = () => send({ card: listbox, node: listbox.querySelector(`#qualityButtons`), info, centerURLBox })
+                listbox.querySelector(`#confirmDownload-2`).onclick = () => send({ card: listbox.querySelector(`#qualityButtons`), node: listbox.querySelector(`#qualityButtons`), info })
+            } else if(info.entries) {
+                qualityButtons({ card: listbox, node: listbox.querySelector(`#qualityButtons`), info, centerURLBox });
             } else {
-                qualityButtons({ card: listbox, node: listbox.querySelector(`#qualityButtons`), info, centerURLBox: info.entries ? centerURLBox : () => {} });
+                qualityButtons({ card: listbox.querySelector(`#qualityButtons`), node: listbox.querySelector(`#qualityButtons`), info });
             }
 
             wavesAnims.fadeOut();
