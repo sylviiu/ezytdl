@@ -52,6 +52,7 @@ const config = {
         "html/afterload/*",
         "html/util/*",
         "html/pagescripts/*",
+        "html/tabs/*",
         "html/scripts/*",
         "node_modules/**/*",
         "res/*.*",
