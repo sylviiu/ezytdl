@@ -207,6 +207,7 @@ var startDownload = (originalCard, opt) => {
     
         card.opacity = 1;
         card.style.opacity = 1;
+        card.style.pointerEvents = `none`;
     
         card.id += `-clone`;
     
