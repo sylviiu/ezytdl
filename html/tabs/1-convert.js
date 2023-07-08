@@ -268,6 +268,10 @@ tabs[`Convert`] = {
         
                     let type = `${info.extractor_key || info.extractor || info.webpage_url_domain}`.split(/(?=[A-Z])/).slice(0, -1).join(``);
                     let icon;
+
+                    info._ezytdl_ui_icon = `arrow-alt-circle-right`;
+                    info._ezytdl_ui_type = `Convert`;
+                    info._ezytdl_ui_title = `Converted from ${url}`;
         
                     const setIcon = (name, original, extra) => {
                         console.log(`checking if icon "fab fa-${name}" exists (from ${original}) -- extra: ${extra || `(none)`}`);

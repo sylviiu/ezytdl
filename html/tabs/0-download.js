@@ -354,6 +354,11 @@ if(!tabs[`Download`]) tabs[`Download`] = {
         
                     let type = `${info.extractor_key || info.extractor || info.webpage_url_domain}`.split(/(?=[A-Z])/).slice(0, -1).join(``);
                     let icon;
+                    let iconExtra = ``;
+
+                    info._ezytdl_ui_icon = `arrow-alt-circle-down`;
+                    info._ezytdl_ui_type = `Download`;
+                    info._ezytdl_ui_title = `Downloaded from ${type}`;
         
                     const setIcon = (name, original, extra) => {
                         console.log(`checking if icon "fab fa-${name}" exists (from ${original}) -- extra: ${extra || `(none)`}`);
@@ -364,7 +369,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                             icon.style.marginRight = `12px`;
                             icon.classList.add(`fab`);
                             icon.classList.add(`fa-${name}`);
-                            if(typeof extra == `string`) iconExtra = `| ` + extra + `, `;
+                            if(typeof extra == `string`) iconExtra = `/ ` + extra;
                             return true;
                         } else {
                             console.log(`icon does not exist!`)

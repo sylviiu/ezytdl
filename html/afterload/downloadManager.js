@@ -66,7 +66,7 @@ var initDownloadManager = () => {
             }
         })
         
-        if(document.body.querySelector(`#urlBox`)) {
+        if(typeof formatListTemplate != `undeifned`) {
             const downloadsQueue = formatListTemplate.cloneNode(true);
             downloadsQueue.querySelector(`#formatCard`).parentNode.removeChild(downloadsQueue.querySelector(`#formatCard`));
             
@@ -80,10 +80,6 @@ var initDownloadManager = () => {
             
             const downloadCard = formatListTemplate.querySelector(`#formatCard`).cloneNode(true);
             downloadCard.querySelector(`#formatSubtext`).classList.remove(`d-none`);
-            
-            //downloadCard.querySelector(`#formatMetaList`).classList.add(`d-none`);
-            
-            const platform = navigator.platform.toLowerCase();
             
             const downloadCardStates = {
                 reset: (card) => {
@@ -312,14 +308,36 @@ var initDownloadManager = () => {
                         if(o.opt.info) {
                             if(o.opt.info.webpage_url_domain) title += "[" + o.opt.info.webpage_url_domain + "]";
                             if(o.opt.info.title) title += o.opt.info.title;
-                        }/* else {
-                            title += o.opt.url;
-                        }*/
+                        }
         
                         card.querySelector(`#formatName`).innerHTML = title;
         
                         card.querySelector(`#formatMetaList`).classList.add(`d-none`)
-                        card.querySelector(`#mediaIcons`).classList.add(`d-none`)
+
+                        const mediaIcons = card.querySelector(`#mediaIcons`)
+
+                        mediaIcons.innerHTML = ``;
+
+                        if(o.opt.info._ezytdl_ui_icon) {
+                            const icon = faIconExists(`far`, o.opt.info._ezytdl_ui_icon.replace(`fa-`, ``), true, {color: `black`});
+    
+                            if(icon) mediaIcons.appendChild(icon);
+
+                            if(o.opt.info._ezytdl_ui_type) {
+                                const targetColor = systemColors[tabs[o.opt.info._ezytdl_ui_type || 0].colorScheme];
+                                mediaIcons.style.background = `rgb(${targetColor.light.r}, ${targetColor.light.g}, ${targetColor.light.b})`
+                            }
+
+                            mediaIcons.style.maxWidth = 16 + 12 + `px`
+                            mediaIcons.style.minWidth = 16 + 12 + `px`
+
+                            mediaIcons.classList.remove(`justify-content-between`);
+                            mediaIcons.classList.add(`justify-content-center`);
+
+                            mediaIcons.setAttribute(`title`, o.opt.info._ezytdl_ui_title)
+                        };
+
+                        if(mediaIcons.innerHTML == ``) mediaIcons.classList.add(`d-none`);
 
                         if(o.opt.info.thumbnails && o.opt.info.thumbnails.length > 0) {
                             const thumbnail = o.opt.info.thumbnails[o.opt.info.thumbnails.length - 1];

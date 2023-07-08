@@ -253,6 +253,9 @@ sessions = {
                             title: opt.info.title,
                             thumbnails: opt.info.thumbnails,
                             thumbnail: opt.info.thumbnail,
+                            _ezytdl_ui_icon: opt.info._ezytdl_ui_icon,
+                            _ezytdl_ui_type: opt.info._ezytdl_ui_type,
+                            _ezytdl_ui_title: opt.info._ezytdl_ui_title,
                         } : opt.info
                     }),
                     ignoreUpdates: false,
