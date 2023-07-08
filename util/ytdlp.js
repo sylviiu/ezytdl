@@ -559,7 +559,7 @@ module.exports = {
 
             if(obj.format) {
                 if(obj.format.tags) Object.assign(info, obj.format.tags);
-                if(obj.format.tags.comment) info.description = obj.format.tags.comment;
+                if(obj.format.tags && obj.format.tags.comment) info.description = obj.format.tags.comment;
                 if(obj.format.duration) info.duration = Number(obj.format.duration);
             };
 
