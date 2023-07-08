@@ -158,6 +158,10 @@ const setupConvertDownload = (node, info, colorScheme) => {
                     if(btn.id == currentSelected) {
                         if(btn.id == previousSelected) return;
 
+                        console.log(`reset`, info.selectedConversion)
+
+                        resetTrim(info.selectedConversion.noEdit ? true : false);
+
                         anime.remove(btn);
 
                         const targetColor = colorScheme.light
@@ -339,60 +343,66 @@ const setupConvertDownload = (node, info, colorScheme) => {
 
     console.log(`default option: ${defaultOption} -- parsed: ${usableOption}`)
 
-    setPreset(usableOption ? ffmpegOptions.querySelector(`#${usableOption}`) || null : null, true); // set default preset
+    const resetTrim = (hide) => {
+        const showOptions = ((!info.entries && info.duration && info.duration.timestamp != `--:--`) && !hide) ? true : false;
 
-    if(!info.entries && info.duration && info.duration.timestamp != `--:--`) {
-        const trimFrom = node.querySelector(`#trimFrom`), trimFromInput = node.querySelector(`#trimFromInput`);
-        const trimTo = node.querySelector(`#trimTo`), trimToInput = node.querySelector(`#trimToInput`);
+        console.log(`resetTrim; showing: ${showOptions} (${hide})`)
 
-        const modifyInput = (range, input, source, value) => {
-            const useValue = typeof value == `string` && Number(value) && !value.includes(`:`) ? `00:${value}` : value;
-
-            const time = util.time(useValue, null, {allowZero: true})
-
-            if(source == `from` && (time.units.ms/1000)+1 > Number(trimTo.value)) {
-                if(range) range.value = trimTo.value;
-                if(input) input.value = util.time((Number(trimTo.value)-1)*1000, null, {allowZero: true}).timestamp;
-            } else if(source == `to` && (time.units.ms/1000)-1 < Number(trimFrom.value)) {
-                if(range) range.value = trimFrom.value;
-                if(input) input.value = util.time((Number(trimFrom.value)+1)*1000, null, {allowZero: true}).timestamp;
-            } else {
-                if(range) range.value = (time.units.ms/1000);
-                if(input) input.value = time.timestamp;
-            }
-        };
-
-        const parentStyle = window.getComputedStyle(node);
-
-        console.log(formatCardBounds, formatCardComputed)
-
-        const targetWidth = parseInt(formatCardBounds.width) - parseInt(formatCardComputed.paddingLeft || parentStyle.paddingLeft || node.style.paddingLeft || 0) - parseInt(formatCardComputed.paddingRight || node.style.paddingRight || parentStyle.paddingRight || 0) + `px`;
-
-        console.log(`targetWidth`, targetWidth, `bounds width`, formatCardBounds.width, `padding`, formatCardComputed.paddingLeft || parentStyle.paddingLeft, formatCardComputed.paddingRight || parentStyle.paddingRight)
-
-        trimFrom.style.width = targetWidth;
-        trimTo.style.width = targetWidth;
-        node.querySelector(`#trimContainer`).style.width = targetWidth;
-
-        trimFrom.oninput = () => modifyInput(trimFrom, trimFromInput, `from`, Number(trimFrom.value)*1000);
-        trimTo.oninput = () => modifyInput(trimTo, trimToInput, `to`, Number(trimTo.value)*1000);
-
-        trimFromInput.oninput = () => modifyInput(trimFrom, null, `from`, trimFromInput.value);
-        trimToInput.oninput = () => modifyInput(trimTo, null, `to`, trimToInput.value);
-        trimFromInput.onblur = () => modifyInput(trimFrom, trimFromInput, `from`, trimFromInput.value);
-        trimToInput.onblur = () => modifyInput(trimTo, trimToInput, `to`, trimToInput.value);
-
-        trimFrom.max = Math.ceil(info.duration.units.ms/1000);
-        modifyInput(trimFrom, trimFromInput, `from`, 0);
-
-        trimTo.max = Math.ceil(info.duration.units.ms/1000);
-        modifyInput(trimTo, trimToInput, `to`, (Math.ceil(info.duration.units.ms/1000))*1000);
-
-        info.trim = {};
-    } else {
-        if(!node.querySelector(`#trimOptions`).classList.contains(`d-none`)) node.querySelector(`#trimOptions`).classList.add(`d-none`);
-        if(!node.querySelector(`#trimText`).classList.contains(`d-none`)) node.querySelector(`#trimText`).classList.add(`d-none`);
+        if(showOptions) {
+            const trimFrom = node.querySelector(`#trimFrom`), trimFromInput = node.querySelector(`#trimFromInput`);
+            const trimTo = node.querySelector(`#trimTo`), trimToInput = node.querySelector(`#trimToInput`);
+    
+            const modifyInput = (range, input, source, value) => {
+                const useValue = typeof value == `string` && Number(value) && !value.includes(`:`) ? `00:${value}` : value;
+    
+                const time = util.time(useValue, null, {allowZero: true})
+    
+                if(source == `from` && (time.units.ms/1000)+1 > Number(trimTo.value)) {
+                    if(range) range.value = trimTo.value;
+                    if(input) input.value = util.time((Number(trimTo.value)-1)*1000, null, {allowZero: true}).timestamp;
+                } else if(source == `to` && (time.units.ms/1000)-1 < Number(trimFrom.value)) {
+                    if(range) range.value = trimFrom.value;
+                    if(input) input.value = util.time((Number(trimFrom.value)+1)*1000, null, {allowZero: true}).timestamp;
+                } else {
+                    if(range) range.value = (time.units.ms/1000);
+                    if(input) input.value = time.timestamp;
+                }
+            };
+    
+            const parentStyle = window.getComputedStyle(node);
+    
+            console.log(formatCardBounds, formatCardComputed)
+    
+            const targetWidth = parseInt(formatCardBounds.width) - parseInt(formatCardComputed.paddingLeft || parentStyle.paddingLeft || node.style.paddingLeft || 0) - parseInt(formatCardComputed.paddingRight || node.style.paddingRight || parentStyle.paddingRight || 0) + `px`;
+    
+            console.log(`targetWidth`, targetWidth, `bounds width`, formatCardBounds.width, `padding`, formatCardComputed.paddingLeft || parentStyle.paddingLeft, formatCardComputed.paddingRight || parentStyle.paddingRight)
+    
+            trimFrom.style.width = targetWidth;
+            trimTo.style.width = targetWidth;
+            node.querySelector(`#trimContainer`).style.width = targetWidth;
+    
+            trimFrom.oninput = () => modifyInput(trimFrom, trimFromInput, `from`, Number(trimFrom.value)*1000);
+            trimTo.oninput = () => modifyInput(trimTo, trimToInput, `to`, Number(trimTo.value)*1000);
+    
+            trimFromInput.oninput = () => modifyInput(trimFrom, null, `from`, trimFromInput.value);
+            trimToInput.oninput = () => modifyInput(trimTo, null, `to`, trimToInput.value);
+            trimFromInput.onblur = () => modifyInput(trimFrom, trimFromInput, `from`, trimFromInput.value);
+            trimToInput.onblur = () => modifyInput(trimTo, trimToInput, `to`, trimToInput.value);
+    
+            trimFrom.max = Math.ceil(info.duration.units.ms/1000);
+            modifyInput(trimFrom, trimFromInput, `from`, 0);
+    
+            trimTo.max = Math.ceil(info.duration.units.ms/1000);
+            modifyInput(trimTo, trimToInput, `to`, (Math.ceil(info.duration.units.ms/1000))*1000);
+    
+            info.trim = {};
+        } else {
+            if(!node.querySelector(`#trimOptions`).classList.contains(`d-none`)) node.querySelector(`#trimOptions`).classList.add(`d-none`);
+            if(!node.querySelector(`#trimText`).classList.contains(`d-none`)) node.querySelector(`#trimText`).classList.add(`d-none`);
+        }
     }
+
+    setPreset(usableOption ? ffmpegOptions.querySelector(`#${usableOption}`) || null : null, true); // set default preset
     
     const formattxtbox = node.querySelector(`#outputExtension`);
 

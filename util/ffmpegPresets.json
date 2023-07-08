@@ -63,6 +63,7 @@
         "description": "Extract a specific stream",
         "defaultEnabled": true,
         "icon": "fa-file-export",
+        "noEdit": true,
         "options": {
             "additionalOutputArgs": [ "-c", "copy" ]
         }
