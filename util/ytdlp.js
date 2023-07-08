@@ -1364,7 +1364,7 @@ module.exports = {
     
                 if(killAttempt > 0) return fallback(`Download canceled.`, true);
 
-                if(!useFile) filenames.push(ytdlpFilename)
+                filenames.push(ytdlpFilename)
 
                 if(useFile) onlyGPUConversion = false;
     
