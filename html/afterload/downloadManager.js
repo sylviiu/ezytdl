@@ -324,7 +324,7 @@ var initDownloadManager = () => {
                             if(icon) mediaIcons.appendChild(icon);
 
                             if(o.opt.info._ezytdl_ui_type) {
-                                const targetColor = systemColors[tabs[o.opt.info._ezytdl_ui_type || 0].colorScheme];
+                                const targetColor = systemColors[(tabs[o.opt.info._ezytdl_ui_type] ? tabs[o.opt.info._ezytdl_ui_type].colorScheme : 0)];
                                 mediaIcons.style.background = `rgb(${targetColor.light.r}, ${targetColor.light.g}, ${targetColor.light.b})`
                             }
 
