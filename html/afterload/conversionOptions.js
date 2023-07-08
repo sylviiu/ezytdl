@@ -349,6 +349,9 @@ const setupConvertDownload = (node, info, colorScheme) => {
         console.log(`resetTrim; showing: ${showOptions} (${hide})`)
 
         if(showOptions) {
+            if(node.querySelector(`#trimOptions`).classList.contains(`d-none`)) node.querySelector(`#trimOptions`).classList.remove(`d-none`);
+            if(node.querySelector(`#trimText`).classList.contains(`d-none`)) node.querySelector(`#trimText`).classList.remove(`d-none`);
+
             const trimFrom = node.querySelector(`#trimFrom`), trimFromInput = node.querySelector(`#trimFromInput`);
             const trimTo = node.querySelector(`#trimTo`), trimToInput = node.querySelector(`#trimToInput`);
     
