@@ -110,6 +110,7 @@ contextBridge.exposeInMainWorld(`system`, {
     colors: () => systemColors,
     downloadReq: (cb) => on(`download`, cb),
     hasFFmpeg: () => invoke(`hasFFmpeg`),
+    hasFFprobe: () => invoke(`hasFFprobe`),
     bridgeNeedsDownload: () => invoke(`bridgeNeedsDownload`),
     pickFile: () => invoke(`pickFile`),
 });

@@ -1,4 +1,4 @@
 module.exports = {
     type: `handle`,
-    func: () => require(`../../../util/ytdlp`).hasFFmpeg()
+    func: () => require(`../../../util/filenames/ffmpeg`).getPath()
 }

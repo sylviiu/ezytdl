@@ -4,12 +4,12 @@ tabs[`Convert`] = {
     container: null,
     colorScheme: 1,
     canSwitch: () => new Promise(res => {
-        system.hasFFmpeg().then(r => {
+        system.hasFFprobe().then(r => {
             res(r);
             if(!r) createNotification({
                 type: `error`,
-                headingText: `FFmpeg not found!`,
-                bodyText: `FFmpeg was not found on your system. Please install FFmpeg through the app settings or system-wide, and try again.`,
+                headingText: `FFprobe (from FFmpeg) not found!`,
+                bodyText: `FFprobe was not found on your system. Please install FFmpeg through the app settings (or system-wide with FFprobe), and try again.`,
                 hideReportButton: true,
                 redirect: `settings.html`,
                 redirectMsg: `Go to settings`
