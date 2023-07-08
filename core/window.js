@@ -47,7 +47,7 @@ module.exports = (notDefault, overrideArgs) => {
         width: 800,
         height: 500,
         minHeight: 300,
-        minWidth: 720,
+        minWidth: 800,
         autoHideMenuBar: true,
         fullscreenable: false,
         backgroundColor: `rgb(10,10,10)`,

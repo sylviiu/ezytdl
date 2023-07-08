@@ -38,6 +38,14 @@ var initDownloadManager = () => {
                         downloadsList.appendChild(downloadsIcon)
                     };
 
+                    if(m.data.complete.length > 0 && downloadsIcon.classList.contains(`fa-circle`)) {
+                        downloadsIcon.classList.remove(`fa-circle`);
+                        downloadsIcon.classList.add(`fa-dot-circle`);
+                    } else if(m.data.complete.length == 0 && downloadsIcon.classList.contains(`fa-dot-circle`)) {
+                        downloadsIcon.classList.remove(`fa-dot-circle`);
+                        downloadsIcon.classList.add(`fa-circle`);
+                    }
+
                     if(downloadsList.querySelector(`#downloadsListText`)) downloadsList.removeChild(p);
                 };
 

@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webFrame } = require('electron');
 const fs = require('fs')
 
 console.log(`preload :D`);
@@ -100,6 +100,13 @@ contextBridge.exposeInMainWorld(`system`, {
     loading: () => invoke(`loading`),
     detailsStr: () => invoke(`detailsStr`),
     addScript,
+    getPath,
+    getTabFiles: () => new Promise(async (res, rej) => {
+        fs.readdir(await getPath(`./html/tabs/`), async (e, tabs) => {
+            if(e) return rej(e);
+            res(tabs);
+        })
+    }),
     colors: () => systemColors,
     downloadReq: (cb) => on(`download`, cb),
     hasFFmpeg: () => invoke(`hasFFmpeg`),
@@ -171,6 +178,7 @@ contextBridge.exposeInMainWorld(`update`, {
 
 contextBridge.exposeInMainWorld(`mainQueue`, {
     get: () => invoke(`getQueue`),
+    ffprobeInfo: (path) => invoke(`ffprobeInfo`, path),
     getInfo: (url) => invoke(`getInfo`, url),
     parseInfo: (info) => invoke(`parseInfo`, info),
     parseOutputTemplate: (...arg) => invoke(`parseOutputTemplate`, arg),
@@ -237,7 +245,7 @@ const scriptsObj = {
     }),
 }
 
-contextBridge.exposeInMainWorld(`scripts`, scriptsObj)
+contextBridge.exposeInMainWorld(`scripts`, scriptsObj);
 
 addEventListener(`DOMContentLoaded`, async () => {
     await scriptsObj.libs();

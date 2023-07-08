@@ -457,69 +457,61 @@ module.exports = {
         return module.exports.parseMetadata(d, root);
     },
     search: ({query, count, from, extraArguments, noVerify, forceVerify, ignoreStderr}) => new Promise(async res => {
-        if(fs.existsSync(query)) {
-            console.log(`query is a file!`)
-            
-            return module.exports.ffprobeInfo(query).then(res);
-        } else {
-            console.log(`query is not a file!`)
+        if(!count) count = 10;
 
-            if(!count) count = 10;
-    
-            const additional = module.exports.additionalArguments(extraArguments);
-    
-            //console.log(`query "${query}"; count: ${count}; additional args: "${additional.join(`", "`)}"`)
-    
-            let args = [`--dump-single-json`, `--quiet`, `--verbose`, `--flat-playlist`, `--playlist-end`, `${count}`, ...additional];
-    
-            const encoded = encodeURIComponent(query);
-    
-            if(from == `youtubemusic`) {
-                forceVerify = true;
-                args.unshift(`https://music.youtube.com/search?q=${encoded}&sp=EgIQAQ%253D%253D`)
-            } else if(from == `soundcloud`) {
-                args.unshift(`scsearch${count}:${query}`)
-            } else {
-                args.unshift(`https://www.youtube.com/results?search_query=${encoded}&sp=EgIQAQ%253D%253D`)
-            }
-    
-            console.log(`search args: "${args.map(s => s.includes(` `) ? `'${s}'` : s).join(` `)}"`)
-    
-            const proc = execYTDLP(args, { persist: false });
-    
-            let data = ``;
-    
-            if(!ignoreStderr) sendUpdates(proc, `Starting search for "${query}"`);
-    
-            proc.stdout.on(`data`, d => {
-                //console.log(`output`, d.toString())
-                data += d.toString().trim();
-            });
-    
-            proc.on(`error`, e => {
-                console.log(e)
-            })
-    
-            proc.on(`close`, code => {
-                console.log(`search closed with code ${code}`)
-    
-                try {
-                    const d = Object.assign(JSON.parse(data), { _request_url: query });
-    
-                    if(noVerify) {
-                        return res(d);
-                    } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, extraArguments, forceRun: forceVerify, ignoreStderr }).then(res);
-                } catch(e) {
-                    console.error(`${e}`)
-                    if(!ignoreStderr) sendNotification({
-                        type: `error`,
-                        headingText: `Error getting media info`,
-                        bodyText: `There was an issue retrieving the info. Please try again.`
-                    })
-                    return res(null);
-                }
-            })
+        const additional = module.exports.additionalArguments(extraArguments);
+
+        //console.log(`query "${query}"; count: ${count}; additional args: "${additional.join(`", "`)}"`)
+
+        let args = [`--dump-single-json`, `--quiet`, `--verbose`, `--flat-playlist`, `--playlist-end`, `${count}`, ...additional];
+
+        const encoded = encodeURIComponent(query);
+
+        if(from == `youtubemusic`) {
+            forceVerify = true;
+            args.unshift(`https://music.youtube.com/search?q=${encoded}&sp=EgIQAQ%253D%253D`)
+        } else if(from == `soundcloud`) {
+            args.unshift(`scsearch${count}:${query}`)
+        } else {
+            args.unshift(`https://www.youtube.com/results?search_query=${encoded}&sp=EgIQAQ%253D%253D`)
         }
+
+        console.log(`search args: "${args.map(s => s.includes(` `) ? `'${s}'` : s).join(` `)}"`)
+
+        const proc = execYTDLP(args, { persist: false });
+
+        let data = ``;
+
+        if(!ignoreStderr) sendUpdates(proc, `Starting search for "${query}"`);
+
+        proc.stdout.on(`data`, d => {
+            //console.log(`output`, d.toString())
+            data += d.toString().trim();
+        });
+
+        proc.on(`error`, e => {
+            console.log(e)
+        })
+
+        proc.on(`close`, code => {
+            console.log(`search closed with code ${code}`)
+
+            try {
+                const d = Object.assign(JSON.parse(data), { _request_url: query });
+
+                if(noVerify) {
+                    return res(d);
+                } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, extraArguments, forceRun: forceVerify, ignoreStderr }).then(res);
+            } catch(e) {
+                console.error(`${e}`)
+                if(!ignoreStderr) sendNotification({
+                    type: `error`,
+                    headingText: `Error getting media info`,
+                    bodyText: `There was an issue retrieving the info. Please try again.`
+                })
+                return res(null);
+            }
+        })
     }),
     ffprobeInfo: (path) => new Promise(async res => {
         const ffprobePath = require(`./filenames/ffmpeg`).getFFprobe();
@@ -534,6 +526,16 @@ module.exports = {
                 redirectMsg: `Go to settings`
             });
 
+            return res(null)
+        };
+
+        if(!fs.existsSync(path)) {
+            sendNotification({
+                type: `error`,
+                headingText: `Error getting file info`,
+                bodyText: `The file does not exist.`,
+            });
+            
             return res(null)
         }
 
@@ -616,62 +618,56 @@ module.exports = {
 
         if(ignoreStderr) args.splice(args.indexOf(`--verbose`), 1);
 
-        if(fs.existsSync(query)) {
-            return module.exports.ffprobeInfo(query).then(res);
-        } else {
-            console.log(`query is not a file!`)
+        const proc = execYTDLP(args, { persist: false });
 
-            const proc = execYTDLP(args, { persist: false });
-    
-            let data = ``;
-    
-            if(!ignoreStderr) sendUpdates(proc, `Starting info query of "${query}"`);
-    
-            proc.stdout.on(`data`, d => {
-                //console.log(`output`, d.toString())
-                data += d.toString().trim();
-            });
-    
-            proc.on(`error`, e => {
-                console.log(e)
-            })
-    
-            proc.on(`close`, code => {
-                console.log(`listFormats closed with code ${code} (${query})`)
-    
-                try {
-                    const d = Object.assign(JSON.parse(data), { _request_url: query });
-    
-                    if(ignoreStderr) {
-                        return res(d);
-                    } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, ignoreStderr }).then(res);
-                    //console.log(d)
-                } catch(e) {
-                    console.error(`${e}`)
-                    if(!ignoreStderr) sendNotification({
-                        type: `error`,
-                        headingText: `Error getting media info`,
-                        bodyText: `There was an issue retrieving the info. Please try again.`
-                    })
-                    return res(null);
-                }
-            })
-        }
+        let data = ``;
+
+        if(!ignoreStderr) sendUpdates(proc, `Starting info query of "${query}"`);
+
+        proc.stdout.on(`data`, d => {
+            //console.log(`output`, d.toString())
+            data += d.toString().trim();
+        });
+
+        proc.on(`error`, e => {
+            console.log(e)
+        })
+
+        proc.on(`close`, code => {
+            console.log(`listFormats closed with code ${code} (${query})`)
+
+            try {
+                const d = Object.assign(JSON.parse(data), { _request_url: query });
+
+                if(ignoreStderr) {
+                    return res(d);
+                } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, ignoreStderr }).then(res);
+                //console.log(d)
+            } catch(e) {
+                console.error(`${e}`)
+                if(!ignoreStderr) sendNotification({
+                    type: `error`,
+                    headingText: `Error getting media info`,
+                    bodyText: `There was an issue retrieving the info. Please try again.`
+                })
+                return res(null);
+            }
+        })
     }),
     getFilename: (url, info, format, template, fullParse) => {
         const { outputFilename } = require(`../getConfig`)();
 
         let useTempalte = template || outputFilename;
 
-        console.log(`getFilename / raw: "${useTempalte}"`)
+        //console.log(`getFilename / raw: "${useTempalte}"`)
 
         useTempalte = module.exports.parseOutputTemplate(Object.assign({}, (typeof format == `object` ? format : {}), info), useTempalte);
 
-        console.log(`getFilename / before: "${useTempalte}"`)
+        //console.log(`getFilename / before: "${useTempalte}"`)
 
         if(outputTemplateRegex.test(useTempalte) && fullParse && info._platform != `file`) {
             return new Promise(async res => {
-                console.log(`getFilename / template needs to be parsed!`)
+                //console.log(`getFilename / template needs to be parsed!`)
     
                 const args = [url, `-o`, useTempalte, `--get-filename`, `--quiet`];
         
@@ -711,18 +707,18 @@ module.exports = {
                 //})
                 
                 proc.on(`close`, code => {
-                    console.log(`getFilename / getFilename closed with code ${code}`);
+                    //console.log(`getFilename / getFilename closed with code ${code}`);
                     console.log(data)
-                    console.log(`getFilename / after: "${data}"`)
+                    //console.log(`getFilename / after: "${data}"`)
                     res(data)
                 })
             })
         } else {
-            console.log(`getFilename / no need to parse template! (or noParse is true)`)
+            //console.log(`getFilename / no need to parse template! (or noParse is true)`)
 
             useTempalte = useTempalte.replace(outputTemplateRegex, () => `${`Unknown`}`)
 
-            console.log(`getFilename / after: "${useTempalte}"`)
+            //console.log(`getFilename / after: "${useTempalte}"`)
 
             return useTempalte
         }

@@ -106,7 +106,7 @@ const animateHiddenOptions = (node, ffmpegOptions, {
     };
 };
 
-const setupConvertDownload = (node, info) => {
+const setupConvertDownload = (node, info, colorScheme) => {
     const presetButtonClone = node.querySelector(`#ffmpegOptions`) ? node.querySelector(`#ffmpegOptions`).querySelector(`#custom`).cloneNode(true) : null;
 
     const ffmpegOptions = node.querySelector(`#ffmpegOptions`);
@@ -160,7 +160,7 @@ const setupConvertDownload = (node, info) => {
 
                         anime.remove(btn);
 
-                        const targetColor = (typeof systemColors != `undefined` ? systemColors : system.colors()).light
+                        const targetColor = colorScheme.light
 
                         anime({
                             targets: btn,
@@ -403,7 +403,7 @@ const setupConvertDownload = (node, info) => {
     }
 }
 
-const conversionOptions = (node, info) => {
+const conversionOptions = (node, info, colorScheme) => {
     //node.querySelector(`#saveLocation`).placeholder = `${config && config.saveLocation ? config.saveLocation : `{default save location}`}`;
     //node.querySelector(`#saveLocation`).value = `${config && config.saveLocation ? config.saveLocation : ``}`;
     node.querySelector(`#basedir`).innerText = `${info.saveLocation || (config && config.saveLocation ? config.saveLocation : `Save Location`)}`;
@@ -423,9 +423,9 @@ const conversionOptions = (node, info) => {
     
     if(hasFFmpeg) {
         if(info._platform == `file`) {
-            setupConvertDownload(node, info);
+            setupConvertDownload(node, info, colorScheme);
         } else if(node.querySelector(`#convertDownload`)) node.querySelector(`#convertDownload`).onclick = () => {
-            setupConvertDownload(node, info);
+            setupConvertDownload(node, info, colorScheme);
 
             animateHiddenOptions(node, node.querySelector(`#ffmpegOptions`));
     

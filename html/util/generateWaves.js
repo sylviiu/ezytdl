@@ -1,7 +1,7 @@
 const generateWaves = (color) => {
     if(!color) {
         console.log(`no color provided, using standard system colors`, systemColors)
-        color = systemColors.standard;
+        color = currentColorScheme.standard;
     };
 
     const { r, g, b } = color;
@@ -11,7 +11,6 @@ const generateWaves = (color) => {
     parentDiv.classList.add(`justify-content-center`)
     parentDiv.classList.add(`align-items-end`)
     parentDiv.style.width = `100vw`;
-    //parentDiv.style.height = `100%`;
     parentDiv.style.position = `absolute`;
     parentDiv.style.bottom = `0`;
     parentDiv.style.left = `0`;
@@ -21,8 +20,6 @@ const generateWaves = (color) => {
 
     const svg = document.createElementNS(`http://www.w3.org/2000/svg`, `svg`);
     svg.setAttributeNS(null, `class`, `waves`);
-    //svg.setAttributeNS(null, `xmlns`, `http://www.w3.org/2000/svg`);
-    //svg.setAttributeNS(null, `xmlns:xlink`, `http://www.w3.org/1999/xlink`);
     svg.setAttributeNS(null, `viewBox`, `0 24 150 28`);
     svg.setAttributeNS(null, `preserveAspectRatio`, `none`);
     svg.setAttributeNS(null, `shape-rendering`, `auto`);
@@ -47,16 +44,28 @@ const generateWaves = (color) => {
         use.setAttributeNS(null, `y`, y);
         use.setAttributeNS(null, `fill`, `rgba(${r}, ${g}, ${b}, ${alpha})`);
         gnode.appendChild(use);
+        return use;
     };
 
-    appendUse(48, 0, 0.7);
-    appendUse(48, 3, 0.5);
-    appendUse(48, 5, 0.3);
-    appendUse(48, 7, 1);
+    const useArray = [ appendUse(48, 0, 0.7), appendUse(48, 3, 0.5), appendUse(48, 5, 0.3), appendUse(48, 7, 1) ];
 
     svg.appendChild(gnode);
 
-    return parentDiv;
+    return {
+        waves: parentDiv,
+        useArray,
+        setWavesColor: (color) => {
+            for(const use of useArray) {
+                const previousColor = use.getAttributeNS(null, `fill`);
+                anime({
+                    targets: use,
+                    fill: `rgba(${color.r}, ${color.g}, ${color.b}, ${previousColor.split(`,`)[3].split(`)`)[0]})`,
+                    duration: 1000,
+                    easing: `easeOutExpo`,
+                });
+            }
+        }
+    };
 
     /*return htmlContent.map(s => {
         if(s.includes(`rgba(255,255,255`)) s = s.replace(`rgba(255,255,255`, `rgba(${r},${g},${b}`)

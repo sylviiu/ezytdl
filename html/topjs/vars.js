@@ -8,6 +8,8 @@ configuration.hook(newConf => { config = newConf });
 var systemColors = system.colors();
 console.log(`systemColors: `, systemColors)
 
+var currentColorScheme = systemColors[0];
+
 var appVersion = `0.0.0`;
 version.get().then(v => appVersion = v);
 

@@ -7,7 +7,7 @@ const range = (val) => {
 };
 
 const tinycolor = require('tinycolor2');
-const ColorScheme = require('color-scheme');
+const ColorScheme = require('color-scheme')
 
 module.exports = ({ r, g, b }) => {
     const scm = new ColorScheme;
@@ -17,37 +17,44 @@ module.exports = ({ r, g, b }) => {
     const colors = scm.from_hex(hex)
     .scheme('analogic')
     .distance(0.9)
-    .add_complement(false)
+    .add_complement(true)
     .variation('pastel')
     .web_safe(true)
     .colors();
 
-    const standard = colors[0];
-    const light = tinycolor(`#` + colors[2]).toHexString().replace(`#`, ``);
-    const dark = colors[1];
+    const createColorsObj = (...index) => {
+        const standard = colors[index[0]];
+        const dark = colors[index[1]];
+        const darker = tinycolor(`#` + colors[index[1]]).saturate(-15).toHexString().replace(`#`, ``);
+        const light = tinycolor(`#` + colors[index[2]]).toHexString().replace(`#`, ``);
 
-    const newColors = {
-        standard: {
-            r: range(parseInt(standard.slice(0, 2), 16)),
-            g: range(parseInt(standard.slice(2, 4), 16)),
-            b: range(parseInt(standard.slice(4, 6), 16)),
-        },
-        light: {
-            r: range(parseInt(light.slice(0, 2), 16)),
-            g: range(parseInt(light.slice(2, 4), 16)),
-            b: range(parseInt(light.slice(4, 6), 16)),
-        },
-        dark: {
-            r: range(parseInt(dark.slice(0, 2), 16)),
-            g: range(parseInt(dark.slice(2, 4), 16)),
-            b: range(parseInt(dark.slice(4, 6), 16)),
-        },
-        darker: {
-            r: range(parseInt(dark.slice(0, 2), 16)/10),
-            g: range(parseInt(dark.slice(2, 4), 16)/10),
-            b: range(parseInt(dark.slice(4, 6), 16)/10),
-        },
+        const colorsObj = {
+            standard: {
+                r: range(parseInt(standard.slice(0, 2), 16)),
+                g: range(parseInt(standard.slice(2, 4), 16)),
+                b: range(parseInt(standard.slice(4, 6), 16)),
+            },
+            light: {
+                r: range(parseInt(light.slice(0, 2), 16)),
+                g: range(parseInt(light.slice(2, 4), 16)),
+                b: range(parseInt(light.slice(4, 6), 16)),
+            },
+            dark: {
+                r: range(parseInt(dark.slice(0, 2), 16)),
+                g: range(parseInt(dark.slice(2, 4), 16)),
+                b: range(parseInt(dark.slice(4, 6), 16)),
+            },
+            darker: {
+                r: range(parseInt(darker.slice(0, 2), 16)/6),
+                g: range(parseInt(darker.slice(2, 4), 16)/6),
+                b: range(parseInt(darker.slice(4, 6), 16)/6),
+            },
+        }
+
+        console.log(`picked colors ${standard}, ${dark}, ${light} from offsets ${index.join(`, `)}`, colorsObj)
+
+        return colorsObj
     };
 
-    return newColors
+    return [ createColorsObj(0, 1, 2), createColorsObj(4, 5, 6), createColorsObj(8, 9, 10), createColorsObj(12, 13, 14) ]
 }

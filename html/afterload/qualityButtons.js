@@ -11,7 +11,7 @@ const getDirectChild = (node, id) => {
     return found
 }
 
-const setDefaultSaveOptValues = (node, info) => {
+const setDefaultSaveOptValues = (node, info, colorScheme) => {
     if(node.querySelector(`#outputExtension`)) {
         node.querySelector(`#outputExtension`).placeholder = `ext`;
     } else console.log(`no formatConversionTextbox`)
@@ -19,7 +19,7 @@ const setDefaultSaveOptValues = (node, info) => {
     if(node.querySelector(`#saveLocation`)) {
         //console.log(`setting saveLocation values`)
 
-        conversionOptions(node, info)
+        conversionOptions(node, info, colorScheme)
 
         if(info.entries && info.entries.length > 0) {
             //if(!node.querySelector(`#saveLocation`).value.endsWith(navigator.platform.toLowerCase() == `win32` ? `\\` : `/`)) node.querySelector(`#saveLocation`).value += navigator.platform.toLowerCase() == `win32` ? `\\` : `/`
@@ -284,7 +284,7 @@ const send = ({card, node, info, format, overrideDownloadObj, centerURLBox}) => 
     if(centerURLBox) centerURLBox(false);
 }
 
-const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, removeEntry}) => {
+const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, removeEntry, colorScheme}) => {
     //console.log(`qualityButtons`, info)
 
     addMissingNodes(node);
@@ -316,14 +316,14 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
         formatConversionTextbox.value = config.lastMediaConversionOutputs[configSelectionMap[currentSelected]] || ``;
     }
     
-    const targetColor = (typeof systemColors != `undefined` ? systemColors : system.colors()).light
+    const targetColor = colorScheme.light
 
     let refreshQualityButtonSelection = () => {
         node.querySelectorAll(`.btn`).forEach((btn, i) => {
             if(currentSelected == i) {
                 //btn.style.backgroundColor = `#000000`;
                 //btn.style.color = `#ffffff`;
-                highlightButton(btn)
+                highlightButton(btn, colorScheme)
                 anime.remove(btn);
                 anime({
                     targets: btn,
@@ -349,7 +349,7 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
 
     const qualityButtonsDropdown = node.querySelector(`#saveOptions`);
     if(qualityButtonsDropdown) {
-        setDefaultSaveOptValues(qualityButtonsDropdown, info);
+        setDefaultSaveOptValues(qualityButtonsDropdown, info, colorScheme);
         node.appendChild(qualityButtonsDropdown);
     }
 
@@ -449,7 +449,7 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
         }
     }
 
-    //highlightButton(node.querySelector(`#downloadBest`))
+    //highlightButton(node.querySelector(`#downloadBest`), colorScheme)
     if(node.querySelector(`#downloadBest`)) node.querySelector(`#downloadBest`).onclick = () => btnClick(node.querySelector(`#downloadBest`), 0);
     if(node.querySelector(`#downloadBestAudio`)) node.querySelector(`#downloadBestAudio`).onclick = () => btnClick(node.querySelector(`#downloadBestAudio`), 1);
     if(node.querySelector(`#downloadBestVideo`)) node.querySelector(`#downloadBestVideo`).onclick = () => btnClick(node.querySelector(`#downloadBestVideo`), 2);

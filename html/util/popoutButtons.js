@@ -367,7 +367,6 @@ const createPopout = ({
                             return closeWindow();
                         } else if(closeOnNavigate) console.log(`navigation detected (${loads}) & closeOnNavigate is true; not closing`)
 
-                        h.contentWindow.createButton = (...c) => createButton(...c);
                         h.contentWindow.repositionNotifications = (...c) => repositionNotifications(...c);
                         h.contentWindow.addNotification = (...c) => repositionNotifications(...c);
                         h.contentWindow.createNotification = (...c) => createNotification(...c);

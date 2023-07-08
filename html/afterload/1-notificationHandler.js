@@ -13,22 +13,6 @@ if(window.parent != window) {
     //addNotification = window.parent.addNotification;
     //createNotification = window.parent.createNotification;
 } else {
-    createButton = (id) => {
-        const button = useDocument.createElement(`a`);
-        button.classList.add(`btn`);
-        button.classList.add(`btn-primary`);
-        button.setAttribute(`role`, `button`);
-        button.id = id;
-        button.style.background = `rgb(255,255,255)`;
-        button.style.borderStyle = `none`;
-        button.style.borderRadius = `100px`;
-        button.style.height = `36px`;
-        button.style.marginBottom = `16px`;
-        button.style.marginRight = `6px`;
-        button.style.color = `rgb(0,0,0)`;
-        return button;
-    }
-
     repositionNotifications = (addHeight, constant) => {
         if(!addHeight || typeof addHeight != `number`) addHeight = 0;
     

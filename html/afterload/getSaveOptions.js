@@ -2,7 +2,7 @@ const getSaveOptions = (node, info, overrideDownloadObj, {
     getConvertOnly = false,
     ignore = [],
 }={}) => {
-    const formatConversionTextbox = node.querySelector(`#outputExtension`);
+    const formatConversionTextbox = node.querySelector(`#outputExtension`) || { value: null };
     const convertDownload = node.querySelector(`#convertDownload`);
 
     let convertInfo = { ext: formatConversionTextbox.value };
