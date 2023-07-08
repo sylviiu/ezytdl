@@ -300,6 +300,40 @@ getTabs().then(tabs => {
     
         const icon = thisButton.querySelector(`#icon`);
         const name = thisButton.querySelector(`#name`);
+
+        thisButton.onmouseover = () => {
+            anime.remove(name);
+            anime({
+                targets: name,
+                opacity: 1,
+                //letterSpacing: `0px`,
+                fontSize: `1em`,
+                paddingLeft: `6px`,
+                duration: 200,
+                easing: `easeOutCirc`,
+                begin: () => {
+                    if(name.classList.contains(`d-none`)) name.classList.remove(`d-none`)
+                }
+            })
+        };
+
+        thisButton.onmouseout = () => {
+            anime.remove(name);
+            anime({
+                targets: name,
+                opacity: 0,
+                //letterSpacing: `-8px`,
+                fontSize: `0em`,
+                paddingLeft: `0px`,
+                duration: 200,
+                easing: `easeOutCirc`,
+                complete: () => {
+                    if(!name.classList.contains(`d-none`)) name.classList.add(`d-none`)
+                }
+            })
+        };
+
+        thisButton.onmouseout();
     
         icon.classList.remove(`fa-circle`);
         icon.classList.add(`fa-${tab.icon}`);
