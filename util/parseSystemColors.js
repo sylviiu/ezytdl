@@ -12,7 +12,15 @@ const ColorScheme = require('color-scheme')
 module.exports = ({ r, g, b }) => {
     const scm = new ColorScheme;
 
-    const hex = tinycolor(`#${r.toString(16).toUpperCase()}${g.toString(16).toUpperCase()}${b.toString(16).toUpperCase()}`).saturate(50).toHexString().replace(`#`, ``)
+    const strings = [r.toString(16).toUpperCase(), g.toString(16).toUpperCase(), b.toString(16).toUpperCase()];
+
+    for(let i = 0; i < strings.length; i++) {
+        if(strings[i].length == 1) strings[i] = `0` + strings[i];
+    }
+
+    const originalHex = `#${strings.join(``)}`
+
+    const hex = tinycolor(originalHex).saturate(50).toHexString().replace(`#`, ``)
 
     const colors = scm.from_hex(hex)
     .scheme('analogic')
@@ -51,7 +59,7 @@ module.exports = ({ r, g, b }) => {
             },
         }
 
-        console.log(`picked colors ${standard}, ${dark}, ${light} from offsets ${index.join(`, `)}`, colorsObj)
+        console.log(`picked colors ${standard}, ${dark}, ${light} from offsets ${index.join(`, `)} with original hex ${originalHex} -> ${hex}`, colorsObj)
 
         return colorsObj
     };
