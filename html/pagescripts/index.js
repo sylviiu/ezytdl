@@ -251,11 +251,15 @@ getTabs().then(tabs => {
             if(tab.button.querySelector(`#icon`).classList.contains(`far`)) {
                 tab.button.querySelector(`#icon`).classList.remove(`far`);
                 tab.button.querySelector(`#icon`).classList.add(`fas`);
+
+                tab.button.onmouseover();
             };
     
             if(currentTab) {
                 currentTab.button.style.background = tabButton.style.background;
                 currentTab.button.style.color = tabButton.style.color;
+
+                currentTab.button.onmouseout();
 
                 if(currentTab.button.querySelector(`#icon`).classList.contains(`fas`)) {
                     currentTab.button.querySelector(`#icon`).classList.remove(`fas`);
@@ -328,6 +332,7 @@ getTabs().then(tabs => {
         };
 
         thisButton.onmouseout = () => {
+            if(selectedTab == tabName) return;
             anime.remove(name);
             anime({
                 targets: name,
