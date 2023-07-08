@@ -3,6 +3,19 @@ tabs[`Convert`] = {
     icon: `arrow-alt-circle-right`,
     container: null,
     colorScheme: 1,
+    canSwitch: () => new Promise(res => {
+        system.hasFFmpeg().then(r => {
+            res(r);
+            if(!r) createNotification({
+                type: `error`,
+                headingText: `FFmpeg not found!`,
+                bodyText: `FFmpeg was not found on your system. Please install FFmpeg through the app settings or system-wide, and try again.`,
+                hideReportButton: true,
+                redirect: `settings.html`,
+                redirectMsg: `Go to settings`
+            })
+        })
+    }),
     initializePage: (container, { setBackground, wavesAnims, colorScheme }) => {
         const urlBox = container.querySelector(`#urlBox`);
         const innerUrlBox = container.querySelector(`#innerUrlBox`);
@@ -1222,21 +1235,5 @@ tabs[`Convert`] = {
                 if((e.key == `Enter` || e.keyCode == 13) && !input.disabled) processURL();
             });
         })
-        
-        const housekeeping = () => {
-            updateChecker();
-            changelog.check();
-        }
-        
-        if(typeof introAnimation != `undefined`) {
-            introAnimation.wait(() => housekeeping())
-        } else housekeeping();
-        
-        if(window.location.search.slice(1)) {
-            const str = window.location.search.slice(1);
-            history.pushState({ page: 1 }, "introAnimation", window.location.href.split(`?`)[0]);
-            input.value = str;
-            processURL();
-        };
     }
 }

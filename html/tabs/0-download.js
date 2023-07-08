@@ -1223,10 +1223,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
         
         let selectonBoxShowing = false;
         
-        //const selectionBoxHeight = searchSelectionBox.getBoundingClientRect().height;
         const selectonBoxMargin = searchSelectionBox.style.marginTop;
-        
-        //console.log(`height: ${selectionBoxHeight}, margin: ${selectonBoxMargin}`)
         
         const selectionBox = {
             show: (noAnim) => {
@@ -1291,14 +1288,6 @@ if(!tabs[`Download`]) tabs[`Download`] = {
         
         deselectAllSearchBtns();
         
-        /*urlFilePick.onclick = () => system.pickFile({ title: `Convert File` }).then(file => {
-            if(file) {
-                console.log(`file:`, file)
-                input.value = file;
-                processURL();
-            }
-        });*/
-        
         const setCurrentSearch = (btn) => {
             changesMadeToInput = true;
             centerURLBox(true);
@@ -1343,16 +1332,6 @@ if(!tabs[`Download`]) tabs[`Download`] = {
             });
         };
         
-        document.addEventListener(`drop`, e => {
-            e.preventDefault();
-            e.stopPropagation();
-        
-            if(e.dataTransfer.files.length > 0) {
-                input.value = e.dataTransfer.files[0].path;
-                processURL();
-            };
-        })
-        
         const refreshSelectionBox = () => {
             if(!progressObj) {
                 selectionBox.show(null, false);
@@ -1369,11 +1348,11 @@ if(!tabs[`Download`]) tabs[`Download`] = {
         const inputs = [input, extraArguments];
         
         inputs.forEach(inp => {
-            /*inp.addEventListener(`input`, () => {
+            inp.addEventListener(`input`, () => {
                 changesMadeToInput = true;
                 centerURLBox(true);
                 refreshSelectionBox();
-            });*/
+            });
         
             inp.oninput = () => {
                 changesMadeToInput = true;
@@ -1393,21 +1372,5 @@ if(!tabs[`Download`]) tabs[`Download`] = {
         resultsCountInput.addEventListener(`keyup`, (e) => {
             if(e.key == `Enter` || e.keyCode == 13) processURL();
         });
-        
-        const housekeeping = () => {
-            updateChecker();
-            changelog.check();
-        }
-        
-        if(typeof introAnimation != `undefined`) {
-            introAnimation.wait(() => housekeeping())
-        } else housekeeping();
-        
-        if(window.location.search.slice(1)) {
-            const str = window.location.search.slice(1);
-            history.pushState({ page: 1 }, "introAnimation", window.location.href.split(`?`)[0]);
-            input.value = str;
-            processURL();
-        };
     }
 }

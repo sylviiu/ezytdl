@@ -1,5 +1,7 @@
 let previousConfig = Object.assign({}, config || {});
 
+const postConfigHooks = [];
+
 const popoutButtons = createPopout({
     buttons: [
         {
@@ -24,10 +26,12 @@ const popoutButtons = createPopout({
                 })
         
                 config = newConf;
-                previousConfig = Object.assign({}, newConf || {});;
+                previousConfig = Object.assign({}, newConf || {});
             } else {
                 console.log(`config has NOT changed.`)
             }
+
+            postConfigHooks.forEach(h => h(newConf));
         });
     }
 });
@@ -201,7 +205,7 @@ getTabs().then(tabs => {
         }
     }
     
-    const selectTab = (tabName) => {
+    const selectTab = async (tabName) => {
         if(transitioning) return;
 
         window.scroll({
@@ -218,6 +222,14 @@ getTabs().then(tabs => {
         const indexOfCurrent = tabKeys.indexOf(selectedTab);
     
         if(tab && selectedTab != tabName) {
+            transitioning = true;
+
+            if(typeof tab.canSwitch == `function`) {
+                const result = await tab.canSwitch();
+
+                if(!result) return transitioning = false;
+            }
+
             selectedTab = tabName;
 
             const colorScheme = systemColors[tab.colorScheme];
@@ -254,8 +266,6 @@ getTabs().then(tabs => {
             if(!tab.content.parentElement) {
                 console.log(`appending tab "${tab.name}" to everything`)
     
-                transitioning = true;
-    
                 const goingLeft = indexOfNew < indexOfCurrent;
     
                 tab.content.style.left = goingLeft ? `-100%` : `+100%`;
@@ -279,7 +289,7 @@ getTabs().then(tabs => {
                         transitioning = false;
                     }
                 })
-            }
+            } else transitioning = false;
         }
     };
     
@@ -349,3 +359,19 @@ getTabs().then(tabs => {
                 
     setTimeout(() => getWaveAnims(`Download`).fadeIn(), 50)
 })
+        
+const housekeeping = () => {
+    updateChecker();
+    changelog.check();
+}
+
+if(typeof introAnimation != `undefined`) {
+    introAnimation.wait(() => housekeeping())
+} else housekeeping();
+        
+if(window.location.search.slice(1)) {
+    const str = window.location.search.slice(1);
+    history.pushState({ page: 1 }, "introAnimation", window.location.href.split(`?`)[0]);
+    input.value = str;
+    processURL();
+};
