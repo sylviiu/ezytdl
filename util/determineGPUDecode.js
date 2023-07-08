@@ -100,7 +100,7 @@ module.exports = (link, platforms, setProgress) => {
 
                 setProgress(`Running tests on ${platforms.length} platforms...`, -1)
 
-                const transcoders = require(`./ffmpegGPUArgs.json`);
+                const transcoders = require(`./configs`).ffmpegGPUArgs();
     
                 let tested = {};
     

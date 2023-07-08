@@ -25,23 +25,24 @@ module.exports = (configObject, {
             defaultConfig.nightlyUpdates = require(`./package.json`).version.includes(`-nightly.`) ? true : false;
 
             // add ffmpeg hardware acceleration toggles to config
-            const gpuArgs = require(`./util/ffmpegGPUArgs.json`);
+            const gpuArgs = require(`./util/configs`).ffmpegGPUArgs();
             for(const key of Object.keys(gpuArgs)) {
                 if(gpuArgs[key].platform.includes(process.platform)) {
                     defaultConfig.hardwareAcceleratedConversion[key] = false;
                 }
             };
 
+            const removedArgs = Object.keys(defaultConfig.hardwareAcceleratedConversion).filter(key => !gpuArgs[key]);
+            for(const key of removedArgs) delete defaultConfig.hardwareAcceleratedConversion[key];
+
             // add ffmpeg conversion preset toggles to config
             const ffmpegPresets = Object.values(require(`./util/configs`).ffmpegPresets());
-
             for(const {key, defaultEnabled} of ffmpegPresets) {
                 defaultConfig.ffmpegPresets[key] = defaultEnabled || false;
             };
 
-            const removed = Object.keys(defaultConfig.ffmpegPresets).filter(key => !ffmpegPresets.map(preset => preset.key).includes(key));
-
-            for(const key of removed) delete defaultConfig.ffmpegPresets[key];
+            const removedPresets = Object.keys(defaultConfig.ffmpegPresets).filter(key => !ffmpegPresets.map(preset => preset.key).includes(key));
+            for(const key of removedPresets) delete defaultConfig.ffmpegPresets[key];
         }
     
         fs.mkdirSync(global.configPath, { recursive: true, failIfExists: false });
@@ -184,9 +185,13 @@ module.exports = (configObject, {
             };
     
             parseAction(null, require(`./core/configActions.js`)(userConfig), userConfig.actions);
-        }
+        };
 
-        return values ? Object.values(userConfig) : userConfig;
+        const returnValue = values ? Object.values(userConfig) : userConfig;
+
+        console.log(returnValue)
+
+        return returnValue;
     } catch(e) {
         errorHandler(e)
     }

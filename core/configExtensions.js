@@ -1,6 +1,6 @@
 module.exports = {
     gpuArgs: (userConfig) => {
-        const gpuArgs = require(`../util/ffmpegGPUArgs.json`);
+        const gpuArgs = require(`../util/configs`).ffmpegGPUArgs();
 
         Object.assign(userConfig.strings, { hardwareAcceleratedConversionExtended: {}, });
         Object.assign(userConfig.descriptions, { hardwareAcceleratedConversionExtended: {}, });
