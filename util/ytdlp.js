@@ -286,7 +286,6 @@ module.exports = {
         template = template.replace(outputTemplateRegex, (match, key) => {
             const capturedKeys = key.split(`,`).map(s => s.trim())
             for (const key of capturedKeys) {
-                console.log(match, key);
                 if (info[key]) {
                     return info[key];
                 }
@@ -1391,17 +1390,25 @@ module.exports = {
 
                     const inputArgs = replaceInputArgs || [];
 
+                    let totalDuration = [0, info.duration ? info.duration.units.ms : (info.originalDuration ? info.originalDuration*1000 : 0)];
+
                     let seek = [];
 
                     if(convert.trimFrom) {
                         inputArgs.push(`-ss`, convert.trimFrom);
-                        seek.push(Math.ceil(time(convert.trimFrom).units.ms/1000))
+                        const ms = time(convert.trimFrom).units.ms;
+                        seek.push(Math.ceil(ms/1000));
+                        totalDuration[0] = ms;
                     } else seek.push(0);
 
                     if(convert.trimTo) {
                         inputArgs.push(`-to`, convert.trimTo);
-                        seek.push(Math.ceil(time(convert.trimTo).units.ms/1000))
+                        const ms = time(convert.trimTo).units.ms;
+                        seek.push(Math.ceil(ms/1000))
+                        totalDuration[1] = ms;
                     } else seek.push(Math.ceil(info.duration.units.ms/1000));
+
+                    const totalTrimmedDuration = Math.max(0, (totalDuration[1] ? totalDuration[1] - totalDuration[0] : null));
 
                     if(seek[0] != 0 || seek[1] != Math.ceil(info.duration.units.ms/1000)) {
                         ytdlpFilename = ytdlpFilename.trim() + `.trimmed (${seek[0]}-${seek[1]})`;
@@ -1518,7 +1525,7 @@ module.exports = {
         
                             if(data.includes(`time=`)) {
                                 const timestamp = time(data.trim().split(`time=`)[1].trim().split(` `)[0]).units.ms;
-                                update({percentNum: (Math.round((timestamp / duration) * 1000))/10})
+                                update({percentNum: (Math.round((timestamp / (totalTrimmedDuration || duration)) * 1000))/10})
                             }
     
                             let speed = [];
