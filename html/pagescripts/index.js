@@ -183,6 +183,8 @@ const tabButtons = document.getElementById(`tabButtons`);
 const tabButton = document.getElementById(`tabButton`).cloneNode(true);
 document.getElementById(`tabButton`).remove();
 
+let selectTab = () => {};
+
 getTabs().then(tabs => {
     const tabKeys = Object.keys(tabs);
     
@@ -205,7 +207,7 @@ getTabs().then(tabs => {
         }
     }
     
-    const selectTab = async (tabName) => {
+    selectTab = async (tabName) => {
         if(transitioning) return;
 
         window.scroll({

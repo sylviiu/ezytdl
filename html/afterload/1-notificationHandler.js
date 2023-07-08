@@ -242,6 +242,8 @@ if(window.parent != window) {
 
             if(genericURLRegex.test(redirect)) {
                 button.onclick = () => window.location.href = redirect;
+            } else if(redirect.startsWith(`tab:`) && typeof selectTab == `function`) {
+                button.onclick = () => selectTab(redirect.split(`tab:`)[1]);
             } else {
                 createPopout({
                     buttons: [
