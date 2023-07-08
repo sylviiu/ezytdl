@@ -7,6 +7,7 @@ const createPopout = ({
     closeOnNavigate = false,
     addEventListeners = true,
     updatePosition = false,
+    noReturn = false,
     offsetPx = 80,
 }={}) => {
     console.log(`closeOnNavigate: ${closeOnNavigate}`);
@@ -277,28 +278,36 @@ const createPopout = ({
                                         });
                 
                                         anime.remove(h);
-                                        anime({
+
+                                        const hOpt = {
                                             targets: h,
                                             scale: 0.35,
-                                            left: `${offsetPx}px`,
-                                            top: `${offsetPx*-1}px`,
                                             opacity: 0,
                                             duration: 350,
                                             easing: `easeOutExpo`,
                                             complete: () => h.remove()
-                                        });
+                                        }
+
+                                        if(!noReturn) Object.assign(hOpt, {
+                                            left: `${offsetPx}px`,
+                                            top: `${offsetPx*-1}px`,
+                                        })
+
+                                        anime(hOpt);
                         
                                         const { x, y } = button.getBoundingClientRect();
                 
                                         const newRight = (updatePosition && x ? `${x}px` : null) || right;
                                         const newTop = (updatePosition && y ? `${y}px` : null) || top;
+
+                                        const newOpacity = noReturn ? 0 : (button.parentElement ? 1 : 0)
                 
-                                        console.log(`newRight: ${newRight} (from ${right}) -- newTop: ${newTop} (from ${top})`)
+                                        console.log(`newRight: ${newRight} (from ${right}) -- newTop: ${newTop} (from ${top}); newOpacity: ${newOpacity}`)
                 
                                         anime.remove(clone);
                                         anime({
                                             targets: clone,
-                                            opacity: 1,
+                                            opacity: newOpacity,
                                             scale: 1,
                                             right: newRight,
                                             top: newTop,
@@ -358,6 +367,7 @@ const createPopout = ({
                             return closeWindow();
                         } else if(closeOnNavigate) console.log(`navigation detected (${loads}) & closeOnNavigate is true; not closing`)
 
+                        h.contentWindow.createButton = (...c) => createButton(...c);
                         h.contentWindow.repositionNotifications = (...c) => repositionNotifications(...c);
                         h.contentWindow.addNotification = (...c) => repositionNotifications(...c);
                         h.contentWindow.createNotification = (...c) => createNotification(...c);

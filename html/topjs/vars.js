@@ -10,3 +10,5 @@ console.log(`systemColors: `, systemColors)
 
 var appVersion = `0.0.0`;
 version.get().then(v => appVersion = v);
+
+var genericURLRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/i;

@@ -69,7 +69,7 @@ sessions = {
             
                     if(id == `default`) sendNotification({
                         headingText: `Warning!`,
-                        bodyText: `There are ${totalItems} items in the queue.\n\nDepending on your computer, having too many items in the download queue may cause the UI to slow down and/or freeze, especially if you navigate to different pages while the queue is active. To ensure stability, stay on this screen while you finish this queue.`,
+                        bodyText: `There are ${totalItems} items in the queue.\n\nDepending on your computer, having too many items in the download queue may cause the UI to slow down and/or freeze, especially if you navigate to different pages while the queue is active.\n\nIf the app does freeze, it is still working. You can check the progress of the queue in the taskbar icon.`,
                         type: `warn`,
                     });
                 }

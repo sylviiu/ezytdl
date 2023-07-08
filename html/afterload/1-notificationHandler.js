@@ -13,6 +13,22 @@ if(window.parent != window) {
     //addNotification = window.parent.addNotification;
     //createNotification = window.parent.createNotification;
 } else {
+    createButton = (id) => {
+        const button = useDocument.createElement(`a`);
+        button.classList.add(`btn`);
+        button.classList.add(`btn-primary`);
+        button.setAttribute(`role`, `button`);
+        button.id = id;
+        button.style.background = `rgb(255,255,255)`;
+        button.style.borderStyle = `none`;
+        button.style.borderRadius = `100px`;
+        button.style.height = `36px`;
+        button.style.marginBottom = `16px`;
+        button.style.marginRight = `6px`;
+        button.style.color = `rgb(0,0,0)`;
+        return button;
+    }
+
     repositionNotifications = (addHeight, constant) => {
         if(!addHeight || typeof addHeight != `number`) addHeight = 0;
     
@@ -129,34 +145,27 @@ if(window.parent != window) {
         }, 8000)
     }
     
-    createNotification = (opt, providedClickFunc) => {
-        let { headingText, title, bodyText, content, redirect, type, stack, stackType } = opt;
+    createNotification = (opt) => {
+        let { headingText, title, bodyText, content, redirect, redirectMsg, hideReportButton, type, stack, stackType } = opt;
     
         const container = useDocument.createElement(`div`);
     
         const onClick = () => {
-            if(redirect) {
-                window.location.href = redirect;
-            } else {
-                container.classList.remove(`notificationBox`)
-                repositionNotifications();
-    
-                if(useDocument.body.querySelector(`#${container.id}`)) anime({
-                    targets: container,
-                    right: `-=${container.getBoundingClientRect().width + 20}px`,
-                    easing: `easeOutExpo`,
-                    duration: 1000,
-                    complete: () => {
-                        if(useDocument.body.querySelector(`#${container.id}`)) useDocument.body.removeChild(container);
-                    }
-                });
-            }
+            container.classList.remove(`notificationBox`)
+            repositionNotifications();
+
+            if(useDocument.body.querySelector(`#${container.id}`)) anime({
+                targets: container,
+                right: `-=${container.getBoundingClientRect().width + 20}px`,
+                easing: `easeOutExpo`,
+                duration: 1000,
+                complete: () => {
+                    if(useDocument.body.querySelector(`#${container.id}`)) useDocument.body.removeChild(container);
+                }
+            });
         }
-    
-        container.onclick = () => {
-            if(providedClickFunc && typeof providedClickFunc == `function`) providedClickFunc();
-            onClick();
-        }
+
+        container.onclick = onClick;
     
         container.classList.add(`notificationBox`)
     
@@ -217,19 +226,8 @@ if(window.parent != window) {
     
             container.style.paddingBottom = `0px`;
     
-            if(type == `error`) {
-                const button = useDocument.createElement(`a`);
-                button.classList.add(`btn`);
-                button.classList.add(`btn-primary`);
-                button.setAttribute(`role`, `button`);
-                button.id = `githubIssuesButton`;
-                button.style.background = `rgb(255,255,255)`;
-                button.style.borderStyle = `none`;
-                button.style.borderRadius = `100px`;
-                button.style.height = `36px`;
-                button.style.marginBottom = `16px`;
-                button.style.color = `rgb(0,0,0)`;
-                //button.style.marginTop = `10px`;
+            if(type == `error` && !hideReportButton) {
+                const button = createButton(`githubIssuesButton`);
     
                 let reportStrings = [`## Type: ${type[0].toUpperCase() + type.slice(1)}`];
     
@@ -249,6 +247,28 @@ if(window.parent != window) {
     
                 container.appendChild(button);
             }
+        };
+
+        if(redirect) {
+            const button = createButton(`notifButton`);
+
+            button.innerText = redirectMsg || `View`;
+
+            container.appendChild(button);
+
+            if(genericURLRegex.test(redirect)) {
+                button.onclick = () => window.location.href = redirect;
+            } else {
+                createPopout({
+                    buttons: [
+                        {
+                            element: button,
+                            href: redirect
+                        }
+                    ],
+                    noReturn: true,
+                });
+            }
         }
     
         addNotification(container);
@@ -258,7 +278,7 @@ if(window.parent != window) {
     
     if(!useDocument.getElementById(`disableNotifications`)) {
         notifications.handler((content) => {
-            if(content.redirect == `changelog.html`) {
+            /*if(content.redirect == `changelog.html`) {
                 createPopout({
                     buttons: [
                         {
@@ -268,7 +288,7 @@ if(window.parent != window) {
                     ],
                     closeOnNavigate: true,
                 });
-            } else createNotification(content)
+            } else */createNotification(content)
         });
         notifications.setReady();
     }

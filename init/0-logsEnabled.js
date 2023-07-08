@@ -8,7 +8,9 @@ module.exports = () => new Promise (async res => {
         sendNotification({
             type: `warn`,
             headingText: `Debug logs enabled!`,
-            bodyText: `Debug logs are enabled in the config. This most likely will slow down the app.`
+            bodyText: `Debug logs are enabled in the config. This most likely will slow down the app.`,
+            redirect: `settings.html`,
+            redirectMsg: `Go to settings`
         });
         //res(true);
         return res(true)

@@ -457,12 +457,10 @@ module.exports = {
         return module.exports.parseMetadata(d, root);
     },
     search: ({query, count, from, extraArguments, noVerify, forceVerify, ignoreStderr}) => new Promise(async res => {
-        let ffprobePath = require(`./filenames/ffmpeg`).getFFprobe();
-
-        if(fs.existsSync(query) && ffprobePath) {
+        if(fs.existsSync(query)) {
             console.log(`query is a file!`)
             
-            return module.exports.ffprobeInfo(ffprobePath, query).then(res);
+            return module.exports.ffprobeInfo(query).then(res);
         } else {
             console.log(`query is not a file!`)
 
@@ -523,7 +521,22 @@ module.exports = {
             })
         }
     }),
-    ffprobeInfo: (ffprobePath, path) => new Promise(async res => {
+    ffprobeInfo: (path) => new Promise(async res => {
+        const ffprobePath = require(`./filenames/ffmpeg`).getFFprobe();
+
+        if(!ffprobePath) {
+            sendNotification({
+                type: `error`,
+                headingText: `Error getting file info`,
+                bodyText: `FFprobe is not installed. Please install FFmpeg in settings (or on your system) and try again.`,
+                hideReportButton: true,
+                redirect: `settings.html`,
+                redirectMsg: `Go to settings`
+            });
+
+            return res(null)
+        }
+
         console.log(`getting info of "${path}"`);
 
         const info = {};
@@ -603,12 +616,8 @@ module.exports = {
 
         if(ignoreStderr) args.splice(args.indexOf(`--verbose`), 1);
 
-        let ffprobePath = require(`./filenames/ffmpeg`).getFFprobe();
-
-        if(fs.existsSync(query) && ffprobePath) {
-            console.log(`query is a file!`)
-
-            return module.exports.ffprobeInfo(ffprobePath, query).then(res);
+        if(fs.existsSync(query)) {
+            return module.exports.ffprobeInfo(query).then(res);
         } else {
             console.log(`query is not a file!`)
 

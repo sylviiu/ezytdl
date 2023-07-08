@@ -64,10 +64,17 @@ const notifyWithInfo = (info, downloaded) => {
         date = `Released ${arr[0]} ago`;
     }
 
-    sendNotification({
+    const opt = {
         headingText: `Update available! (${info.version})`,
         bodyText: (`${date} -- "${global.updateAvailable}" `) + (downloaded ? `is available to download!` : `will be installed when you exit!`)
+    };
+
+    if(!downloaded) Object.assign(opt, {
+        redirect: `https://github.com/sylviiu/ezytdl/releases/${info.version}`,
+        redirectMsg: `Download latest release`
     })
+
+    sendNotification(opt)
 };
 
 const { autoUpdater } = require(`electron-updater`);
@@ -135,6 +142,8 @@ module.exports = async (manual) => {
                 sendNotification({
                     headingText: `Build is not updatable!`,
                     bodyText: `This build is not updatable. Please download an auto-updatable build from the releases page.`,
+                    redirect: `https://github.com/sylviiu/ezytdl/releases`,
+                    redirectMsg: `Download latest release`
                 })
             }, 5000)
 
@@ -142,6 +151,8 @@ module.exports = async (manual) => {
         } else sendNotification({
             headingText: `Build is not updatable!`,
             bodyText: `This build is not updatable. Please download an auto-updatable build from the releases page.`,
+            redirect: `https://github.com/sylviiu/ezytdl/releases`,
+            redirectMsg: `Download latest release`
         });
 
         return;
