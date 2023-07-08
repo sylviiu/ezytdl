@@ -59,10 +59,10 @@
     },
     {
         "key": "no-convert",
-        "name": "No Conversion",
-        "description": "For trimming/extracting formats",
+        "name": "Extract",
+        "description": "Extract a specific stream",
         "defaultEnabled": true,
-        "icon": "fa-copy",
+        "icon": "fa-file-export",
         "options": {
             "additionalOutputArgs": [ "-c", "copy" ]
         }
