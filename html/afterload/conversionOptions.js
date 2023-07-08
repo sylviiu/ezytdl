@@ -432,13 +432,7 @@ const setupConvertDownload = (node, info, colorScheme) => {
 
     setPreset(usableOption ? ffmpegOptions.querySelector(`#${usableOption}`) || null : null, true); // set default preset
     
-    const formattxtbox = node.querySelector(`#outputExtension`);
-
-    if(formattxtbox) {
-        formattxtbox.parentElement.removeChild(formattxtbox);
-    
-        node.querySelector(`#conversionDiv`).appendChild(formattxtbox);
-    }
+    node.querySelector(`#conversionDiv`).appendChild(node.querySelector(`#outputExtension`) || listboxTemplate.querySelector(`#outputExtension`).cloneNode(true));
 }
 
 const conversionOptions = (node, info, colorScheme) => {
