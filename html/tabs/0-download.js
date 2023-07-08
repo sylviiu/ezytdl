@@ -1320,7 +1320,9 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                     runSearch(url, `Running search...`, `search`)
                 }
             };
-        }
+        };
+
+        tabs[`Download`].processURL = processURL;
         
         button.onclick = () => processURL();
         

@@ -5,11 +5,14 @@ system.downloadReq((...str) => {
         str = str[0]
     } // this is a fucking mess
 
-    console.log(`Download request:`, str)
+    console.log(`Download request:`, str);
 
-    if(typeof input != `undefined` && typeof processURL == `function`) {
-        input.value = str;
-        processURL();
+
+    if(typeof selectTab == `function`) {
+        const tab = selectTab(`Download`)
+        console.log(tab)
+        tab.content.querySelector(`#urlInput`).value = str;
+        tab.processURL();
     } else {
         window.location.href = `./index.html?${str}`;
     }

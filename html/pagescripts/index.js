@@ -207,14 +207,7 @@ getTabs().then(tabs => {
         }
     }
     
-    selectTab = async (tabName) => {
-        if(transitioning) return;
-
-        window.scroll({
-            top: 0,
-            behavior: `instant`
-        })
-    
+    selectTab = (tabName) => {
         console.log(`selecting tab "${tabName}"`)
     
         const tab = tabs[tabName];
@@ -223,80 +216,89 @@ getTabs().then(tabs => {
         const indexOfNew = tabKeys.indexOf(tabName);
         const indexOfCurrent = tabKeys.indexOf(selectedTab);
     
-        if(tab && selectedTab != tabName) {
-            transitioning = true;
-
-            if(typeof tab.canSwitch == `function`) {
-                const result = await tab.canSwitch();
-
-                if(!result) return transitioning = false;
-            }
-
-            selectedTab = tabName;
-
-            const colorScheme = systemColors[tab.colorScheme];
-
-            currentColorScheme = colorScheme
-
-            setBackground(tabName);
-
-            setBackgroundColor(colorScheme);
-            setWavesColor(colorScheme.standard);
+        (async () => {
+            if(!transitioning && tab && selectedTab != tabName) {
+                transitioning = true;
     
-            initializeTab(tab);
-
-            console.log(`new color scheme`, colorScheme);
-            
-            tab.button.style.background = `rgb(${colorScheme.light.r},${colorScheme.light.g},${colorScheme.light.b})`;
-            tab.button.style.color = `rgb(0,0,0)`;
-
-            if(tab.button.querySelector(`#icon`).classList.contains(`far`)) {
-                tab.button.querySelector(`#icon`).classList.remove(`far`);
-                tab.button.querySelector(`#icon`).classList.add(`fas`);
-
-                tab.button.onmouseover();
-            };
-    
-            if(currentTab) {
-                currentTab.button.style.background = tabButton.style.background;
-                currentTab.button.style.color = tabButton.style.color;
-
-                currentTab.button.onmouseout();
-
-                if(currentTab.button.querySelector(`#icon`).classList.contains(`fas`)) {
-                    currentTab.button.querySelector(`#icon`).classList.remove(`fas`);
-                    currentTab.button.querySelector(`#icon`).classList.add(`far`);
-                };
-            };
-    
-            if(!tab.content.parentElement) {
-                console.log(`appending tab "${tab.name}" to everything`)
-    
-                const goingLeft = indexOfNew < indexOfCurrent;
-    
-                tab.content.style.left = goingLeft ? `-100%` : `+100%`;
-    
-                console.log(currentTab.content.style.left, tab.content.style.left)
-    
-                everything.appendChild(tab.content);
-    
-                refreshWaves();
-    
-                anime.remove(tab.content);
-                anime.remove(currentTab.content);
-    
-                anime({
-                    targets: [tab.content, currentTab.content],
-                    left: goingLeft ? `+=100%` : `-=100%`,
-                    duration: 500,
-                    easing: `easeOutExpo`,
-                    complete: () => {
-                        currentTab.content.remove();
-                        transitioning = false;
-                    }
+                window.scroll({
+                    top: 0,
+                    behavior: `instant`
                 })
-            } else transitioning = false;
-        }
+    
+                if(typeof tab.canSwitch == `function`) {
+                    const result = await tab.canSwitch();
+    
+                    if(!result) return transitioning = false;
+                }
+    
+                selectedTab = tabName;
+    
+                const colorScheme = systemColors[tab.colorScheme];
+    
+                currentColorScheme = colorScheme
+    
+                setBackground(tabName);
+    
+                setBackgroundColor(colorScheme);
+                setWavesColor(colorScheme.standard);
+        
+                initializeTab(tab);
+    
+                console.log(`new color scheme`, colorScheme);
+                
+                tab.button.style.background = `rgb(${colorScheme.light.r},${colorScheme.light.g},${colorScheme.light.b})`;
+                tab.button.style.color = `rgb(0,0,0)`;
+    
+                if(tab.button.querySelector(`#icon`).classList.contains(`far`)) {
+                    tab.button.querySelector(`#icon`).classList.remove(`far`);
+                    tab.button.querySelector(`#icon`).classList.add(`fas`);
+    
+                    tab.button.onmouseover();
+                };
+        
+                if(currentTab) {
+                    currentTab.button.style.background = tabButton.style.background;
+                    currentTab.button.style.color = tabButton.style.color;
+    
+                    currentTab.button.onmouseout();
+    
+                    if(currentTab.button.querySelector(`#icon`).classList.contains(`fas`)) {
+                        currentTab.button.querySelector(`#icon`).classList.remove(`fas`);
+                        currentTab.button.querySelector(`#icon`).classList.add(`far`);
+                    };
+                };
+        
+                if(!tab.content.parentElement) {
+                    console.log(`appending tab "${tab.name}" to everything`)
+        
+                    const goingLeft = indexOfNew < indexOfCurrent;
+        
+                    tab.content.style.left = goingLeft ? `-100%` : `+100%`;
+        
+                    console.log(currentTab.content.style.left, tab.content.style.left)
+        
+                    everything.appendChild(tab.content);
+        
+                    refreshWaves();
+        
+                    anime.remove(tab.content);
+                    anime.remove(currentTab.content);
+        
+                    anime({
+                        targets: [tab.content, currentTab.content],
+                        left: goingLeft ? `+=100%` : `-=100%`,
+                        duration: 500,
+                        easing: `easeOutExpo`,
+                        complete: () => {
+                            currentTab.content.remove();
+                            transitioning = false;
+                        }
+                    });
+                } else transitioning = false;
+            }
+        })();
+
+        return tab;
     };
     
     for(const tabName of tabKeys) {
