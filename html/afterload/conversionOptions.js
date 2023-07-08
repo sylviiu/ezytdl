@@ -152,6 +152,7 @@ const setupConvertDownload = (node, info, colorScheme) => {
         } else {
             const previousSelected = currentSelected;
             currentSelected = node ? node.id : null;
+            const previousSelectedConversion = info.selectedConversion;
             info.selectedConversion = node.id == `custom` ? customFormat : (currentSelected && enabledConversionFormats.find(o => o.key == currentSelected)) ? Object.assign({}, enabledConversionFormats.find(o => o.key == currentSelected), { key: currentSelected }) : null;
             buttons.forEach(btn => {
                 if(btn.id && btn.style) {
@@ -160,7 +161,9 @@ const setupConvertDownload = (node, info, colorScheme) => {
 
                         console.log(`reset`, info.selectedConversion)
 
-                        resetTrim(info.selectedConversion.noEdit ? true : false);
+                        if(!previousSelectedConversion || info.selectedConversion.noEdit != previousSelectedConversion.noEdit) {
+                            resetTrim(info.selectedConversion.noEdit ? true : false);
+                        }
 
                         anime.remove(btn);
 
@@ -344,30 +347,40 @@ const setupConvertDownload = (node, info, colorScheme) => {
     console.log(`default option: ${defaultOption} -- parsed: ${usableOption}`)
 
     const resetTrim = (hide) => {
-        const showOptions = ((!info.entries && info.duration && info.duration.timestamp != `--:--`) && !hide) ? true : false;
+        const showOptions = ((!info.entries && info.duration && info.duration.timestamp != `--:--`)) ? true : false;
 
         console.log(`resetTrim; showing: ${showOptions} (${hide})`)
 
         if(showOptions) {
-            if(node.querySelector(`#trimOptions`).classList.contains(`d-none`)) node.querySelector(`#trimOptions`).classList.remove(`d-none`);
-            if(node.querySelector(`#trimText`).classList.contains(`d-none`)) node.querySelector(`#trimText`).classList.remove(`d-none`);
-
             const trimFrom = node.querySelector(`#trimFrom`), trimFromInput = node.querySelector(`#trimFromInput`);
             const trimTo = node.querySelector(`#trimTo`), trimToInput = node.querySelector(`#trimToInput`);
-    
-            const modifyInput = (range, input, source, value) => {
+
+            const modifyInput = (range, input, source, value, animate) => {
+                const setRange = (val) => {
+                    if(range && animate) {
+                        anime({
+                            targets: range,
+                            value: val,
+                            duration: 250,
+                            easing: `easeOutExpo`,
+                        })
+                    } else if(range) {
+                        range.value = val;
+                    }
+                }
+
                 const useValue = typeof value == `string` && Number(value) && !value.includes(`:`) ? `00:${value}` : value;
     
                 const time = util.time(useValue, null, {allowZero: true})
     
                 if(source == `from` && (time.units.ms/1000)+1 > Number(trimTo.value)) {
-                    if(range) range.value = trimTo.value;
+                    setRange(trimTo.value);
                     if(input) input.value = util.time((Number(trimTo.value)-1)*1000, null, {allowZero: true}).timestamp;
                 } else if(source == `to` && (time.units.ms/1000)-1 < Number(trimFrom.value)) {
-                    if(range) range.value = trimFrom.value;
+                    if(range) setRange(trimFrom.value);
                     if(input) input.value = util.time((Number(trimFrom.value)+1)*1000, null, {allowZero: true}).timestamp;
                 } else {
-                    if(range) range.value = (time.units.ms/1000);
+                    if(range) setRange(time.units.ms/1000);
                     if(input) input.value = time.timestamp;
                 }
             };
@@ -387,18 +400,30 @@ const setupConvertDownload = (node, info, colorScheme) => {
             trimFrom.oninput = () => modifyInput(trimFrom, trimFromInput, `from`, Number(trimFrom.value)*1000);
             trimTo.oninput = () => modifyInput(trimTo, trimToInput, `to`, Number(trimTo.value)*1000);
     
-            trimFromInput.oninput = () => modifyInput(trimFrom, null, `from`, trimFromInput.value);
-            trimToInput.oninput = () => modifyInput(trimTo, null, `to`, trimToInput.value);
-            trimFromInput.onblur = () => modifyInput(trimFrom, trimFromInput, `from`, trimFromInput.value);
-            trimToInput.onblur = () => modifyInput(trimTo, trimToInput, `to`, trimToInput.value);
+            trimFromInput.oninput = () => modifyInput(trimFrom, null, `from`, trimFromInput.value, true);
+            trimToInput.oninput = () => modifyInput(trimTo, null, `to`, trimToInput.value, true);
+            trimFromInput.onblur = () => modifyInput(trimFrom, trimFromInput, `from`, trimFromInput.value, true);
+            trimToInput.onblur = () => modifyInput(trimTo, trimToInput, `to`, trimToInput.value, true);
     
             trimFrom.max = Math.ceil(info.duration.units.ms/1000);
-            modifyInput(trimFrom, trimFromInput, `from`, 0);
+            modifyInput(trimFrom, trimFromInput, `from`, 0, true);
     
             trimTo.max = Math.ceil(info.duration.units.ms/1000);
-            modifyInput(trimTo, trimToInput, `to`, (Math.ceil(info.duration.units.ms/1000))*1000);
+            modifyInput(trimTo, trimToInput, `to`, (Math.ceil(info.duration.units.ms/1000))*1000, true);
     
             info.trim = {};
+
+            if(hide) {
+                if(node.querySelector(`#trimOptions`).style.opacity != `0.5`) node.querySelector(`#trimOptions`).style.opacity = `0.5`;
+                if(node.querySelector(`#trimOptions`).style.pointerEvents != `none`) node.querySelector(`#trimOptions`).style.pointerEvents = `none`;
+                trimFrom.disabled = true;
+                trimTo.disabled = true;
+            } else {
+                if(node.querySelector(`#trimOptions`).style.opacity == `0.5`) node.querySelector(`#trimOptions`).style.opacity = `1`;
+                if(node.querySelector(`#trimOptions`).style.pointerEvents == `none`) node.querySelector(`#trimOptions`).style.pointerEvents = ``;
+                trimFrom.disabled = false;
+                trimTo.disabled = false;
+            }
         } else {
             if(!node.querySelector(`#trimOptions`).classList.contains(`d-none`)) node.querySelector(`#trimOptions`).classList.add(`d-none`);
             if(!node.querySelector(`#trimText`).classList.contains(`d-none`)) node.querySelector(`#trimText`).classList.add(`d-none`);
