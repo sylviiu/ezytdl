@@ -43,6 +43,12 @@ update.event(m => {
         popoutButtons.setCloseable(true);
     }
 })
+
+const _temporaryFormatCard = document.getElementById(`formatCard`).cloneNode(true);
+document.body.appendChild(_temporaryFormatCard);
+const formatCardComputed = window.getComputedStyle(_temporaryFormatCard);
+const innerFormatCardStyle = _temporaryFormatCard.querySelector(`#innerFormatCard`).style;
+document.body.removeChild(_temporaryFormatCard);
             
 const { waves, setWavesColor } = generateWaves();
 
@@ -131,7 +137,6 @@ const formatListTemplate = document.getElementById(`formatList`).cloneNode(true)
 const formatCard = document.getElementById(`formatCard`).cloneNode(true);
 
 const formatCardBounds = document.getElementById(`formatCard`).getBoundingClientRect();
-const formatCardComputed = window.getComputedStyle(document.getElementById(`formatCard`));
 
 const everything = document.getElementById(`everythingContainer`);
 
