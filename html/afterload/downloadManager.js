@@ -301,17 +301,6 @@ var initDownloadManager = () => {
                         card = downloadCard.cloneNode(true)
                         card.id = `download-${o.id}`;
         
-                        let title = `[${o.opt.format}] `;
-        
-                        console.log(o.opt)
-        
-                        if(o.opt.info) {
-                            if(o.opt.info.webpage_url_domain) title += "[" + o.opt.info.webpage_url_domain + "]";
-                            if(o.opt.info.title) title += o.opt.info.title;
-                        }
-        
-                        card.querySelector(`#formatName`).innerHTML = title;
-        
                         card.querySelector(`#formatMetaList`).classList.add(`d-none`)
 
                         const mediaIcons = card.querySelector(`#mediaIcons`)
@@ -373,6 +362,15 @@ var initDownloadManager = () => {
                         downloadManagers[o.id] = downloadManager;
                         
                         downloadManagers[o.id].update(o.status);
+                    }
+
+                    let title = `[${o.opt.format}] `;
+    
+                    if(o.opt.info && (o.opt.info.output_name || o.opt.info.title)) title += o.opt.info.output_name || o.opt.info.title;
+
+                    if(card.querySelector(`#formatName`).innerHTML != title) {
+                        card.querySelector(`#formatName`).innerHTML = title;
+                        console.log(`title: ${card.querySelector(`#formatName`).innerHTML}`)
                     }
         
                     if(!document.querySelector(`#download-${o.id}`)) downloadsQueue.appendChild(card);
