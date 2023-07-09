@@ -140,11 +140,11 @@ const setupConvertDownload = (node, info, colorScheme) => {
         confirmDownloadBtn.querySelector(`#icon`).replaceWith(node.querySelector(`#saveOptions`).querySelector(`#convertDownload`).querySelector(`#icon`))
         //node.querySelector(`#saveOptions`).querySelector(`#convertDownload`).remove();
 
-        if(node.querySelector(`#metadataOptions`) && node.querySelector(`#saveMetadataText`)) {
+        /*if(node.querySelector(`#metadataOptions`) && node.querySelector(`#saveMetadataText`)) {
             appendTo.appendChild(node.querySelector(`#saveMetadataText`));
             if(node.querySelector(`#metadataOptions`).querySelector(`#thumbnail`)) node.querySelector(`#metadataOptions`).querySelector(`#thumbnail`).remove();
             appendTo.appendChild(node.querySelector(`#metadataOptions`));
-        }
+        }*/
 
         appendTo.appendChild(confirmDownloadBtn);
 
