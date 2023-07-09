@@ -187,11 +187,7 @@ module.exports = (configObject, {
             parseAction(null, require(`./core/configActions.js`)(userConfig), userConfig.actions);
         };
 
-        const returnValue = values ? Object.values(userConfig) : userConfig;
-
-        console.log(returnValue)
-
-        return returnValue;
+        return values ? Object.values(userConfig) : userConfig;
     } catch(e) {
         errorHandler(e)
     }
