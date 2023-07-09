@@ -26,6 +26,11 @@ tabs[`Convert`] = {
             icon: `file`,
             label: `Upload file...`,
         }, { paddingLeft: `30px`, paddingRight: `30px` });
+
+        const openFolderButton = createButton(`openFolder`, {
+            icon: `folder`,
+            label: `Open folder...`,
+        }, { paddingLeft: `30px`, paddingRight: `30px` });
         
         const searchSelectionBox = container.querySelector(`#searchSelectionBox`);
         const innerSearchSelectionBox = container.querySelector(`#innerSelectionBox`);
@@ -34,6 +39,7 @@ tabs[`Convert`] = {
 
         innerSearchSelectionBox.innerHTML = ``;
         innerSearchSelectionBox.appendChild(openFileButton);
+        innerSearchSelectionBox.appendChild(openFolderButton);
         
         const input = container.querySelector(`#urlInput`);
         input.placeholder = config.saveLocation + `...`;
@@ -42,17 +48,14 @@ tabs[`Convert`] = {
         
         button.style.background = `rgb(${colorScheme.light.r}, ${colorScheme.light.g}, ${colorScheme.light.b})`;
         openFileButton.style.background = `rgb(${colorScheme.light.r}, ${colorScheme.light.g}, ${colorScheme.light.b})`;
+        openFolderButton.style.background = `rgb(${colorScheme.light.r}, ${colorScheme.light.g}, ${colorScheme.light.b})`;
         
         const mediaMetaItem = container.querySelector(`#mediaMetaItem`).cloneNode(true);
         container.querySelector(`#mediaMetaItem`).parentNode.removeChild(container.querySelector(`#mediaMetaItem`));
         
         const listboxParent = container.querySelector(`#listbox`).parentElement;
         
-        const advancedOptions = container.querySelector(`#advancedOptions`);
-        
-        const extraArguments = container.querySelector(`#extraArguments`);
-        
-        if(!config.advanced) advancedOptions.classList.add(`d-none`)
+        container.querySelector(`#advancedOptions`).remove();
         
         listboxParent.removeChild(container.querySelector(`#listbox`));
         
@@ -79,7 +82,7 @@ tabs[`Convert`] = {
             r(false)
         });
         
-        const runSearch = async (url, initialMsg, func) => {
+        const runSearch = async (url, initialMsg, func=`ffprobe`) => {
             system.hasFFmpeg().then(has => {
                 hasFFmpeg = has;
             });
@@ -189,7 +192,7 @@ tabs[`Convert`] = {
                     
                     if(config.disableAnimations) {
                         input.value = url;
-                        runSearch(input.value, `Fetching info...`, `getInfo`)
+                        runSearch(input.value, `Fetching info...`, `ffprobe`)
                     } else {
                         const nodeBounds = node ? node.getBoundingClientRect() : null;
         
@@ -220,9 +223,9 @@ tabs[`Convert`] = {
         
                         if(entry && entry.fullInfo) {
                             console.log(`fullInfo already provided; replacing info with fullInfo`);
-                            runSearch(entry, `Reading entry...`, `getInfo`)
+                            runSearch(entry, `Reading entry...`, `ffprobe`)
                         } else {
-                            runSearch(url, `Fetching info...`, `getInfo`)
+                            runSearch(url, `Fetching info...`, `ffprobe`)
                         }
         
                         window.scrollTo(0, 0);
@@ -260,9 +263,9 @@ tabs[`Convert`] = {
                                 console.log(`throwing node`)
                                 throwNode(newCard, innerUrlBox, true, true).then(() => {
                                     console.log(`parseInfo: node hit`)
-                                    //runSearch(entry, `Reading entry...`, `getInfo`)
+                                    //runSearch(entry, `Reading entry...`, `ffprobe`)
                                     //input.value = entry.webpage_url || entry.url;
-                                    //runSearch(input.value, `Fetching info...`, `getInfo`)
+                                    //runSearch(input.value, `Fetching info...`, `ffprobe`)
                                 })
                             }
                         })
@@ -278,8 +281,10 @@ tabs[`Convert`] = {
                     refreshSelectionBox();
                 } else {
                     listbox.querySelector(`#mediaTitle`).innerHTML = ``;
+
+                    const splitType = `${info.extractor_key || info.extractor || info.webpage_url_domain}`.split(/(?=[A-Z])/);
         
-                    let type = `${info.extractor_key || info.extractor || info.webpage_url_domain}`.split(/(?=[A-Z])/).slice(0, -1).join(``);
+                    let type = splitType.slice(0, -1).join(``);
                     let icon;
 
                     info._ezytdl_ui_icon = `arrow-alt-circle-right`;
@@ -330,32 +335,10 @@ tabs[`Convert`] = {
         
                     listbox.querySelector(`#mediaTitle`).innerHTML += `${info.media_metadata.general.title}`;
         
-                    const getType = (entry) => {
-                        let type = `${entry.extractor_key || entry.extractor || entry.webpage_url_domain}`.split(/(?=[A-Z])/)[0];
-        
-                        if(info._platform == `file`) {
-                            return `file`
-                        } else if(entry.entries && entry.entries[0] && (entry.entries[0].album || entry.entries[0].track)) {
-                            return `album`
-                        } else if(entry.categories && entry.categories.map(f => f.toString().toLowerCase()).find(f => f == `music`) || entry.track || entry.album) {
-                            return `song`
-                        } else if(entry.ezytdl_key_type && `${entry.ezytdl_key_type}`.toLowerCase() != `${type}`.toLowerCase()) {
-                            return `${entry.ezytdl_key_type}`
-                        } else if(entry.ezytdl_type) {
-                            return `${entry.ezytdl_type}`
-                        } else return `listing`;
-                    }
-        
                     const updateMetadata = async (parse) => {
                         if(parse) info = await mainQueue.parseInfo(info);
         
-                        let afterType = ``;
-        
-                        if(info._platform == `file`) {
-                            afterType += ` file`
-                        } else if(func == `search`) {
-                            afterType += ` search`
-                        } else afterType += getType(info);
+                        let afterType = ` ${splitType[splitType.length - 1]}`;
         
                         if(info.media_metadata.url.source_url) {
                             const a = document.createElement(`a`);
@@ -498,8 +481,6 @@ tabs[`Convert`] = {
                             return headingContainer.appendChild(metaItem);
                         }
         
-                        if(info._off_platform) addMetaItem(`fa-info-circle`, `Off-platform.`, (`This content was found on a platform not supported by yt-dlp. ` + (info.entries ? `ezytdl will attempt to find equivalent media on supported platforms during download, however there's no guarantees it'll be 100% accurate.` : `This is the most suitable equivalent ezytdl was able to find on another platform.`)), `off-platform`)
-        
                         if(info.media_metadata.general.artist) addMetaItem(`fa-user`, parseCreator(info, `by `), null, `creator`);
         
                         if(info.entries && func != `search`) {
@@ -559,7 +540,7 @@ tabs[`Convert`] = {
                             addMetaItem(`fa-play-circle`, info.formats.length + ` format${info.formats.length == 1 ? `` : `s`}`, null, `formats`)
                         }
         
-                        listbox.querySelector(`#mediaSubtext`).innerHTML = ((type || iconExtra)).trim();
+                        listbox.querySelector(`#mediaSubtext`).innerHTML = ((type || ``)).trim();
         
                         if(typeof afterType == `string` && afterType.length > 0) {
                             listbox.querySelector(`#mediaSubtext`).innerHTML += ` ${afterType}`;
@@ -647,29 +628,6 @@ tabs[`Convert`] = {
         
                             const card = formatCard.cloneNode(true);
         
-                            new Draggable({
-                                node: card,
-                                targets: [input, urlBox],
-                                value: entry.media_metadata.url.source_url,
-                                targetScale: 0.5,
-                                animateDrop: false,
-                                animateDropFail: true,
-                                hint: `Drag to URL box to retrieve info!`,
-                                //hideOriginal: false,
-                                dropHook: (success, clone) => {
-                                    if(success) {
-                                        console.log(`dropped! (${success})`);
-        
-                                        clone.style.top = `${window.innerHeight - parseInt(clone.style.bottom)}px`;
-                                        clone.style.bottom = `0px`
-        
-                                        throwToURL(clone, null, entry);
-                                    } else {
-                                        console.log(`did not hit target`)
-                                    };
-                                }
-                            })
-        
                             card.querySelector(`#formatMetaList`).classList.add(`d-none`);
         
                             card.querySelector(`#buttonsDiv`).style.minHeight = `36px`;
@@ -731,81 +689,11 @@ tabs[`Convert`] = {
         
                             card.querySelector(`#pausePlayButton`).onclick = () => removeCardAnim(card, removeEntry);
         
-                            const nested = (entry.entries || func == `search`) ? true : false;
+                            if(entry.entries) card.querySelector(`#formatName`).innerHTML += ` (${entry.entries.length})`;
         
-                            if(nested) {
-                                if(entry.entries) card.querySelector(`#formatName`).innerHTML += ` (${info._off_platform ? getType(entry) : entry.entries.length})`;
-        
-                                card.querySelector(`#downloadicon`).style.transform = `rotate(270deg)`;
-                                // make arrow point right
+                            card.querySelector(`#downloadicon`).style.transform = `rotate(270deg)`;
                             
-                                //highlightButton(card.querySelector(`#formatDownload`), colorScheme)
-        
-                                card.querySelector(`#formatDownload`).onclick = () => throwToURL(null, card, entry);
-                            } else {
-                                let fadeIn = () => null;
-                                let fadeOut = () => null;
-        
-                                let visible = false;
-        
-                                let btnClick = () => {
-                                    if(!visible) {
-                                        fadeIn();
-                                    } else {
-                                        fadeOut();
-                                    }
-        
-                                    visible = !visible;
-                                };
-        
-                                card.querySelector(`#formatDownload`).onclick = () => btnClick();
-        
-                                card.querySelector(`#formatDownload`).classList.remove(`d-none`)
-        
-                                if(entry.is_live) {                            
-                                    const saveOptions = listboxTemplate.querySelector(`#saveOptions`).cloneNode(true)
-                
-                                    card.querySelector(`#innerFormatCard`).appendChild(saveOptions)
-            
-                                    const confirmDownload = () => {
-                                        saveOptionsAnimations.fadeOut(card.querySelector(`#confirmDownload`), saveOptions);
-                
-                                        card.querySelector(`#confirmDownload`).disabled = true;
-                
-                                        card.style.opacity = 0.5;
-                
-                                        startDownload(card, getSaveOptions(card, Object.assign({}, info, { entries: null }, entry)))
-                                    }
-        
-                                    card.querySelector(`#confirmDownload`).onclick = () => confirmDownload();
-        
-                                    fadeIn = () => saveOptionsAnimations.fadeIn(card.querySelector(`#formatDownload`), saveOptions, btnClick);
-                                    fadeOut = () => saveOptionsAnimations.fadeOut(card.querySelector(`#formatDownload`), saveOptions, btnClick);
-                                } else {
-                                    const newDiv = listbox.querySelector(`#qualityButtons`).cloneNode(true);
-                
-                                    newDiv.style.padding = `0px`;
-                                    newDiv.style.minWidth = `100%`;
-                                    newDiv.style.removeProperty(`background`);
-                
-                                    const innerQualityButtons = newDiv.querySelector(`#innerQualityButtons`);
-                
-                                    innerQualityButtons.style.minWidth = `100%`;
-        
-                                    newDiv.classList.add(`d-none`)
-                                    
-                                    card.querySelector(`#innerFormatCard`).appendChild(newDiv);
-        
-                                    fadeIn = () => saveOptionsAnimations.fadeIn(card.querySelector(`#formatDownload`), newDiv, btnClick);
-                                    fadeOut = () => saveOptionsAnimations.fadeOut(card.querySelector(`#formatDownload`), newDiv, btnClick);
-        
-                                    qualityButtons({ node: card.querySelector(`#innerFormatCard`), info: entry, card, removeEntry: () => removeEntry() });
-                                }
-        
-                                //console.log(`running conversionOptions`)
-            
-                                conversionOptions(card, Object.assign({}, info, entry), colorScheme)
-                            }
+                            card.querySelector(`#formatDownload`).onclick = () => throwToURL(null, card, entry);
         
                             let visible = false;
         
@@ -865,7 +753,7 @@ tabs[`Convert`] = {
                         if(info.formats.filter(f => f.video).length == 0 && listbox.querySelector(`#downloadBestVideo`)) listbox.querySelector(`#downloadBestVideo`).classList.add(`d-none`);
                         
                         for (const i in info.formats) {
-                            const format = Object.assign({}, info, info.formats[i]);
+                            const format = Object.assign({}, info, info.formats[i], {entries: null, formats: null});
         
                             parseProgress.setProgress((i/info.formats.length)*100, `Parsing format ${i}/${info.formats.length}`);
         
@@ -965,18 +853,11 @@ tabs[`Convert`] = {
                                 startDownload(card, getSaveOptions(card, format))
                             }
         
-                            //card.querySelector(`#convertDownload`).parentElement.removeChild(card.querySelector(`#convertDownload`));
-                            //card.querySelector(`#confirmDownload`).style.width = `100%`
-        
                             card.querySelector(`#conversionDiv`).appendChild(card.querySelector(`#outputExtension`));
         
                             conversionOptions(card.querySelector(`#innerFormatCard`), format, colorScheme);
         
-                            //card.querySelector(`#confirmDownload-2`).onclick = () => send({ card, node: card.querySelector(`#qualityButtons`), info, centerURLBox })
-        
                             if(card.querySelector(`#confirmDownload-2`)) card.querySelector(`#confirmDownload-2`).onclick = () => confirmDownload();
-                            
-                            if(card.querySelector(`#confirmDownload`)) card.querySelector(`#confirmDownload`).onclick = () => confirmDownload();
         
                             const btnClick = () => {
                                 if(saveOptions.classList.contains(`d-none`)) {
@@ -994,14 +875,8 @@ tabs[`Convert`] = {
                         };
                     }
         
-                    if(info._platform == `file`) {
-                        setupConvertDownload(listbox.querySelector(`#qualityButtons`), info, colorScheme)
-                        listbox.querySelector(`#confirmDownload-2`).onclick = () => send({ card: listbox.querySelector(`#qualityButtons`), node: listbox.querySelector(`#qualityButtons`), info })
-                    } else if(info.entries) {
-                        qualityButtons({ card: listbox, node: listbox.querySelector(`#qualityButtons`), info, centerURLBox, colorScheme });
-                    } else {
-                        qualityButtons({ card: listbox.querySelector(`#qualityButtons`), node: listbox.querySelector(`#qualityButtons`), info, colorScheme });
-                    }
+                    setupConvertDownload(listbox.querySelector(`#qualityButtons`), info, colorScheme)
+                    listbox.querySelector(`#confirmDownload-2`).onclick = () => send({ card: listbox.querySelector(`#qualityButtons`), node: listbox.querySelector(`#qualityButtons`), info })
         
                     wavesAnims.fadeOut();
         
@@ -1075,7 +950,8 @@ tabs[`Convert`] = {
                 url = info._request_url || info.media_metadata.url.source_url || info.media_metadata.url || info.url;
                 runParse(`url is object`)
             } else {
-                mainQueue.ffprobeInfo(url).then(data => {
+                console.log(`running func ${func}`)
+                mainQueue[func](url).then(data => {
                     info = data;
             
                     console.log(`info received`)
@@ -1132,7 +1008,6 @@ tabs[`Convert`] = {
                 };
         
                 run(searchSelectionBox);
-                if(config.advanced) run(advancedOptions);
             },
             hide: (noAnim, hideAdvanced) => {
                 if(!selectonBoxShowing && !hideAdvanced) return;
@@ -1157,7 +1032,6 @@ tabs[`Convert`] = {
                 }
         
                 run(searchSelectionBox);
-                if(hideAdvanced && config.advanced) run(advancedOptions);
             }
         }
         
@@ -1165,6 +1039,14 @@ tabs[`Convert`] = {
             if(file) {
                 console.log(`file:`, file)
                 input.value = file;
+                processURL();
+            }
+        });
+        
+        openFolderButton.onclick = () => system.pickFolder({ title: `Batch Convert` }).then(path => {
+            if(path) {
+                console.log(`path:`, path)
+                input.value = path;
                 processURL();
             }
         });
@@ -1179,11 +1061,7 @@ tabs[`Convert`] = {
             
                 console.log (`match`, match)
             
-                if(match) {
-                    runSearch(url, `Fetching info...`, `getInfo`)
-                } else {
-                    runSearch(url, `Running search...`, `search`)
-                }
+                runSearch(url, `Running search...`, `ffprobe`)
             };
         }
         
@@ -1212,28 +1090,24 @@ tabs[`Convert`] = {
             }
         }
         
-        const inputs = [input, extraArguments];
+        /*input.addEventListener(`input`, () => {
+            changesMadeToInput = true;
+            centerURLBox(true);
+            refreshSelectionBox();
+        });*/
+    
+        input.oninput = () => {
+            changesMadeToInput = true;
+            centerURLBox(true);
+            refreshSelectionBox();
+        }
         
-        inputs.forEach(inp => {
-            /*inp.addEventListener(`input`, () => {
-                changesMadeToInput = true;
-                centerURLBox(true);
-                refreshSelectionBox();
-            });*/
+        input.addEventListener(`click`, refreshSelectionBox);
+        input.addEventListener(`blur`, () => setTimeout(() => !changesMadeToInput ? selectionBox.hide(null, true) : null, 100));
+        //input.addEventListener(`focus`, () => !changesMadeToInput ? selectionBox.hide(null, true) : null);
         
-            inp.oninput = () => {
-                changesMadeToInput = true;
-                centerURLBox(true);
-                refreshSelectionBox();
-            }
-            
-            inp.addEventListener(`click`, refreshSelectionBox);
-            inp.addEventListener(`blur`, () => setTimeout(() => !changesMadeToInput ? selectionBox.hide(null, true) : null, 100));
-            //inp.addEventListener(`focus`, () => !changesMadeToInput ? selectionBox.hide(null, true) : null);
-            
-            inp.addEventListener(`keyup`, (e) => {
-                if((e.key == `Enter` || e.keyCode == 13) && !input.disabled) processURL();
-            });
-        })
+        input.addEventListener(`keyup`, (e) => {
+            if((e.key == `Enter` || e.keyCode == 13) && !input.disabled) processURL();
+        });
     }
 }
