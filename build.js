@@ -245,18 +245,6 @@ which(`npm`).then(async npm => {
         }
 
         console.log(`Building:\n| ${config.productName} (${config.appId})\n| version: ${config.extraMetadata.version}\n| commit: ${config.extraMetadata.commitHash}\n| full commit: ${config.extraMetadata.fullCommitHash}\n| build number: ${config.extraMetadata.buildNumber}`)
-    
-        const buildScripts = fs.readdirSync(`./buildscripts`).filter(f => f.endsWith(`.js`));
-
-        console.log(`Build scripts: ${buildScripts.join(`, `)}`)
-
-        console.log(`Running build ${buildScripts.length} scripts...`);
-
-        for(const script of buildScripts) {
-            console.log(`Running build script ${script}...`);
-            await require(`./buildscripts/${script}`)(config);
-            console.log(`Completed build script ${script}!`);
-        }
 
         if(process.argv.find(s => s == `pack`)) {
             console.log(`Pack flag found (removing targets)...`);
