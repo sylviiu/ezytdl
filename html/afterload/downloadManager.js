@@ -17,7 +17,7 @@ var initDownloadManager = () => {
         
         circleProgress.setProgress(0);
         
-        mainQueue.queueUpdate((m) => {
+        mainQueue.queueUpdate(function (m) {
             if(m.type == `queue`) {
                 console.log(m.data)
             
@@ -329,33 +329,35 @@ var initDownloadManager = () => {
                         if(mediaIcons.innerHTML == ``) mediaIcons.classList.add(`d-none`);
 
                         if(o.opt.info.thumbnails && o.opt.info.thumbnails.length > 0) {
-                            const thumbnail = o.opt.info.thumbnails[o.opt.info.thumbnails.length - 1];
-            
-                            console.log(`thumbnail:`, thumbnail);
-            
-                            const img = new Image();
-            
-                            img.addEventListener(`load`, () => {
-                                if(card && card.parentElement) {
-                                    console.log(`image loaded! setting bg...`)
+                            const thumbnail = o.opt.info.thumbnails.reverse().find(o => o.url);
 
-                                    const formatBG = card.querySelector(`#formatCardBG`)
+                            if(thumbnail && typeof thumbnail == `object` && thumbnail.url) {
+                                console.log(`thumbnail:`, thumbnail);
+                
+                                const img = new Image();
+                
+                                img.addEventListener(`load`, () => {
+                                    if(card && card.parentElement) {
+                                        console.log(`image loaded! setting bg...`)
     
-                                    formatBG.style.backgroundImage = `url(${thumbnail.url})`;
-                                    formatBG.style.filter = `blur(2px)`
-            
-                                    anime.remove(formatBG)
-            
-                                    anime({
-                                        targets: formatBG,
-                                        opacity: [0, 0.15],
-                                        duration: 1000,
-                                        easing: `easeOutQuad`
-                                    })
-                                }
-                            });
-            
-                            img.src = thumbnail.url;
+                                        const formatBG = card.querySelector(`#formatCardBG`)
+        
+                                        formatBG.style.backgroundImage = `url(${thumbnail.url})`;
+                                        formatBG.style.filter = `blur(2px)`
+                
+                                        anime.remove(formatBG)
+                
+                                        anime({
+                                            targets: formatBG,
+                                            opacity: [0, 0.15],
+                                            duration: 1000,
+                                            easing: `easeOutQuad`
+                                        })
+                                    }
+                                });
+                
+                                img.src = thumbnail.url;
+                            }
                         }
         
                         const downloadManager = createDownloadManager(card, o.id);
@@ -460,7 +462,7 @@ var initDownloadManager = () => {
             openFolder.onclick = () => mainQueue.openDir();
             clearQueueButton.onclick = () => clearFromQueue(totalQueue.filter(o => o.state != `active` && o.state != `paused` && o.state != `complete`));
         
-            mainQueue.queueUpdate((m) => {
+            mainQueue.queueUpdate(function (m) {
                 if(m.type == `queue`) {
                     console.log(m)
         
