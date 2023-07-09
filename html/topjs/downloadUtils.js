@@ -175,7 +175,7 @@ var createDownloadManager = (card, id) => {
 var startDownload = (originalCard, opt) => {
     console.log(`startDownload:`, new Error().stack)
 
-    opt.extraArguments = document.getElementById(`extraArguments`).value;
+    opt.extraArguments = document.getElementById(`extraArguments`) ? document.getElementById(`extraArguments`).value : ``;
 
     if(config.reduceAnimations) {
         mainQueue.download(opt);
