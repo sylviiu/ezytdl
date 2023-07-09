@@ -8,6 +8,9 @@ sessions = {
             const idGen = require(`./idGen`);
             
             const { app } = require(`electron`);
+
+            let lastQueueSend = 0;
+            let queueSendTimeout = 0;
             
             const queue = {
                 complete: [],
@@ -22,19 +25,46 @@ sessions = {
             
             let ws = {
                 send: (c1) => {
-                    if(id != `default`) return;
+                    if(id != `default` || !global.window) return;
+
+                    const filteredObj = (obj) => {
+                        const newObj = Object.assign({}, obj);
+
+                        if(newObj.ytdlpProc) delete newObj.ytdlpProc;
+                        if(newObj.killFunc) delete newObj.killFunc;
+                        if(newObj.deleteFiles) delete newObj.deleteFiles;
+                        if(newObj.nextUpdateTimeout) delete newObj.nextUpdateTimeout;
+                        if(newObj.updateFunc) delete newObj.updateFunc;
+                        if(newObj.ignoreUpdates) delete newObj.ignoreUpdates;
+                        if(newObj.lastUpdateSent) delete newObj.lastUpdateSent;
+                        if(newObj.opt && newObj.opt.info && !newObj.opt.info.modified) Object.assign(newObj.opt, { 
+                            info: typeof newObj.opt.info == `object` ? {
+                                webpage_url_domain: newObj.opt.info.webpage_url_domain,
+                                title: newObj.opt.info.title,
+                                thumbnails: newObj.opt.info.thumbnails,
+                                thumbnail: newObj.opt.info.thumbnail,
+                                output_name: newObj.opt.info.output_name,
+                                _ezytdl_ui_icon: newObj.opt.info._ezytdl_ui_icon,
+                                _ezytdl_ui_type: newObj.opt.info._ezytdl_ui_type,
+                                _ezytdl_ui_title: newObj.opt.info._ezytdl_ui_title,
+                                modified: true,
+                            } : newObj.opt.info
+                        });
+
+                        for(const key of Object.keys(newObj)) {
+                            if(newObj[key] && typeof newObj[key] == `object`) {
+                                if(typeof newObj[key].length == `number`) {
+                                    newObj[key] = newObj[key].map(e => typeof e == `object` ? filteredObj(e) : e);
+                                } else newObj[key] = filteredObj(newObj[key]);
+                            } else if(newObj[key] && typeof newObj[key] == `function`) delete newObj[key];
+                        };
+
+                        return newObj;
+                    };
+
+                    const send = typeof c1 == `object` ? filteredObj(c1) : c1;
                     
-                    if(!global.window) return;
-            
-                    let content = Object.assign({}, c1);
-            
-                    if(typeof content == `object` && typeof content.data == `object` && content.data.ytdlpProc) {
-                        content.data = Object.assign({}, content.data, { ytdlpProc: null })
-                    }
-            
-                    if(typeof content == `object`) content = JSON.stringify(content);
-                    
-                    global.window.webContents.send(`queueUpdate`, JSON.parse(content));
+                    global.window.webContents.send(`queueUpdate`, send);
                 }
             };
             
@@ -239,26 +269,19 @@ sessions = {
                     const sendObj = queue;
             
                     queueEventEmitter.emit(`queueUpdate`, sendObj);
-            
-                    ws.send({ type: `queue`, data: sendObj });
+
+                    refreshAll();
                 }
             }
             
             const createDownloadObject = (opt, rawUpdateFunc, downloadFunc) => {
                 let id = idGen(16);
+
                 const obj = {
                     id,
-                    opt: Object.assign({}, opt, { 
-                        info: typeof opt.info == `object` ? {
-                            webpage_url_domain: opt.info.webpage_url_domain,
-                            title: opt.info.title,
-                            thumbnails: opt.info.thumbnails,
-                            thumbnail: opt.info.thumbnail,
-                            _ezytdl_ui_icon: opt.info._ezytdl_ui_icon,
-                            _ezytdl_ui_type: opt.info._ezytdl_ui_type,
-                            _ezytdl_ui_title: opt.info._ezytdl_ui_title,
-                        } : opt.info
-                    }),
+                    opt,
+                    lastUpdateSent: 0,
+                    nextUpdateTimeout: null,
                     ignoreUpdates: false,
                     complete: false,
                     failed: false,
@@ -273,7 +296,9 @@ sessions = {
                             activeProgress[obj.id] = update.latest.percentNum;
                             updateProgressBar();
                         }
+
                         sendUpdate(Object.assign({}, obj, { status: update.latest }));
+
                         if(!downloadFunc) rawUpdateFunc(update);
                     },
                     paused: false,
@@ -298,9 +323,25 @@ sessions = {
 
                         if(!downloadFunc) {
                             args.push((update, proc) => {
-                                if(!obj.ytdlpProc && proc) obj.ytdlpProc = proc;
-                                if(!obj.killFunc && obj.status && obj.status.overall && obj.status.overall.kill) obj.killFunc = () => obj.status.overall.kill();
-                                obj.updateFunc(update);
+                                const timeout = Math.max(0, 150 - (Date.now() - obj.lastUpdateSent));
+
+                                if(timeout == 0) obj.lastUpdateSent = Date.now();
+                                if(obj.nextUpdateTimeout) clearTimeout(obj.nextUpdateTimeout);
+
+                                console.log(`next send timeout ${timeout}ms for ${id}`);
+
+                                const func = () => {
+                                    obj.nextUpdateTimeout = null;
+
+                                    if(!obj.ytdlpProc && proc) obj.ytdlpProc = proc;
+                                    if(!obj.killFunc && obj.status && obj.status.overall && obj.status.overall.kill) obj.killFunc = () => obj.status.overall.kill();
+
+                                    obj.updateFunc(update);
+                                }
+
+                                if(timeout == 0) {
+                                    func();
+                                } else obj.nextUpdateTimeout = setTimeout(() => func(), timeout);
                             });
                         } else {
                             obj.updateFunc({status: `Running "${downloadFunc}"`, progressNum: -1})
@@ -309,6 +350,8 @@ sessions = {
                         const progress = require(`../util/ytdlp`)[downloadFunc || `download`](...args);
                 
                         progress.then((update) => {
+                            if(obj.nextUpdateTimeout) clearTimeout(obj.nextUpdateTimeout);
+
                             if(activeProgress[obj.id]) delete activeProgress[obj.id];
                             
                             obj.complete = true;
@@ -431,11 +474,8 @@ sessions = {
                 }
             
                 ws = newWs;
-            
-                ws.send({
-                    type: `queue`,
-                    data: queue
-                })
+
+                refreshAll();
                 
                 ws.sessionID = idGen(10);
             
@@ -468,12 +508,20 @@ sessions = {
                 if(lastDownloadStatus) {
                     downloadStatusWs.send(lastDownloadStatus);
                 }
-            }
+            };
             
             const refreshAll = () => {
-                ws.send({ type: `queue`, data: queue });
-            
-                downloadStatusWs.send(lastDownloadStatus);
+                const timeout = Math.max(0, 450 - (Date.now() - lastQueueSend));
+
+                if(timeout == 0) lastQueueSend = Date.now();
+                if(queueSendTimeout) clearTimeout(queueSendTimeout);
+
+                queueSendTimeout = setTimeout(() => {
+                    queueSendTimeout = null;
+
+                    ws.send({ type: `queue`, data: queue });
+                    downloadStatusWs.send(lastDownloadStatus);
+                }, timeout);
             }
         
             if(!sessions[id]) sessions[id] = {
