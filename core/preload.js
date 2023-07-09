@@ -113,6 +113,7 @@ contextBridge.exposeInMainWorld(`system`, {
     hasFFprobe: () => invoke(`hasFFprobe`),
     bridgeNeedsDownload: () => invoke(`bridgeNeedsDownload`),
     pickFile: () => invoke(`pickFile`),
+    pickFolder: () => invoke(`pickFolder`),
 });
 
 let dialogPromise = new Promise(r => {
@@ -179,7 +180,7 @@ contextBridge.exposeInMainWorld(`update`, {
 
 contextBridge.exposeInMainWorld(`mainQueue`, {
     get: () => invoke(`getQueue`),
-    ffprobeInfo: (path) => invoke(`ffprobeInfo`, path),
+    ffprobe: (path) => invoke(`ffprobe`, path),
     getInfo: (url) => invoke(`getInfo`, url),
     parseInfo: (info) => invoke(`parseInfo`, info),
     parseOutputTemplate: (...arg) => invoke(`parseOutputTemplate`, arg),
