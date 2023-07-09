@@ -366,7 +366,7 @@ var initDownloadManager = () => {
 
                     let title = `[${o.opt.format}] `;
     
-                    if(o.opt.info && (o.opt.info.output_name || o.opt.info.title)) title += o.opt.info.output_name || o.opt.info.title;
+                    if(o.opt.info && (o.opt.info.title || o.opt.info.output_name)) title += o.opt.info.title || o.opt.info.output_name;
 
                     if(card.querySelector(`#formatName`).innerHTML != title) {
                         card.querySelector(`#formatName`).innerHTML = title;
