@@ -1,8 +1,11 @@
 const electronPath = require('electron').app.getAppPath();
 const fs = require('fs');
+const existsFunc = require(`./promisifiedFS/existsSync`);
 const path = require('path');
 
-module.exports = (filePath, allowNull, debug) => {
+module.exports = (filePath, allowNull, debug, promise=false) => {
+    console.log(`getPath ${filePath} (promise: ${promise})`)
+
     if(filePath.startsWith(`./`)) filePath = filePath.slice(2)
 
     const splitPath = filePath.split(`/`);
@@ -18,21 +21,37 @@ module.exports = (filePath, allowNull, debug) => {
 
     if(debug) {
         console.log(`\n\noriginalPath: ${originalPath}\nunpackedPath: ${unpackedPath}\nnoasarPath: ${noasarPath}\nnounpackedasarPath: ${nounpackedasarPath}\nrelativePath: ${relativePath}\n\n`)
-    }
+    };
 
-    if(fs.existsSync(unpackedPath)) {
-        return unpackedPath
-    } else if(fs.existsSync(originalPath)) {
-        return originalPath
-    } else if(fs.existsSync(noasarPath)) {
-        return noasarPath
-    } else if(fs.existsSync(nounpackedasarPath)) {
-        return nounpackedasarPath
-    } else if(fs.existsSync(relativePath)) {
-        return relativePath
+    const checks = {originalPath, unpackedPath, noasarPath, nounpackedasarPath, relativePath};
+
+    const errorMsg = `File doesn't exist in any of the following:\n\nOriginal path: ${filePath}\n${Object.entries(checks).map(([name, path]) => `\n- ${name}: ${path}`).join(`\n`)}`;
+
+    let exists = null;
+
+    if(promise) {
+        return new Promise(async (res, rej) => {
+            for(const check of Object.values(checks)) {
+                if(await existsFunc(check)) {
+                    exists = check;
+                    break;
+                }
+            }
+    
+            if(exists || allowNull) {
+                res(exists)
+            } else rej(new Error(errorMsg));
+        });
     } else {
-        if(allowNull) {
-            return null;
-        } else throw new Error(`File doesn't exist in any of the following:\n\nOriginal path: ${filePath}\n\n- ${originalPath}\n- ${unpackedPath}\n- ${relativePath}`);
+        for(const check of Object.values(checks)) {
+            if(fs.existsSync(check)) {
+                exists = check;
+                break;
+            }
+        }
+    
+        if(exists || allowNull) {
+            return exists;
+        } else throw new Error(errorMsg);
     }
 }

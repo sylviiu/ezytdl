@@ -3,7 +3,7 @@ module.exports = () => new Promise(async res => {
 
     for(const conf of Object.entries(configs)) {
         console.log(`Creating config ${conf[0]}... (typeof ${conf[1]})`)
-        conf[1]();
+        await conf[1]();
     };
 
     res();

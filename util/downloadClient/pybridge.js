@@ -1,5 +1,6 @@
 const { file, path } = require(`../filenames/pybridge`);
 const fs = require('fs');
+const pfs = require('../promisifiedFS')
 const Stream = require('stream');
 
 const errorHandler = require(`../errorHandler`);
@@ -130,7 +131,7 @@ module.exports = async () => new Promise(async res => {
                     ws.send({ progress, version: versionStr, message: `Downloading...` });
                 })
     
-                writeStream.on(`finish`, () => {
+                writeStream.on(`finish`, async () => {
                     console.log(`done!`);
 
                     console.log(`CHMOD ${path}`)
@@ -139,7 +140,7 @@ module.exports = async () => new Promise(async res => {
                         try {
                             require(`child_process`).execFileSync(`chmod`, [`+x`, path])
                         } catch(e) {
-                            fs.chmodSync(path, 0o777)
+                            await pfs.chmodSync(path, 0o777)
                         }
                     };
                     

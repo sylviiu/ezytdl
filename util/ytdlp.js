@@ -1,5 +1,6 @@
 const child_process = require('child_process');
 const fs = require('fs');
+const pfs = require('./promisifiedFS');
 const yargs = require('yargs');
 const { compareTwoStrings } = require('string-similarity');
 const idGen = require(`../util/idGen`);
@@ -10,9 +11,11 @@ const outputTemplateRegex = /%\(\s*([^)]+)\s*\)s/g;
 
 const durationCurve = require(`animejs`).easing(`easeInExpo`);
 
-const platforms = fs.readdirSync(require(`../util/getPath`)(`./util/platforms`)).map(f => (Object.assign(require(`../util/platforms/${f}`), {
-    name: f.split(`.`).slice(0, -1).join(`.`)
-})));
+const platforms = fs.readdirSync(require(`../util/getPath`)(`./util/platforms`)).map(f => 
+    Object.assign(require(`../util/platforms/${f}`), {
+        name: f.split(`.`).slice(0, -1).join(`.`)
+    })
+);
 
 console.log(`platforms:`, platforms)
 
@@ -41,7 +44,10 @@ var ffmpegVideoCodecs = null;
 var ffmpegAudioCodecs = null;
 
 const refreshVideoCodecs = () => {
+    console.log(`refreshVideoCodecs (promise)`)
     if(module.exports.ffmpegPath && fs.existsSync(module.exports.ffmpegPath)) {
+        console.log(`ffmpegPath exists!`);
+
         ffmpegRawVideoCodecsOutput = child_process.execFileSync(module.exports.ffmpegPath, [`-codecs`, `-hide_banner`, `loglevel`, `error`]).toString().split(`-------`).slice(1).join(`-------`).trim();
 
         ffmpegRawVideoCodecsDecodeOutput = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `V` && s[1] == `D`);
@@ -64,6 +70,45 @@ var refreshFFmpeg = () => {
         return true;
     } else return false;
 };
+
+const refreshVideoCodecsPromise = () => new Promise(async res => {
+    console.log(`refreshVideoCodecs (promise)`)
+    if(module.exports.ffmpegPath && (await pfs.existsSync(module.exports.ffmpegPath))) {
+        console.log(`ffmpegPath exists! (promise)`);
+
+        const proc = child_process.execFile(module.exports.ffmpegPath, [`-codecs`, `-hide_banner`, `loglevel`, `error`]);
+
+        let data = ``
+
+        proc.stdout.on(`data`, d => data += d.toString().trim());
+
+        proc.once(`close`, code => {
+            if(code != 0) return res(null);
+
+            ffmpegRawVideoCodecsOutput = data;
+    
+            ffmpegRawVideoCodecsDecodeOutput = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `V` && s[1] == `D`);
+            ffmpegRawVideoCodecsEncodeOutput = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `V` && s[2] == `E`);
+    
+            ffmpegVideoCodecs = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `V`).map(s => s.split(` `)[2]);
+            ffmpegAudioCodecs = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `A`).map(s => s.split(` `)[2]);
+    
+            res();
+        })
+    
+        //console.log(ffmpegVideoCodecs, `decode:`, ffmpegRawVideoCodecsDecodeOutput, `encode:`, ffmpegRawVideoCodecsEncodeOutput);
+    }
+})
+
+var refreshFFmpegPromise = () => new Promise(async res => {
+    if(!module.exports.ffmpegPath || !(await pfs.existsSync(module.exports.ffmpegPath))) module.exports.ffmpegPath = require(`./filenames/ffmpeg`).getPath();
+
+    if(module.exports.ffmpegPath && !ffmpegVideoCodecs) {
+        refreshVideoCodecsPromise().then(() => res(true));
+    } else if(module.exports.ffmpegPath) {
+        res(true);
+    } else res(false);
+})
 
 refreshFFmpeg();
 
@@ -281,7 +326,8 @@ module.exports = {
         }
     }),
     parseOutputTemplate: (info, template) => {
-        if(!template) template = require(`../getConfig`)().outputFilename;
+        //if(!template) template = require(`../getConfig`)().outputFilename;
+        if(!template) template = (global.lastConfig).outputFilename;
       
         template = template.replace(outputTemplateRegex, (match, key) => {
             const capturedKeys = key.split(`,`).map(s => s.trim())
@@ -331,7 +377,7 @@ module.exports = {
     },
     getSavePath: (info, filePath) => {
         // sanitizePath(...currentConfig.saveLocation.split(`\\`).join(`/`).split(`/`))
-        const { saveLocation, downloadInWebsiteFolders } = require(`../getConfig`)();
+        const { saveLocation, downloadInWebsiteFolders } = global.lastConfig;
 
         const useSaveLocation = sanitizePath(...saveLocation.split(`\\`).join(`/`).split(`/`));
 
@@ -348,8 +394,6 @@ module.exports = {
         if(filePath) paths.push(filePath)
 
         const saveTo = sanitizePath(...paths) + (require('os').platform() == `win32` ? `\\` : `/`);
-
-        console.log(`saveTo: ${saveTo}`)
 
         return saveTo
     },
@@ -532,7 +576,7 @@ module.exports = {
             return res(null)
         };
 
-        if(!fs.existsSync(path)) {
+        if(!await pfs.existsSync(path)) {
             if(!ffprobePathProvided) sendNotification({
                 type: `error`,
                 headingText: `Error getting info`,
@@ -579,6 +623,8 @@ module.exports = {
                     if(obj.format.duration) info.duration = Number(obj.format.duration);
                 };
 
+                if(!info.title) info.title = require(`path`).basename(path);
+
                 if(obj.streams) {
                     info.formats = [];
                     for(const stream of obj.streams) {
@@ -619,8 +665,6 @@ module.exports = {
                     _platform: `file`,
                 })
 
-                console.log(`all`, obj, info);
-
                 res(module.exports.parseInfo(info, true));
             } catch(e) {
                 console.error(e)
@@ -649,7 +693,7 @@ module.exports = {
             return res(null)
         };
 
-        if(!fs.existsSync(path)) {
+        if(!await pfs.existsSync(path)) {
             sendNotification({
                 type: `error`,
                 headingText: `Error getting info`,
@@ -661,13 +705,13 @@ module.exports = {
 
         const instanceName = `ffprobeInfo-${idGen(16)}`
 
-        const manager = downloadManager.get(instanceName, { staggered: true, noSendErrors: true });
+        const manager = downloadManager.get(instanceName, { staggered: false, noSendErrors: true });
 
-        const files = fs.readdirSync(path);
+        const files = await pfs.readdirSync(path);
 
         if(downloadManager[instanceName].timeout) clearTimeout(downloadManager[instanceName].timeout);
 
-        manager.set({ concurrentDownloadsMult: 1 })
+        manager.set({ concurrentDownloadsMult: 0.5 })
 
         manager.queueAction(manager.queue.queue.map(o => o.id), `remove`);
         manager.queueAction(manager.queue.complete.map(o => o.id), `remove`);
@@ -686,6 +730,37 @@ module.exports = {
 
         let badEntries = 0;
         let skipped = 0;
+
+        for(const file of files) {
+            const location = require(`path`).join(path, file);
+
+            const remove = () => {
+                badEntries++;
+                const i = newInfo.entries.findIndex(o => o.url == location);
+                if(i != -1) newInfo.entries.splice(i, 1)
+            };
+
+            try {
+                const stat = await pfs.statSync(location);
+                console.log(`stat ${location}: ${stat.isDirectory()} / ${stat.isFile()}`)
+                if(!stat.isDirectory() && stat.isFile()) {
+                    manager.createDownload([location, ffprobePath], (i) => {
+                        if(i) {
+                            console.log(`new info!`)
+                            delete i.entries;
+                            Object.assign(newInfo.entries.find(o => o.url == location), i);
+                        } else {
+                            remove();
+                        }
+                    }, `ffprobeInfo`)
+                } else {
+                    remove();
+                    skipped++;
+                }
+            } catch(err) {
+                remove();
+            };
+        }
 
         manager.queueEventEmitter.on(`queueUpdate`, (queue) => {
             const totalLength = Object.values(queue).reduce((a, b) => a + b.length, 0);
@@ -717,37 +792,6 @@ module.exports = {
             }
         });
 
-        files.forEach(file => {
-            const location = require(`path`).join(path, file);
-
-            const remove = () => {
-                badEntries++;
-                const i = newInfo.entries.findIndex(o => o.url == location);
-                if(i != -1) newInfo.entries.splice(i, 1)
-            }
-
-            try {
-                const stat = fs.statSync(location);
-                console.log(`stat ${location}: ${stat.isDirectory()} / ${stat.isFile()}`)
-                if(!stat.isDirectory() && stat.isFile()) {
-                    manager.createDownload([location, ffprobePath], (i) => {
-                        if(i) {
-                            console.log(`new info!`)
-                            delete i.entries;
-                            Object.assign(newInfo.entries.find(o => o.url == location), i);
-                        } else {
-                            remove();
-                        }
-                    }, `ffprobeInfo`)
-                } else {
-                    remove();
-                    skipped++;
-                }
-            } catch(e) {
-                remove();
-            }
-        })
-
         manager.queueEventEmitter.emit(`queueUpdate`, manager.queue);
     }),
     ffprobe: (path) => new Promise(async res => {
@@ -766,7 +810,7 @@ module.exports = {
             return res(null)
         };
 
-        if(!fs.existsSync(path)) {
+        if(!(await pfs.existsSync(path))) {
             sendNotification({
                 type: `error`,
                 headingText: `Error getting info`,
@@ -776,7 +820,7 @@ module.exports = {
             return res(null)
         };
 
-        const stat = fs.statSync(path);
+        const stat = await pfs.statSync(path);
 
         if(stat.isDirectory()) {
             return module.exports.ffprobeDir(path).then(res);
@@ -830,7 +874,8 @@ module.exports = {
         })
     }),
     getFilename: (url, info, format, template, fullParse) => {
-        const { outputFilename } = require(`../getConfig`)();
+        //const { outputFilename } = require(`../getConfig`)();
+        const { outputFilename } = global.lastConfig;
 
         let useTempalte = template || outputFilename;
 
@@ -901,7 +946,7 @@ module.exports = {
     getCodec: (file, audio) => new Promise(async res => {
         let ffprobePath = require(`./filenames/ffmpeg`).getFFprobe();
         
-        if(ffprobePath && fs.existsSync(ffprobePath) && file) {
+        if(ffprobePath && await pfs.existsSync(ffprobePath) && file) {
             try {
                 child_process.execFile(ffprobePath, [`-v`, `error`, `-select_streams`, `${audio ? `a` : `v`}`, `-show_entries`, `stream=codec_name`, `-of`, `default=noprint_wrappers=1:nokey=1`, file], (err, stdout, stderr) => {
                     if(err) {
@@ -1134,6 +1179,8 @@ module.exports = {
 
             const { disableHWAcceleratedConversion, outputFilename, hardwareAcceleratedConversion, advanced } = currentConfig;
 
+            console.log(`download started! (url: ${url})`)
+
             let { onlyGPUConversion } = currentConfig;
 
             let thisFormat;
@@ -1178,7 +1225,11 @@ module.exports = {
             filenames.push(fullYtdlpFilename)
             filenames.push(temporaryFilename)
     
-            if(!module.exports.ffmpegPath || !ffmpegVideoCodecs) refreshFFmpeg();
+            if(!module.exports.ffmpegPath || !ffmpegVideoCodecs) {
+                console.log(`ffmpeg not installed or codecs not present! refreshing...`);
+                await refreshFFmpegPromise();
+                console.log(`ffmpeg refreshed!`)
+            }
     
             //console.log(saveLocation, filePath, ytdlpFilename)
 
@@ -1186,7 +1237,11 @@ module.exports = {
 
             update({ deleteFiles: () => purgeLeftoverFiles(saveTo), live: info.is_live ? true : false, destinationFilename: ytdlpFilename, formatID: format })
     
-            fs.mkdirSync(saveTo, { recursive: true, failIfExists: false });
+            console.log(`saveTo: ${saveTo} (making dir)`)
+
+            await pfs.mkdirSync(saveTo, { recursive: true, failIfExists: false });
+
+            console.log(`saveTo: ${saveTo} (made dir)`)
     
             let reasonConversionNotDone = null;
         
@@ -1206,19 +1261,19 @@ module.exports = {
 
                     if(killAttempt > 0) run = false;
 
-                    const file = fs.readdirSync(saveTo).find(f => f.startsWith(ytdlpFilename) && !f.endsWith(`.meta`));
+                    const file = (await pfs.readdirSync(saveTo)).find(f => f.startsWith(ytdlpFilename) && !f.endsWith(`.meta`));
                     const target = file ? require(`path`).join(saveTo, file) : null;
 
-                    const isWritable = () => {
+                    const isWritable = () => new Promise(async res => {
                         try {
-                            fs.accessSync(target, fs.constants.W_OK);
-                            return true;
+                            await pfs.accessSync(target, fs.constants.W_OK);
+                            return res(true);
                         } catch (err) {
-                            return false;
+                            return res(false);
                         }
-                    }
+                    })
 
-                    if(run && addMetadata && module.exports.ffmpegPath && file && fs.existsSync(target)) {
+                    if(run && addMetadata && module.exports.ffmpegPath && file && (await pfs.existsSync(target))) {
                         console.log(`adding metadata...`)
 
                         setProgress(`metadata`, `Metadata`)
@@ -1233,7 +1288,7 @@ module.exports = {
 
                         let n = 0;
 
-                        while(!isWritable()) {
+                        while(!(await isWritable())) {
                             n++;
                             update({status: `Waiting for file to unlock for metadata... (${n}/10)`})
                             if(n > 10) break;
@@ -1244,110 +1299,112 @@ module.exports = {
                             console.log(`file still locked after 10 attempts!`)
                             Object.entries(addMetadata).filter(v => v[1]).forEach(k => skipped[k[0]] = `File was locked (10 attempts were made).`);
                         } else {
-                            const cleanup = (restoreOriginal) => {
-                                if(fs.existsSync(target + `.ezytdl`) && !fs.existsSync(target)) {
+                            const cleanup = (restoreOriginal) => new Promise(async res => {
+                                if((await pfs.existsSync(target + `.ezytdl`)) && !(await pfs.existsSync(target))) {
                                     update({status: `Restoring original file...`})
                                     console.log(`-- restoring ${target + `.ezytdl`}...`)
-                                    fs.renameSync(target + `.ezytdl`, target);
-                                } else if(fs.existsSync(target + `.ezytdl`) && fs.existsSync(target)) {
+                                    await pfs.renameSync(target + `.ezytdl`, target);
+                                } else if((await pfs.existsSync(target + `.ezytdl`)) && (await pfs.existsSync(target))) {
                                     if(restoreOriginal) {
                                         update({status: `Rolling back changes...`})
                                         console.log(`-- restoring ${target}...`)
-                                        if(fs.existsSync(target)) fs.unlinkSync(target);
-                                        fs.renameSync(target + `.ezytdl`, target);
+                                        if(await pfs.existsSync(target)) await pfs.unlinkSync(target);
+                                        await pfs.renameSync(target + `.ezytdl`, target);
                                     } else {
                                         update({status: `Removing temporary file...`})
                                         console.log(`-- removing ${target + `.ezytdl`}...`)
-                                        if(fs.existsSync(target + `.ezytdl`)) fs.unlinkSync(target + `.ezytdl`);
+                                        if(await pfs.existsSync(target + `.ezytdl`)) await pfs.unlinkSync(target + `.ezytdl`);
                                     }
                                 }
                                 
-                                if(fs.existsSync(target + `.songcover`)) {
+                                if(await pfs.existsSync(target + `.songcover`)) {
                                     update({status: `Removing temporary thumbnail file...`})
                                     console.log(`-- removing ${target + `.songcover`}...`)
-                                    fs.unlinkSync(target + `.songcover`);
+                                    await pfs.unlinkSync(target + `.songcover`);
                                 }
                                 
-                                if(fs.existsSync(target + `.png`)) {
+                                if(await pfs.existsSync(target + `.png`)) {
                                     update({status: `Removing temporary thumbnail file...`})
                                     console.log(`-- removing ${target + `.png`}...`)
-                                    fs.unlinkSync(target + `.png`);
+                                    await pfs.unlinkSync(target + `.png`);
                                 }
-                            }
+
+                                res();
+                            })
                             
                             if(addMetadata.tags) await new Promise(async r => {
-                                fs.renameSync(target, target + `.ezytdl`);
+                                try {
+                                    await pfs.renameSync(target, target + `.ezytdl`);
+        
+                                    let tags = [];
     
-                                let tags = [];
-
-                                if(!info.fullInfo) {
-                                    setProgress(`tags`, {progressNum: -1, status: `Getting full metadata...`})
-                                    await fetchFullInfo();
-                                }
-
-                                tags = [];
-
-                                const general = Object.entries(info.media_metadata.general).filter(v => v[1]);
-                                const album = Object.entries(info.media_metadata.album).filter(v => v[1]);
-                                //const url = Object.entries(info.media_metadata.url).filter(v => v[1]);
-
-                                for(const entry of general) tags.push([entry[0], entry[1]]);
-
-                                if(addMetadata['opt-saveAsAlbum']) for(const entry of album) tags.push([entry[0], entry[1]]);
-
-                                /*if(info.track || info.title) tags.push([`title`, info.track || info.title]);
-                                if(info.artist || info.album_artist || info.creator || info.uploader || info.channel) tags.push([`artist`, info.artist || info.album_artist || info.creator || info.uploader || info.channel]);
-
-                                if(addMetadata['opt-saveAsAlbum']) {
-                                    if(info.album || info['playlist-title']) tags.push([`album`, info.album || info['playlist-title']]);
-                                    if((info.entry_number) && (info[`playlist-playlist_count`] || info.entry_total)) tags.push([`track`, `${info.entry_number}/${info[`playlist-playlist_count`] || info.entry_total}`]);
-                                }
-
-                                if(info.genre) tags.push([`genre`, info.genre]);
-                                if(info.license) tags.push([`copyright`, info.license]);
-                                if(info.description) tags.push([`comment`, info.description]);*/
-                                
-                                setProgress(`tags`, {progressNum: 30, status: `Adding ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}...`})
+                                    if(!info.fullInfo) {
+                                        setProgress(`tags`, {progressNum: -1, status: `Getting full metadata...`})
+                                        await fetchFullInfo();
+                                    }
     
-                                const meta = [];
+                                    tags = [];
     
-                                tags.forEach(t => meta.push(`-metadata`, `${t[0]}=${`${t[1]}`.replace(/\n/g, `\r\n`)}`));
+                                    const general = Object.entries(info.media_metadata.general).filter(v => v[1]);
+                                    const album = Object.entries(info.media_metadata.album).filter(v => v[1]);
+                                    //const url = Object.entries(info.media_metadata.url).filter(v => v[1]);
+    
+                                    for(const entry of general) tags.push([entry[0], entry[1]]);
+    
+                                    if(addMetadata['opt-saveAsAlbum']) for(const entry of album) tags.push([entry[0], entry[1]]);
+    
+                                    /*if(info.track || info.title) tags.push([`title`, info.track || info.title]);
+                                    if(info.artist || info.album_artist || info.creator || info.uploader || info.channel) tags.push([`artist`, info.artist || info.album_artist || info.creator || info.uploader || info.channel]);
+    
+                                    if(addMetadata['opt-saveAsAlbum']) {
+                                        if(info.album || info['playlist-title']) tags.push([`album`, info.album || info['playlist-title']]);
+                                        if((info.entry_number) && (info[`playlist-playlist_count`] || info.entry_total)) tags.push([`track`, `${info.entry_number}/${info[`playlist-playlist_count`] || info.entry_total}`]);
+                                    }
+    
+                                    if(info.genre) tags.push([`genre`, info.genre]);
+                                    if(info.license) tags.push([`copyright`, info.license]);
+                                    if(info.description) tags.push([`comment`, info.description]);*/
+                                    
+                                    setProgress(`tags`, {progressNum: 30, status: `Adding ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}...`})
         
-                                const args = [`-y`, `-ignore_unknown`, `-i`, target + `.ezytdl`, `-id3v2_version`, `3`, `-write_id3v1`, `1`, ...meta, `-c`, `copy`, target];
+                                    const meta = [];
         
-                                ////console.log(args);
+                                    tags.forEach(t => meta.push(`-metadata`, `${t[0]}=${`${t[1]}`.replace(/\n/g, `\r\n`)}`));
+            
+                                    const args = [`-y`, `-ignore_unknown`, `-i`, target + `.ezytdl`, `-id3v2_version`, `3`, `-write_id3v1`, `1`, ...meta, `-c`, `copy`, target];
+            
+                                    ////console.log(args);
+            
+                                    const proc = child_process.execFile(module.exports.ffmpegPath, args);
+    
+                                    proc.once(`spawn`, () => {
+                                        setProgress(`tags`, {progressNum: 50, status: `Adding ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}... (FFmpeg spawned)`})
+                                    })
+            
+                                    proc.on(`error`, e => {
+                                        console.error(e)
         
-                                const proc = child_process.execFile(module.exports.ffmpegPath, args);
-
-                                proc.once(`spawn`, () => {
-                                    setProgress(`tags`, {progressNum: 50, status: `Adding ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}... (FFmpeg spawned)`})
-                                })
+                                        skipped.tags = `${e}`;
+    
+                                        deleteProgress(`tags`);
         
-                                proc.on(`error`, e => {
+                                        cleanup(true).then(r)
+                                    });
+            
+                                    proc.on(`close`, code => {
+                                        console.log(`metadata added! (code ${code})`)
+                                        setProgress(`tags`, {progressNum: 100, status: `Added ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}`})
+                                        cleanup(code === 0 ? false : true).then(r)
+                                    })
+                                } catch(e) {
                                     console.error(e)
-    
-                                    skipped.tags = `${e}`;
-
-                                    deleteProgress(`tags`);
-    
-                                    cleanup(true);
-                                    r()
-                                });
         
-                                proc.on(`close`, code => {
-                                    console.log(`metadata added! (code ${code})`)
-                                    setProgress(`tags`, {progressNum: 100, status: `Added ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}`})
-                                    cleanup(code === 0 ? false : true);
-                                    r()
-                                })
-                            }).catch(e => {
-                                console.error(e)
-    
-                                skipped.tags = `${e}`;
-                                
-                                deleteProgress(`tags`);
-    
-                                cleanup(true);
+                                    skipped.tags = `${e}`;
+                                    
+                                    deleteProgress(`tags`);
+        
+                                    cleanup(true).then(r)
+                                }
                             });
 
                             const foundCodec = await module.exports.getCodec(target);
@@ -1360,150 +1417,151 @@ module.exports = {
                                     skipped.thumbnail = `No thumbnail found`;
                                     deleteProgress(`thumbnail`);
                                 } else if(info.thumbnails || info.media_metadata.url.thumbnail_url) await new Promise(async r => {
-                                    let progressNum = 15;
+                                    try {
+                                        let progressNum = 15;
+        
+                                        await pfs.renameSync(target, target + `.ezytdl`);
     
-                                    fs.renameSync(target, target + `.ezytdl`);
-
-                                    let thumbnailAttempts = 0;
-                                    let successfulThumbnail = null;
-                                    
-                                    const continueWithThumbnail = () => {
-                                        if(fs.existsSync(`${target + `.png`}`)) {
-                                            progressNum = 65;
-                                            setProgress(`thumbnail`, {progressNum, status: `Applying thumbnail...`})
-
-                                            const args = [`-y`, `-i`, target + `.ezytdl`, `-i`, `${target + `.png`}`, `-c`, `copy`, `-map`, `0:0`, `-map`, `1:0`, `-metadata:s:v`, `title=Album cover`, `-metadata:s:v`, `comment=Cover (front)`];
-                    
-                                            if(target.endsWith(`.mp3`)) args.splice(args.indexOf(`1:0`)+1, 0, `-id3v2_version`, `3`, `-write_id3v1`, `1`);
-        
-                                            ////console.log(args);
-                    
-                                            const proc = child_process.execFile(module.exports.ffmpegPath, [...args, target]);
-                    
-                                            //proc.stdout.on(`data`, d => {
-                                            //    console.log(d.toString().trim())
-                                            //});
-                                            
-                                            proc.stderr.on(`data`, d => {
-                                                //console.error(d.toString().trim())
-                                                progressNum += 1;
-                                                if(progressNum > 90) progressNum = 90;
-                                                setProgress(`thumbnail`, {progressNum})
-                                            });
-                    
-                                            proc.on(`error`, e => {
-                                                console.error(e)
-                
-                                                skipped.thumbnail = `Failed to add cover: ${e}`;
-
-                                                deleteProgress(`thumbnail`);
-                
-                                                cleanup(true);
-                                                r();
-                                            });
-                    
-                                            proc.on(`close`, code => {
-                                                console.log(`song cover added! (code ${code})`)
-                                                cleanup(code === 0 ? false : true);
-
-                                                switch(thumbnailAttempts) {
-                                                    case 0:
-                                                        thumbnailAttempts = `wait how did it register as 0 tries what`
-                                                        break;
-                                                    case 1:
-                                                        thumbnailAttempts = `ez first try`
-                                                        break;
-                                                    case 2:
-                                                        thumbnailAttempts = `ez second try`
-                                                        break;
-                                                    case 3:
-                                                        thumbnailAttempts = `only 3 attempts maybe possibly (thats kinda high uhh hh)`
-                                                        break;
-                                                    default:
-                                                        thumbnailAttempts = `${thumbnailAttempts} attempt${thumbnailAttempts == 1 ? `` : `s`}${thumbnailAttempts > 10 ? `. what.` : ``}`
-                                                        break;
-                                                }
-
-                                                setProgress(`thumbnail`, {progressNum: 100, status: `Thumbnail added! (${thumbnailAttempts})`});
-                                                r();
-                                            })
-                                        } else {
-                                            console.log(`failed to convert image to png!`)
-                                            skipped.thumbnail = `Failed to convert thumbnail to PNG`;
-                                            deleteProgress(`thumbnail`);
-                                            cleanup(true);
-                                            r();
-                                        }
-                                    }
-
-                                    const thumbnails = (info.thumbnails || []).reverse();
-
-                                    if(info.media_metadata.url.thumbnail_url) thumbnails.unshift({ url: info.media_metadata.url.thumbnail_url, preference: 0, id: `metadata` });
-
-                                    for(const thumbnail of thumbnails) {
-                                        const code = await new Promise(async res => {
-                                            thumbnailAttempts++;
-
-                                            let extension = thumbnail.id ? ` "${thumbnail.id}"` : ``;
-                                            if(thumbnail.preference) extension += ` (priority ${thumbnail.preference})`;
-
-                                            progressNum = 15;
-                                            setProgress(`thumbnail`, {progressNum, status: `Downloading thumbnail` + extension + `...`});
-
-                                            const req = require(`superagent`).get(thumbnail.url);
-                
-                                            req.pipe(fs.createWriteStream(target + `.songcover`));
-        
-                                            req.on(`data`, () => {
-                                                progressNum += 1;
-                                                if(progressNum > 30) progressNum = 30;
-                                                setProgress(`thumbnail`, {progressNum})
-                                            })
-                
-                                            req.once(`error`, e => {
-                                                //console.log(e)
-                                                res(1)
-                                            });
-                
-                                            req.once(`end`, () => {
-                                                progressNum = 35;
-                                                setProgress(`thumbnail`, {progressNum, status: `Converting thumbnail` + extension + `...`})
+                                        let thumbnailAttempts = 0;
+                                        let successfulThumbnail = null;
+                                        
+                                        const continueWithThumbnail = async () => {
+                                            if(await pfs.existsSync(`${target + `.png`}`)) {
+                                                progressNum = 65;
+                                                setProgress(`thumbnail`, {progressNum, status: `Applying thumbnail...`})
+    
+                                                const args = [`-y`, `-i`, target + `.ezytdl`, `-i`, `${target + `.png`}`, `-c`, `copy`, `-map`, `0:0`, `-map`, `1:0`, `-metadata:s:v`, `title=Album cover`, `-metadata:s:v`, `comment=Cover (front)`];
+                        
+                                                if(target.endsWith(`.mp3`)) args.splice(args.indexOf(`1:0`)+1, 0, `-id3v2_version`, `3`, `-write_id3v1`, `1`);
             
-                                                const imgConvertProc = child_process.execFile(module.exports.ffmpegPath, [`-y`, `-i`, target + `.songcover`, `-update`, `1`, `-vf`, `crop=min(in_w\\,in_h):min(in_w\\,in_h)`, target + `.png`]);
-            
-                                                imgConvertProc.stdout.on(`data`, d => {
-                                                    //console.log(d.toString().trim())
+                                                ////console.log(args);
+                        
+                                                const proc = child_process.execFile(module.exports.ffmpegPath, [...args, target]);
+                        
+                                                //proc.stdout.on(`data`, d => {
+                                                //    console.log(d.toString().trim())
+                                                //});
+                                                
+                                                proc.stderr.on(`data`, d => {
+                                                    //console.error(d.toString().trim())
                                                     progressNum += 1;
-                                                    if(progressNum > 60) progressNum = 60;
+                                                    if(progressNum > 90) progressNum = 90;
+                                                    setProgress(`thumbnail`, {progressNum})
+                                                });
+                        
+                                                proc.on(`error`, e => {
+                                                    console.error(e)
+                    
+                                                    skipped.thumbnail = `Failed to add cover: ${e}`;
+    
+                                                    deleteProgress(`thumbnail`);
+                    
+                                                    cleanup(true).then(r);
+                                                });
+                        
+                                                proc.on(`close`, async code => {
+                                                    console.log(`song cover added! (code ${code})`);
+                                                    
+                                                    await cleanup(code === 0 ? false : true);
+    
+                                                    switch(thumbnailAttempts) {
+                                                        case 0:
+                                                            thumbnailAttempts = `wait how did it register as 0 tries what`
+                                                            break;
+                                                        case 1:
+                                                            thumbnailAttempts = `ez first try`
+                                                            break;
+                                                        case 2:
+                                                            thumbnailAttempts = `ez second try`
+                                                            break;
+                                                        case 3:
+                                                            thumbnailAttempts = `only 3 attempts maybe possibly (thats kinda high uhh hh)`
+                                                            break;
+                                                        default:
+                                                            thumbnailAttempts = `${thumbnailAttempts} attempt${thumbnailAttempts == 1 ? `` : `s`}${thumbnailAttempts > 10 ? `. what.` : ``}`
+                                                            break;
+                                                    }
+    
+                                                    setProgress(`thumbnail`, {progressNum: 100, status: `Thumbnail added! (${thumbnailAttempts})`});
+                                                    r();
+                                                })
+                                            } else {
+                                                console.log(`failed to convert image to png!`)
+                                                skipped.thumbnail = `Failed to convert thumbnail to PNG`;
+                                                deleteProgress(`thumbnail`);
+                                                cleanup(true).then(r)
+                                            }
+                                        }
+    
+                                        const thumbnails = (info.thumbnails || []).reverse();
+    
+                                        if(info.media_metadata.url.thumbnail_url) thumbnails.unshift({ url: info.media_metadata.url.thumbnail_url, preference: 0, id: `metadata` });
+    
+                                        for(const thumbnail of thumbnails) {
+                                            const code = await new Promise(async res => {
+                                                thumbnailAttempts++;
+    
+                                                let extension = thumbnail.id ? ` "${thumbnail.id}"` : ``;
+                                                if(thumbnail.preference) extension += ` (priority ${thumbnail.preference})`;
+    
+                                                progressNum = 15;
+                                                setProgress(`thumbnail`, {progressNum, status: `Downloading thumbnail` + extension + `...`});
+    
+                                                const req = require(`superagent`).get(thumbnail.url);
+                    
+                                                req.pipe(await pfs.createWriteStream(target + `.songcover`));
+            
+                                                req.on(`data`, () => {
+                                                    progressNum += 1;
+                                                    if(progressNum > 30) progressNum = 30;
                                                     setProgress(`thumbnail`, {progressNum})
                                                 })
-            
-                                                //imgConvertProc.stderr.on(`data`, d => {
-                                                //    console.error(d.toString().trim())
-                                                //})
-            
-                                                imgConvertProc.once(`close`, c => {
-                                                    successfulThumbnail = c == 0 ? thumbnail : successfulThumbnail;
-                                                    res(c)
+                    
+                                                req.once(`error`, e => {
+                                                    //console.log(e)
+                                                    res(1)
                                                 });
-
-                                                imgConvertProc.once(`error`, e => res(1));
-                                            })
-                                        });
-
-                                        if(code == 0) break;
-                                    };
-
-                                    continueWithThumbnail();
-                                }).catch(e => {
-                                    console.error(e)
-        
-                                    skipped.thumbnail = `${e}`;
-
-                                    deleteProgress(`thumbnail`);
-        
-                                    cleanup(true);
-                                })
+                    
+                                                req.once(`end`, () => {
+                                                    progressNum = 35;
+                                                    setProgress(`thumbnail`, {progressNum, status: `Converting thumbnail` + extension + `...`})
+                
+                                                    const imgConvertProc = child_process.execFile(module.exports.ffmpegPath, [`-y`, `-i`, target + `.songcover`, `-update`, `1`, `-vf`, `crop=min(in_w\\,in_h):min(in_w\\,in_h)`, target + `.png`]);
+                
+                                                    imgConvertProc.stdout.on(`data`, d => {
+                                                        //console.log(d.toString().trim())
+                                                        progressNum += 1;
+                                                        if(progressNum > 60) progressNum = 60;
+                                                        setProgress(`thumbnail`, {progressNum})
+                                                    })
+                
+                                                    //imgConvertProc.stderr.on(`data`, d => {
+                                                    //    console.error(d.toString().trim())
+                                                    //})
+                
+                                                    imgConvertProc.once(`close`, c => {
+                                                        successfulThumbnail = c == 0 ? thumbnail : successfulThumbnail;
+                                                        res(c)
+                                                    });
+    
+                                                    imgConvertProc.once(`error`, e => res(1));
+                                                })
+                                            });
+    
+                                            if(code == 0) break;
+                                        };
+    
+                                        continueWithThumbnail();
+                                    } catch(e) {
+                                        console.error(e)
+            
+                                        skipped.thumbnail = `${e}`;
+    
+                                        deleteProgress(`thumbnail`);
+            
+                                        cleanup(true).then(r);
+                                    }
+                                });
                             } else if(vcodec) {
                                 skipped.thumbnail = `Video detected`;
                             }
@@ -1514,7 +1572,7 @@ module.exports = {
                             Object.entries(addMetadata).filter(v => v[1] && !v[0].startsWith(`opt-`)).forEach(k => skipped[k[0]] = `Download was canceled.`);
                         } else if(!module.exports.ffmpegPath) {
                             Object.entries(addMetadata).filter(v => v[1] && !v[0].startsWith(`opt-`)).forEach(k => skipped[k[0]] = `FFmpeg wasn't found.`);
-                        } else if(!file || !fs.existsSync(target)) {
+                        } else if(!file || !await pfs.existsSync(target)) {
                             Object.entries(addMetadata).filter(v => v[1] && !v[0].startsWith(`opt-`)).forEach(k => skipped[k[0]] = `File wasn't found.`);
                         }
                     }
@@ -1529,22 +1587,22 @@ module.exports = {
             }
 
             const runThroughFFmpeg = async (code, replaceInputArgs, replaceOutputArgs, useFile=null) => {
-                const temporaryFiles = useFile ? [] : fs.readdirSync(saveTo).filter(f => f.startsWith(temporaryFilename) && !f.endsWith(`.part`) && !f.endsWith(`.meta`));
+                const temporaryFiles = useFile ? [] : (await pfs.readdirSync(saveTo)).filter(f => f.startsWith(temporaryFilename) && !f.endsWith(`.part`) && !f.endsWith(`.meta`));
 
                 if(!useFile) filenames.push(...temporaryFiles);
 
                 let previousFilename = obj.destinationFile ? `ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0] : temporaryFilename + `.${ytdlpSaveExt}`;
 
-                const fallback = (msg, deleteFile) => {
+                const fallback = async (msg, deleteFile) => {
                     try {
                         console.log(`ffmpeg did not save file, renaming temporary file`);
                         if(deleteFile) {
                             for(const file of temporaryFiles) {
-                                if(fs.existsSync(require(`path`).join(saveTo, file))) fs.unlinkSync(require(`path`).join(saveTo, file));
+                                if(await pfs.existsSync(require(`path`).join(saveTo, file))) await pfs.unlinkSync(require(`path`).join(saveTo, file));
                             }
                         } else {
                             for(const file of temporaryFiles) {
-                                if(fs.existsSync(require(`path`).join(saveTo, file))) fs.renameSync(require(`path`).join(saveTo, file), require(`path`).join(saveTo, file.includes(temporaryFilename) ? file.replace(temporaryFilename, ytdlpFilename) : (ytdlpFilename + `.${file.split(`.`).slice(-1)[0]}`)));
+                                if(await pfs.existsSync(require(`path`).join(saveTo, file))) await pfs.renameSync(require(`path`).join(saveTo, file), require(`path`).join(saveTo, file.includes(temporaryFilename) ? file.replace(temporaryFilename, ytdlpFilename) : (ytdlpFilename + `.${file.split(`.`).slice(-1)[0]}`)));
                             }
                         }
                     } catch(e) { console.log(e) }
@@ -1614,7 +1672,11 @@ module.exports = {
 
                     if(useFile) {
                         inputArgs.push(`-i`, useFile);
-                    } else temporaryFiles.filter(f => fs.existsSync(require(`path`).join(saveTo, f))).forEach(file => inputArgs.push(`-i`, require(`path`).join(saveTo, file)));
+                    } else for(const file of temporaryFiles) {
+                        if(await pfs.existsSync(require(`path`).join(saveTo, file))) {
+                            inputArgs.push(`-i`, require(`path`).join(saveTo, file));
+                        }
+                    }
 
                     console.log(inputArgs)
 
@@ -1765,7 +1827,7 @@ module.exports = {
                             allLogs += data.toString().trim() + `\n`;
                         });
         
-                        proc.on(`close`, (code) => {
+                        proc.on(`close`, async (code) => {
                             if(killAttempt > 0) {
                                 update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`, url, format})
                                 return res(obj)
@@ -1774,9 +1836,9 @@ module.exports = {
                             } else if(code == 0) {
                                 console.log(`ffmpeg completed; deleting temporary file...`);
                                 //if(fs.existsSync(saveTo + previousFilename)) fs.unlinkSync(saveTo + previousFilename);
-                                temporaryFiles.forEach(f => {
-                                    if(fs.existsSync(require(`path`).join(saveTo, f))) fs.unlinkSync(require(`path`).join(saveTo, f));
-                                })
+                                for(const f of temporaryFiles) {
+                                    if(await pfs.existsSync(require(`path`).join(saveTo, f))) await pfs.unlinkSync(require(`path`).join(saveTo, f));
+                                }
                                 update({percentNum: 100, status: `Done!`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`, url, format});
                                 resolveFFmpeg(obj)
                             } else {
@@ -1787,7 +1849,7 @@ module.exports = {
                         })
                     });
 
-                    const ffmpegGPUArgs = require(`./configs`).ffmpegGPUArgs();
+                    const ffmpegGPUArgs = await require(`./configs`).ffmpegGPUArgs();
     
                     const transcoders = {};
 
@@ -1807,7 +1869,7 @@ module.exports = {
                     if(convert.videoCodec || destinationCodec.videoCodec) for(const f of temporaryFiles) {
                         let promises = [];
 
-                        if(fs.existsSync(require(`path`).join(saveTo, f))) {
+                        if(await pfs.existsSync(require(`path`).join(saveTo, f))) {
                             if(!originalVideoCodec) promises.push(new Promise(async r => {
                                 originalVideoCodec = await module.exports.getCodec(require(`path`).join(saveTo, f));
                                 r();
@@ -1927,7 +1989,7 @@ module.exports = {
                     }
                 } else if(!convert) {
                     for(const file of temporaryFiles) {
-                        if(fs.existsSync(require(`path`).join(saveTo, file))) fs.renameSync(require(`path`).join(saveTo, file), require(`path`).join(saveTo, file.includes(temporaryFilename) ? file.replace(temporaryFilename, ytdlpFilename) : (ytdlpFilename + `.${file.split(`.`).slice(-1)[0]}`)));
+                        if(await pfs.existsSync(require(`path`).join(saveTo, file))) await pfs.renameSync(require(`path`).join(saveTo, file), require(`path`).join(saveTo, file.includes(temporaryFilename) ? file.replace(temporaryFilename, ytdlpFilename) : (ytdlpFilename + `.${file.split(`.`).slice(-1)[0]}`)));
                     }
 
                     if(killAttempt > 0) {
@@ -1963,7 +2025,7 @@ module.exports = {
     
                 args.push(`--ffmpeg-location`, ``);
         
-                if(!fs.existsSync(module.exports.ffmpegPath)) {
+                if(!(await pfs.existsSync(module.exports.ffmpegPath))) {
                     if(convert && convert.ext) {
                         ext = convert.ext
                         convert = false;
@@ -2158,7 +2220,7 @@ module.exports = {
                                     if(convert) {
                                         runThroughFFmpeg(code);
                                     } else {
-                                        if(fs.existsSync(require(`path`).join(saveTo, temporaryFilename + `.${ytdlpSaveExt}`))) fs.unlinkSync(require(`path`).join(saveTo, temporaryFilename + `.${ytdlpSaveExt}`));
+                                        if(await pfs.existsSync(require(`path`).join(saveTo, temporaryFilename + `.${ytdlpSaveExt}`))) await pfs.unlinkSync(require(`path`).join(saveTo, temporaryFilename + `.${ytdlpSaveExt}`));
                                         update({code, saveLocation: saveTo, url, format, status: `Done!`})
                                         res(obj)
                                     }
@@ -2180,8 +2242,8 @@ module.exports = {
                     } else runThroughFFmpeg(code);
                 })
             } else {
-                if(!fs.existsSync(module.exports.ffmpegPath)) return resolve(update({ failed: true, status: `FFmpeg was not found on your system -- conversion aborted.` }));
-                if(!fs.existsSync(url)) return resolve(update({ failed: true, status: `File not found -- conversion aborted.` }));
+                if(!(await pfs.existsSync(module.exports.ffmpegPath))) return resolve(update({ failed: true, status: `FFmpeg was not found on your system -- conversion aborted.` }));
+                if(!(await pfs.existsSync(url))) return resolve(update({ failed: true, status: `File not found -- conversion aborted.` }));
 
                 const inputArgs = [];
                 const outputArgs = [];

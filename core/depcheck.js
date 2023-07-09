@@ -1,4 +1,5 @@
 const fs = require('fs');
+const pfs = require(`../util/promisifiedFS`);
 const path = require('path');
 const errorHandler = require(`../util/errorHandler`);
 const errorAndExit = require(`../util/errorAndExit`)
@@ -8,9 +9,9 @@ const depcheckPath = path.join(__dirname + `/depcheck/` + process.platform)
 
 module.exports = () => new Promise(async res => {
     console.log(`Verifying dependencies at ${depcheckPath}`)
-    if(fs.existsSync(depcheckPath)) {
+    if(await pfs.existsSync(depcheckPath)) {
         console.log(`depchecks available for platform ${process.platform} -- running`);
-        const depchecks = fs.readdirSync(depcheckPath);
+        const depchecks = await pfs.readdirSync(depcheckPath);
 
         let missingDependencies = [];
         let missingUnrequiredDependencies = [];

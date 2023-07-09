@@ -1,5 +1,5 @@
 if(typeof config == `undefined`) {
-    let config = {};
+    var config = {};
 }
 
 configuration.get().then(newConf => { config = newConf });

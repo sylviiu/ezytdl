@@ -1,5 +1,6 @@
 const { file, downloadPath, platform } = require(`../filenames/ffmpeg`);
 const fs = require('fs');
+const pfs = require('../promisifiedFS')
 const Stream = require('stream');
 
 const errorHandler = require(`../errorHandler`);
@@ -79,7 +80,7 @@ module.exports = async () => new Promise(async res => {
 
                 if(platform == `linux`) ext = `.tar.xz`;
 
-                if(fs.existsSync(downloadPath)) fs.rmdirSync(downloadPath, { recursive: true });
+                if(await pfs.existsSync(downloadPath)) await pfs.rmdirSync(downloadPath, { recursive: true });
     
                 const writeStream = fs.createWriteStream(downloadPath + ext, { flags: `w` });
     
@@ -105,11 +106,11 @@ module.exports = async () => new Promise(async res => {
                     //console.log(`Downloaded ` + Math.round(progress * 100) + `% ...`)
                 })
     
-                writeStream.on(`finish`, () => {
-                    const finalize = () => {
+                writeStream.on(`finish`, async () => {
+                    const finalize = async () => {
                         console.log(`Extracted!`);
 
-                        fs.unlinkSync(downloadPath + ext);
+                        await pfs.unlinkSync(downloadPath + ext);
 
                         const newPath = require(`../filenames/ffmpeg`).getPath()
 
@@ -119,7 +120,7 @@ module.exports = async () => new Promise(async res => {
                             try {
                                 require(`child_process`).execFileSync(`chmod`, [`+x`, newPath])
                             } catch(e) {
-                                fs.chmodSync(newPath, 0o777)
+                                await pfs.chmodSync(newPath, 0o777)
                             }
                         }
 
@@ -130,7 +131,7 @@ module.exports = async () => new Promise(async res => {
 
                     console.log(`done!`);
 
-                    fs.mkdirSync(downloadPath, { recursive: true, failOnError: false });
+                    await pfs.mkdirSync(downloadPath, { recursive: true, failOnError: false });
 
                     if(platform == `linux`) {
                         require(`child_process`).execFileSync(`tar`, [`-xf`, downloadPath + ext, `-C`, downloadPath]);

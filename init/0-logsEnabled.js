@@ -1,11 +1,11 @@
 module.exports = () => new Promise (async res => {
     const sendNotification = require(`../core/sendNotification`)
     
-    const config = require(`../getConfig`)();
+    const config = await require(`../getConfig`)();
     
     if(config.logsEnabled || global.testrun || global.headless) {
         console.log(`Keeping logs enabled`)
-        sendNotification({
+        if(require('electron').app.isPackaged) sendNotification({
             type: `warn`,
             headingText: `Debug logs enabled!`,
             bodyText: `Debug logs are enabled in the config. This most likely will slow down the app.`,

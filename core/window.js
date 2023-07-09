@@ -107,7 +107,8 @@ module.exports = (notDefault, overrideArgs) => {
         //window.setIcon(downloadIcons.getCurrentIcon(true));
 
         window.on('close', (e) => {
-            const config = require(`../getConfig`)();
+            //const config = require(`../getConfig`)();
+            const config = global.lastConfig;
 
             console.log(`closing to tray: ${config.closeToTray}`)
 

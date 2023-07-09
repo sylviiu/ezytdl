@@ -1,6 +1,7 @@
 const { app, Menu, Tray, nativeImage, nativeTheme, ipcMain } = require('electron');
 const sharp = require('sharp');
 const fs = require('fs');
+const pfs = require('../util/promisifiedFS')
 const path = require(`path`);
 
 let current = `regular`;
@@ -50,22 +51,18 @@ const iconToPNG = (icon, size, negate) => new Promise(async res => {
     const filePath = path.join(basePath, fileName);
 
     //if(!fs.existsSync(basePath)) fs.mkdirSync(basePath, { recursive: true });
-    if(!fs.existsSync(basePath)) await new Promise(r => fs.mkdir(basePath, { recursive: true }, r));
+    if(!await pfs.existsSync(basePath)) await pfs.mkdirSync(basePath, { recursive: true });
 
-    if(fs.existsSync(filePath)) {
-        fs.readFile(filePath, (err, data) => {
-            if(err) {
-                fs.rmSync(filePath);
-                return iconToPNG(icon, size, negate).then(res);
-            } else return res(data);
-        })
+    if(await pfs.existsSync(filePath)) {
+        pfs.readFileSync(filePath).then(res).catch(e => {
+            pfs.rmSync(filePath).then(() => iconToPNG(icon, size, negate).then(res));
+        });
     } else {
         console.log(`creating icon ${filePath}`);
         const sharpIcon = sharp(icon).resize(Math.round(size), Math.round(size));
         if(negate) sharpIcon.negate({ alpha: false });
         const buf = await sharpIcon.png().toBuffer();
-        fs.writeFile(filePath, buf, () => console.log(`icon ${filePath} created`));
-        return res(buf);
+        pfs.writeFileSync(filePath, buf).then(() => res(buf));
     }
 })
 
@@ -184,11 +181,11 @@ module.exports = {
             res(icons);
         });
 
-        getIconsPromise.then(() => {
-            for(const filename of fs.readdirSync(basePath)) {
+        getIconsPromise.then(async () => {
+            for(const filename of await pfs.readdirSync(basePath)) {
                 if(!createdFilenames.includes(filename)) {
                     console.log(`Deleting unused icon ${filename}`)
-                    fs.unlinkSync(path.join(basePath, filename));
+                    await pfs.unlinkSync(path.join(basePath, filename));
                 }
             }
         })
@@ -197,20 +194,20 @@ module.exports = {
     },
     get: (...content) => iconGetter(...content),
     set: (type) => {
-        const { alwaysUseLightIcon } = require(`../getConfig`)();
-    
         if(!type) type = current;
 
         if(type == `noQueue` && global.updateAvailable) type = `update`
-        
-        console.log(`Updating tray -- type: ${type} / use dark colors? ${nativeTheme.shouldUseDarkColors} / force light? ${alwaysUseLightIcon}`);
-        
-        events.emit(`icon`, iconGetter(type));
-        events.emit(`lightIcon`, iconGetter(type, true));
-        events.emit(`darkIcon`, iconGetter(type, false));
-        events.emit(`iconType`, type);
 
-        current = type
+        require(`../getConfig`)().then(({ alwaysUseLightIcon }) => {            
+            console.log(`Updating tray -- type: ${type} / use dark colors? ${nativeTheme.shouldUseDarkColors} / force light? ${alwaysUseLightIcon}`);
+            
+            events.emit(`icon`, iconGetter(type));
+            events.emit(`lightIcon`, iconGetter(type, true));
+            events.emit(`darkIcon`, iconGetter(type, false));
+            events.emit(`iconType`, type);
+    
+            current = type
+        })
     }
 };
 

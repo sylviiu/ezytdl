@@ -1,6 +1,6 @@
 module.exports = {
-    gpuArgs: (userConfig) => {
-        const gpuArgs = require(`../util/configs`).ffmpegGPUArgs();
+    gpuArgs: (userConfig) => new Promise(async res => {
+        const gpuArgs = await require(`../util/configs`).ffmpegGPUArgs();
 
         Object.assign(userConfig.strings, { hardwareAcceleratedConversionExtended: {}, });
         Object.assign(userConfig.descriptions, { hardwareAcceleratedConversionExtended: {}, });
@@ -12,10 +12,10 @@ module.exports = {
             }
         };
 
-        return userConfig;
-    },
-    ffmpegPresets: (userConfig) => {
-        const ffmpegPresets = Object.values(require(`../util/configs`).ffmpegPresets());
+        return res(userConfig);
+    }),
+    ffmpegPresets: (userConfig) => new Promise(async res => {
+        const ffmpegPresets = Object.values(await require(`../util/configs`).ffmpegPresets());
 
         Object.assign(userConfig.strings, { ffmpegPresetsExtended: {}, });
         Object.assign(userConfig.descriptions, { ffmpegPresetsExtended: {}, });
@@ -25,6 +25,6 @@ module.exports = {
             userConfig.descriptions.ffmpegPresetsExtended[key] = description || `No description provided.`;
         };
 
-        return userConfig;
-    }
+        return res(userConfig);
+    })
 }

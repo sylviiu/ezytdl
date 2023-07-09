@@ -1,6 +1,7 @@
 const errorHandler = require("./util/errorHandler.js");
 
 const fs = require('fs');
+const pfs = require('./util/promisifiedFS');
 const os = require('os');
 
 const sendNotification = require("./core/sendNotification.js");
@@ -15,7 +16,7 @@ module.exports = (configObject, {
     allowNonexistentRemoval=true,
     allowChangedDefaults=true,
     values=false,
-}={}) => {
+}={}) => new Promise(async res => {
     const custom = source != `./defaultConfig.json` && target != `config.json` ? true : false;
 
     try {
@@ -25,7 +26,7 @@ module.exports = (configObject, {
             defaultConfig.nightlyUpdates = require(`./package.json`).version.includes(`-nightly.`) ? true : false;
 
             // add ffmpeg hardware acceleration toggles to config
-            const gpuArgs = require(`./util/configs`).ffmpegGPUArgs();
+            const gpuArgs = await require(`./util/configs`).ffmpegGPUArgs();
             for(const key of Object.keys(gpuArgs)) {
                 if(gpuArgs[key].platform.includes(process.platform)) {
                     defaultConfig.hardwareAcceleratedConversion[key] = false;
@@ -36,7 +37,7 @@ module.exports = (configObject, {
             for(const key of removedArgs) delete defaultConfig.hardwareAcceleratedConversion[key];
 
             // add ffmpeg conversion preset toggles to config
-            const ffmpegPresets = Object.values(require(`./util/configs`).ffmpegPresets());
+            const ffmpegPresets = Object.values(await require(`./util/configs`).ffmpegPresets());
             for(const {key, defaultEnabled} of ffmpegPresets) {
                 defaultConfig.ffmpegPresets[key] = defaultEnabled || false;
             };
@@ -45,18 +46,18 @@ module.exports = (configObject, {
             for(const key of removedPresets) delete defaultConfig.ffmpegPresets[key];
         }
     
-        fs.mkdirSync(global.configPath, { recursive: true, failIfExists: false });
+        await pfs.mkdirSync(global.configPath, { recursive: true, failIfExists: false });
         
         let checked = false;
 
-        if(!fs.existsSync(`${global.configPath}/${target}`)) {
+        if(!await pfs.existsSync(`${global.configPath}/${target}`)) {
             fs.writeFileSync(`${global.configPath}/${target}`, JSON.stringify(defaultConfig, null, 4), { encoding: `utf-8` });
             checked = true;
         } else {
             try {
-                JSON.parse(fs.readFileSync(`${global.configPath}/${target}`));
+                JSON.parse(await pfs.readFileSync(`${global.configPath}/${target}`));
             } catch(e) {
-                fs.unlinkSync(`${global.configPath}/${target}`);
+                await pfs.unlinkSync(`${global.configPath}/${target}`);
                 module.exports(configObject);
             }
         };
@@ -123,7 +124,7 @@ module.exports = (configObject, {
         }
         
         if(!checked) {
-            const config = JSON.parse(fs.readFileSync(`${global.configPath}/${target}`));
+            const config = JSON.parse(await pfs.readFileSync(`${global.configPath}/${target}`));
 
             const checkedConfig = checkKeys(`> `, `root config object`, config, defaultConfig, true, true);
 
@@ -135,7 +136,7 @@ module.exports = (configObject, {
         };
         
         if(configObject) {
-            const config = JSON.parse(fs.readFileSync(`${global.configPath}/${target}`));
+            const config = JSON.parse(await pfs.readFileSync(`${global.configPath}/${target}`));
 
             const checkedConfig = checkKeys(`> `, `updated config object`, configObject, defaultConfig);
             
@@ -144,10 +145,10 @@ module.exports = (configObject, {
             if(!custom && configObject.alwaysUseLightIcon != undefined) require(`./core/downloadIcon.js`).set();
         };
 
-        const userConfig = JSON.parse(fs.readFileSync(`${global.configPath}/${target}`));
+        const userConfig = JSON.parse(await pfs.readFileSync(`${global.configPath}/${target}`));
 
         if(!custom) {
-            if(!userConfig.saveLocation) userConfig.saveLocation = require(`path`).join((fs.existsSync(require(`path`).join(os.homedir(), `Downloads`)) ? require(`path`).join(os.homedir(), `Downloads`) : os.homedir()), `ezytdl`);
+            if(!userConfig.saveLocation) userConfig.saveLocation = require(`path`).join((await pfs.existsSync(require(`path`).join(os.homedir(), `Downloads`)) ? require(`path`).join(os.homedir(), `Downloads`) : os.homedir()), `ezytdl`);
     
             if(userConfig.downloadFromClipboard) {
                 global.downloadFromClipboard = true;
@@ -161,7 +162,7 @@ module.exports = (configObject, {
             userConfig.descriptions = require(`./configDescriptions.json`);
     
             for(const extension of Object.entries(require(`./core/configExtensions.js`))) {
-                extension[1](userConfig);
+                await extension[1](userConfig);
             }
     
             userConfig.actions = {};
@@ -185,10 +186,12 @@ module.exports = (configObject, {
             };
     
             parseAction(null, require(`./core/configActions.js`)(userConfig), userConfig.actions);
+
+            global.lastConfig = userConfig;
         };
 
-        return values ? Object.values(userConfig) : userConfig;
+        return res(values ? Object.values(userConfig) : userConfig);
     } catch(e) {
         errorHandler(e)
     }
-}
+})

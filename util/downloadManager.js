@@ -198,7 +198,8 @@ sessions = {
                 }
             
                 if(queueModified) {
-                    const conf = require(`../getConfig`)();
+                    //const conf = require(`../getConfig`)();
+                    const conf = global.lastConfig;
 
                     let maxDownloads = conf.concurrentDownloads;
 

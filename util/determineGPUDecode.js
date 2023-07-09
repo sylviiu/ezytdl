@@ -4,6 +4,7 @@ const { app } = require(`electron`);
 const { Stream } = require('stream');
 
 const fs = require('fs');
+const pfs = require('./promisifiedFS')
 
 const findPath = require(`./getPath`);
 const idGen = require(`./idGen`);
@@ -100,7 +101,7 @@ module.exports = (link, platforms, setProgress) => {
 
                 setProgress(`Running tests on ${platforms.length} platforms...`, -1)
 
-                const transcoders = require(`./configs`).ffmpegGPUArgs();
+                const transcoders = await require(`./configs`).ffmpegGPUArgs();
     
                 let tested = {};
     
@@ -114,7 +115,7 @@ module.exports = (link, platforms, setProgress) => {
 
                 for(const transcoder of platforms) tested[transcoder].then(() => setProgress(`Running tests on ${platforms.length} platforms...`, (i++ / platforms.length) * 100))
     
-                Promise.allSettled(Object.values(tested)).then((results) => {
+                Promise.allSettled(Object.values(tested)).then(async (results) => {
                     let o = {};
     
                     results.map(o => o.value).filter(o => o).forEach(result => o[result.name] = result.works);
@@ -124,7 +125,7 @@ module.exports = (link, platforms, setProgress) => {
                         results: o
                     });
 
-                    if(fs.existsSync(destination)) fs.unlinkSync(destination);
+                    if(await pfs.existsSync(destination)) pfs.unlinkSync(destination);
                 });
             });
         });

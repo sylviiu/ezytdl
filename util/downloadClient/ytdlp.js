@@ -1,5 +1,6 @@
 const { file, downloadPath } = require(`../filenames/ytdlp`);
 const fs = require('fs');
+const pfs = require('../promisifiedFS');
 const Stream = require('stream');
 const which = require(`which`);
 const path = require(`path`);
@@ -41,7 +42,7 @@ module.exports = async () => new Promise(async res => {
 
     console.log(`downloadClient`);
 
-    if(fs.existsSync(require(`../pythonBridge`).bridgepath)) {
+    if(await pfs.existsSync(require(`../pythonBridge`).bridgepath)) {
         ws.send({ progress: 1, message: `Python bridge exists -- no need to download a client!` });
         ws.close(true);
     }
@@ -133,17 +134,17 @@ module.exports = async () => new Promise(async res => {
                     //console.log(`Downloaded ` + Math.round(progress * 100) + `% ...`)
                 })
     
-                writeStream.on(`finish`, () => {
+                writeStream.on(`finish`, async () => {
                     console.log(`done!`);
 
-                    const chmod = (path) => {
+                    const chmod = async (path) => {
                         console.log(`CHMOD ${path}`)
 
                         if(!process.platform.toLowerCase().includes(`win32`)) {
                             try {
                                 require(`child_process`).execFileSync(`chmod`, [`+x`, path])
                             } catch(e) {
-                                fs.chmodSync(path, 0o777)
+                                await pfs.chmodSync(path, 0o777)
                             }
                         }
         
@@ -151,16 +152,16 @@ module.exports = async () => new Promise(async res => {
                     }
 
                     if(downloadFile.endsWith(`.zip`)) {
-                        fs.mkdirSync(downloadPath, { recursive: true, failOnError: false });
+                        await pfs.mkdirSync(downloadPath, { recursive: true, failOnError: false });
 
                         const extractor = require(`unzipper`).Extract({
                             path: downloadPath
                         });
 
-                        fs.createReadStream(downloadPath + `.zip`).pipe(extractor);
+                        await pfs.createReadStream(downloadPath + `.zip`).pipe(extractor);
 
-                        extractor.on(`close`, () => {
-                            fs.unlinkSync(downloadPath + `.zip`);
+                        extractor.on(`close`, async () => {
+                            await pfs.unlinkSync(downloadPath + `.zip`);
                             const newPath = require(`../filenames/ytdlp`).getPath()
                             chmod(newPath);
                         });

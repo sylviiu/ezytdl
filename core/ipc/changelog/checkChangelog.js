@@ -20,16 +20,16 @@ module.exports = {
             })
         });
 
-        const lastVersionChecked = require(`../../../getConfig`)().version;
+        const lastVersionChecked = (await require(`../../../getConfig`)()).version;
         const currentVersion = require(`../../../package.json`).version;
 
-        if(lastVersionChecked !== currentVersion && currentVersion == global.changelogResponse.tag_name) {
-            const updated = require(`../../../getConfig`)({ version: global.changelogResponse.tag_name });
+        if(global.changelogResponse && lastVersionChecked !== currentVersion && currentVersion == global.changelogResponse.tag_name) {
             sendNotification({
                 headingText: `ezytdl has been updated!`,
                 bodyText: `Click here to view the changelog.`,
                 redirect: `changelog.html`,
             })
+            require(`../../../getConfig`)({ version: global.changelogResponse.tag_name });
         }
     }
 }

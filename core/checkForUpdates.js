@@ -126,7 +126,7 @@ module.exports = async (manual) => {
     // if the last check was less than 15 minutes ago, don't check again unless it's a manual check
     if(Date.now() - lastChecked > 900000 && !manual) return;
 
-    const { nightlyUpdates } = require(`../getConfig`)()
+    const { nightlyUpdates } = await require(`../getConfig`)()
 
     if(nightlyUpdates) {
         autoUpdater.allowPrerelease = true;

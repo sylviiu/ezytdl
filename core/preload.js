@@ -27,7 +27,10 @@ const on = (...args) => {
     return ipcRenderer.on(...args);
 }
 
-const getPath = (...data) => invoke(`getPath`, ...data)
+const getPath = (path, allowNull=true) => {
+    console.log(`getPath: ${path} (allow null: ${allowNull})`)
+    return invoke(`getPath`, [path, allowNull])
+}
 
 const addScript = (path, type) => new Promise(async res => {
     const script = document.createElement(`script`);
@@ -37,9 +40,7 @@ const addScript = (path, type) => new Promise(async res => {
         const checkDir = (p) => {
             if(p) {
                 const dir = fs.readdirSync(p);
-                if(dir.find(s => s.endsWith(`.min.js`))) {
-                    usePath = require(`path`).join(p, dir.find(s => s.endsWith(`.min.js`)))
-                }
+                if(dir.find(s => s.endsWith(`.min.js`))) usePath = require(`path`).join(p, dir.find(s => s.endsWith(`.min.js`)))
             }
         };
 
@@ -143,13 +144,23 @@ contextBridge.exposeInMainWorld(`version`, {
     openUpdatePage: () => send(`openUpdatePage`)
 });
 
-const configHooks = [];
+const configHooks = [ (conf) => localStorage.setItem(`systemConfig`, JSON.stringify(conf)) ];
+
+let preloadedConfig = localStorage.getItem(`systemConfig`) ? JSON.parse(localStorage.getItem(`systemConfig`)) : null;
+
+if(!preloadedConfig) invoke(`getConfig`).then(conf => {
+    localStorage.setItem(`systemConfig`, JSON.stringify(conf));
+    preloadedConfig = conf;
+})
 
 const exposedConfiguration = {
     action: (name) => invoke(`configAction`, name),
     actionUpdate: (key, cb) => on(`configActionUpdate-${key}`, cb),
     get: (name) => new Promise(async res => {
-        invoke(`getConfig`, name).then(data => {
+        if(preloadedConfig) {
+            res(preloadedConfig)
+            preloadedConfig = null;
+        } else invoke(`getConfig`, name).then(data => {
             if(!name) configHooks.forEach(cb => cb(data));
             res(data);
         })

@@ -1,6 +1,7 @@
 const getBridgePath = require(`../util/filenames/pybridge`).getPath;
 
 const child_process = require(`child_process`);
+const fs = require('./promisifiedFS')
 const path = require(`path`);
 const wsprocess = require(`./class/wsprocess`);
 const getPath = require(`./getPath`);
@@ -91,7 +92,7 @@ module.exports = {
                         try {
                             require(`child_process`).execFileSync(`chmod`, [`+x`, bridgepath])
                         } catch(e) {
-                            fs.chmodSync(bridgepath, 0o777)
+                            await fs.chmodSync(bridgepath, 0o777)
                         }
                     };
 

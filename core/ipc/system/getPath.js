@@ -1,4 +1,4 @@
 module.exports = {
     type: `handle`,
-    func: (_e, d) => new Promise(res => res(require(`../../../util/getPath`)(d, true)))
+    func: (_e, [path, allowNull]) => new Promise((res, rej) => require(`../../../util/getPath`)(path, allowNull, false, true).then(res).catch(rej))
 }

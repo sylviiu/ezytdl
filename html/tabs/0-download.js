@@ -749,6 +749,9 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                             card.querySelector(`#mediaIcons`).style.width = `24px`
                             card.querySelector(`#mediaIcons`).style.minWidth = `24px`
                             card.querySelector(`#mediaIcons`).style.maxWidth = `24px`
+
+                            card.querySelector(`#mediaIcons`).classList.remove(`justify-content-between`);
+                            card.querySelector(`#mediaIcons`).classList.add(`justify-content-center`);
         
                             card.querySelector(`#audioIcon`).classList.add(`d-none`);
                             card.querySelector(`#videoIcon`).classList.add(`d-none`);

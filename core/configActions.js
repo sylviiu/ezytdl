@@ -11,7 +11,7 @@ module.exports = (config) => ({
                 properties: [`openDirectory`]
             }).then(result => {
                 if(result.filePaths[0]) {
-                    res(require(`../getConfig`)({ saveLocation: result.filePaths[0] }))
+                    require(`../getConfig`)({ saveLocation: result.filePaths[0] }).then(res);
                 } else {
                     res(null)
                 }
@@ -59,7 +59,7 @@ module.exports = (config) => ({
                             bodyText: `Hardware acceleration (tested with codec ${hw.codec}) has been ${enabled.length > 0 ? `enabled for the following platforms: ${enabled.length > 0 ? enabled.join(`, `) : `none`}` : `disabled: ${disabled.length}/${platforms.length} have failed tests.`}`
                         })
 
-                        res(require(`../getConfig`)({ hardwareAcceleratedConversion: hw.results }))
+                        require(`../getConfig`)({ hardwareAcceleratedConversion: hw.results }).then(res);
                     } else {
                         console.log(`hardware acceleration:`, null)
                         res(null);

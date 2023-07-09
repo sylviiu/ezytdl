@@ -24,7 +24,7 @@ tabs[`Convert`] = {
 
         const openFileButton = createButton(`openFile`, {
             icon: `file`,
-            label: `Upload file...`,
+            label: `Select file...`,
         }, { paddingLeft: `30px`, paddingRight: `30px` });
 
         const openFolderButton = createButton(`openFolder`, {
@@ -509,7 +509,7 @@ tabs[`Convert`] = {
                                     if(typeof artist == `string`) {
                                         str.innerHTML += artist
                                     } else str.appendChild(artist);
-                                } else if(i == parsableArtists.length - 1) {
+                                } else if(i == parsableArtists.length - 1 && more == 0) {
                                     str.innerHTML += ` and `
                                     if(typeof artist == `string`) {
                                         str.innerHTML += artist
@@ -635,6 +635,9 @@ tabs[`Convert`] = {
                             card.querySelector(`#mediaIcons`).style.width = `24px`
                             card.querySelector(`#mediaIcons`).style.minWidth = `24px`
                             card.querySelector(`#mediaIcons`).style.maxWidth = `24px`
+
+                            card.querySelector(`#mediaIcons`).classList.remove(`justify-content-between`);
+                            card.querySelector(`#mediaIcons`).classList.add(`justify-content-center`);
         
                             card.querySelector(`#audioIcon`).classList.add(`d-none`);
                             card.querySelector(`#videoIcon`).classList.add(`d-none`);
@@ -692,7 +695,7 @@ tabs[`Convert`] = {
                             if(entry.entries) card.querySelector(`#formatName`).innerHTML += ` (${entry.entries.length})`;
         
                             card.querySelector(`#downloadicon`).style.transform = `rotate(270deg)`;
-                            
+
                             card.querySelector(`#formatDownload`).onclick = () => throwToURL(null, card, entry);
         
                             let visible = false;
@@ -948,7 +951,7 @@ tabs[`Convert`] = {
             if(url && typeof url == `object`) {
                 info = url;
                 url = info._request_url || info.media_metadata.url.source_url || info.media_metadata.url || info.url;
-                runParse(`url is object`)
+                runParse(`url is object; ${url}`)
             } else {
                 console.log(`running func ${func}`)
                 mainQueue[func](url).then(data => {
