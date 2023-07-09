@@ -50,17 +50,17 @@ class wsprocess extends events.EventEmitter {
             } else if(data.type == `complete`) {
                 this._complete();
             } else if(data.type == `info`) {
-                console.log(`[${this.processID}] info / ${data.content.length}`)
+                //console.log(`[${this.processID}] info / ${data.content.length}`)
                 this.stdout.write(Buffer.from(data.content + `\n`));
             } else if(data.type == `warning` || data.type == `error`) {
                 if(data.trace && data.type == `error`) {
                     this.lastTrace = data.trace;
                 } else this.lastTrace = null;
 
-                console.log(`[${this.processID}] err / ${data.content.length}`)
+                //console.log(`[${this.processID}] err / ${data.content.length}`)
                 this.stderr.write(Buffer.from(data.content + `\n`));
             } else {
-                console.log(`[${this.processID}] unknown (${data.type}) / ${data.content.length}`, data.content)
+                //console.log(`[${this.processID}] unknown (${data.type}) / ${data.content.length}`, data.content)
             }
         };
         
