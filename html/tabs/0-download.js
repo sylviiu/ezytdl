@@ -151,6 +151,8 @@ if(!tabs[`Download`]) tabs[`Download`] = {
             if(!container.querySelector(`#listbox`)) return r(false);
             r(false)
         });
+
+        let lastSearch = null;
         
         const runSearch = async (url, initialMsg, func) => {
             system.hasFFmpeg().then(has => {
@@ -407,9 +409,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                     const getType = (entry) => {
                         let type = `${entry.extractor_key || entry.extractor || entry.webpage_url_domain}`.split(/(?=[A-Z])/)[0];
         
-                        if(info._platform == `file`) {
-                            return `file`
-                        } else if(entry.entries && entry.entries[0] && (entry.entries[0].album || entry.entries[0].track)) {
+                        if(entry.entries && entry.entries[0] && (entry.entries[0].album || entry.entries[0].track)) {
                             return `album`
                         } else if(entry.categories && entry.categories.map(f => f.toString().toLowerCase()).find(f => f == `music`) || entry.track || entry.album) {
                             return `song`
@@ -425,9 +425,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
         
                         let afterType = ``;
         
-                        if(info._platform == `file`) {
-                            afterType += ` file`
-                        } else if(func == `search`) {
+                        if(func == `search`) {
                             afterType += ` search`
                         } else afterType += getType(info);
         
@@ -873,7 +871,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                                     fadeIn = () => saveOptionsAnimations.fadeIn(card.querySelector(`#formatDownload`), newDiv, btnClick);
                                     fadeOut = () => saveOptionsAnimations.fadeOut(card.querySelector(`#formatDownload`), newDiv, btnClick);
         
-                                    qualityButtons({ node: card.querySelector(`#innerFormatCard`), info: entry, card, removeEntry: () => removeEntry() });
+                                    qualityButtons({ node: card.querySelector(`#innerFormatCard`), info: entry, card, removeEntry: () => removeEntry(), colorScheme });
                                 }
         
                                 //console.log(`running conversionOptions`)
@@ -939,7 +937,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                         if(info.formats.filter(f => f.video).length == 0 && listbox.querySelector(`#downloadBestVideo`)) listbox.querySelector(`#downloadBestVideo`).classList.add(`d-none`);
                         
                         for (const i in info.formats) {
-                            const format = Object.assign({}, info, info.formats[i]);
+                            const format = Object.assign({}, info, info.formats[i], {entries: null, formats: null});
         
                             parseProgress.setProgress((i/info.formats.length)*100, `Parsing format ${i}/${info.formats.length}`);
         
@@ -1068,10 +1066,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                         };
                     }
         
-                    if(info._platform == `file`) {
-                        setupConvertDownload(listbox.querySelector(`#qualityButtons`), info, colorScheme)
-                        listbox.querySelector(`#confirmDownload-2`).onclick = () => send({ card: listbox.querySelector(`#qualityButtons`), node: listbox.querySelector(`#qualityButtons`), info })
-                    } else if(info.entries) {
+                    if(info.entries) {
                         qualityButtons({ card: listbox, node: listbox.querySelector(`#qualityButtons`), info, centerURLBox, colorScheme });
                     } else {
                         qualityButtons({ card: listbox.querySelector(`#qualityButtons`), node: listbox.querySelector(`#qualityButtons`), info, colorScheme });
@@ -1158,6 +1153,10 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                     if(selectedSearch) opt.from = selectedSearch;
                     if(parseInt(resultsCountInput.value)) opt.count = parseInt(resultsCountInput.value);
                 }
+
+                if(lastSearch == url) opt.force = true;
+
+                lastSearch = url;
             
                 console.log(`selectionBox / hiding from parseinfo`)
                 selectionBox.hide(false, true);
@@ -1168,7 +1167,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                     console.log(`info received`)
             
                     runParse(`queue function`)
-                })
+                });
             }
             
             button.disabled = true;
