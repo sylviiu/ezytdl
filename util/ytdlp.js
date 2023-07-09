@@ -746,15 +746,7 @@ module.exports = {
                 const stat = await pfs.statSync(location);
                 console.log(`stat ${location}: ${stat.isDirectory()} / ${stat.isFile()}`)
                 if(!stat.isDirectory() && stat.isFile()) {
-                    manager.createDownload([location, ffprobePath], (i) => {
-                        if(i) {
-                            console.log(`new info!`)
-                            delete i.entries;
-                            Object.assign(newInfo.entries.find(o => o.url == location), i);
-                        } else {
-                            remove();
-                        }
-                    }, `ffprobeInfo`)
+                    manager.createDownload([location, ffprobePath], null, `ffprobeInfo`)
                 } else {
                     remove();
                     skipped++;
@@ -772,6 +764,17 @@ module.exports = {
 
             if(queue.complete.length == totalLength) {
                 const failed = queue.complete.filter(o => o.failed);
+
+                const successful = queue.complete.filter(o => !o.failed && o.result);
+
+                successful.forEach(({result}) => {
+                    delete result.entries;
+                    Object.assign(newInfo.entries.find(o => o.url == result.url), result);
+                });
+
+                while(newInfo.entries.find(o => Object.keys(o) == 1)) {
+                    newInfo.entries.splice(newInfo.entries.findIndex(o => Object.keys(o) == 1), 1)
+                }
 
                 badEntries = badEntries - failed.length - skipped;
 

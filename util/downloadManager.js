@@ -280,8 +280,6 @@ sessions = {
                 const obj = {
                     id,
                     opt,
-                    lastUpdateSent: 0,
-                    nextUpdateTimeout: null,
                     ignoreUpdates: false,
                     complete: false,
                     failed: false,
@@ -323,25 +321,10 @@ sessions = {
 
                         if(!downloadFunc) {
                             args.push((update, proc) => {
-                                const timeout = Math.max(0, 150 - (Date.now() - obj.lastUpdateSent));
+                                if(!obj.ytdlpProc && proc) obj.ytdlpProc = proc;
+                                if(!obj.killFunc && obj.status && obj.status.overall && obj.status.overall.kill) obj.killFunc = () => obj.status.overall.kill();
 
-                                if(timeout == 0) obj.lastUpdateSent = Date.now();
-                                if(obj.nextUpdateTimeout) clearTimeout(obj.nextUpdateTimeout);
-
-                                console.log(`next send timeout ${timeout}ms for ${id}`);
-
-                                const func = () => {
-                                    obj.nextUpdateTimeout = null;
-
-                                    if(!obj.ytdlpProc && proc) obj.ytdlpProc = proc;
-                                    if(!obj.killFunc && obj.status && obj.status.overall && obj.status.overall.kill) obj.killFunc = () => obj.status.overall.kill();
-
-                                    obj.updateFunc(update);
-                                }
-
-                                if(timeout == 0) {
-                                    func();
-                                } else obj.nextUpdateTimeout = setTimeout(() => func(), timeout);
+                                obj.updateFunc(update);
                             });
                         } else {
                             obj.updateFunc({status: `Running "${downloadFunc}"`, progressNum: -1})
@@ -350,8 +333,6 @@ sessions = {
                         const progress = require(`../util/ytdlp`)[downloadFunc || `download`](...args);
                 
                         progress.then((update) => {
-                            if(obj.nextUpdateTimeout) clearTimeout(obj.nextUpdateTimeout);
-
                             if(activeProgress[obj.id]) delete activeProgress[obj.id];
                             
                             obj.complete = true;
