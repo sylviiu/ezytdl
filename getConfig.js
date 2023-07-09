@@ -10,6 +10,8 @@ let newSettingsNotifSent = false;
 
 let firstCheckDone = false;
 
+const configCache = {};
+
 module.exports = (configObject, {
     source=`./defaultConfig.json`,
     target=`config.json`,
@@ -18,6 +20,8 @@ module.exports = (configObject, {
     values=false,
 }={}) => new Promise(async res => {
     const custom = source != `./defaultConfig.json` && target != `config.json` ? true : false;
+
+    if(configCache[`${source}-${target}`] && !configObject) return res(configCache[`${source}-${target}`]);
 
     try {
         const defaultConfig = Object.assign({}, require(source));
@@ -190,7 +194,11 @@ module.exports = (configObject, {
             global.lastConfig = userConfig;
         };
 
-        return res(values ? Object.values(userConfig) : userConfig);
+        const returnValue = values ? Object.values(userConfig) : userConfig;
+
+        configCache[`${source}-${target}`] = returnValue;
+
+        return res(returnValue);
     } catch(e) {
         errorHandler(e)
     }
