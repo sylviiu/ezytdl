@@ -27,7 +27,9 @@ sessions = {
                 send: (c1) => {
                     if(id != `default` || !global.window) return;
 
-                    const filteredObj = (obj) => {
+                    const filteredObj = (obj, depth=0) => {
+                        if(depth > 6) return null;
+
                         const newObj = Object.assign({}, obj);
 
                         if(newObj.ytdlpProc) delete newObj.ytdlpProc;
@@ -37,25 +39,12 @@ sessions = {
                         if(newObj.updateFunc) delete newObj.updateFunc;
                         if(newObj.ignoreUpdates) delete newObj.ignoreUpdates;
                         if(newObj.lastUpdateSent) delete newObj.lastUpdateSent;
-                        if(newObj.opt && newObj.opt.info && !newObj.opt.info.modified) Object.assign(newObj.opt, { 
-                            info: typeof newObj.opt.info == `object` ? {
-                                webpage_url_domain: newObj.opt.info.webpage_url_domain,
-                                title: newObj.opt.info.title,
-                                thumbnails: newObj.opt.info.thumbnails,
-                                thumbnail: newObj.opt.info.thumbnail,
-                                output_name: newObj.opt.info.output_name,
-                                _ezytdl_ui_icon: newObj.opt.info._ezytdl_ui_icon,
-                                _ezytdl_ui_type: newObj.opt.info._ezytdl_ui_type,
-                                _ezytdl_ui_title: newObj.opt.info._ezytdl_ui_title,
-                                modified: true,
-                            } : newObj.opt.info
-                        });
 
                         for(const key of Object.keys(newObj)) {
                             if(newObj[key] && typeof newObj[key] == `object`) {
                                 if(typeof newObj[key].length == `number`) {
-                                    newObj[key] = newObj[key].map(e => typeof e == `object` ? filteredObj(e) : e);
-                                } else newObj[key] = filteredObj(newObj[key]);
+                                    newObj[key] = newObj[key].map(e => typeof e == `object` ? filteredObj(e, depth+1) : e);
+                                } else newObj[key] = filteredObj(newObj[key], depth+1);
                             } else if(newObj[key] && typeof newObj[key] == `function`) delete newObj[key];
                         };
 
@@ -145,13 +134,10 @@ sessions = {
                 }
             };
             
-            const sendUpdate = (sendObj) => {
-                //console.log(`Sending download update...`)
-                if(ws) ws.send({
-                    type: `update`,
-                    data: sendObj
-                })
-            }
+            const sendUpdate = (sendObj) => ws ? ws.send({
+                type: `update`,
+                data: sendObj
+            }) : null;
 
             let addTimeout = 0;
             
@@ -274,18 +260,40 @@ sessions = {
                 }
             }
             
-            const createDownloadObject = (opt, rawUpdateFunc, downloadFunc) => {
+            const createDownloadObject = (rawOpt, rawUpdateFunc, downloadFunc) => {
+                const opt = (rawOpt && typeof rawOpt == `object`) ? (Object.assign((typeof rawOpt.length == `number` ? [] : {}), rawOpt)) : rawOpt;
+
                 let id = idGen(16);
+
+                const formatUpdate = (status) => Object.assign({}, obj, {
+                    opt: Object.assign({}, obj.opt, {
+                        info: typeof obj.opt.info == `object` ? {
+                            webpage_url_domain: obj.opt.info.webpage_url_domain,
+                            title: obj.opt.info.title,
+                            thumbnails: obj.opt.info.thumbnails ? obj.opt.info.thumbnails.sort((a,b) => b.width - a.width).slice(0, 3) : obj.opt.info.thumbnails,
+                            thumbnail: obj.opt.info.thumbnail,
+                            output_name: obj.opt.info.output_name,
+                            _ezytdl_ui_icon: obj.opt.info._ezytdl_ui_icon,
+                            _ezytdl_ui_type: obj.opt.info._ezytdl_ui_type,
+                            _ezytdl_ui_title: obj.opt.info._ezytdl_ui_title,
+                        } : obj.opt.info
+                    }),
+                    status,
+                })
 
                 const obj = {
                     id,
                     opt,
+                    lastUpdateSent: 0,
+                    nextUpdateTimeout: null,
                     ignoreUpdates: false,
                     complete: false,
                     failed: false,
                     killed: false,
                     updateFunc: (update) => {
                         if(typeof update == `object` && !update.latest) update = { latest: update, overall: update };
+
+                        if(obj.nextUpdateTimeout) clearTimeout(obj.nextUpdateTimeout);
             
                         if(update.overall && update.overall.kill) obj.killFunc = () => update.overall.kill();
                         if(update.overall && update.overall.deleteFiles) obj.deleteFiles = () => update.overall.deleteFiles();
@@ -293,9 +301,16 @@ sessions = {
                         if(update.latest.percentNum) {
                             activeProgress[obj.id] = update.latest.percentNum;
                             updateProgressBar();
-                        }
+                        };
 
-                        sendUpdate(Object.assign({}, obj, { status: update.latest }));
+                        const timeout = Math.max(0, 150 - (Date.now() - obj.lastUpdateSent));
+                        if(timeout == 0) obj.lastUpdateSent = Date.now();
+
+                        obj.nextUpdateTimeout = setTimeout(() => {
+                            obj.nextUpdateTimeout = null;
+
+                            sendUpdate(formatUpdate(update.latest));
+                        })
 
                         if(!downloadFunc) rawUpdateFunc(update);
                     },
@@ -334,11 +349,17 @@ sessions = {
                 
                         progress.then((update) => {
                             if(activeProgress[obj.id]) delete activeProgress[obj.id];
+
+                            if(obj.nextUpdateTimeout) {
+                                clearTimeout(obj.nextUpdateTimeout);
+                                obj.nextUpdateTimeout = null;
+                            }
                             
                             obj.complete = true;
                             obj.ytdlpProc = null;
             
                             if(downloadFunc) {
+                                obj.lastUpdateSent = 0;
                                 obj.updateFunc(Object.assign({}, obj.status, {status: `Finished "${downloadFunc}"`, progressNum: 100}));
                                 rawUpdateFunc(update);
                             }

@@ -329,7 +329,7 @@ module.exports = {
         //if(!template) template = require(`../getConfig`)().outputFilename;
         if(!template) template = info.output_name || (global.lastConfig).outputFilename;
 
-        console.log(`template: ${template}`)
+        //console.log(`template: ${template}`)
       
         template = template.replace(outputTemplateRegex, (match, key) => {
             const capturedKeys = key.split(`,`).map(s => s.trim())
@@ -660,14 +660,12 @@ module.exports = {
                     }
                 }
 
-                Object.assign(info, {
+                res(module.exports.parseInfo(Object.assign(info, {
                     url: path,
                     extractor: `system:file`,
                     extractor_key: `SystemFile`,
                     _platform: `file`,
-                })
-
-                res(module.exports.parseInfo(info, true));
+                }), true));
             } catch(e) {
                 console.error(e)
                 if(!ffprobePathProvided) sendNotification({
@@ -713,8 +711,6 @@ module.exports = {
 
         if(downloadManager[instanceName].timeout) clearTimeout(downloadManager[instanceName].timeout);
 
-        manager.set({ concurrentDownloadsMult: 0.5 })
-
         manager.queueAction(manager.queue.queue.map(o => o.id), `remove`);
         manager.queueAction(manager.queue.complete.map(o => o.id), `remove`);
         manager.queueAction(manager.queue.paused.map(o => o.id), `remove`);
@@ -746,7 +742,14 @@ module.exports = {
                 const stat = await pfs.statSync(location);
                 console.log(`stat ${location}: ${stat.isDirectory()} / ${stat.isFile()}`)
                 if(!stat.isDirectory() && stat.isFile()) {
-                    manager.createDownload([location, ffprobePath], null, `ffprobeInfo`)
+                    manager.createDownload([location, ffprobePath], (i) => {
+                        if(i) {
+                            delete i.entries;
+                            Object.assign(newInfo.entries.find(o => o.url == location), i);
+                        } else {
+                            remove();
+                        }
+                    }, `ffprobeInfo`)
                 } else {
                     remove();
                     skipped++;
@@ -765,17 +768,6 @@ module.exports = {
             if(queue.complete.length == totalLength) {
                 const failed = queue.complete.filter(o => o.failed);
 
-                const successful = queue.complete.filter(o => !o.failed && o.result);
-
-                successful.forEach(({result}) => {
-                    delete result.entries;
-                    Object.assign(newInfo.entries.find(o => o.url == result.url), result);
-                });
-
-                while(newInfo.entries.find(o => Object.keys(o) == 1)) {
-                    newInfo.entries.splice(newInfo.entries.findIndex(o => Object.keys(o) == 1), 1)
-                }
-
                 badEntries = badEntries - failed.length - skipped;
 
                 console.log(`queue complete!`);
@@ -783,8 +775,6 @@ module.exports = {
                 updateStatus(`Finished fetching info of ${queue.complete.length}/${totalLength} items!` + (failed > 0 ? ` (${failed} entries not compatible)` : ``) + (badEntries > 0 ? ` (${badEntries} entries failed to resolve)` : ``) + (skipped > 0 ? ` (${skipped} folders skipped)` : ``))
 
                 const parsed = module.exports.parseInfo(newInfo, true);
-
-                console.log(parsed)
 
                 res(parsed);
 
@@ -1184,7 +1174,7 @@ module.exports = {
 
             const { disableHWAcceleratedConversion, outputFilename, hardwareAcceleratedConversion, advanced } = currentConfig;
 
-            console.log(`download started! (url: ${url})`)
+            //console.log(`download started! (url: ${url})`, info)
 
             let { onlyGPUConversion } = currentConfig;
 
@@ -1595,7 +1585,9 @@ module.exports = {
                     //console.log(`-------------\n${status}\n-------------`)
                     resolve(update({status, percentNum: 100}))
                 })
-            }
+            };
+
+            let modifiedResolution = false;
 
             const runThroughFFmpeg = async (code, replaceInputArgs, replaceOutputArgs, useFile=null) => {
                 const temporaryFiles = useFile ? [] : (await pfs.readdirSync(saveTo)).filter(f => f.startsWith(temporaryFilename) && !f.endsWith(`.part`) && !f.endsWith(`.meta`));
@@ -1643,8 +1635,6 @@ module.exports = {
                         if(typeof convert[key] != `boolean` && !convert[key]) delete convert[key] // remove any falsy values
                     }
 
-                    console.log(`convert`, convert)
-
                     const rawExt = convert.ext || info.ext || ytdlpSaveExt || (thisFormat || {}).ext;
 
                     if(!rawExt) return fallback(`Could not convert to ${`${convert ? convert.ext : `--`}`.toUpperCase()} -- unable to find extension. This shouldn't have happened.`, true)
@@ -1661,24 +1651,28 @@ module.exports = {
 
                     let seek = [];
 
-                    if(convert.trimFrom) {
-                        inputArgs.push(`-ss`, convert.trimFrom);
-                        const ms = time(convert.trimFrom).units.ms;
-                        seek.push(Math.ceil(ms/1000));
-                        totalDuration[0] = ms;
-                    } else seek.push(0);
+                    let totalTrimmedDuration = 0;
 
-                    if(convert.trimTo) {
-                        inputArgs.push(`-to`, convert.trimTo);
-                        const ms = time(convert.trimTo).units.ms;
-                        seek.push(Math.ceil(ms/1000))
-                        totalDuration[1] = ms;
-                    } else seek.push(Math.ceil(info.duration.units.ms/1000));
-
-                    const totalTrimmedDuration = Math.max(0, (totalDuration[1] ? totalDuration[1] - totalDuration[0] : null));
-
-                    if(seek[0] != 0 || seek[1] != Math.ceil(info.duration.units.ms/1000)) {
-                        ytdlpFilename = ytdlpFilename.trim() + `.trimmed (${seek[0]}-${seek[1]})`;
+                    if(info.duration && info.duration.units && info.duration.units.ms) {
+                        if(convert.trimFrom) {
+                            inputArgs.push(`-ss`, convert.trimFrom);
+                            const ms = time(convert.trimFrom).units.ms;
+                            seek.push(Math.ceil(ms/1000));
+                            totalDuration[0] = ms;
+                        } else seek.push(0);
+    
+                        if(convert.trimTo) {
+                            inputArgs.push(`-to`, convert.trimTo);
+                            const ms = time(convert.trimTo).units.ms;
+                            seek.push(Math.ceil(ms/1000))
+                            totalDuration[1] = ms;
+                        } else seek.push(Math.ceil(info.duration.units.ms/1000));
+    
+                        totalTrimmedDuration = Math.max(0, (totalDuration[1] ? totalDuration[1] - totalDuration[0] : null));
+    
+                        if(seek[0] != 0 || seek[1] != Math.ceil(info.duration.units.ms/1000)) {
+                            ytdlpFilename = ytdlpFilename.trim() + `.trimmed (${seek[0]}-${seek[1]})`;
+                        }
                     }
 
                     if(useFile) {
@@ -1690,6 +1684,8 @@ module.exports = {
                     }
 
                     console.log(inputArgs)
+
+                    console.log(`convert`, convert)
 
                     if(typeof convert.additionalInputArgs == `string`) {
                         const yargsResult = yargs(convert.additionalInputArgs.replace(/-(\w+)/g, '--$1')).argv
@@ -1715,7 +1711,10 @@ module.exports = {
                     if(convert.audioSampleRate) outputArgs.unshift(`-ar`, convert.audioSampleRate);
                     if(convert.videoBitrate) outputArgs.unshift(`-b:v`, convert.videoBitrate);
                     if(convert.videoFPS) outputArgs.unshift(`-r`, convert.videoFPS);
-                    if(convert.videoResolution) {
+
+                    const numRegex = /-?\d+(\.\d+)?/g;
+
+                    if(convert.videoResolution && numRegex.test(convert.videoResolution)) {
                         convert.videoResolution = convert.videoResolution.replace(/x/g, `:`).trim();
 
                         var width, height;
@@ -1725,21 +1724,35 @@ module.exports = {
                         };
 
                         if(width && height) {
-                            const numRegex = /-?\d+(\.\d+)?/g;
+                            //let newWidth = Number(((convert.videoResolution.split(`:`)[1] ? convert.videoResolution.split(`:`)[0] : `-1`).match(numRegex) || [`-1`])[0]);
+                            //let newHeight = Number(((!convert.videoResolution.split(`:`)[1] ? convert.videoResolution.split(`:`)[0] : convert.videoResolution.split(`:`)[1]).match(numRegex) || [`-1`])[0]);
 
-                            let newWidth = Number(((convert.videoResolution.split(`:`)[1] ? convert.videoResolution.split(`:`)[0] : `-1`).match(numRegex) || [`-1`])[0]);
-                            let newHeight = Number(((!convert.videoResolution.split(`:`)[1] ? convert.videoResolution.split(`:`)[0] : convert.videoResolution.split(`:`)[1]).match(numRegex) || [`-1`])[0]);
+                            const split = convert.videoResolution.split(`:`).filter(s => numRegex.test(s));
 
-                            if(newHeight && (!newWidth || newWidth == -1)) newWidth = Math.round((newHeight / height) * Number(width));
+                            if(split.length == 1) split.unshift(`-1`);
 
-                            const newScale = newWidth > newHeight ? `${newWidth}:-1` : `-1:${newHeight}`;
-                            const newCrop = newWidth > newHeight ? `${newWidth}:${newHeight}` : `${newWidth}:${newHeight}`;
+                            let newWidth = Number(split[0].match(numRegex)[0]);
+                            let newHeight = Number(split[1].match(numRegex)[0]);
+
+                            if(newWidth > -1 || newHeight > -1) {
+                                const newScale = newWidth > newHeight ? `${newWidth}:-1` : `-1:${newHeight}`;
+                                
+                                const greater = newWidth > newHeight ? newWidth : newHeight;
+                                
+                                const newCrop = `${greater}:${greater}`;
+        
+                                //outputArgs.unshift(`-vf`, `scale=${Number(convert.videoResolution) ? `${convert.videoResolution}:-1` : convert.videoResolution.trim().replace(/x/g, `:`)}`);
+                                outputArgs.unshift(`-vf`, `scale=${newScale},crop=${newCrop}`);
     
-                            //outputArgs.unshift(`-vf`, `scale=${Number(convert.videoResolution) ? `${convert.videoResolution}:-1` : convert.videoResolution.trim().replace(/x/g, `:`)}`);
-                            outputArgs.unshift(`-vf`, `scale=${newScale},crop=${newCrop}`);
-
-                            convert.videoResolution = `${newWidth}x${newHeight}`;
+                                //convert.videoResolution = `${newWidth}x${newHeight}`;
+                            } else {
+                                console.log(`(invalid videoResolution) new width: ${newWidth}; new height: ${newHeight}`)
+                            }
+                        } else {
+                            console.log(`(invalid videoResolution) current width: ${width}; current height: ${height}`)
                         }
+                    } else if(convert.videoResolution) {
+                        console.log(`(invalid videoResolution) provided: ${convert.videoResolution}; test: ${numRegex.test(convert.videoResolution)}`)
                     }
 
                     if(typeof convert.additionalOutputArgs == `string`) {
@@ -2259,7 +2272,7 @@ module.exports = {
                 const inputArgs = [];
                 const outputArgs = [];
 
-                console.log(info, format, convert)
+                //console.log(info, format, convert)
 
                 if(info.format_note && typeof info.format_index == `number`) outputArgs.push(`-map`, `0:${info.format_index}`)
 
@@ -2425,6 +2438,8 @@ module.exports = {
     })
 };
 
+const blacklistedAuths = [`download`, `ffprobeInfo`, `ffprobeDir`, `ffprobe`]
+
 for(const entry of Object.entries(module.exports).filter(o => typeof o[1] == `function`)) {
     const name = entry[0];
     const func = entry[1];
@@ -2434,7 +2449,7 @@ for(const entry of Object.entries(module.exports).filter(o => typeof o[1] == `fu
     module.exports.ytdlp[name] = func;
 
     module.exports[name] = (...args) => {
-        const authType = authentication.check(typeof args[0] == `object` && typeof args[0].query == `string` ? args[0].query : ``)
+        const authType = !blacklistedAuths.find(o => o == name) ? authentication.check(typeof args[0] == `object` && typeof args[0].query == `string` ? args[0].query : ``) : null
         if(typeof args[0] == `object` && args[0].query && authType) {
             const doFunc = platforms.find(p => p.name == authType)[name];
             console.log(`authenticated request! (type: ${authType}) (function exists? ${doFunc ? true : false})`);
