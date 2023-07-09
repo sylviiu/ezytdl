@@ -266,7 +266,7 @@ module.exports = {
             } else badEntries++;
         }, `listFormats`);
 
-        if(info.entries) for(const i in info.entries.filter(e => !e.fullInfo)) {
+        if(info.entries) for(const i in info.entries.filter(e => e && !e.fullInfo)) {
             const e = info.entries[i];
 
             manager.createDownload([{query: e.url, extraArguments, ignoreStderr: true}, false], (e) => {
@@ -327,7 +327,9 @@ module.exports = {
     }),
     parseOutputTemplate: (info, template) => {
         //if(!template) template = require(`../getConfig`)().outputFilename;
-        if(!template) template = (global.lastConfig).outputFilename;
+        if(!template) template = info.output_name || (global.lastConfig).outputFilename;
+
+        console.log(`template: ${template}`)
       
         template = template.replace(outputTemplateRegex, (match, key) => {
             const capturedKeys = key.split(`,`).map(s => s.trim())
@@ -1175,7 +1177,7 @@ module.exports = {
         })
 
         try {
-            const currentConfig = require(`../getConfig`)();
+            const currentConfig = await require(`../getConfig`)();
 
             const { disableHWAcceleratedConversion, outputFilename, hardwareAcceleratedConversion, advanced } = currentConfig;
 
@@ -1276,8 +1278,6 @@ module.exports = {
                     if(run && addMetadata && module.exports.ffmpegPath && file && (await pfs.existsSync(target))) {
                         console.log(`adding metadata...`)
 
-                        setProgress(`metadata`, `Metadata`)
-
                         let totalTasks = Object.values(addMetadata).filter(v => v).length + 1;
                         let current = 0;
 
@@ -1339,7 +1339,8 @@ module.exports = {
                                     let tags = [];
     
                                     if(!info.fullInfo) {
-                                        setProgress(`tags`, {progressNum: -1, status: `Getting full metadata...`})
+                                        //setProgress(`tags`, {progressNum: -1, status: `Getting full metadata...`})
+                                        update({status: `Getting full metadata...`})
                                         await fetchFullInfo();
                                     }
     
@@ -1365,7 +1366,8 @@ module.exports = {
                                     if(info.license) tags.push([`copyright`, info.license]);
                                     if(info.description) tags.push([`comment`, info.description]);*/
                                     
-                                    setProgress(`tags`, {progressNum: 30, status: `Adding ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}...`})
+                                    //setProgress(`tags`, {progressNum: 30, status: `Adding ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}...`})
+                                    update({status: `Adding ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}...`})
         
                                     const meta = [];
         
@@ -1378,7 +1380,8 @@ module.exports = {
                                     const proc = child_process.execFile(module.exports.ffmpegPath, args);
     
                                     proc.once(`spawn`, () => {
-                                        setProgress(`tags`, {progressNum: 50, status: `Adding ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}... (FFmpeg spawned)`})
+                                        //setProgress(`tags`, {progressNum: 50, status: `Adding ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}... (FFmpeg spawned)`})
+                                    update({status: `Adding ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}... (FFmpeg spawned)`})
                                     })
             
                                     proc.on(`error`, e => {
@@ -1393,7 +1396,8 @@ module.exports = {
             
                                     proc.on(`close`, code => {
                                         console.log(`metadata added! (code ${code})`)
-                                        setProgress(`tags`, {progressNum: 100, status: `Added ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}`})
+                                        //setProgress(`tags`, {progressNum: 100, status: `Added ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}`})
+                                        update({status: `Added ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}`})
                                         cleanup(code === 0 ? false : true).then(r)
                                     })
                                 } catch(e) {
@@ -1428,7 +1432,8 @@ module.exports = {
                                         const continueWithThumbnail = async () => {
                                             if(await pfs.existsSync(`${target + `.png`}`)) {
                                                 progressNum = 65;
-                                                setProgress(`thumbnail`, {progressNum, status: `Applying thumbnail...`})
+                                                //setProgress(`thumbnail`, {progressNum, status: `Applying thumbnail...`})
+                                                update({status: `Applying thumbnail...`})
     
                                                 const args = [`-y`, `-i`, target + `.ezytdl`, `-i`, `${target + `.png`}`, `-c`, `copy`, `-map`, `0:0`, `-map`, `1:0`, `-metadata:s:v`, `title=Album cover`, `-metadata:s:v`, `comment=Cover (front)`];
                         
@@ -1446,7 +1451,7 @@ module.exports = {
                                                     //console.error(d.toString().trim())
                                                     progressNum += 1;
                                                     if(progressNum > 90) progressNum = 90;
-                                                    setProgress(`thumbnail`, {progressNum})
+                                                    //setProgress(`thumbnail`, {progressNum})
                                                 });
                         
                                                 proc.on(`error`, e => {
@@ -1482,7 +1487,8 @@ module.exports = {
                                                             break;
                                                     }
     
-                                                    setProgress(`thumbnail`, {progressNum: 100, status: `Thumbnail added! (${thumbnailAttempts})`});
+                                                    //setProgress(`thumbnail`, {progressNum: 100, status: `Thumbnail added! (${thumbnailAttempts})`});
+                                                    update({status: `Thumbnail added! (${thumbnailAttempts})`})
                                                     r();
                                                 })
                                             } else {
@@ -1505,7 +1511,8 @@ module.exports = {
                                                 if(thumbnail.preference) extension += ` (priority ${thumbnail.preference})`;
     
                                                 progressNum = 15;
-                                                setProgress(`thumbnail`, {progressNum, status: `Downloading thumbnail` + extension + `...`});
+                                                //setProgress(`thumbnail`, {progressNum, status: `Downloading thumbnail` + extension + `...`});
+                                                update({status: `Downloading thumbnail` + extension + `...`})
     
                                                 const req = require(`superagent`).get(thumbnail.url);
                     
@@ -1514,7 +1521,7 @@ module.exports = {
                                                 req.on(`data`, () => {
                                                     progressNum += 1;
                                                     if(progressNum > 30) progressNum = 30;
-                                                    setProgress(`thumbnail`, {progressNum})
+                                                    //setProgress(`thumbnail`, {progressNum})
                                                 })
                     
                                                 req.once(`error`, e => {
@@ -1524,7 +1531,8 @@ module.exports = {
                     
                                                 req.once(`end`, () => {
                                                     progressNum = 35;
-                                                    setProgress(`thumbnail`, {progressNum, status: `Converting thumbnail` + extension + `...`})
+                                                    //setProgress(`thumbnail`, {progressNum, status: `Converting thumbnail` + extension + `...`})
+                                                    update({status: `Converting thumbnail` + extension + `...`})
                 
                                                     const imgConvertProc = child_process.execFile(module.exports.ffmpegPath, [`-y`, `-i`, target + `.songcover`, `-update`, `1`, `-vf`, `crop=min(in_w\\,in_h):min(in_w\\,in_h)`, target + `.png`]);
                 
@@ -1532,7 +1540,7 @@ module.exports = {
                                                         //console.log(d.toString().trim())
                                                         progressNum += 1;
                                                         if(progressNum > 60) progressNum = 60;
-                                                        setProgress(`thumbnail`, {progressNum})
+                                                        //setProgress(`thumbnail`, {progressNum})
                                                     })
                 
                                                     //imgConvertProc.stderr.on(`data`, d => {
@@ -2375,9 +2383,9 @@ module.exports = {
                 } else return undefined;
             }).filter(a => a !== undefined && a.similarity).sort((a, b) => a.similarity < b.similarity ? 1 : -1);
             
-            resultsInfo.entries.forEach(a => {
+            /*resultsInfo.entries.forEach(a => {
                 console.log(`- ${a.media_metadata.general.title} - ${a.similarity}`, a.similarities)
-            })
+            })*/
 
             Object.assign(thisInfo, {
                 url: resultsInfo.entries[0].url,
