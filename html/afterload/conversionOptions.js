@@ -118,20 +118,35 @@ const setupConvertDownload = (node, info, colorScheme) => {
     let currentSelected = null;
 
     if(info._platform == `file` && node.querySelector(`#saveOptions`) && !node.querySelector(`#confirmDownload-2`)) {
+        const appendTo = node.querySelector(`#innerFormatCard`) || node;
+
+        if(node.querySelector(`#fileOptions`) && node.querySelector(`#fileOptionsText`)) {
+            appendTo.appendChild(node.querySelector(`#fileOptionsText`));
+            node.querySelector(`#fileOptions`).querySelector(`#basedir`).innerHTML = info.saveLocation || config.saveLocation || `{default save location}`;
+            appendTo.appendChild(node.querySelector(`#fileOptions`));
+            if(info.entries && info.entries.length > 0) appendTo.querySelector(`#saveLocation`).value = info.title
+        }
+
         const confirmDownloadBtn = node.querySelector(`#saveOptions`).querySelector(`#confirmDownload`).cloneNode(true);
         confirmDownloadBtn.id += `-2`
         if(node.querySelector(`#innerQualityButtons`)) node.querySelector(`#innerQualityButtons`).remove();
         ffmpegOptions.remove();
         ffmpegOptions.classList.remove(`d-none`);
 
-        node.appendChild(ffmpegOptions);
+        appendTo.appendChild(ffmpegOptions);
 
         confirmDownloadBtn.style.width = `100%`
         confirmDownloadBtn.innerHTML = confirmDownloadBtn.innerHTML.replace(`Download`, `Convert`)
         confirmDownloadBtn.querySelector(`#icon`).replaceWith(node.querySelector(`#saveOptions`).querySelector(`#convertDownload`).querySelector(`#icon`))
         //node.querySelector(`#saveOptions`).querySelector(`#convertDownload`).remove();
 
-        node.appendChild(confirmDownloadBtn);
+        if(node.querySelector(`#metadataOptions`) && node.querySelector(`#saveMetadataText`)) {
+            appendTo.appendChild(node.querySelector(`#saveMetadataText`));
+            if(node.querySelector(`#metadataOptions`).querySelector(`#thumbnail`)) node.querySelector(`#metadataOptions`).querySelector(`#thumbnail`).remove();
+            appendTo.appendChild(node.querySelector(`#metadataOptions`));
+        }
+
+        appendTo.appendChild(confirmDownloadBtn);
 
         if(!node.querySelector(`#saveOptions`).classList.contains(`d-none`)) node.querySelector(`#saveOptions`).classList.add(`d-none`);
         if(!node.querySelector(`#downloadButtons`).classList.contains(`d-none`)) node.querySelector(`#downloadButtons`).classList.add(`d-none`);
@@ -199,6 +214,21 @@ const setupConvertDownload = (node, info, colorScheme) => {
         }
     };
 
+    const getOptionsStr = (obj) => {
+        let str = ``;
+
+        for(const key of Object.keys(obj)) {
+            const value = obj[key];
+            if(typeof value == `object`) {
+                str += `${key}: { ${getOptionsStr(value)} }, `;
+            } else {
+                str += `${key}: ${value}, `;
+            }
+        };
+        
+        return str;
+    }
+
     const resetPresetOptions = () => {
         console.log(`resetting preset options:`, enabledConversionFormats)
 
@@ -217,6 +247,9 @@ const setupConvertDownload = (node, info, colorScheme) => {
                 thisNode.querySelector(`#name`).innerText = options.name;
                 thisNode.querySelector(`#description`).innerText = options.description;
                 thisNode.querySelector(`#icon`).className = `fas ${options.icon || `fa-wrench`}`;
+
+                if(options.options) thisNode.setAttribute(`title`, getOptionsStr(options.options));
+
                 customPresetButton.parentElement.appendChild(thisNode);
             } else customPresetButton.parentElement.appendChild(ffmpegOptions.querySelector(`#${key}`))
 
@@ -347,9 +380,15 @@ const setupConvertDownload = (node, info, colorScheme) => {
     console.log(`default option: ${defaultOption} -- parsed: ${usableOption}`)
 
     const resetTrim = (hide) => {
-        const showOptions = ((!info.entries && info.duration && info.duration.timestamp != `--:--`)) ? true : false;
+        const params = {
+            noEntries: (typeof info.entry_number == `number` ? true : (info.entries ? false : true)),
+            duration: info.duration ? true : false,
+            durationTimestamp: info.duration ? info.duration.timestamp != `--:--` : false,
+        }
 
-        console.log(`resetTrim; showing: ${showOptions} (${hide})`)
+        const showOptions = (Object.values(params).filter(o => o).length == Object.keys(params).length) ? true : false;
+
+        console.log(`resetTrim; showing: ${showOptions}; hide: ${hide};`, params, info)
 
         if(showOptions) {
             const trimFrom = node.querySelector(`#trimFrom`), trimFromInput = node.querySelector(`#trimFromInput`);
@@ -384,19 +423,28 @@ const setupConvertDownload = (node, info, colorScheme) => {
                     if(input) input.value = time.timestamp;
                 }
             };
+
+            if(!trimFrom.hasAttribute(`resizedWidth`)) {
+                trimFrom.setAttribute(`resizedWidth`, `true`)
+
+                const parentStyle = window.getComputedStyle(node);
+        
+                console.log(formatCardBounds, formatCardComputed);
     
-            const parentStyle = window.getComputedStyle(node);
-    
-            console.log(formatCardBounds, formatCardComputed)
-    
-            const targetWidth = parseInt(formatCardBounds.width) - parseInt(formatCardComputed.paddingLeft || parentStyle.paddingLeft || node.style.paddingLeft || 0) - parseInt(formatCardComputed.paddingRight || node.style.paddingRight || parentStyle.paddingRight || 0) + `px`;
-    
-            console.log(`targetWidth`, targetWidth, `bounds width`, formatCardBounds.width, `padding`, formatCardComputed.paddingLeft || parentStyle.paddingLeft, formatCardComputed.paddingRight || parentStyle.paddingRight)
-    
-            trimFrom.style.width = targetWidth;
-            trimTo.style.width = targetWidth;
-            node.querySelector(`#trimContainer`).style.width = targetWidth;
-    
+                const subtract = {
+                    paddingLeft: parseInt(parentStyle.paddingLeft || formatCardComputed.paddingLeft || innerFormatCardStyle.paddingLeft || node.style.paddingLeft || 0),
+                    paddingRight: parseInt(parentStyle.paddingRight || formatCardComputed.paddingRight || innerFormatCardStyle.paddingRight || node.style.paddingRight || 0),
+                }
+        
+                const targetWidth = parseInt(formatCardBounds.width) - Object.values(subtract).reduce((a,b) => a+b, 0) + `px`;
+        
+                console.log(`targetWidth`, targetWidth, `bounds width`, formatCardBounds.width, `subtract`, subtract, `node id`, node.id)
+        
+                trimFrom.style.width = targetWidth;
+                trimTo.style.width = targetWidth;
+                node.querySelector(`#trimContainer`).style.width = targetWidth;
+            }
+        
             trimFrom.oninput = () => modifyInput(trimFrom, trimFromInput, `from`, Number(trimFrom.value)*1000);
             trimTo.oninput = () => modifyInput(trimTo, trimToInput, `to`, Number(trimTo.value)*1000);
     
@@ -428,9 +476,11 @@ const setupConvertDownload = (node, info, colorScheme) => {
             if(!node.querySelector(`#trimOptions`).classList.contains(`d-none`)) node.querySelector(`#trimOptions`).classList.add(`d-none`);
             if(!node.querySelector(`#trimText`).classList.contains(`d-none`)) node.querySelector(`#trimText`).classList.add(`d-none`);
         }
-    }
+    };
 
     setPreset(usableOption ? ffmpegOptions.querySelector(`#${usableOption}`) || null : null, true); // set default preset
+
+    resetTrim(false)
     
     node.querySelector(`#conversionDiv`).appendChild(node.querySelector(`#outputExtension`) || listboxTemplate.querySelector(`#outputExtension`).cloneNode(true));
 }
