@@ -341,11 +341,15 @@ module.exports = {
 
         let useURL = parsedURL.host ? parsedURL.host.split(`.`).slice(-2).join(`.`) : info.webpage_url_domain || null;
 
+        if(downloadInWebsiteFolders && info._platform == `file`) paths.push(`Converted`);
+
         if(downloadInWebsiteFolders && useURL) paths.push(useURL);
 
         if(filePath) paths.push(filePath)
 
-        const saveTo = sanitizePath(...paths) + (require('os').platform() == `win32` ? `\\` : `/`)
+        const saveTo = sanitizePath(...paths) + (require('os').platform() == `win32` ? `\\` : `/`);
+
+        console.log(`saveTo: ${saveTo}`)
 
         return saveTo
     },
@@ -512,13 +516,128 @@ module.exports = {
             }
         })
     }),
-    ffprobeInfo: (path) => new Promise(async res => {
+    ffprobeInfo: (path, ffprobePathProvided) => new Promise(async res => {
+        const ffprobePath = ffprobePathProvided || require(`./filenames/ffmpeg`).getFFprobe();
+
+        if(!ffprobePath) {
+            if(!ffprobePathProvided) sendNotification({
+                type: `error`,
+                headingText: `Error getting info`,
+                bodyText: `FFprobe is not installed. Please install FFmpeg in settings (or on your system) and try again.`,
+                hideReportButton: true,
+                redirect: `settings.html`,
+                redirectMsg: `Go to settings`
+            });
+
+            return res(null)
+        };
+
+        if(!fs.existsSync(path)) {
+            if(!ffprobePathProvided) sendNotification({
+                type: `error`,
+                headingText: `Error getting info`,
+                bodyText: `The path does not exist.`,
+            });
+            
+            return res(null)
+        };
+
+        console.log(`getting info of "${path}"`);
+
+        const info = {};
+
+        const proc = child_process.execFile(ffprobePath, [`-v`, `quiet`, `-print_format`, `json`, `-show_format`, `-show_streams`, path]);
+        
+        if(!ffprobePathProvided) updateStatus(`Retrieving file info for "${path}"`);
+
+        let data = ``;
+
+        proc.stdout.on(`data`, d => data += d.toString().trim());
+
+        proc.on(`close`, (code) => {
+            console.log(`ffprobeInfo closed with code ${code}`);
+
+            if(!ffprobePathProvided) updateStatus(`Parsing data...`);
+
+            try {
+                const obj = JSON.parse(data);
+
+                if(!obj.streams || obj.streams.length == 0) {
+                    if(!ffprobePathProvided) sendNotification({
+                        type: `error`,
+                        headingText: `Error getting info`,
+                        bodyText: `There were no streams found from the given path. If you meant to view the contents of a folder, please select the folder instead.`
+                    });
+                    return res(null);
+                }
+
+                if(obj.format) {
+                    if(obj.format.tags) Object.assign(info, obj.format.tags);
+                    if(obj.format.tags && obj.format.tags.comment) info.description = obj.format.tags.comment;
+                    if(obj.format.duration) info.duration = Number(obj.format.duration);
+                };
+
+                if(obj.streams) {
+                    info.formats = [];
+                    for(const stream of obj.streams) {
+                        console.log(`stream`, stream)
+
+                        const format = {
+                            format_id: `${stream.codec_type}-${stream.codec_name}-${stream.index}`,
+                            format_note: stream.codec_type,
+                            format_index: stream.index,
+                            ext: stream.codec_name,
+                        };
+
+                        if(stream.codec_name && stream.codec_type == `audio`) {
+                            format.acodec = stream.codec_name;
+
+                            if(stream.sample_rate) format.asr = stream.sample_rate;
+                            if(stream.channels) format.audio_channels = stream.channels;
+                            if(stream.bit_rate) format.abr = stream.bit_rate;
+                        } else {
+                            format.vcodec = stream.codec_name;
+
+                            if(stream.width && stream.height) format.resolution = `${stream.width}x${stream.height}`;
+                            if(stream.width) format.width = stream.width;
+                            if(stream.height) format.height = stream.height;
+                            if(stream.bit_rate) format.vbr = stream.bit_rate;
+                            if(stream.fps) format.fps = stream.fps;
+                            if(stream.display_aspect_ratio) format.aspect_ratio = stream.display_aspect_ratio;
+                        };
+
+                        info.formats.push(format);
+                    }
+                }
+
+                Object.assign(info, {
+                    url: path,
+                    extractor: `system:file`,
+                    extractor_key: `SystemFile`,
+                    _platform: `file`,
+                })
+
+                console.log(`all`, obj, info);
+
+                res(module.exports.parseInfo(info, true));
+            } catch(e) {
+                console.error(e)
+                if(!ffprobePathProvided) sendNotification({
+                    type: `error`,
+                    headingText: `Error getting info`,
+                    bodyText: `There was an issue retrieving the info.\n\n${e}`
+                })
+                return res(null);
+            }
+        });
+    }),
+    ffprobeDir: (path) => new Promise(async res => {
         const ffprobePath = require(`./filenames/ffmpeg`).getFFprobe();
 
         if(!ffprobePath) {
             sendNotification({
                 type: `error`,
-                headingText: `Error getting file info`,
+                headingText: `Error getting info`,
                 bodyText: `FFprobe is not installed. Please install FFmpeg in settings (or on your system) and try again.`,
                 hideReportButton: true,
                 redirect: `settings.html`,
@@ -531,82 +650,123 @@ module.exports = {
         if(!fs.existsSync(path)) {
             sendNotification({
                 type: `error`,
-                headingText: `Error getting file info`,
-                bodyText: `The file does not exist.`,
+                headingText: `Error getting info`,
+                bodyText: `The path does not exist.`,
             });
             
             return res(null)
-        }
+        };
 
-        console.log(`getting info of "${path}"`);
+        const instanceName = `ffprobeInfo-${idGen(16)}`
 
-        const info = {};
+        const manager = downloadManager.get(instanceName, { staggered: true, noSendErrors: true });
 
-        const proc = child_process.execFile(ffprobePath, [`-v`, `quiet`, `-print_format`, `json`, `-show_format`, `-show_streams`, path]);
-        
-        updateStatus(`Retrieving file info for "${path}"`);
+        const files = fs.readdirSync(path);
 
-        let data = ``;
+        if(downloadManager[instanceName].timeout) clearTimeout(downloadManager[instanceName].timeout);
 
-        proc.stdout.on(`data`, d => data += d.toString().trim());
+        manager.set({ concurrentDownloadsMult: 1 })
 
-        proc.on(`close`, (code) => {
-            console.log(`ffprobeInfo closed with code ${code}`);
+        manager.queueAction(manager.queue.queue.map(o => o.id), `remove`);
+        manager.queueAction(manager.queue.complete.map(o => o.id), `remove`);
+        manager.queueAction(manager.queue.paused.map(o => o.id), `remove`);
 
-            updateStatus(`Parsing data...`);
+        manager.queueEventEmitter.removeAllListeners(`queueUpdate`);
 
-            const obj = JSON.parse(data);
+        let newInfo = {
+            title: require(`path`).basename(path),
+            extractor: `system:folder`,
+            extractor_key: `SystemFolder`,
+            entries: files.map(o => ({ url: require(`path`).join(path, o) })),
+            url: path,
+            _platform: `file`,
+        };
 
-            if(obj.format) {
-                if(obj.format.tags) Object.assign(info, obj.format.tags);
-                if(obj.format.tags && obj.format.tags.comment) info.description = obj.format.tags.comment;
-                if(obj.format.duration) info.duration = Number(obj.format.duration);
-            };
+        let badEntries = 0;
 
-            if(obj.streams) {
-                info.formats = [];
-                for(const stream of obj.streams) {
-                    console.log(`stream`, stream)
+        manager.queueEventEmitter.on(`queueUpdate`, (queue) => {
+            const totalLength = Object.values(queue).reduce((a, b) => a + b.length, 0);
 
-                    const format = {
-                        format_id: `${stream.codec_type}-${stream.codec_name}-${stream.index}`,
-                        format_note: stream.codec_type,
-                        format_index: stream.index,
-                        ext: stream.codec_name,
-                    };
+            updateStatus(`Fetching info of ${queue.active.length + queue.paused.length + queue.queue.length}/${totalLength} items...`)
+            updateStatusPercent([queue.complete.length == 0 ? -1 : queue.complete.length, totalLength]);
 
-                    if(stream.codec_name && stream.codec_type == `audio`) {
-                        format.acodec = stream.codec_name;
+            if(queue.complete.length == totalLength) {
+                const failed = queue.complete.filter(o => o.failed);
 
-                        if(stream.sample_rate) format.asr = stream.sample_rate;
-                        if(stream.channels) format.audio_channels = stream.channels;
-                        if(stream.bit_rate) format.abr = stream.bit_rate;
-                    } else {
-                        format.vcodec = stream.codec_name;
+                badEntries = badEntries - failed.length;
 
-                        if(stream.width && stream.height) format.resolution = `${stream.width}x${stream.height}`;
-                        if(stream.width) format.width = stream.width;
-                        if(stream.height) format.height = stream.height;
-                        if(stream.bit_rate) format.vbr = stream.bit_rate;
-                        if(stream.fps) format.fps = stream.fps;
-                        if(stream.display_aspect_ratio) format.aspect_ratio = stream.display_aspect_ratio;
-                    };
+                console.log(`queue complete!`);
 
-                    info.formats.push(format);
-                }
+                updateStatus(`Finished fetching info of ${queue.complete.length}/${totalLength} items!` + (failed > 0 ? ` (${failed} entries failed to resolve)` : ``) + (badEntries > 0 ? ` (${badEntries} entries failed to resolve)` : ``))
+
+                const parsed = module.exports.parseInfo(newInfo, true);
+
+                console.log(parsed)
+
+                res(parsed);
+
+                downloadManager[instanceName].timeout = setTimeout(() => {
+                    if(downloadManager[instanceName]) {
+                        console.log(`deleting instance ${instanceName}`)
+                        delete downloadManager[instanceName];
+                    }
+                }, 15000)
             }
+        });
 
-            Object.assign(info, {
-                url: path,
-                extractor: `system:file`,
-                extractor_key: `SystemFile`,
-                _platform: `file`,
-            })
+        files.forEach(file => {
+            const location = require(`path`).join(path, file);
 
-            console.log(`all`, obj, info);
-
-            res(module.exports.parseInfo(info, true));
+            try {
+                const stat = fs.statSync(location);
+    
+                if(stat.isFile()) manager.createDownload([location, ffprobePath], (i) => {
+                    if(i) {
+                        console.log(`new info!`)
+                        delete i.entries;
+                        Object.assign(newInfo.entries.find(o => o.url == location), i);
+                    } else badEntries++;
+                }, `ffprobeInfo`)
+            } catch(e) {
+                badEntries++;
+            }
         })
+
+        manager.queueEventEmitter.emit(`queueUpdate`, manager.queue);
+    }),
+    ffprobe: (path) => new Promise(async res => {
+        const ffprobePath = require(`./filenames/ffmpeg`).getFFprobe();
+
+        if(!ffprobePath) {
+            sendNotification({
+                type: `error`,
+                headingText: `Error getting info`,
+                bodyText: `FFprobe is not installed. Please install FFmpeg in settings (or on your system) and try again.`,
+                hideReportButton: true,
+                redirect: `settings.html`,
+                redirectMsg: `Go to settings`
+            });
+
+            return res(null)
+        };
+
+        if(!fs.existsSync(path)) {
+            sendNotification({
+                type: `error`,
+                headingText: `Error getting info`,
+                bodyText: `The path does not exist.`,
+            });
+            
+            return res(null)
+        };
+
+        const stat = fs.statSync(path);
+
+        if(stat.isDirectory()) {
+            return module.exports.ffprobeDir(path).then(res);
+        } else {
+            return module.exports.ffprobeInfo(path).then(res);
+        }
     }),
     listFormats: ({query, extraArguments, ignoreStderr}) => new Promise(async res => {
         const additional = module.exports.additionalArguments(extraArguments);
@@ -742,6 +902,28 @@ module.exports = {
                 return res(null);
             }
         } else return res(null)
+    }),
+    getResolution: (path) => new Promise(async res => {
+        const proc = child_process.execFile(require(`./filenames/ffmpeg`).getFFprobe(), [`-v`, `error`, `-select_streams`, `v:0`, `-show_entries`, `stream=width,height`, `-of`, `csv=s=x:p=0`, path]);
+
+        let output = ``;
+
+        proc.stdout.on(`data`, d => output += d.toString().trim() + `\n`);
+
+        proc.on(`close`, () => {
+            if(output) {
+                const split = output.split(`x`);
+
+                if(split.length == 2) {
+                    const width = Number(split[0]);
+                    const height = Number(split[1]);
+
+                    if(width && height) {
+                        return res({ width, height });
+                    } else return res({ width: null, height: null });
+                } else return res({ width: null, height: null });
+            } else return res({ width: null, height: null });
+        })
     }),
     getMuxer: (ext) => new Promise(async res => {
         const proc = child_process.execFile(module.exports.ffmpegPath, [`-h`, `muxer=` + ext]);
@@ -1444,7 +1626,32 @@ module.exports = {
                     if(convert.audioSampleRate) outputArgs.unshift(`-ar`, convert.audioSampleRate);
                     if(convert.videoBitrate) outputArgs.unshift(`-b:v`, convert.videoBitrate);
                     if(convert.videoFPS) outputArgs.unshift(`-r`, convert.videoFPS);
-                    if(convert.videoResolution) outputArgs.unshift(`-vf`, `scale=${convert.videoResolution.trim().replace(`x`, `:`)}`);
+                    if(convert.videoResolution) {
+                        convert.videoResolution = convert.videoResolution.replace(/x/g, `:`).trim();
+
+                        var width, height;
+
+                        for(const file of (useFile ? [useFile] : temporaryFiles.map(f => require(`path`).join(saveTo, f)))) {
+                            if(!width || !height) var { width, height } = await module.exports.getResolution(file);
+                        };
+
+                        if(width && height) {
+                            const numRegex = /-?\d+(\.\d+)?/g;
+
+                            let newWidth = Number(((convert.videoResolution.split(`:`)[1] ? convert.videoResolution.split(`:`)[0] : `-1`).match(numRegex) || [`-1`])[0]);
+                            let newHeight = Number(((!convert.videoResolution.split(`:`)[1] ? convert.videoResolution.split(`:`)[0] : convert.videoResolution.split(`:`)[1]).match(numRegex) || [`-1`])[0]);
+
+                            if(newHeight && (!newWidth || newWidth == -1)) newWidth = Math.round((newHeight / height) * Number(width));
+
+                            const newScale = newWidth > newHeight ? `${newWidth}:-1` : `-1:${newHeight}`;
+                            const newCrop = newWidth > newHeight ? `${newWidth}:${newHeight}` : `${newWidth}:${newHeight}`;
+    
+                            //outputArgs.unshift(`-vf`, `scale=${Number(convert.videoResolution) ? `${convert.videoResolution}:-1` : convert.videoResolution.trim().replace(/x/g, `:`)}`);
+                            outputArgs.unshift(`-vf`, `scale=${newScale},crop=${newCrop}`);
+
+                            convert.videoResolution = `${newWidth}x${newHeight}`;
+                        }
+                    }
 
                     if(typeof convert.additionalOutputArgs == `string`) {
                         const yargsResult = yargs(convert.additionalOutputArgs.replace(/-(\w+)/g, '--$1')).argv
@@ -1563,10 +1770,12 @@ module.exports = {
                             }
                         })
                     });
+
+                    const ffmpegGPUArgs = require(`./configs`).ffmpegGPUArgs();
     
                     const transcoders = {};
 
-                    const transcodersArr = Object.entries(hardwareAcceleratedConversion).filter(v => v[1]).map(v => Object.assign({}, require(`./ffmpegGPUArgs.json`)[v[0]], { key: v[0] }));
+                    const transcodersArr = Object.entries(hardwareAcceleratedConversion).filter(v => v[1]).map(v => Object.assign({}, ffmpegGPUArgs[v[0]], { key: v[0] }));
 
                     for(const transcoder of transcodersArr) transcoders[transcoder.key] = transcoder;
 
@@ -1637,7 +1846,7 @@ module.exports = {
                     if(!convert.forceSoftware && compatibleDecoders.length > 0) {
                         for(const decoder of compatibleDecoders) {
                             const o = {
-                                string: `${originalCodec}_${decoder.string} -> ${targetCodec}_software`,
+                                string: `${originalCodec}_${decoder.string} -> ${targetCodec} (CPU)`,
                                 hardware: `Partial`,
                                 decoder: decoder.name,
                                 encoder: `Software`,
@@ -1651,7 +1860,7 @@ module.exports = {
                     if(!convert.forceSoftware && compatibleEncoders.length > 0) {
                         for(const encoder of compatibleEncoders) {
                             const o = {
-                                string: `${originalCodec}_software -> ${targetCodec}_${encoder.string}`,
+                                string: `${originalCodec} (CPU) -> ${targetCodec}_${encoder.string}`,
                                 hardware: `Partial`,
                                 decoder: `Software`,
                                 encoder: encoder.name,
