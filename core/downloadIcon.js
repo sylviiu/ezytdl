@@ -59,7 +59,8 @@ const iconToPNG = (icon, size, negate) => new Promise(async res => {
         });
     } else {
         console.log(`creating icon ${filePath}`);
-        const sharpIcon = sharp(icon).resize(Math.round(size), Math.round(size));
+        const inputBuffer = await pfs.readFileSync(icon);
+        const sharpIcon = sharp(inputBuffer).resize(Math.round(size), Math.round(size));
         if(negate) sharpIcon.negate({ alpha: false });
         const buf = await sharpIcon.png().toBuffer();
         pfs.writeFileSync(filePath, buf).then(() => res(buf));
