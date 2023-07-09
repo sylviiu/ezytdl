@@ -557,6 +557,8 @@ module.exports = {
         proc.on(`close`, (code) => {
             console.log(`ffprobeInfo closed with code ${code}`);
 
+            if(code != 0) return res(null);
+
             if(!ffprobePathProvided) updateStatus(`Parsing data...`);
 
             try {
@@ -683,6 +685,7 @@ module.exports = {
         };
 
         let badEntries = 0;
+        let skipped = 0;
 
         manager.queueEventEmitter.on(`queueUpdate`, (queue) => {
             const totalLength = Object.values(queue).reduce((a, b) => a + b.length, 0);
@@ -693,11 +696,11 @@ module.exports = {
             if(queue.complete.length == totalLength) {
                 const failed = queue.complete.filter(o => o.failed);
 
-                badEntries = badEntries - failed.length;
+                badEntries = badEntries - failed.length - skipped;
 
                 console.log(`queue complete!`);
 
-                updateStatus(`Finished fetching info of ${queue.complete.length}/${totalLength} items!` + (failed > 0 ? ` (${failed} entries failed to resolve)` : ``) + (badEntries > 0 ? ` (${badEntries} entries failed to resolve)` : ``))
+                updateStatus(`Finished fetching info of ${queue.complete.length}/${totalLength} items!` + (failed > 0 ? ` (${failed} entries not compatible)` : ``) + (badEntries > 0 ? ` (${badEntries} entries failed to resolve)` : ``) + (skipped > 0 ? ` (${skipped} folders skipped)` : ``))
 
                 const parsed = module.exports.parseInfo(newInfo, true);
 
@@ -717,18 +720,31 @@ module.exports = {
         files.forEach(file => {
             const location = require(`path`).join(path, file);
 
+            const remove = () => {
+                badEntries++;
+                const i = newInfo.entries.findIndex(o => o.url == location);
+                if(i != -1) newInfo.entries.splice(i, 1)
+            }
+
             try {
                 const stat = fs.statSync(location);
-    
-                if(stat.isFile()) manager.createDownload([location, ffprobePath], (i) => {
-                    if(i) {
-                        console.log(`new info!`)
-                        delete i.entries;
-                        Object.assign(newInfo.entries.find(o => o.url == location), i);
-                    } else badEntries++;
-                }, `ffprobeInfo`)
+                console.log(`stat ${location}: ${stat.isDirectory()} / ${stat.isFile()}`)
+                if(!stat.isDirectory() && stat.isFile()) {
+                    manager.createDownload([location, ffprobePath], (i) => {
+                        if(i) {
+                            console.log(`new info!`)
+                            delete i.entries;
+                            Object.assign(newInfo.entries.find(o => o.url == location), i);
+                        } else {
+                            remove();
+                        }
+                    }, `ffprobeInfo`)
+                } else {
+                    remove();
+                    skipped++;
+                }
             } catch(e) {
-                badEntries++;
+                remove();
             }
         })
 
@@ -764,9 +780,9 @@ module.exports = {
 
         if(stat.isDirectory()) {
             return module.exports.ffprobeDir(path).then(res);
-        } else {
+        } else if(stat.isFile()) {
             return module.exports.ffprobeInfo(path).then(res);
-        }
+        } else return res(null);
     }),
     listFormats: ({query, extraArguments, ignoreStderr}) => new Promise(async res => {
         const additional = module.exports.additionalArguments(extraArguments);
