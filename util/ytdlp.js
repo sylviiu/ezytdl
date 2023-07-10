@@ -1725,6 +1725,8 @@ module.exports = {
                     if(convert.videoResolution && numRegex.test(convert.videoResolution)) {
                         convert.videoResolution = convert.videoResolution.replace(/x/g, `:`).trim();
 
+                        console.log(`raw; videoResolution: ${convert.videoResolution}`)
+
                         var width, height;
 
                         for(const file of (useFile ? [useFile] : temporaryFiles.map(f => require(`path`).join(saveTo, f)))) {
@@ -1732,22 +1734,32 @@ module.exports = {
                         };
 
                         if(width && height) {
-                            //let newWidth = Number(((convert.videoResolution.split(`:`)[1] ? convert.videoResolution.split(`:`)[0] : `-1`).match(numRegex) || [`-1`])[0]);
-                            //let newHeight = Number(((!convert.videoResolution.split(`:`)[1] ? convert.videoResolution.split(`:`)[0] : convert.videoResolution.split(`:`)[1]).match(numRegex) || [`-1`])[0]);
+                            const split = convert.videoResolution.split(`:`).filter(s => s.match(numRegex));
 
-                            const split = convert.videoResolution.split(`:`).filter(s => numRegex.test(s));
+                            console.log(`unparsed; split: [ ${split.join(`, `)} ]`)
 
                             if(split.length == 1) split.unshift(`-1`);
 
                             let newWidth = Number(split[0].match(numRegex)[0]);
                             let newHeight = Number(split[1].match(numRegex)[0]);
 
+                            console.log(`before; newWidth: ${newWidth}; newHeight: ${newHeight}`)
+
+                            if(newWidth == -1 && newHeight > -1) {
+                                newWidth = Math.round((newHeight / height) * width);
+                            } else if(newHeight == -1 && newWidth > -1) {
+                                newHeight = Math.round((newWidth / width) * height);
+                            }
+
+                            console.log(`after; newWidth: ${newWidth}; newHeight: ${newHeight}`)
+
                             if(newWidth > -1 || newHeight > -1) {
-                                const newScale = newWidth > newHeight ? `${newWidth}:-1` : `-1:${newHeight}`;
+                                const newScaledWidth = newWidth > -1 ? newWidth : Math.round((newHeight / height) * width);
+                                const newScaledHeight = newHeight > -1 ? newHeight : Math.round((newWidth / width) * height);
                                 
-                                const greater = newWidth > newHeight ? newWidth : newHeight;
-                                
-                                const newCrop = `${greater}:${greater}`;
+                                const newScale = newScaledWidth > newScaledHeight ? `${newScaledWidth}:-1` : `-1:${newScaledHeight}`;
+
+                                const newCrop = `${newWidth}:${newHeight}`;
         
                                 //outputArgs.unshift(`-vf`, `scale=${Number(convert.videoResolution) ? `${convert.videoResolution}:-1` : convert.videoResolution.trim().replace(/x/g, `:`)}`);
                                 outputArgs.unshift(`-vf`, `scale=${newScale},crop=${newCrop}`);

@@ -21,8 +21,6 @@ module.exports = (configObject, {
 }={}) => new Promise(async res => {
     const custom = source != `./defaultConfig.json` && target != `config.json` ? true : false;
 
-    if(configCache[`${source}-${target}`] && !configObject) return res(configCache[`${source}-${target}`]);
-
     try {
         const defaultConfig = Object.assign({}, require(source));
 
@@ -203,3 +201,5 @@ module.exports = (configObject, {
         errorHandler(e)
     }
 })
+
+module.exports.cache = configCache;
