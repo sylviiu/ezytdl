@@ -48,17 +48,17 @@ sessions = {
 
                 for(const key of Object.keys(newObj)) {
                     if(blacklistedKeys.includes(key)) {
-                        console.log(`[filteredObj] Deleting blacklisted key ${key} from object...`)
+                        //console.log(`[filteredObj] Deleting blacklisted key ${key} from object...`)
                         delete newObj[key];
                     } else if(newObj[key] && typeof newObj[key] == `function`) {
-                        console.log(`[filteredObj] Deleting function ${key} from object...`)
+                        //console.log(`[filteredObj] Deleting function ${key} from object...`)
                         delete newObj[key];
                     } else if(newObj[key] && typeof newObj[key] == `object`) {
                         if(typeof newObj[key].length == `number`) {
-                            console.log(`[filteredObj] Filtering array ${key}...`)
+                            //console.log(`[filteredObj] Filtering array ${key}...`)
                             newObj[key] = newObj[key].map(e => typeof e == `object` ? filteredObj(e, depth+1) : e);
                         } else {
-                            console.log(`[filteredObj] Filtering object ${key}...`)
+                            //console.log(`[filteredObj] Filtering object ${key}...`)
                             newObj[key] = filteredObj(newObj[key], depth+1);
                         }
                     }
@@ -532,7 +532,7 @@ sessions = {
                     const c1 = Object.assign({}, queue);
 
                     for(const queueType of Object.keys(c1)) {
-                        console.log(`Filtering ${queueType} in queue...`)
+                        //console.log(`Filtering ${queueType} in queue...`)
                         c1[queueType] = c1[queueType].map(e => filteredObj(filterUpdate(e)));
                     }
 
