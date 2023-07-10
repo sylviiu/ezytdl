@@ -124,7 +124,7 @@ const setupConvertDownload = (node, info, colorScheme) => {
             appendTo.appendChild(node.querySelector(`#fileOptionsText`));
             node.querySelector(`#fileOptions`).querySelector(`#basedir`).innerHTML = info.saveLocation || config.saveLocation || `{default save location}`;
             appendTo.appendChild(node.querySelector(`#fileOptions`));
-            if(info.entries && info.entries.length > 0) appendTo.querySelector(`#saveLocation`).value = info.title
+            if(info.entries && info.entries.length > 0) appendTo.querySelector(`#saveLocation`).value = (info._platform == `file` ? `Converted` : info.title)
         }
 
         const confirmDownloadBtn = node.querySelector(`#saveOptions`).querySelector(`#confirmDownload`).cloneNode(true);
@@ -159,7 +159,9 @@ const setupConvertDownload = (node, info, colorScheme) => {
         name: `Custom Format`,
         description: `Customize your conversion!`,
         icon: `fa-wrench`,
-    }
+    };
+
+    const saveLocation = node.querySelector(`#saveLocation`)
 
     const setPreset = (node, instant) => {
         if(node && currentSelected == node.id) {
@@ -169,6 +171,7 @@ const setupConvertDownload = (node, info, colorScheme) => {
             currentSelected = node ? node.id : null;
             const previousSelectedConversion = info.selectedConversion;
             info.selectedConversion = node.id == `custom` ? customFormat : (currentSelected && enabledConversionFormats.find(o => o.key == currentSelected)) ? Object.assign({}, enabledConversionFormats.find(o => o.key == currentSelected), { key: currentSelected }) : null;
+            if(info.selectedConversion.key && info._platform == `file` && saveLocation.value.startsWith(`Converted`)) saveLocation.value = (info._platform == `file` ? `Converted-${info.selectedConversion.key}` : info.title)
             buttons.forEach(btn => {
                 if(btn.id && btn.style) {
                     if(btn.id == currentSelected) {

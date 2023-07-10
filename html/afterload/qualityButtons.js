@@ -23,7 +23,7 @@ const setDefaultSaveOptValues = (node, info, colorScheme) => {
 
         if(info.entries && info.entries.length > 0) {
             //if(!node.querySelector(`#saveLocation`).value.endsWith(navigator.platform.toLowerCase() == `win32` ? `\\` : `/`)) node.querySelector(`#saveLocation`).value += navigator.platform.toLowerCase() == `win32` ? `\\` : `/`
-            node.querySelector(`#saveLocation`).value = info.title
+            node.querySelector(`#saveLocation`).value = (info._platform == `file` ? `Converted` : info.title)
         } else if(info.album) {
             node.querySelector(`#saveLocation`).value = info.album
         } else if(info[`playlist-title`]) {
@@ -360,7 +360,7 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
 
     if(info.entries && info.entries.length > 0) {
         //if(!saveLocation.value.endsWith(`/`) && !saveLocation.value.endsWith(`\\`)) saveLocation.value += navigator.platform.toLowerCase() == `win32` ? `\\` : `/`
-        saveLocation.value = info.title
+        saveLocation.value = (info._platform == `file` ? `Converted` : info.title)
     }
 
     const modifyQualityButtonsDropdown = () => {

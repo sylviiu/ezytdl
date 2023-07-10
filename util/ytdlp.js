@@ -378,24 +378,32 @@ module.exports = {
         })
     },
     getSavePath: (info, filePath) => {
-        // sanitizePath(...currentConfig.saveLocation.split(`\\`).join(`/`).split(`/`))
         const { saveLocation, downloadInWebsiteFolders } = global.lastConfig;
 
-        const useSaveLocation = sanitizePath(...saveLocation.split(`\\`).join(`/`).split(`/`));
+        let useSaveLocation;
 
-        const paths = [ useSaveLocation ];
+        if(info._platform == `file`) {
+            useSaveLocation = info.url.split(`\\`).join(`/`).split(`/`);
+            if(info.extractor == `system:file`) useSaveLocation = useSaveLocation.slice(0, -1);
+        } else {
+            useSaveLocation = saveLocation.split(`\\`).join(`/`).split(`/`);
+        }
+
+        const paths = [ sanitizePath(...useSaveLocation) ];
 
         let parsedURL = require(`url`).parse(info._original_url || info.url || info.webpage_url || info._request_url || ``);
 
         let useURL = parsedURL.host ? parsedURL.host.split(`.`).slice(-2).join(`.`) : info.webpage_url_domain || null;
 
-        if(downloadInWebsiteFolders && info._platform == `file`) paths.push(`Converted`);
+        //if(downloadInWebsiteFolders && info._platform == `file`) paths.push(`Converted`);
 
         if(downloadInWebsiteFolders && useURL) paths.push(useURL);
 
         if(filePath) paths.push(filePath)
 
         const saveTo = sanitizePath(...paths) + (require('os').platform() == `win32` ? `\\` : `/`);
+
+        console.log(`-- saveTo: ${saveTo}`)
 
         return saveTo
     },
