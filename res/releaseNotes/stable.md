@@ -1,5 +1,5 @@
-<h1 align="left">
-    <img src="https://raw.githubusercontent.com/sylviiu/ezytdl/main/res/img/heading.png" height="86px"/><br>
+<h1 align="center">
+    <img src="https://raw.githubusercontent.com/sylviiu/ezytdl/main/.github/heading.png"/><br><br>
     <strong>Release v{version}</strong>
 </h1>
 

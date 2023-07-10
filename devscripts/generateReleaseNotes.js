@@ -12,32 +12,40 @@ const type = args.shift();
 const tagList = child_process.execSync(`git tag --sort=-creatordate`).toString().trim().split(`\n`).map(s => s.trim());
 const latestReleaseTag = tagList[0];
 const latestStableTag = tagList.filter(s => !s.includes(`-nightly`))[0];
-const previousTagCommit = child_process.execSync(`git rev-list -n 1 ${tagList.filter(s => !s.includes(`-nightly`))[0]}`).toString().trim();
+const previousTagCommit = child_process.execSync(`git rev-list -n 1 ${latestReleaseTag}`).toString().trim();
+const stableTagCommit = child_process.execSync(`git rev-list -n 1 ${latestStableTag}`).toString().trim();
 const currentCommit = child_process.execSync(`git rev-parse HEAD`).toString().trim();
 
-console.log(`latest release tag: ${latestReleaseTag} -- latest stable tag: ${latestStableTag}`)
+console.log(`latest release tag: ${latestReleaseTag} -- latest stable tag: ${latestStableTag}`);
+
+const commitListNightly = child_process.execSync(`git log ${previousTagCommit}...${currentCommit}`).toString().trim().slice(7);
+const commitListStable = child_process.execSync(`git log ${stableTagCommit}...${currentCommit}`).toString().trim().slice(7).replace(commitListNightly, ``)
+
+const parseCommit = (s) => {
+    if(!s) return ``;
+
+    const hash = s.split(`\n`)[0];
+    const hashLink = `[**${hash.slice(0, 7)}**](https://github.com/sylviiu/ezytdl/commit/${hash})`;
+    //console.log(hashLink);
+
+    const author = s.split(`\n`)[1].trim().split(`: `).slice(1).join(`:`);
+
+    const date = new Date(s.split(`\n`)[2].split(`:`).slice(1).join(`:`).trim())
+    const hour = date.getUTCHours().toString().length == 1 ? `0${date.getUTCHours()}` : date.getUTCHours()
+    const min = date.getUTCMinutes().toString().length == 1 ? `0${date.getUTCMinutes()}` : date.getUTCMinutes()
+    const sec = date.getUTCSeconds().toString().length == 1 ? `0${date.getUTCSeconds()}` : date.getUTCSeconds()
+    const dateStr = `${daysOfTheWeek[date.getUTCDay()]}, ${date.getUTCDate()} ${months[date.getUTCMonth()]}, ${date.getUTCFullYear()} @ ${hour}:${min}:${sec} UTC`
+    //console.log(dateStr)
+
+    const parsed = `> - ${author}: ${hashLink} / ${dateStr}\n> \n> ${s.split(`\n`).slice(4).map(s => s.trim()).join(`\n> `)}\n`;
+
+    return parsed;
+}
 
 const variables = {
     version: require(`../package.json`).version,
     releaseTitle: process.env["RELEASE_TITLE"] || null,
-    commitList: child_process.execSync(`git log ${previousTagCommit}...${currentCommit}`).toString().trim().slice(7).split(`\n\ncommit `).map(s => {
-        const hash = s.split(`\n`)[0];
-        const hashLink = `[**${hash.slice(0, 7)}**](https://github.com/sylviiu/ezytdl/commit/${hash})`;
-        //console.log(hashLink);
-    
-        const author = s.split(`\n`)[1].trim().split(`: `).slice(1).join(`:`);
-    
-        const date = new Date(s.split(`\n`)[2].split(`:`).slice(1).join(`:`).trim())
-        const hour = date.getUTCHours().toString().length == 1 ? `0${date.getUTCHours()}` : date.getUTCHours()
-        const min = date.getUTCMinutes().toString().length == 1 ? `0${date.getUTCMinutes()}` : date.getUTCMinutes()
-        const sec = date.getUTCSeconds().toString().length == 1 ? `0${date.getUTCSeconds()}` : date.getUTCSeconds()
-        const dateStr = `${daysOfTheWeek[date.getUTCDay()]}, ${date.getUTCDate()} ${months[date.getUTCMonth()]}, ${date.getUTCFullYear()} @ ${hour}:${min}:${sec} UTC`
-        //console.log(dateStr)
-    
-        const parsed = `> - ${author}: ${hashLink} / ${dateStr}\n> \n> ${s.split(`\n`).slice(4).map(s => s.trim()).join(`\n> `)}\n`;
-    
-        return parsed;
-    }).join(`\n`)
+    commitList: type == `nightly` ? ((commitListNightly.split(`\n\ncommit `).map(parseCommit).join(`\n`) || `(no changes, see below for all changes since previous release)`) + `\n\n### All commits since previous stable release (${latestStableTag})\n\n<details>\n\n` + (commitListStable.split(`\n\ncommit `).map(parseCommit).join(`\n`)) + `\n\n</details>`) : commitListStable.split(`\n\ncommit `).map(parseCommit).join(`\n`),
 };
 
 if(fs.existsSync(`./res/releaseNotes/${type}.md`)) {
