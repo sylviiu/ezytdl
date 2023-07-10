@@ -362,11 +362,13 @@ var initDownloadManager = () => {
         
                         const downloadManager = createDownloadManager(card, o.id);
                         downloadManagers[o.id] = downloadManager;
+
+                        console.log(`creating new card, current status:`, o.status)
                         
-                        downloadManagers[o.id].update(o.status);
+                        downloadManagers[o.id].update(o.status && o.status.overall ? o.status.overall : o.status);
                     }
 
-                    let title = `[${o.opt.format}] `;
+                    let title = `[${o.status.formatID}] `;
     
                     if(o.opt.info && (o.opt.info.title || o.opt.info.output_name)) title += o.opt.info.title || o.opt.info.output_name;
 

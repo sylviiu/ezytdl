@@ -20,42 +20,54 @@ sessions = {
             };
             
             const queueEventEmitter = new (require(`events`))();
+
+            const filterUpdate = (o) => {
+                const useObj = Object.assign({}, o);
+
+                if(useObj.id && useObj.status && useObj.opt) {
+                    return Object.assign({}, {
+                        id: useObj.id,
+                        opt: useObj.opt,
+                        status: useObj.status,
+                        complete: useObj.complete,
+                        failed: useObj.failed,
+                        killed: useObj.killed,
+                    })
+                } else return useObj;
+            }
             
             let activeProgress = {};
-            
-            let ws = {
-                send: (c1) => {
-                    if(id != `default` || !global.window) return;
 
-                    const filteredObj = (obj, depth=0) => {
-                        if(depth > 6) return null;
+            const blacklistedKeys = [`ytdlpProc`, `killFunc`, `deleteFiles`, `nextUpdateTimeout`, `updateFunc`, `ignoreUpdates`, `lastUpdateSent`];
 
-                        const newObj = Object.assign({}, obj);
+            const filteredObj = (newObj, depth=0) => {
+                if(depth > 6) return null;
 
-                        if(newObj.ytdlpProc) delete newObj.ytdlpProc;
-                        if(newObj.killFunc) delete newObj.killFunc;
-                        if(newObj.deleteFiles) delete newObj.deleteFiles;
-                        if(newObj.nextUpdateTimeout) delete newObj.nextUpdateTimeout;
-                        if(newObj.updateFunc) delete newObj.updateFunc;
-                        if(newObj.ignoreUpdates) delete newObj.ignoreUpdates;
-                        if(newObj.lastUpdateSent) delete newObj.lastUpdateSent;
+                //const newObj = Object.assign({}, obj);
+                // it's already passing through a cloned object
 
-                        for(const key of Object.keys(newObj)) {
-                            if(newObj[key] && typeof newObj[key] == `object`) {
-                                if(typeof newObj[key].length == `number`) {
-                                    newObj[key] = newObj[key].map(e => typeof e == `object` ? filteredObj(e, depth+1) : e);
-                                } else newObj[key] = filteredObj(newObj[key], depth+1);
-                            } else if(newObj[key] && typeof newObj[key] == `function`) delete newObj[key];
-                        };
+                for(const key of Object.keys(newObj)) {
+                    if(blacklistedKeys.includes(key)) {
+                        console.log(`[filteredObj] Deleting blacklisted key ${key} from object...`)
+                        delete newObj[key];
+                    } else if(newObj[key] && typeof newObj[key] == `function`) {
+                        console.log(`[filteredObj] Deleting function ${key} from object...`)
+                        delete newObj[key];
+                    } else if(newObj[key] && typeof newObj[key] == `object`) {
+                        if(typeof newObj[key].length == `number`) {
+                            console.log(`[filteredObj] Filtering array ${key}...`)
+                            newObj[key] = newObj[key].map(e => typeof e == `object` ? filteredObj(e, depth+1) : e);
+                        } else {
+                            console.log(`[filteredObj] Filtering object ${key}...`)
+                            newObj[key] = filteredObj(newObj[key], depth+1);
+                        }
+                    }
+                };
 
-                        return newObj;
-                    };
-
-                    const send = typeof c1 == `object` ? filteredObj(c1) : c1;
-                    
-                    global.window.webContents.send(`queueUpdate`, send);
-                }
+                return newObj;
             };
+            
+            let ws = { send: (sendData) => id == `default` && global.window ? global.window.webContents.send(`queueUpdate`, sendData) : null };
             
             let downloadStatusWs = {
                 send: (content) => {
@@ -136,7 +148,7 @@ sessions = {
             
             const sendUpdate = (sendObj) => ws ? ws.send({
                 type: `update`,
-                data: sendObj
+                data: filteredObj(filterUpdate(sendObj))
             }) : null;
 
             let addTimeout = 0;
@@ -191,7 +203,8 @@ sessions = {
             
                 console.log(`Updating queue...`)
             
-                for (o of queue.active) {
+                for(const o of queue.active) {
+                    console.log(`active`, o)
                     if(o.complete) {
                         const index = queue.active.findIndex(e => e.id == o.id);
                         if(index != -1) {
@@ -304,7 +317,7 @@ sessions = {
                         obj.nextUpdateTimeout = setTimeout(() => {
                             obj.nextUpdateTimeout = null;
 
-                            sendUpdate(Object.assign({}, obj, { status: update.latest }));
+                            sendUpdate(obj);
                         })
 
                         if(!downloadFunc) rawUpdateFunc(update);
@@ -355,7 +368,7 @@ sessions = {
             
                             if(downloadFunc) {
                                 obj.lastUpdateSent = 0;
-                                obj.updateFunc(Object.assign({}, obj.status, {status: `Finished "${downloadFunc}"`, progressNum: 100}));
+                                obj.updateFunc({status: `Finished "${downloadFunc}"`, progressNum: 100});
                                 rawUpdateFunc(update);
                             }
             
@@ -516,7 +529,14 @@ sessions = {
                 queueSendTimeout = setTimeout(() => {
                     queueSendTimeout = null;
 
-                    ws.send({ type: `queue`, data: queue });
+                    const c1 = Object.assign({}, queue);
+
+                    for(const queueType of Object.keys(c1)) {
+                        console.log(`Filtering ${queueType} in queue...`)
+                        c1[queueType] = c1[queueType].map(e => filteredObj(filterUpdate(e)));
+                    }
+
+                    ws.send({ type: `queue`, data: c1 });
                     downloadStatusWs.send(lastDownloadStatus);
                 }, timeout);
             }
