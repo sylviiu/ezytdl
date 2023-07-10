@@ -28,7 +28,7 @@ module.exports = (configObject, {
 
     if(!configObject && configCache.has(key)) {
         //console.log(`[CONFIG / ${key}] config cached! returning`)
-        return configCache.get(key);
+        return Promise.resolve(configCache.get(key));
     } else if(configObject) {
         console.log(`[CONFIG / ${key}] config object passed! clearing cache...`)
         configCache.clear();
