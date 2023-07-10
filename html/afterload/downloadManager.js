@@ -2,7 +2,9 @@ var downloadManagerMainQueueRegistered = false;
 
 var circleProgress = null;
 
-var initDownloadManager = () => {
+var initDownloadManager = (force) => {
+    if(window.location.href.split(`?`)[0].endsWith(`index.html`) && !force) return console.log(`initDownloadManager / skipping initDownloadManager because index.html is loaded`)
+
     console.log(`initDownloadManager / ${downloadManagerMainQueueRegistered}`)
 
     if(document.getElementById('downloadsList') && document.getElementById('downloadsIcon') && !downloadManagerMainQueueRegistered) {
@@ -313,7 +315,9 @@ var initDownloadManager = () => {
                             if(icon) mediaIcons.appendChild(icon);
 
                             if(o.opt.info._ezytdl_ui_type) {
-                                const targetColor = systemColors[(tabs[o.opt.info._ezytdl_ui_type] ? tabs[o.opt.info._ezytdl_ui_type].colorScheme : 0)];
+                                const index = (tabs[o.opt.info._ezytdl_ui_type] ? tabs[o.opt.info._ezytdl_ui_type].colorScheme : 0)
+                                const targetColor = systemColors[index];
+                                console.log(`targetColor of ${index} (found: ${tabs[o.opt.info._ezytdl_ui_type] ? true : false}; ${Object.keys(tabs).length} tabs registered)`, targetColor)
                                 mediaIcons.style.background = `rgb(${targetColor.light.r}, ${targetColor.light.g}, ${targetColor.light.b})`
                             }
 

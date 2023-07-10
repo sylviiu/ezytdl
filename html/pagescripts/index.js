@@ -371,7 +371,9 @@ getTabs().then(tabs => {
     
     selectTab(`Download`);
                 
-    setTimeout(() => getWaveAnims(`Download`).fadeIn(), 50)
+    setTimeout(() => getWaveAnims(`Download`).fadeIn(), 50);
+
+    initDownloadManager(true);
 })
         
 const housekeeping = () => {
