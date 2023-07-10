@@ -1913,23 +1913,35 @@ module.exports = {
                     let originalVideoCodec = null;
                     let originalAudioCodec = null;
 
-                    if(convert.videoCodec || destinationCodec.videoCodec) for(const f of temporaryFiles) {
-                        let promises = [];
+                    let codecPromises = [];
 
-                        if(await pfs.existsSync(require(`path`).join(saveTo, f))) {
-                            if(!originalVideoCodec) promises.push(new Promise(async r => {
-                                originalVideoCodec = await module.exports.getCodec(require(`path`).join(saveTo, f));
+                    if(convert.videoCodec || destinationCodec.videoCodec) {
+                        if(useFile) {
+                            codecPromises.push(new Promise(async r => {
+                                originalVideoCodec = await module.exports.getCodec(useFile);
                                 r();
                             }));
-
-                            if(!originalAudioCodec) promises.push(new Promise(async r => {
-                                originalAudioCodec = await module.exports.getCodec(require(`path`).join(saveTo, f), true);
+                            
+                            codecPromises.push(new Promise(async r => {
+                                originalAudioCodec = await module.exports.getCodec(useFile, true);
                                 r();
                             }));
-                        };
-
-                        if(promises.length > 0) await Promise.all(promises);
+                        } else for(const f of temporaryFiles) {
+                            if(await pfs.existsSync(require(`path`).join(saveTo, f))) {
+                                if(!originalVideoCodec) codecPromises.push(new Promise(async r => {
+                                    originalVideoCodec = await module.exports.getCodec(require(`path`).join(saveTo, f));
+                                    r();
+                                }));
+    
+                                if(!originalAudioCodec) codecPromises.push(new Promise(async r => {
+                                    originalAudioCodec = await module.exports.getCodec(require(`path`).join(saveTo, f), true);
+                                    r();
+                                }));
+                            };
+                        }
                     }
+
+                    if(codecPromises.length > 0) await Promise.all(codecPromises);
 
                     if(!originalVideoCodec) convert.forceSoftware = true;
     
@@ -1998,7 +2010,7 @@ module.exports = {
                     
                     if(!onlyGPUConversion || convert.forceSoftware) {
                         attemptArgs.push({
-                            string: `${originalCodec}_software -> ${targetCodec}_software`,
+                            string: `${originalCodec} (CPU) -> ${targetCodec} (CPU)`,
                             hardware: `None`,
                             decoder: `Software`,
                             encoder: `Software`,
