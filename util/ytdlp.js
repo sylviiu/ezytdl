@@ -1070,7 +1070,7 @@ module.exports = {
 
         let update = (o) => {
             Object.assign(obj, o);
-            updateFunc({ latest: o || obj, overall: obj }, proc);
+            updateFunc({ latest: (o || obj), overall: obj }, proc);
             return obj;
         };
 
@@ -1849,12 +1849,14 @@ module.exports = {
                                     headingText: `yt-dlp failed to download ${url} [2]`,
                                     bodyText: `${data.trim().split(`ERROR: `)[1]}`
                                 })
-                            }
+                            };
+
+                            const sendObj = {}
         
                             if(data.includes(`time=`)) {
                                 const timestamp = time(data.trim().split(`time=`)[1].trim().split(` `)[0]).units.ms;
-                                update({percentNum: (Math.round((timestamp / (totalTrimmedDuration || duration)) * 1000))/10})
-                            }
+                                Object.assign(sendObj, {percentNum: (Math.round((timestamp / (totalTrimmedDuration || duration)) * 1000))/10})
+                            } else sendObj.percentNum = -1;
     
                             let speed = [];
     
@@ -1862,7 +1864,9 @@ module.exports = {
         
                             if(data.includes(`speed=`)) speed.push(data.trim().split(`speed=`)[1].trim().split(` `)[0]);
                             
-                            if(speed && speed.length > 0) update({downloadSpeed: speed.join(` | `)})
+                            if(speed && speed.length > 0) Object.assign(sendObj, {downloadSpeed: speed.join(` | `)});
+
+                            if(Object.keys(sendObj).length > 0) update(sendObj)
                         });
         
                         proc.stdout.on(`data`, data => {
