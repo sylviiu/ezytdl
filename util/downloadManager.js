@@ -265,25 +265,20 @@ sessions = {
 
                 let id = idGen(16);
 
-                const formatUpdate = (status) => Object.assign({}, obj, {
-                    opt: Object.assign({}, obj.opt, {
-                        info: typeof obj.opt.info == `object` ? {
-                            webpage_url_domain: obj.opt.info.webpage_url_domain,
-                            title: obj.opt.info.title,
-                            thumbnails: obj.opt.info.thumbnails ? obj.opt.info.thumbnails.sort((a,b) => b.width - a.width).slice(0, 3) : obj.opt.info.thumbnails,
-                            thumbnail: obj.opt.info.thumbnail,
-                            output_name: obj.opt.info.output_name,
-                            _ezytdl_ui_icon: obj.opt.info._ezytdl_ui_icon,
-                            _ezytdl_ui_type: obj.opt.info._ezytdl_ui_type,
-                            _ezytdl_ui_title: obj.opt.info._ezytdl_ui_title,
-                        } : obj.opt.info
-                    }),
-                    status,
-                })
-
                 const obj = {
                     id,
-                    opt,
+                    opt: opt.info ? Object.assign({}, {
+                        info: opt && typeof opt.info == `object` ? {
+                            webpage_url_domain: opt.info.webpage_url_domain,
+                            title: opt.info.title,
+                            thumbnails: opt.info.thumbnails ? opt.info.thumbnails.sort((a,b) => b.width - a.width).slice(0, 3) : opt.info.thumbnails,
+                            thumbnail: opt.info.thumbnail,
+                            output_name: opt.info.output_name,
+                            _ezytdl_ui_icon: opt.info._ezytdl_ui_icon,
+                            _ezytdl_ui_type: opt.info._ezytdl_ui_type,
+                            _ezytdl_ui_title: opt.info._ezytdl_ui_title,
+                        } : opt.info
+                    }) : opt,
                     lastUpdateSent: 0,
                     nextUpdateTimeout: null,
                     ignoreUpdates: false,
@@ -309,7 +304,7 @@ sessions = {
                         obj.nextUpdateTimeout = setTimeout(() => {
                             obj.nextUpdateTimeout = null;
 
-                            sendUpdate(formatUpdate(update.latest));
+                            sendUpdate(Object.assign({}, obj, { status: update.latest }));
                         })
 
                         if(!downloadFunc) rawUpdateFunc(update);
