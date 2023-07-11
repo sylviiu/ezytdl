@@ -1,6 +1,6 @@
 {
   "name": "ezytdl",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "description": "Advanced electron-based frontend for yt-dlp.",
   "main": "index.js",
   "dependencies": {
