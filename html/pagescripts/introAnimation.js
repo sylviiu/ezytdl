@@ -119,7 +119,27 @@ ajax.onload = async () => {
             closeOnNavigate: true,
             addEventListeners: false,
             updatePosition: true,
-            completeHook: () => callback()
+            //completeHook: () => callback()
+            overlayCompleteHook: () => {
+                if(document.querySelector(`#everythingContainer`)) anime({
+                    targets: document.querySelector(`#everythingContainer`),
+                    opacity: 0,
+                    duration: 350,
+                    easing: `easeInCirc`,
+                    complete: () => window.location.href = `introAnimation.html?${htmlFile}`
+                })
+            },
+            completeHook: () => {
+                if(popout.divs.overlayDiv) {
+                    anime({
+                        targets: popout.divs.overlayDiv,
+                        opacity: 0,
+                        duration: 350,
+                        easing: `easeInCirc`,
+                        complete: () => window.location.href = `introAnimation.html?${htmlFile}`
+                    })
+                } else window.location.href = `introAnimation.html?${htmlFile}`
+            }
         });
 
         let inProgress = true;

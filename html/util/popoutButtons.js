@@ -2,6 +2,7 @@ let popoutActive = false;
 
 const createPopout = ({
     buttons = [],
+    overlayCompleteHook = () => {},
     completeHook = () => {},
     navigateEvent = () => {},
     closeOnNavigate = false,
@@ -48,6 +49,8 @@ const createPopout = ({
 
     let parsedButtons = [];
 
+    let divs = {};
+
     for(const o of buttons.filter(o => o.element)) {
         const name = o.heading || o.element.id || `(unnamed)`;
         const button = o.element;
@@ -65,6 +68,8 @@ const createPopout = ({
             const currentNotification = document.body.querySelector(`.notificationBox`);
         
             const overlayDiv = document.createElement(`div`);
+
+            divs[`overlayDiv`] = overlayDiv;
         
             applyStyle(overlayDiv);
 
@@ -116,6 +121,8 @@ const createPopout = ({
                             duration: 700,
                             easing: `easeOutExpo`,
                             complete: () => {
+                                overlayCompleteHook();
+
                                 overlayDiv.onmouseenter = async () => {
                                     console.log(`mouseenter`);
                 
@@ -457,5 +464,6 @@ const createPopout = ({
         frame: () => frame,
         setCloseable: (val) => setCloseable(val),
         buttons: parsedButtons,
+        divs,
     }
 }
