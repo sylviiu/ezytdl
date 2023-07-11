@@ -138,6 +138,9 @@ const searchBoxHeights = () => [`${window.innerHeight - 80}px`, `225px`]
 const background = document.getElementById(`background`);
 
 const listboxTemplate = document.getElementById(`listbox`).cloneNode(true);
+
+while(listboxTemplate.querySelector(`#formatCard`)) listboxTemplate.querySelector(`#formatCard`).remove();
+
 const formatListTemplate = document.getElementById(`formatList`).cloneNode(true);
             
 const formatCard = document.getElementById(`formatCard`).cloneNode(true);

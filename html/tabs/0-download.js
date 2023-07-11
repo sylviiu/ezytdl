@@ -4,8 +4,6 @@ if(!tabs[`Download`]) tabs[`Download`] = {
     container: null,
     colorScheme: 0,
     initializePage: (container, { setBackground, wavesAnims, colorScheme }) => {
-        const searchBoxHeights = () => [`${window.innerHeight - 80}px`, `225px`]
-        
         const urlBox = container.querySelector(`#urlBox`);
         const innerUrlBox = container.querySelector(`#innerUrlBox`);
         
@@ -82,8 +80,6 @@ if(!tabs[`Download`]) tabs[`Download`] = {
         const extraArguments = container.querySelector(`#extraArguments`);
         
         if(!config.advanced) advancedOptions.classList.add(`d-none`)
-        
-        listboxTemplate.querySelector(`#formatCard`).parentElement.removeChild(listboxTemplate.querySelector(`#formatCard`));
         
         listboxParent.removeChild(container.querySelector(`#listbox`));
         
