@@ -267,11 +267,6 @@ getTabs().then(async tabs => {
     
                 selectedTab = tabName;
     
-                window.scroll({
-                    top: 0,
-                    behavior: `instant`
-                })
-    
                 if(typeof tab.canSwitch == `function`) {
                     const result = await tab.canSwitch();
     
@@ -281,11 +276,19 @@ getTabs().then(async tabs => {
                         if(!previousSelectedTab) {
                             selectedTab = null;
                             return selectTab(`Download`)
-                        } else return false;
+                        } else {
+                            selectedTab = previousSelectedTab;
+                            return false;
+                        }
                     } else console.log(`selecting tab "${tabName}" - canSwitch returned true`)
                 } else {
                     console.log(`selecting tab "${tabName}" - canSwitch is not a function`);
                 }
+    
+                window.scroll({
+                    top: 0,
+                    behavior: `instant`
+                })
 
                 await localStorage.setItem(`selectedTab`, tabName);
 

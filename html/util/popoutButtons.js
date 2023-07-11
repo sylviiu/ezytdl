@@ -383,17 +383,17 @@ const createPopout = ({
                         h.contentWindow.useHref = typeof useHref != `undefined` ? useHref : closeOnNavigate;
                         h.contentWindow.console.log = (...content) => console.log(`iframe ${name}:`, ...content);
 
-                        if(o.heading) {
-                            const headingTxt = document.createElement(`h1`);
+                        const heading = href[0].toUpperCase() + href.slice(1).split(`.`).slice(0, -1).join(`.`)
+
+                        const headingTxt = document.createElement(`h1`);
     
-                            headingTxt.style.padding = `24px`;
-                            headingTxt.style.width = `100vw`;
-                            headingTxt.style.color = `white`;
-    
-                            headingTxt.innerText = name;
-    
-                            h.contentWindow.document.body.prepend(headingTxt);
-                        };
+                        headingTxt.style.padding = `24px`;
+                        headingTxt.style.width = `100vw`;
+                        headingTxt.style.color = `white`;
+
+                        headingTxt.innerText = o.heading || heading;
+
+                        h.contentWindow.document.body.prepend(headingTxt);
 
                         const onclickFunc = e => {
                             const target = e.target;
