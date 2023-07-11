@@ -97,8 +97,12 @@ if(process.platform == `win32` || process.platform == `linux`/* || process.platf
     });
 };
 
-autoUpdater.on(`download-progress`, ({bytesPerSecond, percent, total, transferred}) => {
-    setProgress({ percent, status: `Downloading update... (at ${bytesPerSecond / 1e-6}mb/s)` })
+autoUpdater.on(`download-progress`, (o) => {
+    if(o && o.percent) {
+        const obj = { progress: o.percent, status: `Downloading update...` };
+        console.log(obj);
+        setProgress(obj)
+    }
 });
 
 autoUpdater.on(`update-not-available`, (info) => {

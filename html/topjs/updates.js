@@ -5,7 +5,7 @@ let currentProgressCircle = null;
 let updateAvailable = false;
 
 const setUpdateButton = (disable=false, func, createProgressCirc) => {
-    console.log(`setUpdateButton: ${disable ? `disable` : `enable`}; func? ${func ? true : false}`)
+    console.log(`setUpdateButton: ${disable ? `disable` : `enable`}; func? ${func ? true : false}; creating progress circ? ${createProgressCirc ? true : false} (already exists? ${currentProgressCircle ? true : false})`)
 
     anime.remove(updateAvailableBtn)
 
@@ -48,7 +48,8 @@ const setUpdateButton = (disable=false, func, createProgressCirc) => {
                 if(updateAvailableBtn.classList.contains(`d-none`)) updateAvailableBtn.classList.remove(`d-none`);
             }
         });
-        updateAvailableBtn.onclick = func ? func : () => send(`openUpdatePage`)
+
+        updateAvailableBtn.onclick = func ? func : () => version.openUpdatePage();
     }
 }
 
@@ -64,7 +65,8 @@ const updateChecker = () => {
             updateAvailable = true;
             updateAvailableBtn.style.backgroundColor = `#fff`;
             updateAvailableBtn.style.color = `#000`;
-            setUpdateButton()
+            tabStyle.collapse();
+            setUpdateButton();
         });
     
         version.onUpdateProgress(p => {
@@ -88,6 +90,8 @@ const updateChecker = () => {
                     headingText: `Update Status ${percent}`,
                     bodyText: status,
                 }), true);
+                
+                console.log(`setUpateButton: ${updateAvailableBtn.style.width}, ${updateAvailableBtn.style.height} --`, progress)
 
                 currentProgressCircle.setProgress(progress);
             } else setUpdateButton(true);

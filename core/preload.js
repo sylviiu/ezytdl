@@ -271,15 +271,4 @@ addEventListener(`DOMContentLoaded`, async () => {
     if(!name.includes(`introAnimation`)) await scriptsObj.afterload();
 
     console.log(`Scripts added!`);
-
-    const enableUpdateButton = () => {
-        document.getElementById(`updateAvailable`).classList.add(`d-flex`);
-        document.getElementById(`updateAvailable`).classList.remove(`d-none`);
-        document.getElementById(`updateAvailable`).onclick = () => send(`openUpdatePage`)
-    }
-
-    if(document.getElementById(`updateAvailable`)) {
-        console.log(`updateAvailable Enabled`)
-        if(updateAvailable) enableUpdateButton()
-    }
 });

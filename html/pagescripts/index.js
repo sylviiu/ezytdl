@@ -190,6 +190,24 @@ document.getElementById(`tabButton`).remove();
 
 let selectTab = () => {};
 
+let collapsed = false;
+
+let tabStyle = {
+    collapse: () => {
+        collapsed = true;
+        for(const { button } of Object.values(tabs)) {
+            button.onmouseout();
+        }
+    },
+    expand: () => {
+        collapsed = false;
+        for(const { button } of Object.values(tabs)) {
+            button.onmouseover();
+            button.onmouseout();
+        }
+    }
+}
+
 getTabs().then(tabs => {
     const tabKeys = Object.keys(tabs);
     
@@ -341,7 +359,7 @@ getTabs().then(tabs => {
         };
 
         thisButton.onmouseout = () => {
-            if(selectedTab == tabName) return;
+            if(selectedTab == tabName && !collapsed) return;
             anime.remove(name);
             anime({
                 targets: name,
