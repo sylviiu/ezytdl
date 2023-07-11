@@ -1100,13 +1100,15 @@ module.exports = {
 
         let update = (o) => {
             Object.assign(obj, o);
-            updateFunc({ latest: (o || obj), overall: obj }, proc);
-            return obj;
+            const updateObj = { latest: (o || obj), overall: obj }
+            updateFunc(updateObj, proc);
+            return updateObj;
         };
 
         let setProgress = (key, o) => {
             //Object.assign(obj, { progressBars: Object.assign({}, obj.progressBars, { [key]: o }) });
-            return update({ [`progress-${key}`]: o })
+            //return update({ [`progress-${key}`]: o })
+            return update({ status: o.status || obj.status, progress: o.progress || obj.progress });
         };
 
         let deleteProgress = (key) => {
@@ -1178,9 +1180,7 @@ module.exports = {
                 purgeFiles(`${i}`, f)
             });
 
-            update({status: `Download canceled.`})
-
-            resolve(obj)
+            resolve(update({status: `Download canceled.`}))
         }
 
         const fetchFullInfo = (status) => new Promise(async res => {
@@ -1283,9 +1283,8 @@ module.exports = {
 
             let args = [...additionalArgs];
 
-            const res = async (o) => {
-                //console.log(o)
-                update(Object.assign({}, typeof o == `object` ? o : {}, { percentNum: 100 }));
+            const res = async () => {
+                update({ percentNum: 100 });
                 const resolveStatus = obj.status;
                 const skipped = {};
                 new Promise(async r => {
@@ -1418,8 +1417,6 @@ module.exports = {
                                         console.error(e)
         
                                         skipped.tags = `${e}`;
-    
-                                        deleteProgress(`tags`);
         
                                         cleanup(true).then(r)
                                     });
@@ -1434,8 +1431,6 @@ module.exports = {
                                     console.error(e)
         
                                     skipped.tags = `${e}`;
-                                    
-                                    deleteProgress(`tags`);
         
                                     cleanup(true).then(r)
                                 }
@@ -1449,7 +1444,6 @@ module.exports = {
                             if(addMetadata.thumbnail && !vcodec) {
                                 if(!(info.media_metadata.url.thumbnail_url || info.thumbnails) && info.fullInfo) {
                                     skipped.thumbnail = `No thumbnail found`;
-                                    deleteProgress(`thumbnail`);
                                 } else if(info.thumbnails || info.media_metadata.url.thumbnail_url) await new Promise(async r => {
                                     try {
                                         let progressNum = 15;
@@ -1488,8 +1482,6 @@ module.exports = {
                                                     console.error(e)
                     
                                                     skipped.thumbnail = `Failed to add cover: ${e}`;
-    
-                                                    deleteProgress(`thumbnail`);
                     
                                                     cleanup(true).then(r);
                                                 });
@@ -1524,7 +1516,6 @@ module.exports = {
                                             } else {
                                                 console.log(`failed to convert image to png!`)
                                                 skipped.thumbnail = `Failed to convert thumbnail to PNG`;
-                                                deleteProgress(`thumbnail`);
                                                 cleanup(true).then(r)
                                             }
                                         }
@@ -1594,8 +1585,6 @@ module.exports = {
                                         console.error(e)
             
                                         skipped.thumbnail = `${e}`;
-    
-                                        deleteProgress(`thumbnail`);
             
                                         cleanup(true).then(r);
                                     }
@@ -1617,10 +1606,10 @@ module.exports = {
     
                     r();
                 }).then(() => {
-                    if(Object.keys(skipped).length == Object.keys(addMetadata || {}).filter(v => v).length) deleteProgress(`metadata`);
+                    //if(Object.keys(skipped).length == Object.keys(addMetadata || {}).filter(v => v).length) deleteProgress(`metadata`);
                     const status = resolveStatus + (Object.keys(skipped).length > 0 ? `<br><br>${Object.entries(skipped).map(s => `- Skipped ${s[0]} embed: ${s[1]}`).join(`<br>`)}` : ``);
                     //console.log(`-------------\n${status}\n-------------`)
-                    resolve(update({status, percentNum: 100}))
+                    resolve(update({ status, percentNum: 100 }))
                 })
             };
 
@@ -1649,7 +1638,7 @@ module.exports = {
                     if(msg && typeof msg == `string`) {
                         update({failed: true, percentNum: 100, status: msg, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + `.` + previousFilename.split(`.`).slice(-1)[0], url, format})
                     } else update({failed: true, percentNum: 100, status: `Could not convert to ${`${convert ? convert.ext : `--`}`.toUpperCase()}.`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + `.` + previousFilename.split(`.`).slice(-1)[0], url, format});
-                    return res(obj)
+                    return res()
                     //purgeLeftoverFiles(saveTo)
                 };
 
@@ -1829,7 +1818,7 @@ module.exports = {
 
                         if(killAttempt > 0) {
                             update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`, url, format})
-                            return res(obj)
+                            return res()
                             //purgeLeftoverFiles(saveTo)
                             //return res(`Download canceled.`, true);
                         }
@@ -1907,7 +1896,7 @@ module.exports = {
                         proc.on(`close`, async (code) => {
                             if(killAttempt > 0) {
                                 update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`, url, format})
-                                return res(obj)
+                                return res()
                                 //return purgeLeftoverFiles(saveTo)
                                 //return res(`Download canceled.`, true);
                             } else if(code == 0) {
@@ -1917,7 +1906,7 @@ module.exports = {
                                     if(await pfs.existsSync(require(`path`).join(saveTo, f))) await pfs.unlinkSync(require(`path`).join(saveTo, f));
                                 }
                                 update({percentNum: 100, status: `Done!`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`, url, format});
-                                resolveFFmpeg(obj)
+                                resolveFFmpeg()
                             } else {
                                 if(allLogs.includes(`Press [q] to stop, [?] for help`)) {
                                     rej(allLogs.split(`Press [q] to stop, [?] for help`)[1].trim())
@@ -2083,7 +2072,7 @@ module.exports = {
 
                     if(killAttempt > 0) {
                         update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`, url, format})
-                        return res(obj)
+                        return res()
                         //purgeLeftoverFiles(saveTo)
                     } else if(args.includes(`-S`) && ytdlpSaveExt == ext) {
                         update({code, saveLocation: saveTo, url, format, status: `Downloaded best quality provided for ${ext} format (no conversion done${reasonConversionNotDone ? ` -- ${reasonConversionNotDone}` : ``})`});
@@ -2092,15 +2081,15 @@ module.exports = {
                     } else if(reasonConversionNotDone) {
                         update({code, saveLocation: saveTo, url, format, status: `Could not convert: ${reasonConversionNotDone}`});
                     } else update({code, saveLocation: saveTo, url, format, status: `Done!`});
-                    res(obj)
+                    res()
                 } else {
                     if(killAttempt > 0) {
                         update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`, url, format})
-                        return res(obj)
+                        return res()
                         //purgeLeftoverFiles(saveTo)
                     } else {
                         update({code, saveLocation: saveTo, url, format, status: `Done!`})
-                        res(obj)
+                        res()
                     }
                 }
             };
@@ -2311,7 +2300,7 @@ module.exports = {
                                     } else {
                                         if(await pfs.existsSync(require(`path`).join(saveTo, temporaryFilename + `.${ytdlpSaveExt}`))) await pfs.unlinkSync(require(`path`).join(saveTo, temporaryFilename + `.${ytdlpSaveExt}`));
                                         update({code, saveLocation: saveTo, url, format, status: `Done!`})
-                                        res(obj)
+                                        res()
                                     }
                                 })
                             })

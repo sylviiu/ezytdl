@@ -22,6 +22,8 @@ sessions = {
             const queueEventEmitter = new (require(`events`))();
 
             const filterUpdate = (o) => {
+                if(!o || typeof o != `object`) return o;
+
                 const useObj = Object.assign({}, o);
 
                 if(useObj.id && useObj.status && useObj.opt) {
@@ -43,26 +45,28 @@ sessions = {
             const filteredObj = (newObj, depth=0) => {
                 if(depth > 6) return null;
 
-                //const newObj = Object.assign({}, obj);
-                // it's already passing through a cloned object
-
-                for(const key of Object.keys(newObj)) {
-                    if(blacklistedKeys.includes(key)) {
-                        //console.log(`[filteredObj] Deleting blacklisted key ${key} from object...`)
-                        delete newObj[key];
-                    } else if(newObj[key] && typeof newObj[key] == `function`) {
-                        //console.log(`[filteredObj] Deleting function ${key} from object...`)
-                        delete newObj[key];
-                    } else if(newObj[key] && typeof newObj[key] == `object`) {
-                        if(typeof newObj[key].length == `number`) {
-                            //console.log(`[filteredObj] Filtering array ${key}...`)
-                            newObj[key] = newObj[key].map(e => typeof e == `object` ? filteredObj(e, depth+1) : e);
-                        } else {
-                            //console.log(`[filteredObj] Filtering object ${key}...`)
-                            newObj[key] = filteredObj(newObj[key], depth+1);
+                if(newObj && typeof newObj == `object`) {
+                    for(const key of Object.keys(newObj)) {
+                        if(!newObj[key]) {
+                            //console.log(`[filteredObj] Deleting null / falsy key ${key} from object...`)
+                            delete newObj[key];
+                        } else if(blacklistedKeys.includes(key)) {
+                            //console.log(`[filteredObj] Deleting blacklisted key ${key} from object...`)
+                            delete newObj[key];
+                        } else if(newObj[key] && typeof newObj[key] == `function`) {
+                            //console.log(`[filteredObj] Deleting function ${key} from object...`)
+                            delete newObj[key];
+                        } else if(newObj[key] && typeof newObj[key] == `object`) {
+                            if(typeof newObj[key].length == `number`) {
+                                //console.log(`[filteredObj] Filtering array ${key}...`)
+                                newObj[key] = newObj[key].map(e => typeof e == `object` ? filteredObj(e, depth+1) : e);
+                            } else {
+                                //console.log(`[filteredObj] Filtering object ${key}...`)
+                                newObj[key] = filteredObj(newObj[key], depth+1);
+                            }
                         }
-                    }
-                };
+                    };
+                }
 
                 return newObj;
             };
@@ -146,7 +150,7 @@ sessions = {
                 }
             };
             
-            const sendUpdate = (sendObj) => ws ? ws.send({
+            const sendUpdate = (sendObj) => (sendObj && typeof sendObj == `object` && ws) ? ws.send({
                 type: `update`,
                 data: filteredObj(filterUpdate(sendObj))
             }) : null;
@@ -294,31 +298,55 @@ sessions = {
                     }) : opt,
                     lastUpdateSent: 0,
                     nextUpdateTimeout: null,
+                    pendingLatestUpdate: null,
+                    nextUpdateFunc: () => {},
                     ignoreUpdates: false,
                     complete: false,
                     failed: false,
                     killed: false,
                     updateFunc: (update) => {
-                        if(typeof update == `object` && !update.latest) update = { latest: update, overall: update };
+                        if(typeof update == `object` && !update.latest) {
+                            update = { latest: Object.assign((obj.pendingLatestUpdate ? obj.pendingLatestUpdate : {}), update), overall: update };
+                        } else if(typeof update == `object` && update.latest) {
+                            update = Object.assign({}, update, {
+                                latest: Object.assign((obj.pendingLatestUpdate ? obj.pendingLatestUpdate : {}), update.latest)
+                            });
+                        }
 
                         if(obj.nextUpdateTimeout) clearTimeout(obj.nextUpdateTimeout);
             
                         if(update.overall && update.overall.kill) obj.killFunc = () => update.overall.kill();
                         if(update.overall && update.overall.deleteFiles) obj.deleteFiles = () => update.overall.deleteFiles();
-                        obj.status = Object.assign({}, obj.status, update.latest);
+
+                        Object.assign(obj.status, update.latest);
+
                         if(update.latest.percentNum) {
                             activeProgress[obj.id] = update.latest.percentNum;
                             updateProgressBar();
                         };
 
+                        obj.pendingLatestUpdate = update.latest;
+
                         const timeout = Math.max(0, 150 - (Date.now() - obj.lastUpdateSent));
                         if(timeout == 0) obj.lastUpdateSent = Date.now();
 
-                        obj.nextUpdateTimeout = setTimeout(() => {
+                        obj.nextUpdateFunc = () => {
+                            obj.nextUpdateFunc = () => {};
+
                             obj.nextUpdateTimeout = null;
 
+                            const sendObj = Object.assign({}, obj, {
+                                status: Object.assign({}, obj.status, obj.pendingLatestUpdate)
+                            });
+
+                            console.log(`sending update with status:`, sendObj.status)
+
                             sendUpdate(obj);
-                        })
+
+                            obj.pendingLatestUpdate = null;
+                        }
+
+                        obj.nextUpdateTimeout = setTimeout(() => obj.nextUpdateFunc())
 
                         if(!downloadFunc) rawUpdateFunc(update);
                     },
@@ -355,20 +383,27 @@ sessions = {
             
                         const progress = require(`../util/ytdlp`)[downloadFunc || `download`](...args);
                 
-                        progress.then((update) => {
+                        progress.then(update => {
                             if(activeProgress[obj.id]) delete activeProgress[obj.id];
 
                             if(obj.nextUpdateTimeout) {
                                 clearTimeout(obj.nextUpdateTimeout);
                                 obj.nextUpdateTimeout = null;
-                            }
+                                obj.nextUpdateFunc();
+                            };
                             
                             obj.complete = true;
                             obj.ytdlpProc = null;
             
                             if(downloadFunc) {
                                 obj.lastUpdateSent = 0;
-                                obj.updateFunc({status: `Finished "${downloadFunc}"`, progressNum: 100});
+
+                                const finishedObj = { status: `Finished "${downloadFunc}"`, progressNum: 100 }
+
+                                obj.updateFunc(update.latest ? Object.assign(update, {
+                                    latest: Object.assign(update.latest, finishedObj)
+                                }) : Object.assign(update, finishedObj));
+
                                 rawUpdateFunc(update);
                             }
             
