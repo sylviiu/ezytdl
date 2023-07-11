@@ -28,13 +28,28 @@ const disableAnimations = () => {
             rawAnimeFunc(Object.assign(obj, { 
                 duration: 0
             }))
-        }
+        };
+        
+        Object.assign(anime, rawAnimeFunc)
     
-        anime.remove = () => null;
+        //anime.remove = () => null;
     } else {
         console.log(`Keeping animations`);
 
-        anime = rawAnimeFunc
+        anime = (...opts) => {
+            const func = rawAnimeFunc(...opts);
+
+            func._onDocumentVisibility = (e) => {
+                // this is necessary because background throttling is disabled in window creation; there's no point in keeping this default
+                console.log(`[ignored] document visibility changed (${e})`)
+            };
+
+            return func;
+        };
+        
+        Object.assign(anime, rawAnimeFunc);
+
+        //anime.remove = (...args) => rawAnimeFunc.remove(...args);
     }
 }
 
