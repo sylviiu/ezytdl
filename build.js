@@ -41,10 +41,7 @@ const config = {
         ]
     },
     "asar": true,
-    "asarUnpack": [
-        "res/*.mp4",
-        "res/**/*"
-    ],
+    "asarUnpack": [],
     "files": [
         "html/*.html",
         "html/assets/**/*",
@@ -57,6 +54,7 @@ const config = {
         "node_modules/**/*",
         "res/*.*",
         "res/trayIcons/*",
+        "res/img/*",
         "res/packageIcons/*",
         "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
         "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
