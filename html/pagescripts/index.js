@@ -110,11 +110,17 @@ const getWaveAnims = (tabName) => {
     return {
         fadeIn: () => {
             wavesOpt[tabName] = true;
-            if(selectedTab == tabName) waveAnims.fadeIn();
+            if(selectedTab == tabName) {
+                console.log(`fading in waves for tab "${tabName}"`)
+                waveAnims.fadeIn();
+            } else console.log(`not fading in waves for tab "${tabName}" because it is not selected (current: ${selectedTab})`)
         },
         fadeOut: () => {
             wavesOpt[tabName] = false;
-            if(selectedTab == tabName) waveAnims.fadeOut();
+            if(selectedTab == tabName) {
+                console.log(`fading out waves for tab "${tabName}"`)
+                waveAnims.fadeOut();
+            } else console.log(`not fading out waves for tab "${tabName}" because it is not selected (current: ${selectedTab})`)
         },
     }
 };
@@ -208,7 +214,18 @@ let tabStyle = {
     }
 }
 
-getTabs().then(tabs => {
+getTabs().then(async tabs => {
+    const searchStr = window.location.search.slice(1);
+
+    let lastUsedTab = searchStr ? `Download` : (await localStorage.getItem(`selectedTab`));
+
+    console.log(`last used tab: ${lastUsedTab} (${searchStr ? `search string: ${searchStr}` : `no search string`})`);
+
+    if(!tabs[lastUsedTab]) {
+        console.log(`last used tab "${lastUsedTab}" does not exist!`);
+        lastUsedTab = `Download`;
+    }
+
     const tabKeys = Object.keys(tabs);
     
     let transitioning = false;
@@ -231,17 +248,21 @@ getTabs().then(tabs => {
     }
     
     selectTab = (tabName) => {
-        console.log(`selecting tab "${tabName}"`)
-    
         const tab = tabs[tabName];
-        const currentTab = tabs[selectedTab];
+        const currentTab = selectedTab ? tabs[selectedTab] : null;
     
         const indexOfNew = tabKeys.indexOf(tabName);
         const indexOfCurrent = tabKeys.indexOf(selectedTab);
     
         (async () => {
             if(!transitioning && tab && selectedTab != tabName) {
+                console.log(`selecting tab "${tabName}"`)
+
                 transitioning = true;
+
+                let previousSelectedTab = selectedTab;
+    
+                selectedTab = tabName;
     
                 window.scroll({
                     top: 0,
@@ -251,10 +272,21 @@ getTabs().then(tabs => {
                 if(typeof tab.canSwitch == `function`) {
                     const result = await tab.canSwitch();
     
-                    if(!result) return transitioning = false;
+                    if(!result) {
+                        console.log(`not selecting tab "${tabName}" because canSwitch returned false`)
+                        transitioning = false;
+                        if(!previousSelectedTab) {
+                            selectedTab = null;
+                            return selectTab(`Download`)
+                        } else return false;
+                    } else console.log(`selecting tab "${tabName}" - canSwitch returned true`)
+                } else {
+                    console.log(`selecting tab "${tabName}" - canSwitch is not a function`);
                 }
-    
-                selectedTab = tabName;
+
+                await localStorage.setItem(`selectedTab`, tabName);
+
+                console.log(`selecting tab "${tabName}" - set storage key!`)
     
                 const colorScheme = systemColors[tab.colorScheme];
     
@@ -318,7 +350,7 @@ getTabs().then(tabs => {
                         }
                     });
                 } else transitioning = false;
-            }
+            } else console.log(`not selecting tab "${tabName}" because it is already selected or it does not exist`)
         })();
 
         return tab;
@@ -329,7 +361,7 @@ getTabs().then(tabs => {
     
         tab.name = tabName;
     
-        if(tabName == `Download`) initializeTab(tab, true);
+        if(tabName == lastUsedTab) initializeTab(tab, true);
     
         const thisID = `tab-${tabName}`
     
@@ -386,10 +418,19 @@ getTabs().then(tabs => {
     
         tab.button = thisButton;
     }
-    
-    selectTab(`Download`);
                 
-    setTimeout(() => getWaveAnims(`Download`).fadeIn(), 50);
+    setTimeout(() => {
+        const tab = selectTab(lastUsedTab);
+
+        getWaveAnims(lastUsedTab).fadeIn();
+
+        if(searchStr) {
+            const { content, processURL } = tab;
+            history.pushState({ page: 1 }, "introAnimation", window.location.href.split(`?`)[0]);
+            content.querySelector(`#urlInput`).value = searchStr;
+            processURL();
+        }
+    }, 50);
 
     initDownloadManager(true);
 })
@@ -402,10 +443,3 @@ const housekeeping = () => {
 if(typeof introAnimation != `undefined`) {
     introAnimation.wait(() => housekeeping())
 } else housekeeping();
-        
-if(window.location.search.slice(1)) {
-    const str = window.location.search.slice(1);
-    history.pushState({ page: 1 }, "introAnimation", window.location.href.split(`?`)[0]);
-    input.value = str;
-    processURL();
-};
