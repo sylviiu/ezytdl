@@ -381,7 +381,6 @@ const createPopout = ({
                         h.contentWindow.parentWindow = typeof parentWindow != `undefined` ? parentWindow : window;
 
                         h.contentWindow.useHref = typeof useHref != `undefined` ? useHref : closeOnNavigate;
-
                         h.contentWindow.console.log = (...content) => console.log(`iframe ${name}:`, ...content);
 
                         if(o.heading) {

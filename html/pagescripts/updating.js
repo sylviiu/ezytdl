@@ -26,7 +26,7 @@ systemUpdate.event((m) => {
         homeButton.disabled = false
         homeButton.style.opacity = 1;
         homeButton.classList.replace(`d-none`, `d-flex`);
-        if(typeof useHref == `boolean` && useHref) {
+        /*if(typeof useHref == `boolean` && useHref) {
             console.log(`using href: ${homeButton.getAttribute(`href`)}`)
         } else {
             console.log(`not using href`)
@@ -44,7 +44,8 @@ systemUpdate.event((m) => {
                     }
                 })
             }
-        }
+        }*/
+        console.log(`using href: ${homeButton.getAttribute(`href`)}`)
         progressBar.remove();
     } else {
         if(m.message) {

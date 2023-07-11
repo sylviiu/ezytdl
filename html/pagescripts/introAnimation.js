@@ -126,19 +126,28 @@ ajax.onload = async () => {
                     opacity: 0,
                     duration: 350,
                     easing: `easeInCirc`,
-                    complete: () => window.location.href = `introAnimation.html?${htmlFile}`
+                    //complete: () => window.location.href = `introAnimation.html?${htmlFile}`
                 })
             },
             completeHook: () => {
-                if(popout.divs.overlayDiv) {
+                if(document.querySelector(`#background`)) {
+                    anime.remove(document.querySelector(`#background`))
                     anime({
-                        targets: popout.divs.overlayDiv,
+                        targets: document.querySelector(`#background`),
                         opacity: 0,
                         duration: 350,
                         easing: `easeInCirc`,
-                        complete: () => window.location.href = `introAnimation.html?${htmlFile}`
-                    })
-                } else window.location.href = `introAnimation.html?${htmlFile}`
+                    });
+                }
+
+                anime.remove(document.body)
+                anime({
+                    targets: document.body,
+                    opacity: 0,
+                    duration: 350,
+                    easing: `easeInCirc`,
+                    complete: () => window.location.href = `introAnimation.html?index.html`
+                })
             }
         });
 
