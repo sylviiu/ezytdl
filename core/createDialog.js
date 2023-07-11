@@ -66,7 +66,7 @@ module.exports = {
 
         console.log(`creating window for ${id}`)
     
-        dialogs[id].window = require(`./window`)(true, {
+        dialogs[id].window = await require(`./window`)(true, {
             width: 600,
             height: 250,
             minWidth: 600,

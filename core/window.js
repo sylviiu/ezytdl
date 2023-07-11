@@ -18,12 +18,12 @@ if(platform == `win32`) s = `\\`;
 
 const getPath = require(`../util/getPath`);
 
-module.exports = (notDefault, overrideArgs) => {
-    if(!app.isReady()) return null;
+module.exports = (notDefault, overrideArgs) => new Promise(async res => {
+    if(!app.isReady()) return res(null);
 
-    if(currentWindow && !notDefault) return currentWindow;
+    if(currentWindow && !notDefault) return res(currentWindow);
 
-    const conf = require('../getConfig')();
+    const conf = await require('../getConfig')();
 
     global.defaultWindowControls = conf.defaultWindowControls;
 
@@ -76,7 +76,7 @@ module.exports = (notDefault, overrideArgs) => {
         args.titleBarStyle = `hidden-inset`
     } else console.log(`Using default window controls`);
 
-    if(currentWindow && !notDefault) return currentWindow;
+    if(currentWindow && !notDefault) return res(currentWindow);
 
     if(notDefault && currentWindow) {
         Object.assign(args, {
@@ -95,7 +95,7 @@ module.exports = (notDefault, overrideArgs) => {
 
     const useArgs = Object.assign({}, args, (overrideArgs || {}));
     
-    console.log(useArgs)
+    console.log(`window args`, useArgs)
     
     const window = new BrowserWindow(useArgs);
 
@@ -148,5 +148,5 @@ module.exports = (notDefault, overrideArgs) => {
 
     console.log(`returning window`)
 
-    return window;
-}
+    return res(window);
+})

@@ -48,7 +48,7 @@ if(!locked) {
 
             const createWindow = require(`./core/window`)
         
-            const window = createWindow();
+            const window = await createWindow();
 
             let requestedLoading = Date.now();
             
