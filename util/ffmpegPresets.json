@@ -5,7 +5,7 @@
         "description": "most compatible video",
         "defaultEnabled": true,
         "icon": "fa-video",
-        "options": { "ext": "mp4", "videoCodec": "h264" }
+        "options": { "ext": "mp4", "videoCodec": "h264", "videoBitrate": "8000k" }
     },
     {
         "key": "mp4-hevc",
@@ -13,7 +13,7 @@
         "description": "also known as H.265",
         "defaultEnabled": true,
         "icon": "fa-video",
-        "options": { "ext": "mp4", "videoCodec": "h265" }
+        "options": { "ext": "mp4", "videoCodec": "h265", "videoBitrate": "6500k" }
     },
     {
         "key": "mp3",
