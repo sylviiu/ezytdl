@@ -247,8 +247,15 @@ const setupConvertDownload = (node, info, colorScheme) => {
                 thisNode.style.backgroundColor = `rgba(255,255,255,0.85)`;
                 thisNode.style.color = `rgb(0,0,0)`;
                 thisNode.id = `${key}`;
-                thisNode.querySelector(`#name`).innerText = options.name;
-                thisNode.querySelector(`#description`).innerText = options.description;
+
+                const name = thisNode.querySelector(`#name`);
+                name.innerHTML = markdown.makeHtml(options.name);
+                name.childNodes.forEach(c => c.style ? c.style.marginBottom = `0px` : null)
+
+                const description = thisNode.querySelector(`#description`);
+                description.innerHTML = markdown.makeHtml(options.description);
+                description.childNodes.forEach(c => c.style ? c.style.marginBottom = `0px` : null)
+
                 thisNode.querySelector(`#icon`).className = `fas ${options.icon || `fa-wrench`}`;
 
                 if(options.options) thisNode.setAttribute(`title`, getOptionsStr(options.options));

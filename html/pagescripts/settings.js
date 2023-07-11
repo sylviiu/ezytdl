@@ -1,5 +1,3 @@
-const settingsCardMDConverter = new showdown.Converter({ parseImgDimensions: true });
-
 const systemConfiguration = typeof parentWindow != `undefined` ? parentWindow.configuration : configuration
 
 const cards = [];
@@ -114,10 +112,10 @@ const createCard = (key, string, description, config, parentNode, showSaveButton
 
     cards.push(card);
 
-    card.querySelector(`#name`).innerHTML = settingsCardMDConverter.makeHtml(string);
+    card.querySelector(`#name`).innerHTML = markdown.makeHtml(string);
 
     if(description) {
-        card.querySelector(`#description`).innerHTML = settingsCardMDConverter.makeHtml(description);
+        card.querySelector(`#description`).innerHTML = markdown.makeHtml(description);
         if(card.querySelector(`#description`).classList.contains(`d-none`)) card.querySelector(`#description`).classList.remove(`d-none`);
         card.querySelector(`#description`).style.marginBottom = `-10px`;
         if(!showSaveButton) {
@@ -590,8 +588,7 @@ const parseDownloadables = () => document.body.querySelector('#downloadables').c
 parseDownloadables();
 
 if(detailsStr) system.detailsStr().then(details => {
-    const detailsStrConverter = new showdown.Converter({ parseImgDimensions: true });
-    detailsStr.innerHTML = detailsStrConverter.makeHtml(details.join(`\n`) + `\n`);
+    detailsStr.innerHTML = markdown.makeHtml(details.join(`\n`) + `\n`);
     detailsStr.classList.remove(`d-none`)
 })
 

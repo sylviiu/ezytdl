@@ -3,15 +3,13 @@ const input = document.getElementById(`inputText`).cloneNode(true);
 document.getElementById(`inputText`).remove();
 document.getElementById(`button`).parentNode.removeChild(document.getElementById(`button`));
 
-const mkdown = new showdown.Converter({ parseImgDimensions: true });
-
 dialog.get().then(content => {
     console.log(`dialog id: ${content.id} (sent)`);
     
     const str = content.id;
     
     document.getElementById(`title`).innerHTML = content.title;
-    document.getElementById(`content`).innerHTML = mkdown.makeHtml(content.body);
+    document.getElementById(`content`).innerHTML = markdown.makeHtml(content.body);
     
     if(content.inputs) content.inputs.forEach(inputContent => {
         const inp = input.cloneNode(true);

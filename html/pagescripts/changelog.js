@@ -2,8 +2,6 @@ const heading = document.getElementById(`heading`);
 const released = document.getElementById(`released`);
 const contentBody = document.getElementById(`content`);
 
-const converter = new showdown.Converter({ parseImgDimensions: true });
-
 changelog.get().then(content => {
     console.log(content)
 
@@ -50,7 +48,7 @@ changelog.get().then(content => {
         document.getElementById(`githubReleaseButton`).disabled = true;
     }
 
-    contentBody.innerHTML = converter.makeHtml(b.join(`\n`))
+    contentBody.innerHTML = markdown.makeHtml(b.join(`\n`))
 
     setInterval(updateReleasedTime, 1000); updateReleasedTime();
 

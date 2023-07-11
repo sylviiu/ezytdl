@@ -1,9 +1,5 @@
 let constantAddedHeight = 0;
 
-let notificationMarkdownConverter = new showdown.Converter({ parseImgDimensions: true });
-
-let useDocument = window.parent != window ? window.parent.document : document;
-
 //let repositionNotifications, addNotification, createNotification;
 
 if(window.parent != window) {
@@ -205,7 +201,7 @@ if(window.parent != window) {
         
             const body = useDocument.createElement(`p`);
             body.id = `errorBody`
-            body.innerHTML = notificationMarkdownConverter.makeHtml((bodyText || content || `-- unknown --`).trim());
+            body.innerHTML = markdown.makeHtml((bodyText || content || `-- unknown --`).trim());
             container.appendChild(body);
     
             container.style.paddingBottom = `0px`;
