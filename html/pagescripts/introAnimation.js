@@ -44,7 +44,7 @@ ajax.onload = async () => {
     
         document.body = h.querySelector(`body`);
 
-        await system.addScript(`./topjs/feelLikeNativeApp.js`)
+        await system.addScript(`./topjs/tweaks.js`)
         await system.addScript(`./topjs/vars.js`)
         //await system.addScript(`./pagescripts/${htmlFile.split(`.`).slice(0, -1).join(`.`)}.js`)
         await scripts.pagescript(htmlFile.split(`.`).slice(0, -1).join(`.`))
@@ -63,7 +63,7 @@ ajax.onload = async () => {
             if(!updateBridge) callback();
             res();
         } else if(config.reduceAnimations) {
-            anime({
+            const a = anime({
                 targets: document.body,
                 opacity: [0, 1],
                 duration: 1500,
@@ -72,10 +72,10 @@ ajax.onload = async () => {
                     if(!updateBridge) callback();
                 },
                 complete: () => res(),
-            });
+            }); a._onDocumentVisibility = () => {};
             if(updateBridge) setTimeout(() => res(), 500);
         } else {
-            anime({
+            const a = anime({
                 targets: navigationBar,
                 top: [`0px`, navigationBar.style.top],
                 duration: 1500,
@@ -84,7 +84,7 @@ ajax.onload = async () => {
                 },
                 complete: () => res(),
                 easing: `easeOutExpo`,
-            });
+            }); a._onDocumentVisibility = () => {};
 
             if(updateBridge) setTimeout(() => res(), 500);
             

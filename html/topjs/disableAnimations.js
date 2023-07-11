@@ -1,7 +1,15 @@
-const rawAnimeFunc = anime;
+if(typeof rawAnimeFunc == `undefined`) {
+    anime.suspendWhenDocumentHidden = false;
 
-const disableAnimations = () => {
-    if(config.disableAnimations) {
+    rawAnimeFunc = anime;
+
+    rawAnimeFunc._onDocumentVisibility = () => {
+        console.log(`[ignored root] document visibility changed (${e})`)
+    }
+}
+
+var disableAnimations = () => {
+    if(typeof config == `object` && config.disableAnimations) {
         console.log(`Disabling animations (crudely)`)
     
         anime = (obj) => {
@@ -25,7 +33,7 @@ const disableAnimations = () => {
                 obj.targets.forEach(parseTargetStyle)
             } else parseTargetStyle(obj.targets || obj.target)
 
-            rawAnimeFunc(Object.assign(obj, { 
+            return rawAnimeFunc(Object.assign(obj, { 
                 duration: 0
             }))
         };
@@ -36,18 +44,7 @@ const disableAnimations = () => {
     } else {
         console.log(`Keeping animations`);
 
-        anime = (...opts) => {
-            const func = rawAnimeFunc(...opts);
-
-            func._onDocumentVisibility = (e) => {
-                // this is necessary because background throttling is disabled in window creation; there's no point in keeping this default
-                console.log(`[ignored] document visibility changed (${e})`)
-            };
-
-            return func;
-        };
-        
-        Object.assign(anime, rawAnimeFunc);
+        anime = rawAnimeFunc;
 
         //anime.remove = (...args) => rawAnimeFunc.remove(...args);
     }
@@ -55,4 +52,4 @@ const disableAnimations = () => {
 
 configuration.hook(disableAnimations);
 
-disableAnimations(config)
+disableAnimations()
