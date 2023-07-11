@@ -80,6 +80,7 @@ const notifyWithInfo = (info, downloaded) => {
 const { autoUpdater } = require(`electron-updater`);
 const { check } = require("yargs");
 
+autoUpdater.allowDowngrade = true;
 autoUpdater.autoDownload = false;
 
 if(process.platform == `win32` || process.platform == `linux`/* || process.platform == `darwin`*/) {
@@ -132,10 +133,7 @@ module.exports = async (manual) => {
 
     const { nightlyUpdates } = await require(`../getConfig`)()
 
-    if(nightlyUpdates) {
-        autoUpdater.allowPrerelease = true;
-        //autoUpdater.allowDowngrade = true;
-    }
+    if(nightlyUpdates) autoUpdater.allowPrerelease = true;
 
     if(!autoUpdater.isUpdaterActive() && manual) {
         setProgress(null);
