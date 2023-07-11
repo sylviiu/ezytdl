@@ -24,7 +24,7 @@ tabs[`Convert`] = {
 
         const openFileButton = createButton(`openFile`, {
             icon: `file`,
-            label: `Select file...`,
+            label: `Select files...`,
         }, { paddingLeft: `30px`, paddingRight: `30px` });
 
         const openFolderButton = createButton(`openFolder`, {
@@ -948,13 +948,13 @@ tabs[`Convert`] = {
                 }
             }
         
-            if(url && typeof url == `object`) {
+            if(url && typeof url == `object` && typeof url.length != `number`) {
                 info = url;
                 url = info._request_url || info.media_metadata.url.source_url || info.media_metadata.url || info.url;
                 runParse(`url is object; ${url}`)
             } else {
                 console.log(`running func ${func}`)
-                mainQueue[func](url).then(data => {
+                mainQueue[func](url.includes(`|`) ? url.split(`|`) : url).then(data => {
                     info = data;
             
                     console.log(`info received`)
@@ -1038,21 +1038,32 @@ tabs[`Convert`] = {
             }
         }
         
-        openFileButton.onclick = () => system.pickFile({ title: `Convert File` }).then(file => {
-            if(file) {
-                console.log(`file:`, file)
-                input.value = file;
-                processURL();
-            }
-        });
+        openFileButton.onclick = () => {
+            centerURLBox(true);
+            system.pickFile({ title: `Convert File`, properties: [ `openFile`, `multiSelections` ] }).then(files => {
+                if(files) {
+                    console.log(`files:`, files)
+                    if(files.length > 1) {
+                        input.value = files.join(`|`);
+                        processURL();
+                    } else {
+                        input.value = files[0];
+                        processURL();
+                    }
+                }
+            });
+        }
         
-        openFolderButton.onclick = () => system.pickFolder({ title: `Batch Convert` }).then(path => {
-            if(path) {
-                console.log(`path:`, path)
-                input.value = path;
-                processURL();
-            }
-        });
+        openFolderButton.onclick = () => {
+            centerURLBox(true);
+            system.pickFolder({ title: `Batch Convert` }).then(path => {
+                if(path) {
+                    console.log(`path:`, path)
+                    input.value = path;
+                    processURL();
+                }
+            });
+        }
         
         const processURL = () => {
             const url = input.value;

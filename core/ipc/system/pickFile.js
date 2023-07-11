@@ -7,7 +7,7 @@ module.exports = {
             properties: [`openFile`]
         }, opt)).then(result => {
             if(result && result.filePaths[0]) {
-                res(result.filePaths[0])
+                res(result.filePaths)
             } else {
                 res(null)
             }
