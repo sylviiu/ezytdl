@@ -208,7 +208,7 @@ sessions = {
                 console.log(`Updating queue...`)
             
                 for(const o of queue.active) {
-                    console.log(`active`, o)
+                    //console.log(`active`, o)
                     if(o.complete) {
                         const index = queue.active.findIndex(e => e.id == o.id);
                         if(index != -1) {
