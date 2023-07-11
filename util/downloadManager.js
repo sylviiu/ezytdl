@@ -339,7 +339,7 @@ sessions = {
                                 status: Object.assign({}, obj.status, obj.pendingLatestUpdate)
                             });
 
-                            console.log(`sending update with status:`, sendObj.status)
+                            //console.log(`sending update with status:`, sendObj.status)
 
                             sendUpdate(obj);
 

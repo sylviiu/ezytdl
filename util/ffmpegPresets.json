@@ -67,5 +67,21 @@
         "options": {
             "additionalOutputArgs": [ "-c", "copy" ]
         }
+    },
+    {
+        "key": "nokia",
+        "name": "nokia",
+        "description": "<img src=\"../res/img/SMILE.webp\" height=\"20\"/>",
+        "defaultEnabled": false,
+        "icon": "fa-blender-phone",
+        "options": {
+            "ext": "mp4",
+            "videoCodec": "h264",
+            "videoBitrate": "50k",
+            "videoResolution": "144p",
+            "videoFPS": "15",
+            "audioBitrate": "32k",
+            "audioSampleRate": "8000"
+        }
     }
 ]
