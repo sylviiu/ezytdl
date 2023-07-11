@@ -378,7 +378,11 @@ module.exports = {
         })
     },
     getSavePath: (info, filePath) => {
+        const slash = require('os').platform() == `win32` ? `\\` : `/`;
+
         const { saveLocation, downloadInWebsiteFolders } = global.lastConfig;
+
+        if(info.url == `*`) return (`*` + slash);
 
         let useSaveLocation;
 
@@ -401,7 +405,7 @@ module.exports = {
 
         if(filePath) paths.push(filePath)
 
-        const saveTo = sanitizePath(...paths) + (require('os').platform() == `win32` ? `\\` : `/`);
+        const saveTo = sanitizePath(...paths) + slash;
 
         console.log(`-- saveTo: ${saveTo}`)
 
@@ -685,7 +689,7 @@ module.exports = {
             }
         });
     }),
-    ffprobeDir: (path) => new Promise(async res => {
+    ffprobeFiles: (path, files) => new Promise(async res => {
         const ffprobePath = require(`./filenames/ffmpeg`).getFFprobe();
 
         if(!ffprobePath) {
@@ -701,21 +705,13 @@ module.exports = {
             return res(null)
         };
 
-        if(!await pfs.existsSync(path)) {
-            sendNotification({
-                type: `error`,
-                headingText: `Error getting info`,
-                bodyText: `The path does not exist.`,
-            });
-            
-            return res(null)
-        };
+        const noPath = !path;
 
-        const instanceName = `ffprobeInfo-${idGen(16)}`
+        if(!path) path = (await require(`../getConfig`)()).saveLocation;
+
+        const instanceName = `ffprobeFiles-${idGen(16)}`
 
         const manager = downloadManager.get(instanceName, { staggered: false, noSendErrors: true });
-
-        const files = await pfs.readdirSync(path);
 
         if(downloadManager[instanceName].timeout) clearTimeout(downloadManager[instanceName].timeout);
 
@@ -726,20 +722,18 @@ module.exports = {
         manager.queueEventEmitter.removeAllListeners(`queueUpdate`);
 
         let newInfo = {
-            title: require(`path`).basename(path),
+            title: noPath ? `${files.length} files` : require(`path`).basename(path),
             extractor: `system:folder`,
             extractor_key: `SystemFolder`,
-            entries: files.map(o => ({ url: require(`path`).join(path, o) })),
-            url: path,
+            entries: files.map(o => ({ url: o })),
+            url: noPath ? `*` : path,
             _platform: `file`,
         };
 
         let badEntries = 0;
         let skipped = 0;
 
-        for(const file of files) {
-            const location = require(`path`).join(path, file);
-
+        for(const location of files) {
             const remove = () => {
                 badEntries++;
                 const i = newInfo.entries.findIndex(o => o.url == location);
@@ -797,6 +791,36 @@ module.exports = {
 
         manager.queueEventEmitter.emit(`queueUpdate`, manager.queue);
     }),
+    ffprobeDir: (path) => new Promise(async res => {
+        const ffprobePath = require(`./filenames/ffmpeg`).getFFprobe();
+
+        if(!ffprobePath) {
+            sendNotification({
+                type: `error`,
+                headingText: `Error getting info`,
+                bodyText: `FFprobe is not installed. Please install FFmpeg in settings (or on your system) and try again.`,
+                hideReportButton: true,
+                redirect: `settings.html`,
+                redirectMsg: `Go to settings`
+            });
+
+            return res(null)
+        };
+
+        if(!await pfs.existsSync(path)) {
+            sendNotification({
+                type: `error`,
+                headingText: `Error getting info`,
+                bodyText: `The path does not exist.`,
+            });
+            
+            return res(null)
+        };
+
+        const files = await pfs.readdirSync(path);
+
+        module.exports.ffprobeFiles(path, files.map(o => require(`path`).join(path, o))).then(res)
+    }),
     ffprobe: (path) => new Promise(async res => {
         const ffprobePath = require(`./filenames/ffmpeg`).getFFprobe();
 
@@ -813,7 +837,7 @@ module.exports = {
             return res(null)
         };
 
-        if(!(await pfs.existsSync(path))) {
+        if(typeof path == `string` && !(await pfs.existsSync(path))) {
             sendNotification({
                 type: `error`,
                 headingText: `Error getting info`,
@@ -823,13 +847,19 @@ module.exports = {
             return res(null)
         };
 
-        const stat = await pfs.statSync(path);
+        console.log(`path:`, path)
 
-        if(stat.isDirectory()) {
-            return module.exports.ffprobeDir(path).then(res);
-        } else if(stat.isFile()) {
-            return module.exports.ffprobeInfo(path).then(res);
-        } else return res(null);
+        if(typeof path == `object` && typeof path.length == `number`) {
+            return module.exports.ffprobeFiles(null, path).then(res);
+        } else {
+            const stat = await pfs.statSync(path);
+    
+            if(stat.isDirectory()) {
+                return module.exports.ffprobeDir(path).then(res);
+            } else if(stat.isFile()) {
+                return module.exports.ffprobeInfo(path).then(res);
+            } else return res(null);
+        }
     }),
     listFormats: ({query, extraArguments, ignoreStderr}) => new Promise(async res => {
         const additional = module.exports.additionalArguments(extraArguments);
@@ -1201,7 +1231,7 @@ module.exports = {
             const fullYtdlpFilename = sanitize(await new Promise(res => {
                 if(info._platform == `file` && convert) {
                     const parsed = require(`path`).parse(url);
-                    res(`${parsed.name} - converted-${Date.now()}` + (convert.ext ? `.${convert.ext}` : parsed.ext))
+                    res(`${parsed.name} - converted-${info.selectedConversion ? info.selectedConversion.key : `customconversion`}-${Date.now()}` + (convert.ext ? `.${convert.ext}` : parsed.ext))
                 } else {
                     const filename = module.exports.getFilename(url, info, thisFormat, outputFilename + `.%(ext)s`, true);
                     if(filename.then) {
@@ -2484,8 +2514,8 @@ for(const entry of Object.entries(module.exports).filter(o => typeof o[1] == `fu
     module.exports.ytdlp[name] = func;
 
     module.exports[name] = (...args) => {
-        const authType = !blacklistedAuths.find(o => o == name) ? authentication.check(typeof args[0] == `object` && typeof args[0].query == `string` ? args[0].query : ``) : null
-        if(typeof args[0] == `object` && args[0].query && authType) {
+        const authType = !blacklistedAuths.find(o => o == name) ? authentication.check(args[0] && typeof args[0] == `object` && typeof args[0].query == `string` ? args[0].query : ``) : null
+        if(args[0] && typeof args[0] == `object` && args[0].query && authType) {
             const doFunc = platforms.find(p => p.name == authType)[name];
             console.log(`authenticated request! (type: ${authType}) (function exists? ${doFunc ? true : false})`);
             if(doFunc) {
