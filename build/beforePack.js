@@ -18,7 +18,7 @@ module.exports = (context) => {
 
         for(const script of pagescripts) {
             const minified = uglify.minify(Object.assign({}, overallScript, { page: fs.readFileSync(`./html/pagescripts/${script}`) }), { compress: { drop_console: true } }).code;
-            fs.writeFileSync(`${dir.path}/minified.js`, minified, 'utf8');
+            fs.writeFileSync(`./html/pagescripts/${script}`, minified, 'utf8');
             console.log(`created embedded script for ${dir.path} with ${script}`)
         }
 
