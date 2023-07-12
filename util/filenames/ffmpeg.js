@@ -2,7 +2,9 @@ let platform = require('os').platform();
 
 if(platform == `win32`) platform = `win`
 
-let file = `${platform}64`;
+const archString = process.arch.startsWith(`x`) ? process.arch.slice(1) : process.arch;
+
+let file = platform + archString;
 
 console.log(`System platform ${platform}; file name will be ${file}`);
 console.log(`App data location: ${global.configPath}`);

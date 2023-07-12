@@ -48,13 +48,13 @@ module.exports = async () => new Promise(async res => {
         
         const latest = r.response;
             
-        const version = latest.name.split(`(`)[1].split(` `)[0].replace(/-/g, ``);
+        const version = latest.name.includes(`(`) ? latest.name.split(`(`)[1].split(` `)[0].replace(/-/g, ``) : latest.name;
 
         const downloads = latest.assets;
         
         ws.send({ version, progress: 0 })
         
-        const currentVersion = (await require(`../currentVersion/ffmpeg`)(true, true)).toString();
+        const currentVersion = (await require(`../currentVersion/ffmpeg`)(true, true));
 
         console.log(`Current version: ${currentVersion}`)
 
@@ -66,86 +66,126 @@ module.exports = async () => new Promise(async res => {
     
             console.log(`Latest version: ${version}`);
             console.log(`Downloads: ${downloads.map(d => d.name).join(`, `)}`);
+
+            if(process.platform == `darwin`) {
+                const downloadFFmpeg = downloads.find(d => d.name == `ffmpeg-darwin-${process.arch}`);
+                const downloadFFprobe = downloads.find(d => d.name == `ffprobe-darwin-${process.arch}`);
+
+                if(!downloadFFmpeg || !downloadFFprobe) {
+                    return errorHandler(`Failed to find download for ${file} in latest release; please make sure that you are using a supported a platform!\n\nIf you are, please open an issue on GitHub.`)
+                } else {
+                    console.log(`Found target FFmpeg: ${downloadFFmpeg.name} / ${downloadFFmpeg.size} size; downloading from "${downloadFFmpeg.browser_download_url}"`);
+                    console.log(`Found target FFprobe: ${downloadFFprobe.name} / ${downloadFFprobe.size} size; downloading from "${downloadFFprobe.browser_download_url}"`);
     
-            if(!downloads.find(d => d.name.startsWith(`ffmpeg-master-latest-${file}`))) {
-                return errorHandler(`Failed to find download for ${file} in latest release; please make sure that you are using a supported a platform!\n\nIf you are, please open an issue on GitHub.`)
-            } else {
-                const download = downloads.find(d => d.name.startsWith(`ffmpeg-master-latest-${file}`));
-    
-                console.log(`Found target file! (${file} / ${download.size} size); downloading ${download.name} from "${download.browser_download_url}"`);
+                    require(`../currentVersion/ffmpeg`)(null, null, true);
 
-                require(`../currentVersion/ffmpeg`)(null, null, true);
+                    if(await pfs.existsSync(downloadPath)) await pfs.rmdirSync(downloadPath, { recursive: true });
 
-                let ext = `.zip`;
+                    await pfs.mkdirSync(require(`path`).join(downloadPath, `bin`), { recursive: true, failOnError: false });
 
-                if(platform == `linux`) ext = `.tar.xz`;
+                    const ffmpegPath = require(`path`).join(downloadPath, `bin`, `ffmpeg`);
+                    const ffprobePath = require(`path`).join(downloadPath, `bin`, `ffprobe`);
 
-                if(await pfs.existsSync(downloadPath)) await pfs.rmdirSync(downloadPath, { recursive: true });
-    
-                const writeStream = fs.createWriteStream(downloadPath + ext, { flags: `w` });
-    
-                const req = require('superagent').get(download.browser_download_url).set(`User-Agent`, `node`);
-
-                if(process.env["GITHUB_TOKEN"] && global.testrun) {
-                    console.log(`[TESTRUN] GITHUB_TOKEN found in environment! Authorizing this release request`)
-                    req.set(`Authorization`, process.env["GITHUB_TOKEN"])
-                }
-    
-                const pt = new Stream.PassThrough();
-    
-                req.pipe(pt);
-                pt.pipe(writeStream);
-    
-                let totalData = 0;
-    
-                pt.on(`data`, d => {
-                    const progress = totalData += Buffer.byteLength(d) / download.size;
-    
-                    ws.send({ progress, version });
-    
-                    //console.log(`Downloaded ` + Math.round(progress * 100) + `% ...`)
-                })
-    
-                writeStream.on(`finish`, async () => {
-                    const finalize = async () => {
-                        console.log(`Extracted!`);
-
-                        await pfs.unlinkSync(downloadPath + ext);
-
-                        const newPath = require(`../filenames/ffmpeg`).getPath()
-
-                        if(!process.platform.toLowerCase().includes(`win32`)) {
-                            console.log(`CHMOD ${newPath}`);
-                            
-                            try {
-                                require(`child_process`).execFileSync(`chmod`, [`+x`, newPath])
-                            } catch(e) {
-                                await pfs.chmodSync(newPath, 0o777)
-                            }
-                        }
-
-                        console.log(newPath);
-
-                        ws.close();
-                    };
-
-                    console.log(`done!`);
-
-                    await pfs.mkdirSync(downloadPath, { recursive: true, failOnError: false });
-
-                    if(platform == `linux`) {
-                        require(`child_process`).execFileSync(`tar`, [`-xf`, downloadPath + ext, `-C`, downloadPath]);
-                        finalize();
-                    } else if(platform == `win`) {
-                        const extractor = require(`unzipper`).Extract({
-                            path: downloadPath
+                    try {
+                        const ffmpeg = await require(`../downloadClientTo`)({
+                            ws,
+                            version,
+                            url: downloadFFmpeg.browser_download_url,
+                            size: downloadFFmpeg.size,
+                            downloadPath: ffmpegPath
                         });
 
-                        fs.createReadStream(downloadPath + ext).pipe(extractor);
+                        const ffprobe = await require(`../downloadClientTo`)({
+                            ws,
+                            version,
+                            url: downloadFFprobe.browser_download_url,
+                            size: downloadFFprobe.size,
+                            downloadPath: ffprobePath
+                        });
 
-                        extractor.on(`close`, () => finalize())
-                    };
-                })
+                        console.log(`CHMOD ${ffmpegPath} & ${ffprobePath}`);
+                        
+                        try {
+                            require(`child_process`).execFileSync(`chmod`, [`+x`, ffmpegPath])
+                        } catch(e) {
+                            await pfs.chmodSync(ffmpegPath, 0o777)
+                        };
+                        
+                        try {
+                            require(`child_process`).execFileSync(`chmod`, [`+x`, ffprobePath])
+                        } catch(e) {
+                            await pfs.chmodSync(ffprobePath, 0o777)
+                        };
+
+                        ws.close();
+                    } catch(e) {
+                        console.error(e);
+                        return errorHandler(`Failed to download FFmpeg / FFprobe! (${e})`)
+                    }
+                }
+            } else {
+                const download = downloads.find(d => d.name.startsWith(`ffmpeg-master-latest-${file}-gpl-shared`)) || downloads.find(d => d.name.startsWith(`ffmpeg-master-latest-${file}`));
+        
+                if(!download) {
+                    return errorHandler(`Failed to find download for ${file} in latest release; please make sure that you are using a supported a platform!\n\nIf you are, please open an issue on GitHub.`)
+                } else {
+                    console.log(`Found target file! (${file} / ${download.size} size); downloading ${download.name} from "${download.browser_download_url}"`);
+    
+                    require(`../currentVersion/ffmpeg`)(null, null, true);
+    
+                    let ext = `.zip`;
+    
+                    if(platform == `linux`) ext = `.tar.xz`;
+    
+                    if(await pfs.existsSync(downloadPath)) await pfs.rmdirSync(downloadPath, { recursive: true });
+    
+                    require(`../downloadClientTo`)({
+                        ws,
+                        version,
+                        url: download.browser_download_url,
+                        size: download.size,
+                        downloadPath: downloadPath + ext
+                    }).then(async () => {
+                        const finalize = async () => {
+                            console.log(`Extracted!`);
+            
+                            await pfs.unlinkSync(downloadPath + ext);
+            
+                            const newPath = require(`../filenames/ffmpeg`).getPath()
+            
+                            if(!process.platform.toLowerCase().includes(`win32`)) {
+                                console.log(`CHMOD ${newPath}`);
+                                
+                                try {
+                                    require(`child_process`).execFileSync(`chmod`, [`+x`, newPath])
+                                } catch(e) {
+                                    await pfs.chmodSync(newPath, 0o777)
+                                }
+                            }
+            
+                            console.log(newPath);
+            
+                            ws.close();
+                        };
+            
+                        console.log(`done!`);
+            
+                        await pfs.mkdirSync(downloadPath, { recursive: true, failOnError: false });
+            
+                        if(platform == `linux`) {
+                            require(`child_process`).execFileSync(`tar`, [`-xf`, downloadPath + ext, `-C`, downloadPath]);
+                            finalize();
+                        } else if(platform == `win`) {
+                            const extractor = require(`unzipper`).Extract({
+                                path: downloadPath
+                            });
+            
+                            fs.createReadStream(downloadPath + ext).pipe(extractor);
+            
+                            extractor.on(`close`, () => finalize())
+                        };
+                    });
+                }
             }
         }
     })
