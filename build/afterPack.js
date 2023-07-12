@@ -19,6 +19,7 @@ module.exports = (context) => {
 
     try {
         child_process.execSync(`git reset --hard`);
+        child_process.execSync(`git stash pop`);
     } catch(e) {
         console.log(`Failed resetting repo: ${e}`)
     }

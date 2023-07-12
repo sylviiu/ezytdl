@@ -1,7 +1,16 @@
 const fs = require('fs');
+const child_process = require('child_process');
 const uglify = require('uglify-js');
 
 module.exports = (context) => {
+    try {
+        console.log(`stashing changes...`);
+        child_process.execSync(`git stash`);
+    } catch(e) {
+        console.log(`Failed stashing: ${e}`);
+        process.exit(1);
+    }
+
     const dirs = require(`./dirs`);
     
     console.log(`minifying ${dirs.map(o => o.files.length).reduce((a,b) => a + b, 0)} files in ${dirs.length} dirs... (${dirs.map(o => `${o.path} with ${o.files.length} files`).join(`, `)})`);
