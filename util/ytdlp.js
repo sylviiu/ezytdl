@@ -600,11 +600,13 @@ module.exports = {
             return res(null)
         };
 
-        console.log(`getting info of "${path}"`);
+        const args = [`-v`, `quiet`, `-print_format`, `json`, `-show_format`, `-show_streams`, path];
+
+        console.log(`getting info of "${path}" -- "${args.join(`" "`)}"`);
 
         const info = {};
 
-        const proc = child_process.execFile(ffprobePath, [`-v`, `quiet`, `-print_format`, `json`, `-show_format`, `-show_streams`, path]);
+        const proc = child_process.execFile(ffprobePath, args);
         
         if(!ffprobePathProvided) updateStatus(`Retrieving file info for "${path}"`);
 
@@ -613,7 +615,7 @@ module.exports = {
         proc.stdout.on(`data`, d => data += d.toString().trim());
 
         proc.on(`close`, (code) => {
-            console.log(`ffprobeInfo closed with code ${code}`);
+            console.log(`ffprobeInfo closed with code ${code}`, data);
 
             if(code != 0) return res(null);
 

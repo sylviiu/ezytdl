@@ -22,6 +22,8 @@ module.exports = (doNotCheckForUpdates) => new Promise(async res => {
             });
         })
 
+        res(true)
+
         console.log(`creating bridge`);
         
         require(`../util/pythonBridge`).create().then(() => {

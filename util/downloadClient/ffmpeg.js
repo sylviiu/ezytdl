@@ -81,15 +81,18 @@ module.exports = async () => new Promise(async res => {
 
                     if(await pfs.existsSync(downloadPath)) await pfs.rmdirSync(downloadPath, { recursive: true });
 
-                    await pfs.mkdirSync(require(`path`).join(downloadPath, `bin`), { recursive: true, failOnError: false });
+                    const mainPath = require(`path`).join(downloadPath, `pretend-this-is-a-good-name`);
 
-                    const ffmpegPath = require(`path`).join(downloadPath, `bin`, `ffmpeg`);
-                    const ffprobePath = require(`path`).join(downloadPath, `bin`, `ffprobe`);
+                    await pfs.mkdirSync(mainPath, { recursive: true, failOnError: false });
+
+                    const ffmpegPath = require(`path`).join(mainPath, `bin`, `ffmpeg`);
+                    const ffprobePath = require(`path`).join(mainPath, `bin`, `ffprobe`);
 
                     try {
                         const ffmpeg = await require(`../downloadClientTo`)({
                             ws,
                             version,
+                            str: `FFmpeg (${version})`,
                             url: downloadFFmpeg.browser_download_url,
                             size: downloadFFmpeg.size,
                             downloadPath: ffmpegPath
@@ -98,6 +101,7 @@ module.exports = async () => new Promise(async res => {
                         const ffprobe = await require(`../downloadClientTo`)({
                             ws,
                             version,
+                            str: `FFprobe (${version})`,
                             url: downloadFFprobe.browser_download_url,
                             size: downloadFFprobe.size,
                             downloadPath: ffprobePath

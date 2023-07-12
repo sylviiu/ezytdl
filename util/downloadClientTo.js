@@ -2,9 +2,9 @@ const fs = require('fs');
 const pfs = require('./promisifiedFS');
 const Stream = require('stream');
 
-module.exports = ({ws, version, url, size, downloadPath}) => new Promise(async (res, rej) => {
+module.exports = ({ws, version, str, url, size, downloadPath}) => new Promise(async (res, rej) => {
     try {
-        ws.send({ progress: 0, version });
+        ws.send({ progress: 0, version, message: `Downloading ${str ? str : `version ${version}`}` });
     
         const parsedPath = require(`path`).parse(downloadPath);
     
