@@ -41,6 +41,7 @@ const config = {
         ]
     },
     "beforePack": "./build/beforePack.js",
+    "afterPack": "./build/afterPack.js",
     "asar": true,
     "asarUnpack": [],
     "files": [

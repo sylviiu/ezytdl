@@ -1,5 +1,4 @@
 const fs = require('fs');
-const child_process = require('child_process');
 const uglify = require('uglify-js');
 
 const blacklistedDirs = [`assets`]
@@ -20,6 +19,4 @@ module.exports = (context) => {
 
         fs.writeFileSync(`${dir.path}/minified.js`, minified, 'utf8');
     });
-
-    process.exit(0);
 }
