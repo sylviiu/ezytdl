@@ -32,7 +32,7 @@ const getPath = (path, allowNull=true) => {
     return invoke(`getPath`, [path, allowNull])
 }
 
-const addScript = (path, type) => new Promise(async res => {
+const addScript = (path, type) => new Promise(async (res, rej) => {
     const script = document.createElement(`script`);
 
     if(type == `lib`) {
@@ -67,6 +67,14 @@ const addScript = (path, type) => new Promise(async res => {
     script.addEventListener(`load`, () => {
         console.log(`loaded script ${path}`)
         res()
+    });
+
+    script.addEventListener(`error`, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log(`failed to load script ${path}`)
+        rej(e)
     });
 })
 
@@ -232,17 +240,21 @@ const scriptsObj = {
         return Promise.all(libs.map(name => addScript(`${name}`, `lib`)));
     },
     util: () => new Promise(async res => {
-        fs.readdir(await getPath(`./html/util`), (e, util) => {
-            if(e) throw e;
-            console.log(`-- ADDING util: ${util.join(`, `)}`)
-            Promise.all(util.map(path => addScript(`./util/${path}`))).then(res)
+        addScript(`./util/minified.js`).then(res).catch(async e => {
+            fs.readdir(await getPath(`./html/util`), (e, util) => {
+                if(e) throw e;
+                console.log(`-- ADDING util: ${util.join(`, `)}`)
+                Promise.all(util.map(path => addScript(`./util/${path}`))).then(res)
+            });
         });
     }),
     topjs: () => new Promise(async res => {
-        fs.readdir(await getPath(`./html/topjs`), (e, topjs) => {
-            if(e) throw e;
-            console.log(`-- ADDING topjs: ${topjs.join(`, `)}`)
-            Promise.all(topjs.map(path => addScript(`./topjs/${path}`))).then(res)
+        addScript(`./topjs/minified.js`).then(res).catch(async e => {
+            fs.readdir(await getPath(`./html/topjs`), (e, topjs) => {
+                if(e) throw e;
+                console.log(`-- ADDING topjs: ${topjs.join(`, `)}`)
+                Promise.all(topjs.map(path => addScript(`./topjs/${path}`))).then(res)
+            });
         });
     }),
     pagescript: (useName=name) => {
@@ -250,10 +262,12 @@ const scriptsObj = {
         return addScript(`./pagescripts/${useName.includes(`-`) ? useName.split(`-`)[0] : useName}.js`);
     },
     afterload: () => new Promise(async res => {
-        fs.readdir(await getPath(`./html/afterload`), (e, afterload) => {
-            if(e) throw e;
-            console.log(`-- ADDING afterload: ${afterload.join(`, `)}`)
-            Promise.all(afterload.map(path => addScript(`./afterload/${path}`))).then(res)
+        addScript(`./afterload/minified.js`).then(res).catch(async e => {
+            fs.readdir(await getPath(`./html/afterload`), (e, afterload) => {
+                if(e) throw e;
+                console.log(`-- ADDING afterload: ${afterload.join(`, `)}`)
+                Promise.all(afterload.map(path => addScript(`./afterload/${path}`))).then(res)
+            });
         });
     }),
 }
