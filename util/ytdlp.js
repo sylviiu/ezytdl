@@ -405,7 +405,9 @@ module.exports = {
 
         if(filePath) paths.push(filePath)
 
-        const saveTo = sanitizePath(...paths) + slash;
+        let saveTo = sanitizePath(...paths) + slash;
+
+        if(process.platform != `win32` && !saveTo.startsWith(slash)) saveTo = slash + saveTo
 
         console.log(`-- saveTo: ${saveTo}`)
 
