@@ -1,3 +1,3 @@
 module.exports = () => {
-    return require(`../githubReleasesRequest`)(`yt-dlp`, `FFmpeg-Builds`);
+    return require(`../githubReleasesRequest`)(...(process.platform == `darwin` ? [`eugeneware`, `ffmpeg-static`] : [`yt-dlp`, `FFmpeg-Builds`]));
 }
