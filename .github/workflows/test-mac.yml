@@ -24,9 +24,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v2
 
-      - name: Install ffmpeg (macos only)
-        uses: FedericoCarboni/setup-ffmpeg@v2
-
       - name: Install Node.js & NPM
         uses: actions/setup-node@main
         with:
