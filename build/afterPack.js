@@ -8,16 +8,14 @@ module.exports = (context) => {
     dirs.forEach(dir => {
         try {
             fs.rmSync(`${dir.path}/minified.js`);
+            console.log(`removed file ${dir.path}/minified.js`);
 
             fs.readdirSync(`${dir.path}/etc`).forEach(file => {
                 fs.renameSync(`${dir.path}/etc/${file}`, `${dir.path}/${file}`);
+                console.log(`restored file ${dir.path}/etc/${file} to ${dir.path}/${file}`);
             });
-            
-            console.log(`removed file ${dir.path}/minified.js`);
         } catch(e) {
             console.log(`Failed removing file ${dir.path}/minified.js: ${e}`);
         }
     });
-
-    console.log(`resetting repo...`);
 }
