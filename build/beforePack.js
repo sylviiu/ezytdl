@@ -8,6 +8,9 @@ module.exports = (context) => {
     
     console.log(`minifying ${dirs.map(o => o.files.length).reduce((a,b) => a + b, 0)} files in ${dirs.length} dirs... (${dirs.map(o => `${o.path} with ${o.files.length} files`).join(`, `)})`);
 
+    let i = 1;
+    let total = dirs.length * pagescripts.length;
+
     dirs.forEach(dir => {
         const overallScript = {};
 
@@ -18,10 +21,9 @@ module.exports = (context) => {
 
         for(const script of pagescripts) {
             const useScriptObj = Object.assign({}, overallScript, { page: fs.readFileSync(`./html/pagescripts/${script}`, 'utf8') })
-            console.log(useScriptObj)
             const minified = uglify.minify(useScriptObj, { compress: { drop_console: true } }).code;
             fs.writeFileSync(`./html/pagescripts/${script}`, minified, 'utf8');
-            console.log(`created embedded script for ${dir.path} with ${script}`)
+            console.log(`created embedded script for ${dir.path} with ${script} (${i++}/${total})`)
         }
 
         //const minified = uglify.minify(overallScript, { compress: { drop_console: true } }).code;
