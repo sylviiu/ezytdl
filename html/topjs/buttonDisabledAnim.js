@@ -1,4 +1,4 @@
-const buttonDisabledAnim = (m, extraOpt={}) => {
+var buttonDisabledAnim = (m, extraOpt={}) => {
     if(!extraOpt.noRemove) anime.remove(m);
     m.style.position = `relative`
     anime(Object.assign({}, {

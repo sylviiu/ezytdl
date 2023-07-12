@@ -1,10 +1,10 @@
-let updateAvailableBtn = document.getElementById(`updateAvailable`);
+var updateAvailableBtn = document.getElementById(`updateAvailable`);
 
-let currentProgressCircle = null;
+var currentProgressCircle = null;
 
-let updateAvailable = false;
+var updateAvailable = false;
 
-const setUpdateButton = (disable=false, func, createProgressCirc) => {
+var setUpdateButton = (disable=false, func, createProgressCirc) => {
     console.log(`setUpdateButton: ${disable ? `disable` : `enable`}; func? ${func ? true : false}; creating progress circ? ${createProgressCirc ? true : false} (already exists? ${currentProgressCircle ? true : false})`)
 
     anime.remove(updateAvailableBtn)
@@ -53,7 +53,7 @@ const setUpdateButton = (disable=false, func, createProgressCirc) => {
     }
 }
 
-const updateChecker = () => {
+var updateChecker = () => {
     updateAvailableBtn = document.getElementById(`updateAvailable`);
 
     if(updateAvailableBtn) {

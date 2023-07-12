@@ -44,9 +44,12 @@ ajax.onload = async () => {
     
         document.body = h.querySelector(`body`);
 
-        await system.addScript(`./topjs/tweaks.js`)
-        await system.addScript(`./topjs/vars.js`)
-        //await system.addScript(`./pagescripts/${htmlFile.split(`.`).slice(0, -1).join(`.`)}.js`)
+        try {
+            await system.addScript(`./topjs/minified.js`)
+        } catch(e) {
+            await system.addScript(`./topjs/tweaks.js`)
+            await system.addScript(`./topjs/vars.js`)
+        }
         await scripts.pagescript(htmlFile.split(`.`).slice(0, -1).join(`.`))
         await scripts.afterload();
     
