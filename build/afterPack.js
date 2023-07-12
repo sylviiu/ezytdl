@@ -1,4 +1,3 @@
-const child_process = require('child_process');
 const fs = require('fs');
 
 module.exports = (context) => {
@@ -9,6 +8,11 @@ module.exports = (context) => {
     dirs.forEach(dir => {
         try {
             fs.rmSync(`${dir.path}/minified.js`);
+
+            fs.readdirSync(`${dir.path}/etc`).forEach(file => {
+                fs.renameSync(`${dir.path}/etc/${file}`, `${dir.path}/${file}`);
+            });
+            
             console.log(`removed file ${dir.path}/minified.js`);
         } catch(e) {
             console.log(`Failed removing file ${dir.path}/minified.js: ${e}`);
@@ -16,16 +20,4 @@ module.exports = (context) => {
     });
 
     console.log(`resetting repo...`);
-
-    try {
-        child_process.execSync(`git reset --hard`);
-        child_process.execSync(`git stash pop`);
-    } catch(e) {
-        console.log(`Failed resetting repo: ${e}`)
-        try {
-            child_process.execSync(`git reset --hard`);
-        } catch(e) {
-            console.log(`Failed resetting repo twice: ${e}`)
-        }
-    }
 }
