@@ -58,7 +58,7 @@ module.exports = async () => new Promise(async res => {
 
         const downloads = latest.assets;
         
-        const currentVersion = (await require(`../currentVersion/pybridge`)(true)).toString();
+        const currentVersion = (await require(`../currentVersion/pybridge`)(true));
 
         console.log(`Current version: ${currentVersion}`)
 

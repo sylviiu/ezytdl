@@ -42,7 +42,7 @@ module.exports = (forceCheck, getBuildDate, clear) => new Promise(async (res, re
             });*/
             
             child_process.execFile(path, [`--version-json`], (err, stdout, stderr) => {
-                if(err) return rej(err);
+                if(err) return res(null)
 
                 try {
                     let version = JSON.parse((stdout ? stdout.toString().trim() : `` || stderr ? stderr.toString().trim() : ``));

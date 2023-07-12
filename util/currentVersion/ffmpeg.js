@@ -44,7 +44,7 @@ module.exports = (forceCheck, getBuildDate, clear) => new Promise(async (res, re
             
             child_process.execFile(path, [`-version`], (err, stdout, stderr) => {
                 if(stderr) console.log(`STDERR`, stderr.toString());
-                if(err) return rej(err)
+                if(err) return res(null)
                 //const versionString = child_process.execSync(`${path} -version`).toString().trim();
                 if(!stdout) return res(null);
                 const versionString = stdout.toString().trim();
