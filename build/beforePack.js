@@ -11,22 +11,26 @@ module.exports = (context) => {
     let i = 1;
     let total = dirs.length * pagescripts.length;
 
-    dirs.forEach(dir => {
-        const overallScript = {};
-
-        dir.files.forEach(file => {
-            overallScript[file] = fs.readFileSync(`${dir.path}/${file}`, 'utf8');
-            fs.rmSync(`${dir.path}/${file}`);
-        });
-
-        for(const script of pagescripts) {
-            const useScriptObj = Object.assign({}, overallScript, { page: fs.readFileSync(`./html/pagescripts/${script}`, 'utf8') })
-            const minified = uglify.minify(useScriptObj, { compress: { drop_console: true } }).code;
+    for(const script of pagescripts) {
+        dirs.forEach(dir => {
+            const overallScript = { page: fs.readFileSync(`./html/pagescripts/${script}`, 'utf8') };
+    
+            dir.files.forEach(file => {
+                overallScript[file] = fs.readFileSync(`${dir.path}/${file}`, 'utf8');
+                fs.rmSync(`${dir.path}/${file}`);
+            });
+            
+            const minified = uglify.minify(overallScript, { compress: { drop_console: true } }).code;
             fs.writeFileSync(`./html/pagescripts/${script}`, minified, 'utf8');
             console.log(`created embedded script for ${dir.path} with ${script} (${i++}/${total})`)
-        }
+    
+            //const minified = uglify.minify(overallScript, { compress: { drop_console: true } }).code;
+            //fs.writeFileSync(`${dir.path}/minified.js`, minified, 'utf8');
+        });
 
-        //const minified = uglify.minify(overallScript, { compress: { drop_console: true } }).code;
-        //fs.writeFileSync(`${dir.path}/minified.js`, minified, 'utf8');
-    });
+        /*const useScriptObj = Object.assign({}, overallScript, { page: fs.readFileSync(`./html/pagescripts/${script}`, 'utf8') })
+        const minified = uglify.minify(useScriptObj, { compress: { drop_console: true } }).code;
+        fs.writeFileSync(`./html/pagescripts/${script}`, minified, 'utf8');
+        console.log(`created embedded script for ${dir.path} with ${script} (${i++}/${total})`)*/
+    }
 }
