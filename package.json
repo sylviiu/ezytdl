@@ -40,6 +40,7 @@
   "homepage": "https://github.com/sylviiu/ezytdl#readme",
   "devDependencies": {
     "electron": "^25.2.0",
-    "electron-builder": "^24.4.0"
+    "electron-builder": "^24.4.0",
+    "uglify-js": "^3.17.4"
   }
 }

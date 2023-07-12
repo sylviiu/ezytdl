@@ -40,6 +40,7 @@ const config = {
             "dmg",
         ]
     },
+    "beforePack": "./build/beforePack.js",
     "asar": true,
     "asarUnpack": [],
     "files": [
