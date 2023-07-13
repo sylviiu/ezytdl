@@ -11,7 +11,7 @@ console.log(`App data location: ${global.configPath}`);
 
 const s = require('os').platform() == `win32` ? `\\` : `/`
 
-const downloadPath = `${global.configPath}${s}ffmpeg-${file}`;
+const downloadPath = require(`path`).join(global.configPath, `ffmpeg-${file}`);
 
 const fs = require('fs')
 

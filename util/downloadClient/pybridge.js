@@ -1,4 +1,4 @@
-const { file, path } = require(`../filenames/pybridge`);
+const { file, path, downloadPath } = require(`../filenames/pybridge`);
 const fs = require('fs');
 const pfs = require('../promisifiedFS')
 const Stream = require('stream');
@@ -81,11 +81,13 @@ module.exports = async () => new Promise(async res => {
     
             console.log(`Latest version: ${version}`);
             console.log(`Downloads: ${downloads.map(d => d.name).join(`, `)}`);
+
+            let downloadFile = file.replace(`.exe`, ``) + `.zip`;
     
-            if(!downloads.find(d => d.name === file)) {
-                return errorHandler(`Failed to find download for ${file} in latest release; please make sure that you are using a supported a platform!\n\nIf you are, please open an issue on GitHub.`)
+            if(!downloads.find(d => d.name === downloadFile)) {
+                return errorHandler(`Failed to find download for ${file}.zip in latest release; please make sure that you are using a supported a platform!\n\nIf you are, please open an issue on GitHub.`)
             } else {
-                const download = downloads.find(d => d.name === file);
+                const download = downloads.find(d => d.name === downloadFile);
     
                 console.log(`Found target file! (${file} / ${download.size} size); downloading ${download.name} from "${download.browser_download_url}"`);
 
@@ -108,45 +110,45 @@ module.exports = async () => new Promise(async res => {
                         }
                     });
                 });
-    
-                const writeStream = fs.createWriteStream(path, { flags: `w` });
-    
-                const req = require('superagent').get(download.browser_download_url).set(`User-Agent`, `node`);
 
-                if(process.env["GITHUB_TOKEN"] && global.testrun) {
-                    console.log(`[TESTRUN] GITHUB_TOKEN found in environment! Authorizing this release request`)
-                    req.set(`Authorization`, process.env["GITHUB_TOKEN"])
-                }
-    
-                const pt = new Stream.PassThrough();
-    
-                req.pipe(pt);
-                pt.pipe(writeStream);
-    
-                let totalData = 0;
-    
-                pt.on(`data`, d => {
-                    const progress = totalData += Buffer.byteLength(d) / download.size;
-    
-                    ws.send({ progress, version: versionStr, message: `Downloading...` });
-                })
-    
-                writeStream.on(`finish`, async () => {
+                if(await pfs.existsSync(downloadPath)) await pfs.rmSync(downloadPath, { recursive: true });
+
+                const saveTo = downloadPath + `.zip`;
+
+                console.log(`downloading to: ${saveTo}; extract to: ${downloadPath}`)
+                
+                require(`../downloadClientTo`)({
+                    ws,
+                    version,
+                    url: download.browser_download_url,
+                    size: download.size,
+                    downloadPath: saveTo
+                }).then(async () => {
                     console.log(`done!`);
 
-                    console.log(`CHMOD ${path}`)
+                    const extractor = require(`unzipper`).Extract({
+                        path: downloadPath
+                    });
 
-                    if(!process.platform.toLowerCase().includes(`win32`)) {
-                        try {
-                            require(`child_process`).execFileSync(`chmod`, [`+x`, path])
-                        } catch(e) {
-                            await pfs.chmodSync(path, 0o777)
-                        }
-                    };
-                    
-                    ws.send({ progress: 1, version: versionStr });
+                    fs.createReadStream(saveTo).pipe(extractor);
 
-                    ws.close()
+                    extractor.on(`close`, async () => {
+                        if(await pfs.existsSync(downloadPath + `.zip`)) await pfs.rmSync(downloadPath + `.zip`)
+
+                        console.log(`CHMOD ${path}`)
+    
+                        if(!process.platform.toLowerCase().includes(`win32`)) {
+                            try {
+                                require(`child_process`).execFileSync(`chmod`, [`+x`, path])
+                            } catch(e) {
+                                await pfs.chmodSync(path, 0o777)
+                            }
+                        };
+                        
+                        ws.send({ progress: 1, version: versionStr });
+    
+                        ws.close()
+                    });
                 })
             }
         }
