@@ -13,7 +13,7 @@ const homeButton = document.getElementById(`homeButton`);
 
 const percentageText = document.getElementById(`percentageText`);
 
-const systemUpdate = typeof parentWindow != `undefined` ? parentWindow.update : update
+const systemUpdate = useWindow.update
 
 systemUpdate.event((m) => {
     console.log(`updatestr event: ${JSON.stringify(m, null, 4)}`)

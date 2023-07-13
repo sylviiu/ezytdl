@@ -1,4 +1,4 @@
-const systemConfiguration = typeof parentWindow != `undefined` ? parentWindow.configuration : configuration
+const systemConfiguration = useWindow.configuration
 
 const cards = [];
 

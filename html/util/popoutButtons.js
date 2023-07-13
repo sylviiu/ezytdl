@@ -376,8 +376,6 @@ const createPopout = ({
                         h.contentWindow.addNotification = (...c) => repositionNotifications(...c);
                         h.contentWindow.createNotification = (...c) => createNotification(...c);
 
-                        h.contentWindow.parentWindow = typeof parentWindow != `undefined` ? parentWindow : window;
-
                         h.contentWindow.useHref = typeof useHref != `undefined` ? useHref : closeOnNavigate;
                         h.contentWindow.console.log = (...content) => console.log(`iframe ${name}:`, ...content);
 

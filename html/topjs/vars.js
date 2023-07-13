@@ -18,3 +18,5 @@ var genericURLRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-
 var markdown = new showdown.Converter({ parseImgDimensions: true });
 
 var useDocument = window.parent != window ? window.parent.document : document;
+
+var useWindow = window.parent != window ? window.parent : window;
