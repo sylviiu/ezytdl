@@ -407,7 +407,12 @@ const createPopout = ({
                             const test = (target, depth=0) => {
                                 console.log(`iframe click (depth ${depth}): ${target.onclick ? `onclick func` : target.href ? `link` : `no redirection`} / closeOnNavigate: ${closeOnNavigate}`, e)
                                 if(target.href || target.onclick) {
-                                    if(closeOnNavigate) {
+                                    if(target.href && genericURLRegex.test(target.href.split(`?`)[0])) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        console.log(`redirecting window to "${target.href}"`)
+                                        window.location.href = target.href;
+                                    } else if(closeOnNavigate) {
                                         e.preventDefault();
                                         e.stopPropagation();
                                         closeWindow();
