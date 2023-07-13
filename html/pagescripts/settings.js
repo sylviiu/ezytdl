@@ -536,20 +536,6 @@ const updateConfig = (json, {noUpdate, silent=false}={}) => {
     }
 }
 
-/*let paltform = navigator.platform.toLowerCase();
-
-if(paltform.toLowerCase() != `win32` && !paltform.toLowerCase().includes(`linux`)) {
-    const ffmpegCard = document.getElementById(`ffmpeg`);
-    
-    ffmpegCard.style.background = ffmpegCard.style.background.replace(`rgb(`, `rgba(`).replace(`)`, `, 0.5)`);
-    ffmpegCard.querySelectorAll(`.btn`).forEach(btn => {
-        btn.disabled = true;
-        btn.style.background = btn.style.background.replace(`rgb(`, `rgba(`).replace(`)`, `, 0.5)`);
-    });
-
-    ffmpegCard.querySelector(`#txt`).innerHTML = `FFmpeg downloading is not available on your platform.<br>If FFmpeg is installed system-wide, ezytdl will use that.`
-};*/
-
 const parseDownloadables = () => document.body.querySelector('#downloadables').childNodes.forEach(n => {
     if(!n || !n.querySelector) return;
 
