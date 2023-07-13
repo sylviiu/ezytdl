@@ -18,4 +18,10 @@ module.exports = (context) => {
             console.log(`Failed removing file ${dir.path}/minified.js: ${e}`);
         }
     });
+
+    const pagescripts = fs.readdirSync(`./html/pagescripts/etc`);
+
+    pagescripts.forEach(file => {
+        fs.renameSync(`./html/pagescripts/etc/${file}`, `./html/pagescripts/${file}`);
+    })
 }
