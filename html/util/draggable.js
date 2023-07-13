@@ -25,7 +25,6 @@ const startInterval = () => {
 
         const scroll = () => {
             if(currentScrollBy != 0 && cloned) {
-                let negativeMult = currentScrollBy < 0 ? -1 : 1;
                 let useScroll = Math.min(Math.abs(currentScrollBy), 70);
 
                 const now = Date.now();
@@ -59,19 +58,6 @@ const startInterval = () => {
         animationFrameID = requestAnimationFrame(scroll);
     }
 }
-
-const pointerMoveEvent = (e) => {
-    if(e.y) {    
-        let difference = 0;
-    
-        if(e.y < (150 + 90)) difference = e.y - 90 - 150;
-        else if(e.y > window.innerHeight - 150) difference = e.y - (window.innerHeight - 150);
-    
-        currentScrollBy = difference;
-    
-        startInterval();
-    }
-};
 
 let lastDragged = null;
 
@@ -167,6 +153,7 @@ class Draggable {
         value=``,
         enableClickRecognition=true,
         enableDrag=true,
+        enableScroll=true,
         reanimate=true,
         animateDrop=true,
         animateDropFail=true,
@@ -184,6 +171,10 @@ class Draggable {
         let thisCloned = null;
     
         let returned = false;
+
+        targets.forEach(target => {
+            target.style[`touch-action`] = `none`;
+        })
     
         const returnDrop = (...val) => {
             if(!returned) {
@@ -448,10 +439,25 @@ class Draggable {
             }
     
             node.ondrag = (e) => {
-                if(cloned) pointerMoveEvent(e);
+                if(enableScroll && cloned && e.y) {
+                    let difference = 0;
+            
+                    const bounds = 50;
+            
+                    const top = window != useWindow ? 0 : 90;
+                
+                    if(e.y < (bounds + top)) difference = e.y - top - bounds;
+                    else if(e.y > window.innerHeight - bounds) difference = e.y - (window.innerHeight - bounds);
+            
+                    currentScrollBy = difference * 3;
+                
+                    startInterval();
+                }
+
                 // it's not possible for the dragged element to go outside of the bounds
                 // for some reason when in iframe, the "ondrag" event would be called before drop with X being -40 (the padding of the settings page iframe)
                 // so we just check if the mouse is actually in the page before doing anything
+
                 if(e.pageX && e.pageX > 0 && e.pageY && e.pageY > 0) {
                     if(cloned) {
                         cloned.style.left = e.pageX - nodeBounds.width/2 + `px`;

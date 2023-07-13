@@ -70,6 +70,7 @@ const addFilenameFunctionality = () => {
             targets: [fileNameInput],
             value: str,
             enableDrag: fileNameInput.value.includes(str) ? false : true,
+            enableScroll: false,
             reanimate: false,
             enableClickRecognition: false,
             dropHook
