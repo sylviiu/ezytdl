@@ -2,10 +2,8 @@ const getBridgePath = require(`../util/filenames/pybridge`).getPath;
 
 const child_process = require(`child_process`);
 const fs = require('./promisifiedFS')
-const path = require(`path`);
-const wsprocess = require(`./class/wsprocess`);
-const getPath = require(`./getPath`);
 const sendNotification = require(`../core/sendNotification`);
+const { updateStatus } = require(`./downloadManager`).default;
 
 let basepath = require(`electron`).app.getAppPath();
 
@@ -57,6 +55,11 @@ module.exports = {
                 if(!module.exports.bridgeProc) {
                     console.log(`no bridge process!`);
 
+                    let currentStep = 1;
+                    let steps = 3;
+
+                    updateStatus(`Starting bridge process (${currentStep}/${steps})...`)
+
                     let busy = 1;
 
                     while(busy) await new Promise(async r => {
@@ -66,6 +69,7 @@ module.exports = {
                         } else require('fs').open(bridgepath, 'r', (err, fd) => {
                             if(err && err.code == `EBUSY`) {
                                 console.log(`bridge process busy (attempt ${busy}), waiting...`);
+                                updateStatus(`Bridge executable is busy (attempt ${busy}), trying again (${currentStep}/${steps})...`)
                                 busy++;
                                 if(fd) require('fs').close(fd)
                                 setTimeout(() => r(), 1000)
@@ -88,6 +92,10 @@ module.exports = {
 
                     if(!process.platform.toLowerCase().includes(`win32`)) {
                         console.log(`CHMOD ${bridgepath}`);
+
+                        steps++;
+                        currentStep++;
+                        updateStatus(`Marking bridge as executable (${currentStep}/${steps})...`)
                         
                         try {
                             require(`child_process`).execFileSync(`chmod`, [`+x`, bridgepath])
@@ -98,6 +106,9 @@ module.exports = {
 
                     module.exports.starting = true;
 
+                    currentStep++;
+                    updateStatus(`Starting bridge process; this may take a bit (${currentStep}/${steps})...`)
+
                     module.exports.bridgeProc = child_process.execFile(bridgepath, {
                         maxBuffer: 1024 * 1024 * 1024, // 1GB
                     });
@@ -105,8 +116,6 @@ module.exports = {
                     let resolved = false;
 
                     console.log(`starting bridge:\n- bridge path: ${bridgepath}`)
-
-                    process.env.PYTHONUNBUFFERED = `1`;
 
                     module.exports.bridgeProc.on(`close`, (code) => {
                         console.log(`bridge process closed; code: ${code}`);
@@ -136,6 +145,7 @@ module.exports = {
 
                     module.exports.bridgeProc.on(`error`, (err) => {
                         console.log(`bridge process errored; err: ${err}`);
+                        updateStatus(`Bridge process errored! (${err})`)
                     })
 
                     const parseLog = async (d, type) => {
@@ -148,6 +158,9 @@ module.exports = {
                         //console.log(prefix + str.trim().split(`\n`).join(`\n` + prefix));
 
                         if(d.toString().trim().includes(`Bridge ready`) && !resolved) {
+                            currentStep++;
+                            updateStatus(`Bridge is ready! (${currentStep}/${steps})...`)
+
                             module.exports.bridgeProc.emit(`ready`);
 
                             module.exports.starting = false;
