@@ -4,6 +4,8 @@ const uglify = require('uglify-js');
 module.exports = {
     beforePack: () => {
         const pagescripts = fs.readdirSync(`./html/pagescripts`).filter(f => f.endsWith(`.js`));
+
+        console.log(`minifying ${pagescripts.length} pagescripts`);
         
         if(fs.existsSync(`./html/pagescripts/etc`)) fs.rmdirSync(`./html/pagescripts/etc`, { recursive: true });
         

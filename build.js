@@ -48,6 +48,7 @@ const config = {
         "html/*.html",
         "html/assets/**/*",
         "html/core/*",
+        "html/lib/*",
         "html/topjs/*",
         "html/afterload/*",
         "html/util/*",

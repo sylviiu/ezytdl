@@ -1,7 +1,7 @@
 const fs = require('fs');
 const uglify = require('uglify-js');
 
-const blacklistedDirs = [`assets`, `pagescripts`];
+const blacklistedDirs = [`assets`, `pagescripts`, `core`, `lib`];
 
 const dirs = fs.readdirSync(`./html`).filter(f => !f.endsWith(`.html`) && blacklistedDirs.indexOf(f) === -1).map(f => ({ path: `./html/${f}`, files: fs.readdirSync(`./html/${f}`).filter(f2 => f2 != `minified.js` && f2.endsWith(`.js`)) }));
 
@@ -17,6 +17,7 @@ module.exports = {
             const overallScript = {};
     
             dir.files.forEach(file => {
+                console.log(`minifying ${dir.path}/${file}`);
                 overallScript[file] = fs.readFileSync(`${dir.path}/${file}`, 'utf8');
                 fs.renameSync(`${dir.path}/${file}`, `${dir.path}/etc/${file}`);
             });

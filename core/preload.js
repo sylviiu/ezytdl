@@ -28,6 +28,8 @@ const getPath = (path, allowNull=true) => {
 }
 
 const addScript = (path, type) => new Promise(async (res, rej) => {
+    const name = path;
+
     const script = document.createElement(`script`);
 
     if(type == `lib`) {
@@ -35,7 +37,7 @@ const addScript = (path, type) => new Promise(async (res, rej) => {
         const checkDir = (p) => {
             if(p) {
                 const dir = fs.readdirSync(p);
-                if(dir.find(s => s.endsWith(`.min.js`))) usePath = require(`path`).join(p, dir.find(s => s.endsWith(`.min.js`)))
+                if(dir.find(s => s.endsWith(`min.js`))) usePath = require(`path`).join(p, dir.find(s => s.endsWith(`min.js`)))
             }
         };
 
@@ -50,7 +52,7 @@ const addScript = (path, type) => new Promise(async (res, rej) => {
         path = usePath;
     }
 
-    //console.log(`path: ${path}`)
+    console.log(`${name} - path: ${path}`)
 
     if(!path) return null;
 
@@ -225,13 +227,14 @@ contextBridge.exposeInMainWorld(`preload`, {
     oncomplete: (cb) => script.addEventListener(`load`, cb)
 });
 
-const libs = [`animejs`, `showdown`, `color-scheme`]
-
 const scriptsObj = {
-    libs: () => {
-        //console.log(`-- ADDING libs`)
-        return Promise.all(libs.map(name => addScript(`${name}`, `lib`)));
-    },
+    libs: () => new Promise(async res => {
+        addScript(`./lib/minified.js`).then(res).catch(async e => {
+            const lib = Object.values(require(`../build/scripts/addLibs`).scripts);
+            console.log(`-- ADDING lib: ${lib.join(`, `)}`);
+            Promise.all(lib.map(name => addScript(`../${name}`))).then(res);
+        })
+    }),
     util: () => new Promise(async res => {
         addScript(`./util/minified.js`).then(res).catch(async e => {
             fs.readdir(await getPath(`./html/util`), (e, util) => {
@@ -271,8 +274,6 @@ const scriptsObj = {
 contextBridge.exposeInMainWorld(`scripts`, scriptsObj);
 
 addEventListener(`DOMContentLoaded`, async () => {
-    await scriptsObj.libs();
-    
     await scriptsObj.libs();
     await scriptsObj.util();
     await scriptsObj.topjs();

@@ -5,7 +5,7 @@ if(typeof config == `undefined`) {
 configuration.get().then(newConf => { config = newConf });
 configuration.hook(newConf => { config = newConf });
 
-var systemColors = system.colors();
+var systemColors = parseSystemColors(system.colors());
 console.log(`systemColors: `, systemColors)
 
 var currentColorScheme = systemColors[0];

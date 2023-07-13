@@ -1,24 +1,25 @@
 const fs = require('fs');
-const uglify = require('uglify-js');
-
-const scripts = {
-    animejs: `./node_modules/animejs/lib/anime.min.js`,
-    showdown: `./node_modules/showdown/dist/showdown.min.js`,
-    tinycolor2: `./node_modules/tinycolor2/dist/tinycolor-min.js`,
-    colorscheme: `./node_modules/color-scheme/lib/color-scheme.min.js`,
-}
 
 module.exports = {
+    scripts: {
+        animejs: `./node_modules/animejs/lib/anime.min.js`,
+        showdown: `./node_modules/showdown/dist/showdown.min.js`,
+        tinycolor: `./node_modules/tinycolor2/dist/tinycolor-min.js`,
+        "color-scheme": `./node_modules/color-scheme/lib/color-scheme.min.js`,
+    },
     beforePack: () => {
-        for(const key of Object.keys(scripts)) {
+        for(const key of Object.keys(module.exports.scripts)) {
             console.log(`minifying script ${key}`);
-            scripts[key] = fs.readFileSync(scripts[key], `utf8`);
+            module.exports.scripts[key] = fs.readFileSync(module.exports.scripts[key], `utf8`);
         };
 
         console.log(`creating minified script ./html/lib/main.js`);
 
         if(!fs.existsSync(`./html/lib`)) fs.mkdirSync(`./html/lib`);
 
-        fs.writeFileSync(`./html/lib/minified.js`, uglify.minify(scripts).code);
+        fs.writeFileSync(`./html/lib/minified.js`, Object.entries(scripts).map(([key, value]) => `// ${key}\n${value}`).join(`\n\n`), `utf8`);
+    },
+    afterPack: () => {
+        if(fs.existsSync(`./html/lib`)) fs.rmSync(`./html/lib`, { recursive: true });
     }
 }
