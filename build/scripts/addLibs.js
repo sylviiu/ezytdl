@@ -10,12 +10,14 @@ const scripts = {
 
 module.exports = {
     beforePack: () => {
-        for(const key of scripts) {
+        for(const key of Object.keys(scripts)) {
             console.log(`minifying script ${key}`);
             scripts[key] = fs.readFileSync(scripts[key], `utf8`);
         };
 
         console.log(`creating minified script ./html/lib/main.js`);
+
+        if(!fs.existsSync(`./html/lib`)) fs.mkdirSync(`./html/lib`);
 
         fs.writeFileSync(`./html/lib/minified.js`, uglify.minify(scripts).code);
     }

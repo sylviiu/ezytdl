@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 module.exports = (context) => {
-    const scripts = fs.readdirSync(`./scripts/`);
+    const scripts = fs.readdirSync(`./build/scripts/`);
 
     scripts.forEach(file => {
         console.log(`\n\n----------------- running script ${file}`);
