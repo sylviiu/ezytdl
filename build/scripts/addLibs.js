@@ -15,11 +15,12 @@ module.exports = {
 
         console.log(`creating minified script ./html/lib/main.js`);
 
-        if(!fs.existsSync(`./html/lib`)) fs.mkdirSync(`./html/lib`);
-
-        fs.writeFileSync(`./html/lib/minified.js`, Object.entries(scripts).map(([key, value]) => `// ${key}\n${value}`).join(`\n\n`), `utf8`);
+        fs.writeFileSync(`./html/lib.js`, Object.entries(module.exports.scripts).map(([key, value]) => `// ${key}\n${value}`).join(`\n\n`), `utf8`);
     },
     afterPack: () => {
-        if(fs.existsSync(`./html/lib`)) fs.rmSync(`./html/lib`, { recursive: true });
+        if(fs.existsSync(`./html/lib.js`)) {
+            console.log(`removing minified script ./html/lib.js`);
+            fs.rmSync(`./html/lib.js`);
+        } else console.log(`minified script ./html/lib.js not found`);
     }
 }

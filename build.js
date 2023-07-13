@@ -46,8 +46,8 @@ const config = {
     "asarUnpack": [],
     "files": [
         "html/*.html",
+        "html/*.js",
         "html/assets/**/*",
-        "html/core/*",
         "html/lib/*",
         "html/topjs/*",
         "html/afterload/*",

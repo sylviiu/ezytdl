@@ -1,6 +1,7 @@
 node_modules/
 dist/
 etc/
+html/lib.js
 keys.json
 .DS_Store
 build.json

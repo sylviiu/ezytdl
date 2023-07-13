@@ -21,6 +21,8 @@ module.exports = {
     },
     afterPack: () => {
         const pagescripts = fs.readdirSync(`./html/pagescripts/etc`);
+
+        console.log(`restoring ${pagescripts.length} pagescripts`);
     
         pagescripts.forEach(file => {
             fs.renameSync(`./html/pagescripts/etc/${file}`, `./html/pagescripts/${file}`);

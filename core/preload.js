@@ -229,7 +229,7 @@ contextBridge.exposeInMainWorld(`preload`, {
 
 const scriptsObj = {
     libs: () => new Promise(async res => {
-        addScript(`./lib/minified.js`).then(res).catch(async e => {
+        addScript(`./lib.js`).then(res).catch(async e => {
             const lib = Object.values(require(`../build/scripts/addLibs`).scripts);
             console.log(`-- ADDING lib: ${lib.join(`, `)}`);
             Promise.all(lib.map(name => addScript(`../${name}`))).then(res);
