@@ -48,7 +48,7 @@ module.exports = async () => new Promise(async res => {
         
         const latest = r.response;
             
-        const version = latest.name.includes(`(`) ? latest.name.split(`(`)[1].split(` `)[0].replace(/-/g, ``) : latest.name;
+        const version = (latest.name.match(/[\d*]*\.[\d*]*/) || [latest.name])[0]
 
         const downloads = latest.assets;
         
@@ -67,128 +67,67 @@ module.exports = async () => new Promise(async res => {
             console.log(`Latest version: ${version}`);
             console.log(`Downloads: ${downloads.map(d => d.name).join(`, `)}`);
 
-            if(process.platform == `darwin`) {
-                const downloadFFmpeg = downloads.find(d => d.name == `ffmpeg-darwin-${process.arch}`);
-                const downloadFFprobe = downloads.find(d => d.name == `ffprobe-darwin-${process.arch}`);
+            const downloadFFmpeg = downloads.find(d => d.name == `ffmpeg-${process.platform}-${process.arch}`);
+            const downloadFFprobe = downloads.find(d => d.name == `ffprobe-${process.platform}-${process.arch}`);
 
-                if(!downloadFFmpeg || !downloadFFprobe) {
-                    return errorHandler(`Failed to find download for ${file} in latest release; please make sure that you are using a supported a platform!\n\nIf you are, please open an issue on GitHub.`)
-                } else {
-                    console.log(`Found target FFmpeg: ${downloadFFmpeg.name} / ${downloadFFmpeg.size} size; downloading from "${downloadFFmpeg.browser_download_url}"`);
-                    console.log(`Found target FFprobe: ${downloadFFprobe.name} / ${downloadFFprobe.size} size; downloading from "${downloadFFprobe.browser_download_url}"`);
-    
-                    require(`../currentVersion/ffmpeg`)(null, null, true);
-
-                    if(await pfs.existsSync(downloadPath)) await pfs.rmdirSync(downloadPath, { recursive: true });
-
-                    const mainPath = require(`path`).join(downloadPath, `pretend-this-is-a-good-name`);
-
-                    await pfs.mkdirSync(mainPath, { recursive: true, failOnError: false });
-
-                    const ffmpegPath = require(`path`).join(mainPath, `bin`, `ffmpeg`);
-                    const ffprobePath = require(`path`).join(mainPath, `bin`, `ffprobe`);
-
-                    try {
-                        const ffmpeg = await require(`../downloadClientTo`)({
-                            ws,
-                            version,
-                            str: `FFmpeg (${version})`,
-                            url: downloadFFmpeg.browser_download_url,
-                            size: downloadFFmpeg.size,
-                            downloadPath: ffmpegPath
-                        });
-
-                        const ffprobe = await require(`../downloadClientTo`)({
-                            ws,
-                            version,
-                            str: `FFprobe (${version})`,
-                            url: downloadFFprobe.browser_download_url,
-                            size: downloadFFprobe.size,
-                            downloadPath: ffprobePath
-                        });
-
-                        console.log(`CHMOD ${ffmpegPath} & ${ffprobePath}`);
-                        
-                        try {
-                            require(`child_process`).execFileSync(`chmod`, [`+x`, ffmpegPath])
-                        } catch(e) {
-                            await pfs.chmodSync(ffmpegPath, 0o777)
-                        };
-                        
-                        try {
-                            require(`child_process`).execFileSync(`chmod`, [`+x`, ffprobePath])
-                        } catch(e) {
-                            await pfs.chmodSync(ffprobePath, 0o777)
-                        };
-
-                        ws.close();
-                    } catch(e) {
-                        console.error(e);
-                        return errorHandler(`Failed to download FFmpeg / FFprobe! (${e})`)
-                    }
-                }
+            if(!downloadFFmpeg || !downloadFFprobe) {
+                return errorHandler(`Failed to find download for ${file} in latest release; please make sure that you are using a supported a platform!\n\nIf you are, please open an issue on GitHub.`)
             } else {
-                const download = downloads.find(d => d.name.startsWith(`ffmpeg-master-latest-${file}-gpl-shared`)) || downloads.find(d => d.name.startsWith(`ffmpeg-master-latest-${file}`));
-        
-                if(!download) {
-                    return errorHandler(`Failed to find download for ${file} in latest release; please make sure that you are using a supported a platform!\n\nIf you are, please open an issue on GitHub.`)
-                } else {
-                    console.log(`Found target file! (${file} / ${download.size} size); downloading ${download.name} from "${download.browser_download_url}"`);
-    
-                    require(`../currentVersion/ffmpeg`)(null, null, true);
-    
-                    let ext = `.zip`;
-    
-                    if(platform == `linux`) ext = `.tar.xz`;
-    
-                    if(await pfs.existsSync(downloadPath)) await pfs.rmdirSync(downloadPath, { recursive: true });
-    
-                    require(`../downloadClientTo`)({
+                console.log(`Found target FFmpeg: ${downloadFFmpeg.name} / ${downloadFFmpeg.size} size; downloading from "${downloadFFmpeg.browser_download_url}"`);
+                console.log(`Found target FFprobe: ${downloadFFprobe.name} / ${downloadFFprobe.size} size; downloading from "${downloadFFprobe.browser_download_url}"`);
+
+                require(`../currentVersion/ffmpeg`)(null, null, true);
+
+                if(await pfs.existsSync(downloadPath)) await pfs.rmdirSync(downloadPath, { recursive: true });
+
+                const mainPath = require(`path`).join(downloadPath, `pretend-this-is-a-good-name`);
+
+                await pfs.mkdirSync(mainPath, { recursive: true, failOnError: false });
+
+                const ffmpegPath = require(`path`).join(mainPath, `bin`, `ffmpeg`);
+                const ffprobePath = require(`path`).join(mainPath, `bin`, `ffprobe`);
+
+                try {
+                    const ffmpeg = await require(`../downloadClientTo`)({
                         ws,
                         version,
-                        url: download.browser_download_url,
-                        size: download.size,
-                        downloadPath: downloadPath + ext
-                    }).then(async () => {
-                        const finalize = async () => {
-                            console.log(`Extracted!`);
-            
-                            await pfs.unlinkSync(downloadPath + ext);
-            
-                            const newPath = require(`../filenames/ffmpeg`).getPath()
-            
-                            if(!process.platform.toLowerCase().includes(`win32`)) {
-                                console.log(`CHMOD ${newPath}`);
-                                
-                                try {
-                                    require(`child_process`).execFileSync(`chmod`, [`+x`, newPath])
-                                } catch(e) {
-                                    await pfs.chmodSync(newPath, 0o777)
-                                }
-                            }
-            
-                            console.log(newPath);
-            
-                            ws.close();
-                        };
-            
-                        console.log(`done!`);
-            
-                        await pfs.mkdirSync(downloadPath, { recursive: true, failOnError: false });
-            
-                        if(platform == `linux`) {
-                            require(`child_process`).execFileSync(`tar`, [`-xf`, downloadPath + ext, `-C`, downloadPath]);
-                            finalize();
-                        } else if(platform == `win`) {
-                            const extractor = require(`unzipper`).Extract({
-                                path: downloadPath
-                            });
-            
-                            fs.createReadStream(downloadPath + ext).pipe(extractor);
-            
-                            extractor.on(`close`, () => finalize())
-                        };
+                        str: `FFmpeg (${version})`,
+                        url: downloadFFmpeg.browser_download_url,
+                        size: downloadFFmpeg.size,
+                        downloadPath: ffmpegPath + (process.platform == `win32` ? `.exe` : ``)
                     });
+
+                    const ffprobe = await require(`../downloadClientTo`)({
+                        ws,
+                        version,
+                        str: `FFprobe (${version})`,
+                        url: downloadFFprobe.browser_download_url,
+                        size: downloadFFprobe.size,
+                        downloadPath: ffprobePath + (process.platform == `win32` ? `.exe` : ``)
+                    });
+
+                    console.log(`CHMOD ${ffmpegPath} & ${ffprobePath}`);
+                    
+                    try {
+                        require(`child_process`).execFileSync(`chmod`, [`+x`, ffmpegPath])
+                    } catch(e) {
+                        try {
+                            await pfs.chmodSync(ffmpegPath, 0o777)
+                        } catch(e) {}
+                    };
+                    
+                    try {
+                        require(`child_process`).execFileSync(`chmod`, [`+x`, ffprobePath])
+                    } catch(e) {
+                        try {
+                            await pfs.chmodSync(ffprobePath, 0o777)
+                        } catch(e) {}
+                    };
+
+                    ws.close();
+                } catch(e) {
+                    console.error(e);
+                    return errorHandler(`Failed to download FFmpeg / FFprobe! (${e})`)
                 }
             }
         }
