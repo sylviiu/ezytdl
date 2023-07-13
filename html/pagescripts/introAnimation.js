@@ -44,12 +44,7 @@ ajax.onload = async () => {
     
         document.body = h.querySelector(`body`);
 
-        try {
-            await system.addScript(`./topjs/minified.js`)
-        } catch(e) {
-            await system.addScript(`./topjs/tweaks.js`)
-            await system.addScript(`./topjs/vars.js`)
-        }
+        await scripts.topjs();
         await scripts.pagescript(htmlFile.split(`.`).slice(0, -1).join(`.`))
         await scripts.afterload();
     
@@ -115,15 +110,15 @@ ajax.onload = async () => {
         const popout = createPopout({
             buttons: [
                 {
-                    element: h.querySelector(`#urlBox`),
+                    element: h.querySelector(`#background`),
                     href: `updating.html`
                 }
             ],
             closeOnNavigate: true,
             addEventListeners: false,
             updatePosition: true,
-            //completeHook: () => callback()
-            overlayCompleteHook: () => {
+            completeHook: () => callback()
+            /*overlayCompleteHook: () => {
                 if(document.querySelector(`#everythingContainer`)) anime({
                     targets: document.querySelector(`#everythingContainer`),
                     opacity: 0,
@@ -151,7 +146,7 @@ ajax.onload = async () => {
                     easing: `easeInCirc`,
                     complete: () => window.location.href = `introAnimation.html?index.html`
                 })
-            }
+            }*/
         });
 
         let inProgress = true;

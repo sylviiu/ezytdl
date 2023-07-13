@@ -110,7 +110,7 @@ contextBridge.exposeInMainWorld(`system`, {
     getTabFiles: () => new Promise(async (res, rej) => {
         fs.readdir(await getPath(`./html/tabs/`), async (e, tabs) => {
             if(e) return rej(e);
-            res(tabs);
+            res(tabs.filter(f => f.endsWith(`.js`) && f != `minified.js`));
         })
     }),
     colors: () => systemColors,
