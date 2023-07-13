@@ -11,9 +11,12 @@ const path = require(`path`).join(downloadPath, file)
 
 const fs = require('fs')
 
-if(fs.existsSync(downloadPath) && !fs.existsSync(require('path').join(downloadPath + '/'))) {
-    console.log(`Not a directory. Removing.`)
-    fs.unlinkSync(downloadPath)
+try {
+    fs.readdirSync(downloadPath)
+} catch(e) {
+    if(fs.existsSync(downloadPath)) {
+        fs.unlinkSync(downloadPath)
+    }
 }
 
 module.exports = {
