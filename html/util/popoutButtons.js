@@ -86,9 +86,7 @@ const createPopout = ({
             
             overlayCloseText.innerText = `Click anywhere to close.`;
 
-            if(popoutActive) {
-                overlayDiv.onclick();
-            } else {
+            if(!popoutActive) {
                 closeWindow();
 
                 popoutActive = true;
@@ -383,7 +381,9 @@ const createPopout = ({
                         h.contentWindow.useHref = typeof useHref != `undefined` ? useHref : closeOnNavigate;
                         h.contentWindow.console.log = (...content) => console.log(`iframe ${name}:`, ...content);
 
-                        const heading = href[0].toUpperCase() + href.slice(1).split(`.`).slice(0, -1).join(`.`)
+                        const embedHref = h.contentWindow.location.href.split(`/`).slice(0, -1)[0].split(`?`)[0];
+
+                        const heading = embedHref[0].toUpperCase() + embedHref.slice(1).split(`.`).slice(0, -1).join(`.`)
 
                         const headingTxt = document.createElement(`h1`);
     
@@ -396,15 +396,18 @@ const createPopout = ({
                         h.contentWindow.document.body.prepend(headingTxt);
 
                         const onclickFunc = e => {
-                            const target = e.target;
-
-                            console.log(`iframe click: ${target.onclick ? `onclick func` : target.href ? `link` : `no redirection`} / closeOnNavigate: ${closeOnNavigate}`, e)
-    
-                            if(target.href || target.onclick) {
-                                if(closeOnNavigate) {
-                                    closeWindow();
-                                } else if(target.href) navigateEvent(e, target.href);
+                            const test = (target, depth=0) => {
+                                console.log(`iframe click (depth ${depth}): ${target.onclick ? `onclick func` : target.href ? `link` : `no redirection`} / closeOnNavigate: ${closeOnNavigate}`, e)
+                                if(target.href || target.onclick) {
+                                    if(closeOnNavigate) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        closeWindow();
+                                    } else if(target.href) navigateEvent(e, target.href);
+                                } else if(target.parentElement && target.parentElement != h.contentWindow.document.body) test(target.parentElement, depth+1);
                             }
+    
+                            test(e.target)
                         }
 
                         h.contentWindow.document.onclick = onclickFunc;

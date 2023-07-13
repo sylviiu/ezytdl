@@ -10,11 +10,6 @@ const popoutButtons = createPopout({
             href: `settings.html`
         }
     ],
-    navigateEvent: (e, href) => {
-        console.log(`redirecting window to "${href}"`)
-        e.preventDefault();
-        window.location.href = href;
-    },
     completeHook: () => {
         configuration.get().then(newConf => {
             if(JSON.stringify(previousConfig) != JSON.stringify(newConf)) {
