@@ -1,31 +1,29 @@
 const { contextBridge, ipcRenderer } = require('electron');
 const fs = require('fs')
 
-console.log(`preload :D`);
-
-let updateAvailable = false;
+//console.log(`preload :D`);
 
 window.addEventListener("mouseup", (e) => {
     if(e.button === 3 || e.button === 4) e.preventDefault();
 });
 
 const invoke = (...args) => {
-    console.log(`ipc invoke`, ...args);
+    //console.log(`ipc invoke`, ...args);
     return ipcRenderer.invoke(...args);
 }
 
 const send = (...args) => {
-    console.log(`ipc send`, ...args);
+    //console.log(`ipc send`, ...args);
     return ipcRenderer.send(...args);
 }
 
 const on = (...args) => {
-    console.log(`ipc on`, ...args);
+    //console.log(`ipc on`, ...args);
     return ipcRenderer.on(...args);
 }
 
 const getPath = (path, allowNull=true) => {
-    console.log(`getPath: ${path} (allow null: ${allowNull})`)
+    //console.log(`getPath: ${path} (allow null: ${allowNull})`)
     return invoke(`getPath`, [path, allowNull])
 }
 
@@ -52,7 +50,7 @@ const addScript = (path, type) => new Promise(async (res, rej) => {
         path = usePath;
     }
 
-    console.log(`path: ${path}`)
+    //console.log(`path: ${path}`)
 
     if(!path) return null;
 
@@ -62,7 +60,7 @@ const addScript = (path, type) => new Promise(async (res, rej) => {
     document.head.appendChild(script);
 
     script.addEventListener(`load`, () => {
-        console.log(`loaded script ${path}`)
+        //console.log(`loaded script ${path}`)
         res()
     });
 
@@ -70,7 +68,7 @@ const addScript = (path, type) => new Promise(async (res, rej) => {
         e.preventDefault();
         e.stopPropagation();
         
-        console.log(`failed to load script ${path}`)
+        //console.log(`failed to load script ${path}`)
         rej(e)
     });
 })
@@ -80,7 +78,7 @@ const parseSystemColors = require(`../util/parseSystemColors`);
 let systemColors = localStorage.getItem(`systemColors`) ? JSON.parse(localStorage.getItem(`systemColors`)) : parseSystemColors({ r: 255, g: 255, b: 255 });
 
 invoke(`systemColors`).then(c => { 
-    console.log(`systemColors`, c);
+    //console.log(`systemColors`, c);
     systemColors = parseSystemColors(c);
     localStorage.setItem(`systemColors`, JSON.stringify(systemColors));
 })
@@ -125,7 +123,7 @@ contextBridge.exposeInMainWorld(`system`, {
 let dialogPromise = new Promise(r => {
     on(`dialog`, (_e, obj) => {
         r(obj);
-        console.log(`dialog`, obj);
+        //console.log(`dialog`, obj);
     })
 });
 
@@ -233,7 +231,7 @@ const libs = [`animejs`, `showdown`, `color-scheme`]
 
 const scriptsObj = {
     libs: () => {
-        console.log(`-- ADDING libs`)
+        //console.log(`-- ADDING libs`)
         return Promise.all(libs.map(name => addScript(`${name}`, `lib`)));
     },
     util: () => new Promise(async res => {
@@ -241,7 +239,7 @@ const scriptsObj = {
             fs.readdir(await getPath(`./html/util`), (e, util) => {
                 if(e) throw e;
                 util = util.filter(s => s.endsWith(`.js`) && s != `minified.js`)
-                console.log(`-- ADDING util: ${util.join(`, `)}`)
+                //console.log(`-- ADDING util: ${util.join(`, `)}`)
                 Promise.all(util.map(path => addScript(`./util/${path}`))).then(res)
             });
         });
@@ -251,13 +249,13 @@ const scriptsObj = {
             fs.readdir(await getPath(`./html/topjs`), (e, topjs) => {
                 if(e) throw e;
                 topjs = topjs.filter(s => s.endsWith(`.js`) && s != `minified.js`)
-                console.log(`-- ADDING topjs: ${topjs.join(`, `)}`)
+                //console.log(`-- ADDING topjs: ${topjs.join(`, `)}`)
                 Promise.all(topjs.map(path => addScript(`./topjs/${path}`))).then(res)
             });
         });
     }),
     pagescript: (useName=name) => {
-        console.log(`-- ADDING pagescript`)
+        //console.log(`-- ADDING pagescript`)
         return addScript(`./pagescripts/${useName.includes(`-`) ? useName.split(`-`)[0] : useName}.js`);
     },
     afterload: () => new Promise(async res => {
@@ -265,7 +263,7 @@ const scriptsObj = {
             fs.readdir(await getPath(`./html/afterload`), (e, afterload) => {
                 if(e) throw e;
                 afterload = afterload.filter(s => s.endsWith(`.js`) && s != `minified.js`)
-                console.log(`-- ADDING afterload: ${afterload.join(`, `)}`)
+                //console.log(`-- ADDING afterload: ${afterload.join(`, `)}`)
                 Promise.all(afterload.map(path => addScript(`./afterload/${path}`))).then(res)
             });
         });
@@ -280,9 +278,9 @@ addEventListener(`DOMContentLoaded`, async () => {
     await scriptsObj.topjs();
     await scriptsObj.pagescript();
 
-    console.log(`name: ${name}`)
+    //console.log(`name: ${name}`)
 
     if(!name.includes(`introAnimation`)) await scriptsObj.afterload();
 
-    console.log(`Scripts added!`);
+    //console.log(`Scripts added!`);
 });
