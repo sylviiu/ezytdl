@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer, webFrame } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron');
 const fs = require('fs')
 
 console.log(`preload :D`);
@@ -8,9 +8,6 @@ let updateAvailable = false;
 window.addEventListener("mouseup", (e) => {
     if(e.button === 3 || e.button === 4) e.preventDefault();
 });
-
-// electron does not allow you to require modules in the preload script, and it is not a planned change -- you can do this by disabling the sandbox, which is a shit idea.
-// i wish you can make the preload an array of scripts but NoOoO
 
 const invoke = (...args) => {
     console.log(`ipc invoke`, ...args);
@@ -243,6 +240,7 @@ const scriptsObj = {
         addScript(`./util/minified.js`).then(res).catch(async e => {
             fs.readdir(await getPath(`./html/util`), (e, util) => {
                 if(e) throw e;
+                util = util.filter(s => s.endsWith(`.js`) && s != `minified.js`)
                 console.log(`-- ADDING util: ${util.join(`, `)}`)
                 Promise.all(util.map(path => addScript(`./util/${path}`))).then(res)
             });
@@ -252,6 +250,7 @@ const scriptsObj = {
         addScript(`./topjs/minified.js`).then(res).catch(async e => {
             fs.readdir(await getPath(`./html/topjs`), (e, topjs) => {
                 if(e) throw e;
+                topjs = topjs.filter(s => s.endsWith(`.js`) && s != `minified.js`)
                 console.log(`-- ADDING topjs: ${topjs.join(`, `)}`)
                 Promise.all(topjs.map(path => addScript(`./topjs/${path}`))).then(res)
             });
@@ -265,6 +264,7 @@ const scriptsObj = {
         addScript(`./afterload/minified.js`).then(res).catch(async e => {
             fs.readdir(await getPath(`./html/afterload`), (e, afterload) => {
                 if(e) throw e;
+                afterload = afterload.filter(s => s.endsWith(`.js`) && s != `minified.js`)
                 console.log(`-- ADDING afterload: ${afterload.join(`, `)}`)
                 Promise.all(afterload.map(path => addScript(`./afterload/${path}`))).then(res)
             });
