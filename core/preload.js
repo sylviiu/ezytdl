@@ -73,13 +73,11 @@ const addScript = (path, type) => new Promise(async (res, rej) => {
     });
 })
 
-const parseSystemColors = require(`../util/parseSystemColors`);
+let systemColors = localStorage.getItem(`systemColors`) ? (JSON.parse(localStorage.getItem(`systemColors`)).standard ? JSON.parse(localStorage.getItem(`systemColors`)).standard : JSON.parse(localStorage.getItem(`systemColors`))) : { r: 255, g: 255, b: 255 };
 
-let systemColors = localStorage.getItem(`systemColors`) ? JSON.parse(localStorage.getItem(`systemColors`)) : parseSystemColors({ r: 255, g: 255, b: 255 });
-
-invoke(`systemColors`).then(c => { 
+invoke(`systemColors`).then(c => {
     //console.log(`systemColors`, c);
-    systemColors = parseSystemColors(c);
+    systemColors = c;
     localStorage.setItem(`systemColors`, JSON.stringify(systemColors));
 })
 
@@ -273,6 +271,8 @@ const scriptsObj = {
 contextBridge.exposeInMainWorld(`scripts`, scriptsObj);
 
 addEventListener(`DOMContentLoaded`, async () => {
+    await scriptsObj.libs();
+    
     await scriptsObj.libs();
     await scriptsObj.util();
     await scriptsObj.topjs();

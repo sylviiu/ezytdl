@@ -1,15 +1,12 @@
-const range = (val) => {
-    val = Math.round(val)
+const parseSystemColors = ({ r, g, b }) => {
+    const range = (val) => {
+        val = Math.round(val)
+    
+        if (val < 0) return 0;
+        if (val > 255) return 255;
+        return val;
+    };
 
-    if (val < 0) return 0;
-    if (val > 255) return 255;
-    return val;
-};
-
-const tinycolor = require('tinycolor2');
-const ColorScheme = require('color-scheme')
-
-module.exports = ({ r, g, b }) => {
     const scm = new ColorScheme;
 
     const strings = [r.toString(16).toUpperCase(), g.toString(16).toUpperCase(), b.toString(16).toUpperCase()];
