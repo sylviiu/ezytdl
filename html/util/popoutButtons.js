@@ -65,6 +65,10 @@ const createPopout = ({
         const click = () => {
             console.log(`button ${name} clicked; popoutActive: ${popoutActive}`);
 
+            if(document.getElementById(`navigationBar`) && document.getElementById(`navigationBar`).style[`-webkit-app-region`] != `no-drag`) {
+                document.getElementById(`navigationBar`).style[`-webkit-app-region`] = `no-drag`;
+            }
+
             const currentNotification = document.body.querySelector(`.notificationBox`);
         
             const overlayDiv = document.createElement(`div`);
@@ -253,6 +257,12 @@ const createPopout = ({
                                     if(closeable || force) {
                                         popoutActive = false;
                                         frame = null;
+
+                                        if(document.getElementById(`navigationBar`) && document.getElementById(`navigationBar`).style[`-webkit-app-region`] != `drag`) {
+                                            document.getElementById(`navigationBar`).style[`-webkit-app-region`] = `drag`;
+                                        }
+
+                                        overlayDiv.style.pointerEvents = `none`;
                 
                                         closeWindow = () => new Promise(r => r());
                 
