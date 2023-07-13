@@ -6,12 +6,31 @@ const { compareTwoStrings } = require('string-similarity');
 const idGen = require(`../util/idGen`);
 const downloadManager = require(`./downloadManager`);
 const authentication = require(`../core/authentication`);
+const getPath = require(`../util/getPath`);
 
 const outputTemplateRegex = /%\(\s*([^)]+)\s*\)s/g;
 
-const durationCurve = require(`animejs`).easing(`easeInExpo`);
+const libPath = getPath(`./html/lib.js`, true);
 
-const platforms = fs.readdirSync(require(`../util/getPath`)(`./util/platforms`)).map(f => 
+var animeFunc;
+
+if(libPath) {
+    const lib = `//` + (fs.readFileSync(libPath).toString().split(`//`)[1].split(`// `)[0].trim());
+
+    console.log(lib);
+
+    const currentModule = module;
+
+    animeFunc = eval(`module = {exports: null}; ${lib}; module.exports`);
+
+    module = currentModule;
+} else {
+    animeFunc = require(`animejs`);
+}
+
+const durationCurve = animeFunc.easing(`easeInExpo`);
+
+const platforms = fs.readdirSync(getPath(`./util/platforms`)).map(f => 
     Object.assign(require(`../util/platforms/${f}`), {
         name: f.split(`.`).slice(0, -1).join(`.`)
     })
