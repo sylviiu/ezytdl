@@ -59,7 +59,7 @@ module.exports = ({ r, g, b }) => {
             },
         }
 
-        console.log(`picked colors ${standard}, ${dark}, ${light} from offsets ${index.join(`, `)} with original hex ${originalHex} -> ${hex}`, colorsObj)
+        //console.log(`picked colors ${standard}, ${dark}, ${light} from offsets ${index.join(`, `)} with original hex ${originalHex} -> ${hex}`, colorsObj)
 
         return colorsObj
     };

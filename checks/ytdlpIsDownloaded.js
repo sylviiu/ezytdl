@@ -10,7 +10,7 @@ module.exports = (doNotCheckForUpdates) => new Promise(async res => {
             latestVersion().then(async o => {
                 console.log(`Latest version available is ${o.version}`);
 
-                const versionDownloaded = await require(`../util/currentVersion/ytdlp`)(true);
+                const versionDownloaded = await require(`../util/currentVersion/pybridge`)(true);
 
                 console.log(`Version downloaded is ${versionDownloaded}`);
 
