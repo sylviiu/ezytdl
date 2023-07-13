@@ -6,11 +6,11 @@ module.exports = (context) => {
     
     console.log(`minifying ${dirs.map(o => o.files.length).reduce((a,b) => a + b, 0)} files in ${dirs.length} dirs... (${dirs.map(o => `${o.path} with ${o.files.length} files`).join(`, `)})`);
 
-    if(fs.existsSync(`${dir.path}/etc`)) fs.rmdirSync(`${dir.path}/etc`, { recursive: true });
-
-    fs.mkdirSync(`${dir.path}/etc`);
-
     dirs.forEach(dir => {
+        if(fs.existsSync(`${dir.path}/etc`)) fs.rmdirSync(`${dir.path}/etc`, { recursive: true });
+    
+        fs.mkdirSync(`${dir.path}/etc`);
+        
         const overallScript = {};
 
         dir.files.forEach(file => {
