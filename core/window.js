@@ -44,10 +44,10 @@ module.exports = (notDefault, overrideArgs) => new Promise(async res => {
     console.log(`Icon path: ${iconPath}`)
 
     const args = {
-        width: 800,
+        width: 875,
         height: 500,
         minHeight: 300,
-        minWidth: 800,
+        minWidth: 875,
         autoHideMenuBar: true,
         fullscreenable: false,
         backgroundColor: `rgb(10,10,10)`,
