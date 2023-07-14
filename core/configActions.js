@@ -30,7 +30,7 @@ module.exports = (config) => ({
                 progress: -1
             });
 
-            const hasFFmpeg = require(`../util/ytdlp`).hasFFmpeg();
+            const hasFFmpeg = await require(`../util/ytdlp`).hasFFmpegPromise();
 
             if(hasFFmpeg) {
                 const platforms = Object.keys(config.hardwareAcceleratedConversion);

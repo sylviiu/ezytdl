@@ -120,7 +120,7 @@ const refreshVideoCodecsPromise = () => new Promise(async res => {
 })
 
 var refreshFFmpegPromise = () => new Promise(async res => {
-    if(!module.exports.ffmpegPath || !(await pfs.existsSync(module.exports.ffmpegPath))) module.exports.ffmpegPath = require(`./filenames/ffmpeg`).getPath();
+    if(!module.exports.ffmpegPath || !(await pfs.existsSync(module.exports.ffmpegPath))) module.exports.ffmpegPath = await require(`./filenames/ffmpeg`).getPathPromise();
 
     if(module.exports.ffmpegPath && !ffmpegVideoCodecs) {
         refreshVideoCodecsPromise().then(() => res(true));
@@ -204,6 +204,7 @@ module.exports = {
     ffmpegPath: null,
     sendUpdates,
     hasFFmpeg: () => refreshFFmpeg(),
+    hasFFmpegPromise: () => refreshFFmpegPromise(),
     sanitizePath: (...args) => sanitizePath(...args),
     additionalArguments: (args) => {
         if(!args || typeof args != `object` || typeof args.length != `number`) args = [];
@@ -596,7 +597,7 @@ module.exports = {
         })
     }),
     ffprobeInfo: (path, ffprobePathProvided) => new Promise(async res => {
-        const ffprobePath = ffprobePathProvided || require(`./filenames/ffmpeg`).getFFprobe();
+        const ffprobePath = ffprobePathProvided || (await require(`./filenames/ffmpeg`).getFFprobePromise());
 
         if(!ffprobePath) {
             if(!ffprobePathProvided) sendNotification({
@@ -713,7 +714,7 @@ module.exports = {
         });
     }),
     ffprobeFiles: (path, files) => new Promise(async res => {
-        const ffprobePath = require(`./filenames/ffmpeg`).getFFprobe();
+        const ffprobePath = await require(`./filenames/ffmpeg`).getFFprobePromise();
 
         if(!ffprobePath) {
             sendNotification({
@@ -815,7 +816,7 @@ module.exports = {
         manager.queueEventEmitter.emit(`queueUpdate`, manager.queue);
     }),
     ffprobeDir: (path) => new Promise(async res => {
-        const ffprobePath = require(`./filenames/ffmpeg`).getFFprobe();
+        const ffprobePath = await require(`./filenames/ffmpeg`).getFFprobePromise();
 
         if(!ffprobePath) {
             sendNotification({
@@ -845,7 +846,7 @@ module.exports = {
         module.exports.ffprobeFiles(path, files.map(o => require(`path`).join(path, o))).then(res)
     }),
     ffprobe: (path) => new Promise(async res => {
-        const ffprobePath = require(`./filenames/ffmpeg`).getFFprobe();
+        const ffprobePath = await require(`./filenames/ffmpeg`).getFFprobePromise();
 
         if(!ffprobePath) {
             sendNotification({
@@ -1000,7 +1001,7 @@ module.exports = {
         }
     },
     getCodec: (file, audio) => new Promise(async res => {
-        let ffprobePath = require(`./filenames/ffmpeg`).getFFprobe();
+        let ffprobePath = await require(`./filenames/ffmpeg`).getFFprobePromise();
         
         if(ffprobePath && await pfs.existsSync(ffprobePath) && file) {
             try {
@@ -1021,7 +1022,7 @@ module.exports = {
         } else return res(null)
     }),
     getResolution: (path) => new Promise(async res => {
-        const proc = child_process.execFile(require(`./filenames/ffmpeg`).getFFprobe(), [`-v`, `error`, `-select_streams`, `v:0`, `-show_entries`, `stream=width,height`, `-of`, `csv=s=x:p=0`, path]);
+        const proc = child_process.execFile((await require(`./filenames/ffmpeg`).getFFprobePromise()), [`-v`, `error`, `-select_streams`, `v:0`, `-show_entries`, `stream=width,height`, `-of`, `csv=s=x:p=0`, path]);
 
         let output = ``;
 

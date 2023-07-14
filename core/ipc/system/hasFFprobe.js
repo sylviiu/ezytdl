@@ -1,4 +1,4 @@
 module.exports = {
     type: `handle`,
-    func: () => require(`../../../util/filenames/ffmpeg`).getFFprobe()
+    func: () => new Promise(r => require(`../../../util/filenames/ffmpeg`).getFFprobePromise().then(r))
 }

@@ -1,4 +1,4 @@
-const { file, getPath, systemPath } = require(`../filenames/ffmpeg`);
+const { file, getPathPromise, systemPath } = require(`../filenames/ffmpeg`);
 
 const fs = require('fs');
 const child_process = require('child_process');
@@ -7,7 +7,7 @@ let currentVersion = null;
 let currentVersionPath = null;
 
 module.exports = (forceCheck, getBuildDate, clear) => new Promise(async (res, rej) => {
-    let path = getPath()
+    let path = await getPathPromise()
     
     if(clear) {
         currentVersion = null;

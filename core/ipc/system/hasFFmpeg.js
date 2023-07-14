@@ -1,4 +1,4 @@
 module.exports = {
     type: `handle`,
-    func: () => require(`../../../util/filenames/ffmpeg`).getPath()
+    func: () => new Promise(r => require(`../../../util/filenames/ffmpeg`).getPathPromise().then(r))
 }
