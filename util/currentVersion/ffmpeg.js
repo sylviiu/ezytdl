@@ -1,4 +1,4 @@
-const { file, getPath } = require(`../filenames/ffmpeg`);
+const { file, getPath, systemPath } = require(`../filenames/ffmpeg`);
 
 const fs = require('fs');
 const child_process = require('child_process');
@@ -27,7 +27,11 @@ module.exports = (forceCheck, getBuildDate, clear) => new Promise(async (res, re
                 if(!stdout) return res(null);
                 const versionString = stdout.toString().trim();
         
-                currentVersion = versionString.split(`version `)[1].trim().split(` `).slice(0, 1)[0].split(`-`)[0];
+                currentVersion = versionString.split(`version `)[1].trim().split(` `)[0];
+                currentVersion = (currentVersion.match(/[\d*]*\.[\d*]*/) || [currentVersion])[0].trim();
+
+                if(path == systemPath) currentVersion += ` (system)`;
+
                 currentVersionPath = path;
 
                 return res(currentVersion)

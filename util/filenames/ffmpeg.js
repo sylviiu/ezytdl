@@ -20,9 +20,11 @@ if(fs.existsSync(downloadPath) && !fs.existsSync(require('path').join(downloadPa
     fs.unlinkSync(downloadPath)
 }
 
+let systemPath = require(`which`).sync(`ffmpeg`, {nothrow: true});
+
 module.exports = {
-    platform, file, path: downloadPath, downloadPath, systemPath: require(`which`).sync(`ffmpeg`, {nothrow: true}), getPath: () => {
-        let systemPath = require(`which`).sync(`ffmpeg`, {nothrow: true});
+    platform, file, path: downloadPath, downloadPath, systemPath, getPath: () => {
+        systemPath = require(`which`).sync(`ffmpeg`, {nothrow: true});
 
         if(require('fs').existsSync(downloadPath)) {
             return downloadPath + s + require('fs').readdirSync(downloadPath)[0] + s + `bin` + s + `ffmpeg${require('os').platform() == `win32` ? `.exe` : ``}`
@@ -32,12 +34,12 @@ module.exports = {
             return null
         }
     }, getFFprobe: () => {
-        let systemPath = require(`which`).sync(`ffprobe`, {nothrow: true});
+        let systemFFprobe = require(`which`).sync(`ffprobe`, {nothrow: true});
 
         if(require('fs').existsSync(downloadPath)) {
             return downloadPath + s + require('fs').readdirSync(downloadPath)[0] + s + `bin` + s + `ffprobe${require('os').platform() == `win32` ? `.exe` : ``}`
-        } else if(systemPath) {
-            return systemPath
+        } else if(systemFFprobe) {
+            return systemFFprobe
         } else {
             return null
         }
