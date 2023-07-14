@@ -1955,10 +1955,18 @@ module.exports = {
                     let originalVideoCodec = null;
                     let originalAudioCodec = null;
 
+                    let originalExtensions = [];
+
                     let codecPromises = [];
 
                     if(convert.videoCodec || destinationCodec.videoCodec) {
                         if(useFile) {
+                            const fileExt = useFile.split(`.`).slice(0, -1)[0];
+
+                            console.log(`adding ext ${fileExt}`)
+
+                            originalExtensions.push(fileExt);
+
                             codecPromises.push(new Promise(async r => {
                                 originalVideoCodec = await module.exports.getCodec(useFile);
                                 r();
@@ -1970,6 +1978,12 @@ module.exports = {
                             }));
                         } else for(const f of temporaryFiles) {
                             if(await pfs.existsSync(require(`path`).join(saveTo, f))) {
+                                const fileExt = f.split(`.`).slice(0, -1)[0];
+
+                                console.log(`adding ext ${fileExt}`)
+
+                                if(!originalExtensions.includes(fileExt)) originalExtensions.push(fileExt);
+
                                 if(!originalVideoCodec) codecPromises.push(new Promise(async r => {
                                     originalVideoCodec = await module.exports.getCodec(require(`path`).join(saveTo, f));
                                     r();
@@ -1981,15 +1995,33 @@ module.exports = {
                                 }));
                             };
                         }
+                    } else if(useFile) {
+                        const fileExt = useFile.split(`.`).slice(-1)[0];
+
+                        console.log(`adding ext ${fileExt}`)
+
+                        originalExtensions.push(fileExt);
+                    } else for(const f of temporaryFiles) {
+                        if(await pfs.existsSync(require(`path`).join(saveTo, f))) {
+                            const fileExt = f.split(`.`).slice(-1)[0];
+
+                            console.log(`adding ext ${fileExt}`)
+
+                            if(!originalExtensions.includes(fileExt)) originalExtensions.push(fileExt);
+                        };
                     }
 
                     if(codecPromises.length > 0) await Promise.all(codecPromises);
 
                     if(!originalVideoCodec) convert.forceSoftware = true;
+
+                    console.log(`originalExtensions`, originalExtensions)
+
+                    const originalExtension = originalExtensions.join(` / `)
     
                     console.log(`original obj: `, transcoders.use, `originalVideoCodec: `, originalVideoCodec, `originalAudioCodec:`, originalAudioCodec, `muxer: `, destinationCodec);
 
-                    const originalCodec = originalVideoCodec || originalAudioCodec || `unknown`;
+                    const originalCodec = originalVideoCodec || originalAudioCodec;
                     const targetCodec = convert.videoCodec || destinationCodec.codec;
 
                     if(convert.videoCodec && !ffmpegVideoCodecs.includes(convert.videoCodec)) {
@@ -2010,7 +2042,7 @@ module.exports = {
                         for(const decoder of compatibleDecoders) {
                             for(const encoder of compatibleEncoders) {
                                 const o = {
-                                    string: `${originalCodec}_${decoder.string} -> ${targetCodec}_${encoder.string}`,
+                                    string: `${originalCodec || originalExtension.toUpperCase()}_${decoder.string} -> ${targetCodec || ext.slice(1).toUpperCase()}_${encoder.string}`,
                                     hardware: `Full`,
                                     decoder: decoder.name,
                                     encoder: encoder.name,
@@ -2025,7 +2057,7 @@ module.exports = {
                     if(!convert.forceSoftware && compatibleDecoders.length > 0) {
                         for(const decoder of compatibleDecoders) {
                             const o = {
-                                string: `${originalCodec}_${decoder.string} -> ${targetCodec} (CPU)`,
+                                string: `${originalCodec || originalExtension.toUpperCase()}_${decoder.string} -> ${targetCodec || ext.slice(1).toUpperCase()} (CPU)`,
                                 hardware: `Partial`,
                                 decoder: decoder.name,
                                 encoder: `Software`,
@@ -2039,7 +2071,7 @@ module.exports = {
                     if(!convert.forceSoftware && compatibleEncoders.length > 0) {
                         for(const encoder of compatibleEncoders) {
                             const o = {
-                                string: `${originalCodec} (CPU) -> ${targetCodec}_${encoder.string}`,
+                                string: `${originalCodec || originalExtension.toUpperCase()} (CPU) -> ${targetCodec || ext.slice(1).toUpperCase()}_${encoder.string}`,
                                 hardware: `Partial`,
                                 decoder: `Software`,
                                 encoder: encoder.name,
@@ -2052,7 +2084,7 @@ module.exports = {
                     
                     if(!onlyGPUConversion || convert.forceSoftware) {
                         attemptArgs.push({
-                            string: `${originalCodec} (CPU) -> ${targetCodec} (CPU)`,
+                            string: `${originalCodec || originalExtension.toUpperCase()} (CPU) -> ${targetCodec || ext.slice(1).toUpperCase()} (CPU)`,
                             hardware: `None`,
                             decoder: `Software`,
                             encoder: `Software`,
