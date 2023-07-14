@@ -39,8 +39,6 @@ const checkFFmpeg = (auto=false) => new Promise(async res => {
     } else {
         usableFFmpegPath = null
     }
-    
-    console.log(`FFmpeg path: ${usableFFmpegPath}`)
 
     res(usableFFmpegPath)
 });
@@ -63,8 +61,6 @@ const checkFFprobe = (auto=false) => new Promise(async res => {
     } else {
         usableFFprobePath = null
     }
-
-    console.log(`FFprobe path: ${usableFFprobePath}`)
 
     res(usableFFprobePath)
 });
