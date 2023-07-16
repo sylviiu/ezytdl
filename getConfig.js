@@ -12,6 +12,17 @@ let firstCheckDone = false;
 
 let mainConfigPromise = null;
 
+const postConfigExtensions = (userConfig) => new Promise(async res => {
+    if(!userConfig.saveLocation) userConfig.saveLocation = require(`path`).join((await pfs.existsSync(require(`path`).join(os.homedir(), `Downloads`)) ? require(`path`).join(os.homedir(), `Downloads`) : os.homedir()), `ezytdl`);
+
+    userConfig.strings = require(`./configStrings.json`)
+    userConfig.descriptions = require(`./configDescriptions.json`);
+
+    for(const extension of Object.entries(require(`./core/configExtensions.js`).post)) await extension[1](userConfig);
+
+    res(userConfig);
+})
+
 const configCache = new Map();
 
 module.exports = (configObject, {
@@ -28,7 +39,11 @@ module.exports = (configObject, {
 
     if(!configObject && configCache.has(key)) {
         //console.log(`[CONFIG / ${key}] config cached! returning`)
-        return Promise.resolve(configCache.get(key));
+        if(custom) {
+            return Promise.resolve(configCache.get(key));
+        } else {
+            return postConfigExtensions(configCache.get(key));
+        }
     } else if(configObject) {
         console.log(`[CONFIG / ${key}] config object passed! clearing cache...`)
         configCache.clear();
@@ -53,29 +68,7 @@ module.exports = (configObject, {
         try {
             const defaultConfig = Object.assign({}, require(source));
     
-            if(!custom) {
-                defaultConfig.nightlyUpdates = require(`./package.json`).version.includes(`-nightly.`) ? true : false;
-    
-                // add ffmpeg hardware acceleration toggles to config
-                const gpuArgs = await require(`./util/configs`).ffmpegGPUArgs(null, { waitForPromise: false });
-                for(const key of Object.keys(gpuArgs)) {
-                    if(gpuArgs[key].platform.includes(process.platform)) {
-                        defaultConfig.hardwareAcceleratedConversion[key] = false;
-                    }
-                };
-    
-                const removedArgs = Object.keys(defaultConfig.hardwareAcceleratedConversion).filter(key => !gpuArgs[key]);
-                for(const key of removedArgs) delete defaultConfig.hardwareAcceleratedConversion[key];
-    
-                // add ffmpeg conversion preset toggles to config
-                const ffmpegPresets = Object.values(await require(`./util/configs`).ffmpegPresets(null, { waitForPromise: false }));
-                for(const {key, defaultEnabled} of ffmpegPresets) {
-                    defaultConfig.ffmpegPresets[key] = defaultEnabled || false;
-                };
-    
-                const removedPresets = Object.keys(defaultConfig.ffmpegPresets).filter(key => !ffmpegPresets.map(preset => preset.key).includes(key));
-                for(const key of removedPresets) delete defaultConfig.ffmpegPresets[key];
-            }
+            if(!custom) for(const extension of Object.entries(require(`./core/configExtensions.js`).defaults)) await extension[1](defaultConfig);
         
             await pfs.mkdirSync(global.configPath, { recursive: true, failIfExists: false });
             
@@ -177,49 +170,20 @@ module.exports = (configObject, {
             };
     
             const userConfig = JSON.parse(await pfs.readFileSync(`${global.configPath}/${target}`));
-    
+
             if(!custom) {
-                if(!userConfig.saveLocation) userConfig.saveLocation = require(`path`).join((await pfs.existsSync(require(`path`).join(os.homedir(), `Downloads`)) ? require(`path`).join(os.homedir(), `Downloads`) : os.homedir()), `ezytdl`);
-        
+                firstCheckDone = true;
+
+                await postConfigExtensions(userConfig);
+
                 if(userConfig.downloadFromClipboard) {
                     global.downloadFromClipboard = true;
                 } else {
                     global.downloadFromClipboard = false;
                 }
-        
-                if(!custom) firstCheckDone = true;
-        
-                userConfig.strings = require(`./configStrings.json`)
-                userConfig.descriptions = require(`./configDescriptions.json`);
-        
-                for(const extension of Object.entries(require(`./core/configExtensions.js`))) {
-                    await extension[1](userConfig);
-                }
-        
-                userConfig.actions = {};
-        
-                const parseAction = (key, obj, actionsObj) => {
-                    if(obj.func) {
-                        actionsObj[key] = {
-                            name: obj.name || `ooh fancy button :D`,
-                            args: obj.args || [],
-                            manuallySavable: typeof obj.manuallySavable == `boolean` ? obj.manuallySavable : true,
-                            confirmation: obj.confirmation || null,
-                        };
-                    } else {
-                        if(key) {
-                            actionsObj[key + `Extended`] = {}
-                            for(const entry of Object.entries(obj)) parseAction(entry[0], entry[1], actionsObj[key + `Extended`]);
-                        } else {
-                            for(const entry of Object.entries(obj)) parseAction(entry[0], entry[1], actionsObj);
-                        }
-                    }
-                };
-        
-                parseAction(null, require(`./core/configActions.js`)(userConfig), userConfig.actions);
-    
+
                 global.lastConfig = userConfig;
-            };
+            }
     
             const returnValue = values ? Object.values(userConfig) : userConfig;
 
@@ -228,8 +192,8 @@ module.exports = (configObject, {
             configCache.set(key, returnValue);
 
             console.log(`[CONFIG / ${key}] config cached! (after ${Date.now() - started}ms)`)
-    
-            return res(returnValue);
+
+            res(returnValue);
         } catch(e) {
             console.error(e);
             errorHandler(e)
