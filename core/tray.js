@@ -69,7 +69,7 @@ module.exports = async () => {
         } else {
             a.push({
                 label: `Check for updates`,
-                click: () => require(`./checkForUpdates`)(true)
+                click: () => require(`../util/checkForUpdates`)(true)
             })
         }
 
