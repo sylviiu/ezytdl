@@ -46,4 +46,4 @@ module.exports = (content) => {
     }
 }
 
-module.exports.systemNotificationsEnabled = () => (!global.window || global.windowHidden)
+module.exports.systemNotificationsEnabled = () => (!global.window || global.windowHidden || (global.window ? !global.window.focused : false))

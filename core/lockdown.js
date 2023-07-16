@@ -36,6 +36,16 @@ module.exports = (window, firstRun) => {
         window.loadFile(url);
     }, true)
 
+    window.on(`focus`, () => {
+        console.log(`window focused`)
+        window.focused = true;
+    })
+
+    window.on(`blur`, () => {
+        console.log(`window blurred`)
+        window.focused = false;
+    })
+
     if(firstRun) {
         app.on('web-contents-created', (event, contents) => {
             contents.setWindowOpenHandler(({ url }) => {
