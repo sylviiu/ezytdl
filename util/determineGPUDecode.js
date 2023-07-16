@@ -1,4 +1,4 @@
-const { getPathPromise } = require(`./filenames/ffmpeg`)
+const { getPathPromise, getPath } = require(`./filenames/ffmpeg`)
 const { spawn } = require('child_process');
 const { app } = require(`electron`);
 const { Stream } = require('stream');
@@ -6,7 +6,6 @@ const { Stream } = require('stream');
 const fs = require('fs');
 const pfs = require('./promisifiedFS')
 
-const findPath = require(`./getPath`);
 const idGen = require(`./idGen`);
 const ytdlp = require(`./ytdlp`)
 const superagent = require(`superagent`);
@@ -24,7 +23,7 @@ const constructPromise = (name, accelArgs, file, codec) => new Promise(async (re
 
     console.log(`[FFMPEG/HW -- TESTING] ${name} with codec ${codec}: ${post[post.indexOf(`-c:v`) + 1]}`)
 
-    const proc = spawn(await getPath(), args);
+    const proc = spawn(await getPathPromise(), args);
 
     let complete = false;
 
