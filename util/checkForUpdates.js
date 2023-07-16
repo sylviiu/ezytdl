@@ -96,7 +96,7 @@ module.exports = (force) => new Promise(async res => {
 
             sendNotification({
                 headingText: `No updates available!`,
-                bodyText: `You are up to date! (checked: ${enabled.map(s => require(`./updateAvailable/${s}`).name).join(`, `)})\n\n(` + strings.filter(s => s).join(`)\n(`) + `)`,
+                bodyText: `You are up to date! (checked: ${enabled.map(s => require(`./updateAvailable/${s}`).name).join(`, `)})\n\n` + (strings.length ? `(${strings.filter(s => s).join(`)\n(`)})` : ``),
                 systemAllowed: force ? true : false,
             });
         }
