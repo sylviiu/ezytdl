@@ -109,9 +109,11 @@ const createCard = (key, string, description, config, parentNode, showSaveButton
         parentNode.appendChild(newCard)
     } else console.log(`already present`);
 
-    const card = document.getElementById(key)
+    const card = parentNode.querySelector(`#` + key)
 
     cards.push(card);
+
+    console.log(`card:`, card)
 
     card.querySelector(`#name`).innerHTML = markdown.makeHtml(string);
 
