@@ -12,7 +12,6 @@
     "superagent": "^8.0.9",
     "unzipper": "^0.10.14",
     "which": "^3.0.1",
-    "ws": "^8.13.0",
     "yargs": "^17.7.2"
   },
   "scripts": {
@@ -35,12 +34,12 @@
   },
   "homepage": "https://github.com/sylviiu/ezytdl#readme",
   "devDependencies": {
-    "electron": "^25.2.0",
-    "electron-builder": "^24.4.0",
-    "uglify-js": "^3.17.4",
     "animejs": "^3.2.1",
     "color-scheme": "^1.0.1",
+    "electron": "^25.2.0",
+    "electron-builder": "^24.4.0",
+    "showdown": "^2.1.0",
     "tinycolor2": "^1.6.0",
-    "showdown": "^2.1.0"
+    "uglify-js": "^3.17.4"
   }
 }
