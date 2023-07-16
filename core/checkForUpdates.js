@@ -2,11 +2,15 @@ const sendNotification = require("./sendNotification.js");
 
 const { shell, app, ipcMain } = require(`electron`);
 
+let promises = [];
+
 let checkingForUpdates = false;
 
 let lastChecked = 0;
 
 const setProgress = (opt) => {
+    if(!opt) while(promises.length) promises.pop().res(false);
+
     if(!opt && !checkingForUpdates) return;
 
     if(typeof opt == `object` && JSON.stringify(opt) == JSON.stringify(module.exports.progress)) return;
@@ -20,6 +24,8 @@ const setProgress = (opt) => {
 }
 
 const notifyWithInfo = (info, downloaded) => {
+    while(promises.length) promises.pop().res(true);
+
     global.updateAvailable = info.version;
 
     if(global.window) global.window.webContents.send(`updateAvailable`);
@@ -78,7 +84,6 @@ const notifyWithInfo = (info, downloaded) => {
 };
 
 const { autoUpdater } = require(`electron-updater`);
-const { check } = require("yargs");
 
 autoUpdater.allowDowngrade = true;
 autoUpdater.autoDownload = false;
@@ -88,13 +93,13 @@ if(process.platform == `win32` || process.platform == `linux`/* || process.platf
     // darwin removed because i have to sign the app with my deadname in order for that to work. fuck apple.
 
     autoUpdater.on(`update-downloaded`, (info) => {
-        setProgress(null);
         notifyWithInfo(info, true);
+        setProgress(null);
     });
 } else {
     autoUpdater.on(`update-available`, (info) => {
-        setProgress(null);
         notifyWithInfo(info, false);
+        setProgress(null);
     });
 };
 
@@ -125,11 +130,11 @@ autoUpdater.on(`error`, (e) => {
     })
 })
 
-module.exports = async (manual) => {
-    if(global.testrun) return null;
+module.exports = (manual) => new Promise(async res => {
+    if(global.testrun) return res(null);
 
     // if the last check was less than 15 minutes ago, don't check again unless it's a manual check
-    if(Date.now() - lastChecked > 900000 && !manual) return;
+    if(Date.now() - lastChecked > 900000 && !manual) return res(null);
 
     const { nightlyUpdates } = await require(`../getConfig`)()
 
@@ -157,16 +162,22 @@ module.exports = async (manual) => {
             redirectMsg: `Download latest release`
         });
 
-        return;
-    } else if(!autoUpdater.isUpdaterActive()) return;
+        return res(null);
+    } else if(!autoUpdater.isUpdaterActive()) return res(null);
 
-    if(checkingForUpdates && manual) return sendNotification({
-        headingText: `Already checking for updates!`,
-        bodyText: `ezytdl is already checking for updates!`,
-    })
+    if(checkingForUpdates && manual) {
+        sendNotification({
+            headingText: `Already checking for updates!`,
+            bodyText: `ezytdl is already checking for updates!`,
+        });
+        return res(null)
+    }
     
     if(!global.updateAvailable || manual) {
+        promises.push({res});
         setProgress({ progress: -1, status: `Checking for updates...` });
         autoUpdater.checkForUpdates();
-    }
-};
+    } else res(null);
+});
+
+module.exports.setProgress = setProgress;

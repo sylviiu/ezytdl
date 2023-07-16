@@ -57,12 +57,8 @@ module.exports = async () => new Promise(async res => {
         const versionStr = `build ${version}`
 
         const downloads = latest.assets;
-        
-        const currentVersion = (await require(`../currentVersion/pybridge`)(true));
 
-        console.log(`Current version: ${currentVersion}`)
-
-        if(currentVersion == version) {
+        if((await require(`../updateAvailable/pybridge`).check(r)) == false) {
             ws.send({ message: `You're already on the latest version!`, version: versionStr });
             ws.close(true)
         } else {
@@ -146,6 +142,8 @@ module.exports = async () => new Promise(async res => {
                         };
                         
                         ws.send({ progress: 1, version: versionStr });
+
+                        require(`../fetchLatestVersion/pybridge`)(true);
     
                         ws.close()
                     });

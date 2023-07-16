@@ -3,6 +3,8 @@
     "outputFilename": "File Name Format",
     "downloadInWebsiteFolders": "Create Folders for Websites",
     "downloadFromClipboard": "Allow Checking Clipboard for URLs",
+    "checkForUpdates": "Check for Updates",
+    "updateCheckDaysInterval": "Update Check Interval (Days)",
     "reduceAnimations": "Reduce Animations",
     "disableAnimations": "Disable All Animations",
     "lastMediaConversionOutputs": "Default Media Conversion",

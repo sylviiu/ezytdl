@@ -3,6 +3,8 @@
     "outputFilename": "[ %(webpage_url_domain)s ] %(format_id)s - %(fulltitle)s",
     "downloadInWebsiteFolders": false,
     "downloadFromClipboard": false,
+    "checkForUpdates": {},
+    "updateCheckDaysInterval": 1,
     "reduceAnimations": false,
     "disableAnimations": false,
     "lastMediaConversionOutputs": {
@@ -20,6 +22,7 @@
     "advanced": false,
     "version": "v0.0.0",
     "systemTrayNotifSent": false,
+    "lastUpdateCheck": 0,
     "system": {
         "ffmpegTestMediaLink": "https://sylviiu.dev/ezytdl/assets/video/sample.mp4"
     }

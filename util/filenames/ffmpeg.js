@@ -72,12 +72,38 @@ module.exports = {
     lastCheckedFFmpeg: 0,
     lastCheckedFFprobe: 0,
     getPath: () => {
-        checkFFmpeg();
+        module.exports.lastCheckedFFmpeg = Date.now();
+    
+        if(fs.existsSync(downloadPath)) {
+            usableFFmpegPath = downloadPath + s + (fs.readdirSync(downloadPath))[0] + s + `bin` + s + `ffmpeg${require('os').platform() == `win32` ? `.exe` : ``}`
+        } else {
+            systemPath = require(`which`).sync(`ffmpeg`, {nothrow: true});
+
+            if(systemPath) {
+                usableFFmpegPath = systemPath
+            } else {
+                usableFFmpegPath = null
+            }
+        }
+
         return usableFFmpegPath
     },
     getPathPromise: () => checkFFmpeg(),
     getFFprobe: () => {
-        checkFFprobe();
+        module.exports.lastCheckedFFprobe = Date.now();
+    
+        if(require('fs').existsSync(downloadPath)) {
+            usableFFprobePath = downloadPath + s + (fs.readdirSync(downloadPath))[0] + s + `bin` + s + `ffprobe${require('os').platform() == `win32` ? `.exe` : ``}`
+        } else {
+            let systemFFprobe = require(`which`).sync(`ffprobe`, {nothrow: true});
+
+            if(systemFFprobe) {
+                usableFFprobePath = systemFFprobe
+            } else {
+                usableFFprobePath = null
+            }
+        }
+
         return usableFFprobePath
     },
     getFFprobePromise: () => checkFFprobe()

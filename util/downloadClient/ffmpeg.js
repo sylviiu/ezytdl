@@ -53,12 +53,8 @@ module.exports = async () => new Promise(async res => {
         const downloads = latest.assets;
         
         ws.send({ version, progress: 0 })
-        
-        const currentVersion = (await require(`../currentVersion/ffmpeg`)(true, true));
 
-        console.log(`Current version: ${currentVersion}`)
-
-        if(currentVersion == version) {
+        if((await require(`../updateAvailable/ffmpeg`).check(r)) == false) {
             ws.send({ message: `You're already on the latest version!`, version, progress: 1 });
             ws.close(true)
         } else {
@@ -123,6 +119,8 @@ module.exports = async () => new Promise(async res => {
                             await pfs.chmodSync(ffprobePath, 0o777)
                         } catch(e) {}
                     };
+
+                    require(`../fetchLatestVersion/ffmpeg`)(true);
 
                     ws.close();
                 } catch(e) {
