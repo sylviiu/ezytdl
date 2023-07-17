@@ -41,7 +41,7 @@ module.exports = {
     },
     post: {
         checkForUpdatesDescription: (userConfig) => new Promise(async res => {
-            console.log(`userConfig`, userConfig, `lastUpdateCheck`, userConfig.lastUpdateCheck)
+            //console.log(`userConfig`, userConfig, `lastUpdateCheck`, userConfig.lastUpdateCheck)
 
             if(userConfig.lastUpdateCheck) {
                 const time = require(`../util/time`)(Date.now() - userConfig.lastUpdateCheck);
