@@ -38,11 +38,14 @@ module.exports = (window, firstRun) => {
 
     window.on(`focus`, () => {
         console.log(`window focused`)
+        global.sendNotifs = true;
         window.focused = true;
+        require(`./sendNotification`)();
     })
 
     window.on(`blur`, () => {
         console.log(`window blurred`)
+        global.sendNotifs = false;
         window.focused = false;
     })
 
