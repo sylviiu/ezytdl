@@ -85,7 +85,6 @@ const notifyWithInfo = (info, downloaded) => {
 
 const { autoUpdater } = require(`electron-updater`);
 
-autoUpdater.allowDowngrade = true;
 autoUpdater.autoDownload = false;
 
 if(process.platform == `win32` || process.platform == `linux`/* || process.platform == `darwin`*/) {
@@ -131,6 +130,8 @@ autoUpdater.on(`error`, (e) => {
 })
 
 module.exports = (manual) => new Promise(async res => {
+    const pkg = require(`../package.json`);
+
     if(global.testrun) return res(null);
 
     // if the last check was less than 15 minutes ago, don't check again unless it's a manual check
@@ -138,7 +139,15 @@ module.exports = (manual) => new Promise(async res => {
 
     const { nightlyUpdates } = await require(`../getConfig`)()
 
-    if(nightlyUpdates) autoUpdater.allowPrerelease = true;
+    if(nightlyUpdates) {
+        autoUpdater.allowPrerelease = true;
+    };
+
+    if((!nightlyUpdates && pkg.version.includes(`-dev.`)) || (nightlyUpdates && !pkg.version.includes(`-dev.`))) {
+        autoUpdater.currentVersion = `1.0.0`;
+    }
+
+    autoUpdater.allowDowngrade = true;
 
     if(!autoUpdater.isUpdaterActive() && manual) {
         setProgress(null);

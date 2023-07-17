@@ -11,7 +11,7 @@ const type = args.shift();
 
 const tagList = child_process.execSync(`git tag --sort=-creatordate`).toString().trim().split(`\n`).map(s => s.trim());
 const latestReleaseTag = tagList[0];
-const latestStableTag = tagList.filter(s => !s.includes(`-nightly`))[0];
+const latestStableTag = tagList.filter(s => !s.includes(`-dev`))[0];
 const previousTagCommit = child_process.execSync(`git rev-list -n 1 ${latestReleaseTag}`).toString().trim();
 const stableTagCommit = child_process.execSync(`git rev-list -n 1 ${latestStableTag}`).toString().trim();
 const currentCommit = child_process.execSync(`git rev-parse HEAD`).toString().trim();

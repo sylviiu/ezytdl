@@ -16,7 +16,7 @@ module.exports = {
             url: global.changelogResponse.html_url,
             version: global.changelogResponse.tag_name,
             released: global.changelogResponse.published_at,
-            body: !global.changelogResponse.body || global.changelogResponse.body == `\n` ? global.changelogResponse.tag_name.includes(`-nightly.`) ? `This is a nightly build -- there was no changelog for this release.` : `{ no changelog }` : global.changelogResponse.body,
+            body: !global.changelogResponse.body || global.changelogResponse.body == `\n` ? global.changelogResponse.tag_name.includes(`-dev.`) ? `This is a nightly build -- there was no changelog for this release.` : `{ no changelog }` : global.changelogResponse.body,
         }
 
         console.log(obj);

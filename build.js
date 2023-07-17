@@ -231,7 +231,7 @@ which(`npm`).then(async npm => {
                 process.exit(1);
             }
         
-            config.extraMetadata.version = `${pkg.version}-nightly.${buildArgs.buildNumber}`;
+            config.extraMetadata.version = `${pkg.version}-dev.${buildArgs.buildNumber}`;
         
             //config.productName += `nightly`;
         

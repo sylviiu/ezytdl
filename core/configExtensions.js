@@ -4,7 +4,7 @@ const getPath = require(`../util/getPath`);
 module.exports = {
     defaults: {
         nightly: (defaultConfig) => Object.assign(defaultConfig, {
-            nightlyUpdates: require(`../package.json`).version.includes(`-nightly.`) ? true : false
+            nightlyUpdates: require(`../package.json`).version.includes(`-dev.`) ? true : false
         }),
         checkForUpdates: (defaultConfig) => new Promise(async res => {
             const checks = (await pfs.readdirSync(getPath(`./util/updateAvailable`))).filter(f => f.endsWith(`.js`)).map(s => s.split(`.`).slice(0, -1).join(`.`));
