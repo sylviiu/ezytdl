@@ -1,6 +1,5 @@
-const { app, Menu, Tray, nativeImage, nativeTheme, ipcMain } = require('electron');
+const { nativeImage, nativeTheme, ipcMain } = require('electron');
 const sharp = require('sharp');
-const fs = require('fs');
 const pfs = require('../util/promisifiedFS')
 const path = require(`path`);
 
@@ -9,17 +8,17 @@ let current = `regular`;
 const getPath = require(`../util/getPath`)
 
 const icons = {
-    noQueue: getPath(`res/trayIcons/circle-down-regular.svg`),
-    active: getPath(`res/trayIcons/circle-down-solid.svg`),
-    complete: getPath(`res/trayIcons/circle-check-solid.svg`),
-    mixed: getPath(`res/trayIcons/circle-dot-solid.svg`),
-    errored: getPath(`res/trayIcons/circle-xmark-solid.svg`),
-    update: getPath(`res/trayIcons/circle-up-solid.svg`),
+    noQueue: `res/trayIcons/circle-down-regular.svg`,
+    active: `res/trayIcons/circle-down-solid.svg`,
+    complete: `res/trayIcons/circle-check-solid.svg`,
+    mixed: `res/trayIcons/circle-dot-solid.svg`,
+    errored: `res/trayIcons/circle-xmark-solid.svg`,
+    update: `res/trayIcons/circle-up-solid.svg`,
 };
 
 const events = new (require(`events`).EventEmitter)();
 
-let currentIcon = icons.regularIcon;
+let currentIcon = icons.noQueue;
 events.on(`icon`, i => currentIcon = i);
 
 const iconGetter = (type, alwaysUseLightIcon, maxRes) => {
@@ -50,7 +49,6 @@ const iconToPNG = (icon, size, negate) => new Promise(async res => {
 
     const filePath = path.join(basePath, fileName);
 
-    //if(!fs.existsSync(basePath)) fs.mkdirSync(basePath, { recursive: true });
     if(!await pfs.existsSync(basePath)) await pfs.mkdirSync(basePath, { recursive: true });
 
     if(await pfs.existsSync(filePath)) {
@@ -129,16 +127,13 @@ module.exports = {
                 res(nativeIcon);
             });
 
-            const threads = require('os').cpus().length;
-            //const threads = 4;
-
             const iconPromises = [];
 
             const originalIcons = Object.assign({}, icons);
 
             const iconKeys = [...Object.keys(icons).map(k => k + `Inv`), ...Object.keys(icons)];
 
-            const chunkSize = Math.ceil(iconKeys.length / threads);
+            const chunkSize = Math.ceil(iconKeys.length / require('os').cpus().length);
 
             for(let i = 0; i < iconKeys.length; i += chunkSize) {
                 const chunk = iconKeys.slice(i, i + chunkSize);
@@ -152,7 +147,7 @@ module.exports = {
                         if(inv) iconFile = iconFile.slice(0, -3);
 
                         if(typeof originalIcons[iconFile] == `string`) {
-                            const str = originalIcons[iconFile];
+                            const str = await getPath(originalIcons[iconFile], true, false, true);
 
                             await Promise.all([
                                 new Promise(async r => {

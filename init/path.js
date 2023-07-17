@@ -1,13 +1,33 @@
 module.exports = () => new Promise(async res => {
-    try {
-        const fixPath = (await import('fix-path')).default;
+    const pfs = require(`../util/promisifiedFS`)
 
-        const originalPath = JSON.stringify(process.env.PATH);
+    const splitter = process.platform == `win32` ? `;` : `:`
+
+    try {
+        const { shellEnv } = (await import('shell-env'));
+
+        const originalPathSplit = process.env.PATH.split(splitter);
+
+        console.log(`[PATH] Running "fixPath"...`);
 
         try {
-            const p = await fixPath();
-            const changed = JSON.stringify(process.env.PATH) != originalPath;
-            const r = (`[PATH] Ran "fixPath" successfully; return value: ${p}` + (changed ? ` (changed)` : ` (unchanged)`))
+            const env = await shellEnv();
+
+            const p = env.PATH || env.Path || env.path;
+
+            const locations = p.split(splitter);
+
+            const filteredLocations = [];
+
+            for(const location of locations) {
+                if(await pfs.exists(location) && !originalPathSplit.includes(location)) filteredLocations.push(location)
+            }
+
+            console.log(`[PATH] New additional paths: ${filteredLocations.length}`)
+
+            process.env.PATH += [...originalPathSplit, ...filteredLocations].join(splitter);
+
+            const r = (`[PATH] Ran "fixPath" successfully - (${filteredLocations.length} found locations)`)
             console.log(r)
             res(r)
         } catch(e) {

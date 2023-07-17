@@ -74,7 +74,7 @@ module.exports = {
             resizable: false
         });
 
-        const loadURLPath = require(`../util/getPath`)(`html/dialog.html`)
+        const loadURLPath = await require(`../util/getPath`)(`html/dialog.html`, true, false, true)
 
         console.log(`window created for ${id} -- ${dialogs[id].window}; loading ${loadURLPath}`)
 

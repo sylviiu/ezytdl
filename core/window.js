@@ -39,7 +39,7 @@ module.exports = (notDefault, overrideArgs) => new Promise(async res => {
         iconPath += `-512x512.png`
     }
 
-    iconPath = getPath(iconPath);
+    iconPath = await getPath(iconPath, true, false, true);
 
     console.log(`Icon path: ${iconPath}`)
 

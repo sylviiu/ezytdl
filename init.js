@@ -1,9 +1,13 @@
+const pfs = require(`./util/promisifiedFS`)
+
 module.exports = () => new Promise(async res => {
     const initStart = Date.now();
 
     console.log(`Initializing...`);
 
-    const initScripts = require('fs').readdirSync(require(`./util/getPath`)(`./init`));
+    const path = await require(`./util/getPath`)(`./init`, true, false, true)
+
+    const initScripts = await pfs.readdirSync(path);
 
     console.log(`Scripts: ${initScripts.join(`, `)}`)
 

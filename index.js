@@ -55,36 +55,37 @@ if(!locked) {
             ipcMain.handle(`loading`, () => {
                 requestedLoading = Date.now();
                 if(doneLoading) return Promise.resolve(doneLoading)
-                else if(startedLoading) return startedLoading;
-            });
 
-            startedLoading = new Promise(async res => {
-                console.log(`[${Date.now() - startTime}ms] Loading requested!`);
-
-                const init = await require(`./init`)();
-
-                console.log(`Took [${Date.now() - startTime}ms] to finish init!`);
-        
-                let redirect = `index.html`
-                if(!init.ytdlpDownloaded && !global.testrun) redirect = `index.html`;
-        
-                doneLoading = redirect;
-                res(redirect);
-                loadingPromise = null;
-                console.log(`[${Date.now() - startTime}ms] to finish loading app! (UI took ${Date.now() - requestedLoading}ms)`);
-
-                if(global.testrun) {
-                    console.log(`[${Date.now() - startTime}ms] Waiting a few seconds before starting testrun...`);
+                if(!startedLoading) startedLoading = new Promise(async res => {
+                    console.log(`[${Date.now() - startTime}ms] Loading requested!`);
     
-                    setTimeout(() => {
-                        console.log(`[${Date.now() - startTime}ms] Starting testrun...`)
-                        require(`./devscripts/testrun`)(startTime);
-                    }, 2500)
-                } else {
-                    console.log(`complete`)
-                }
+                    const init = await require(`./init`)();
+    
+                    console.log(`Took [${Date.now() - startTime}ms] to finish init!`);
+            
+                    let redirect = `index.html`
+                    if(!init.ytdlpDownloaded && !global.testrun) redirect = `index.html`;
+            
+                    doneLoading = redirect;
+                    res(redirect);
+                    loadingPromise = null;
+                    console.log(`[${Date.now() - startTime}ms] to finish loading app! (UI took ${Date.now() - requestedLoading}ms)`);
+    
+                    if(global.testrun) {
+                        console.log(`[${Date.now() - startTime}ms] Waiting a few seconds before starting testrun...`);
+        
+                        setTimeout(() => {
+                            console.log(`[${Date.now() - startTime}ms] Starting testrun...`)
+                            require(`./devscripts/testrun`)(startTime);
+                        }, 2500)
+                    } else {
+                        console.log(`complete`)
+                    }
+                });
+                
+                return startedLoading;
             });
-
+            
             //if(!app.isPackaged) window.webContents.openDevTools();
             
             window.loadFile(`./html/loading.html`);

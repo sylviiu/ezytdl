@@ -1,6 +1,6 @@
 const { ipcMain } = require('electron');
 
-const fs = require('fs'), pfs = require('../util/promisifiedFS'), path = require('path')
+const fs = require('fs'), path = require('path')
 
 const ipcMethodGroups = fs.readdirSync(path.join(__dirname, `ipc`));
 

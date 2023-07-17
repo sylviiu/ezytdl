@@ -7,7 +7,8 @@ module.exports = {
             nightlyUpdates: require(`../package.json`).version.includes(`-dev.`) ? true : false
         }),
         checkForUpdates: (defaultConfig) => new Promise(async res => {
-            const checks = (await pfs.readdirSync(getPath(`./util/updateAvailable`))).filter(f => f.endsWith(`.js`)).map(s => s.split(`.`).slice(0, -1).join(`.`));
+            const path = await getPath(`./util/updateAvailable`, true, false, true)
+            const checks = (await pfs.readdirSync(path)).filter(f => f.endsWith(`.js`)).map(s => s.split(`.`).slice(0, -1).join(`.`));
             for(const check of checks) {
                 defaultConfig.checkForUpdates[check] = true;
             }
@@ -66,7 +67,8 @@ module.exports = {
             return res(userConfig);
         }),
         checkForUpdates: (userConfig) => new Promise(async res => {
-            const checks = (await pfs.readdirSync(getPath(`./util/updateAvailable`))).filter(f => f.endsWith(`.js`)).map(s => s.split(`.`).slice(0, -1).join(`.`));
+            const path = await getPath(`./util/updateAvailable`, true, false, true)
+            const checks = (await pfs.readdirSync(path)).filter(f => f.endsWith(`.js`)).map(s => s.split(`.`).slice(0, -1).join(`.`));
 
             Object.assign(userConfig.strings, { checkForUpdatesExtended: {}, });
             Object.assign(userConfig.descriptions, { checkForUpdatesExtended: {}, });

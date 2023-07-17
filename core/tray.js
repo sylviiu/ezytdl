@@ -1,12 +1,10 @@
-const { app, Menu, Tray, nativeImage, nativeTheme, ipcMain } = require('electron');
+const { Menu, Tray } = require('electron');
 const { queueEventEmitter, queueAction } = require(`../util/downloadManager`).default;
 
 global.tray = null;
 
 let s = `/`;
 if(process.platform == `win32`) s = `\\`;
-
-let current = `regular`;
 
 const downloadIcons = require(`./downloadIcon`);
 
