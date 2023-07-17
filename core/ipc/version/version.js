@@ -7,10 +7,10 @@ module.exports = {
 
         let str = [];
         
-        if(pkg.version.includes(`nightly`)) {
+        if(pkg.version.includes(`dev`)) {
             if(pkg.buildDate) {
-                str.push(`nightly.` + pkg.version.split(`nightly.`).slice(-1)[0], `built ${time(Date.now() - pkg.buildDate, true).string} ago`);
-            } else str.push(`nightly build`, `commit ` + pkg.version.split(`nightly.`).slice(-1)[0]);
+                str.push(`dev.` + pkg.version.split(`dev.`).slice(-1)[0], `built ${time(Date.now() - pkg.buildDate, true).string} ago`);
+            } else str.push(`dev build`, `commit ` + pkg.version.split(`dev.`).slice(-1)[0]);
         } else {
             str.push(pkg.version);
         }

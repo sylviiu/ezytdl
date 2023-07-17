@@ -53,7 +53,7 @@ jobs:
         id: get_release_metadata
         run: |
           echo "TAG_NAME=$(node -e "console.log(require('./package.json').version)")-dev.${{github.run_number}}" >> "$GITHUB_ENV"
-          echo "RELEASE_NAME=[NIGHTLY] $(node -e "console.log(require('./package.json').version)")-dev.${{github.run_number}}" >> "$GITHUB_ENV"
+          echo "RELEASE_NAME=[DEV] $(node -e "console.log(require('./package.json').version)")-dev.${{github.run_number}}" >> "$GITHUB_ENV"
           echo "BODY_PATH=$(echo "$(pwd)/release-notes.md")" >> "$GITHUB_ENV"
 
       - name: Create release notes
@@ -170,6 +170,6 @@ jobs:
         with:
           keep_latest: 3
           delete_tags: true
-          delete_tag_pattern: nightly
+          delete_tag_pattern: dev
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
