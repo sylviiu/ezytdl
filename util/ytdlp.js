@@ -1675,8 +1675,8 @@ module.exports = {
                         }
                     } catch(e) { console.log(e) }
                     if(msg && typeof msg == `string`) {
-                        update({failed: true, percentNum: 100, status: msg, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + `.` + previousFilename.split(`.`).slice(-1)[0], url, format})
-                    } else update({failed: true, percentNum: 100, status: `Could not convert to ${`${convert ? convert.ext : `--`}`.toUpperCase()}.`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + `.` + previousFilename.split(`.`).slice(-1)[0], url, format});
+                        update({failed: true, percentNum: 100, status: msg, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + (previousFilename ? (`.` + previousFilename.split(`.`).slice(-1)[0]) : ``), url, format})
+                    } else update({failed: true, percentNum: 100, status: `Could not convert to ${`${convert ? convert.ext : `--`}`.toUpperCase()}.`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + (previousFilename ? (`.` + previousFilename.split(`.`).slice(-1)[0]) : ``), url, format});
                     return res()
                     //purgeLeftoverFiles(saveTo)
                 };
