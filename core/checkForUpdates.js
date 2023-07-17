@@ -146,9 +146,12 @@ module.exports = (manual) => new Promise(async res => {
     autoUpdater.allowPrerelease = nightlyAllowed;
     AppUpdater.allowPrerelease = nightlyAllowed;
 
-    if((!nightlyUpdates && pkg.version.includes(`-dev.`)) || (nightlyUpdates && !pkg.version.includes(`-dev.`))) {
+    if((!nightlyUpdates && pkg.version.includes(`-dev.`))) {
         autoUpdater.currentVersion = `1.0.0`;
         AppUpdater.currentVersion = `1.0.0`;
+    } else if((nightlyUpdates && !pkg.version.includes(`-dev.`))) {
+        autoUpdater.currentVersion = pkg.version;
+        AppUpdater.currentVersion = pkg.version;
     }
 
     autoUpdater.allowDowngrade = true;
