@@ -83,12 +83,14 @@ const notifyWithInfo = (info, downloaded) => {
     sendNotification(opt)
 };
 
-const { autoUpdater } = require(`electron-updater`);
+const { autoUpdater, AppUpdater } = require(`electron-updater`);
 
 autoUpdater.autoDownload = false;
+AppUpdater.autoDownload = false;
 
 if(process.platform == `win32` || process.platform == `linux`/* || process.platform == `darwin`*/) {
     autoUpdater.autoDownload = true;
+    AppUpdater.autoDownload = true;
     // darwin removed because i have to sign the app with my deadname in order for that to work. fuck apple.
 
     autoUpdater.on(`update-downloaded`, (info) => {
@@ -141,13 +143,16 @@ module.exports = (manual) => new Promise(async res => {
 
     if(nightlyUpdates) {
         autoUpdater.allowPrerelease = true;
+        AppUpdater.allowPrerelease = true;
     };
 
     if((!nightlyUpdates && pkg.version.includes(`-dev.`)) || (nightlyUpdates && !pkg.version.includes(`-dev.`))) {
         autoUpdater.currentVersion = `1.0.0`;
+        AppUpdater.currentVersion = `1.0.0`;
     }
 
     autoUpdater.allowDowngrade = true;
+    AppUpdater.allowDowngrade = true;
 
     if(!autoUpdater.isUpdaterActive() && manual) {
         setProgress(null);
