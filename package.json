@@ -1,13 +1,13 @@
 {
   "name": "ezytdl",
-  "version": "2.4.2",
+  "version": "2.4.3",
   "description": "Advanced electron-based frontend for yt-dlp.",
   "main": "index.js",
   "dependencies": {
     "electron-updater": "^6.1.1",
-    "fix-path": "^4.0.0",
     "sanitize-filename": "^1.6.3",
     "sharp": "^0.32.1",
+    "shell-env": "^4.0.1",
     "string-similarity": "^4.0.4",
     "superagent": "^8.0.9",
     "unzipper": "^0.10.14",
