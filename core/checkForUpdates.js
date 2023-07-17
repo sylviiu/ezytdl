@@ -141,10 +141,10 @@ module.exports = (manual) => new Promise(async res => {
 
     const { nightlyUpdates } = await require(`../getConfig`)()
 
-    if(nightlyUpdates) {
-        autoUpdater.allowPrerelease = true;
-        AppUpdater.allowPrerelease = true;
-    };
+    const nightlyAllowed = nightlyUpdates ? true : false;
+    
+    autoUpdater.allowPrerelease = nightlyAllowed;
+    AppUpdater.allowPrerelease = nightlyAllowed;
 
     if((!nightlyUpdates && pkg.version.includes(`-dev.`)) || (nightlyUpdates && !pkg.version.includes(`-dev.`))) {
         autoUpdater.currentVersion = `1.0.0`;
