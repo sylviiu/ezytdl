@@ -107,14 +107,8 @@ var initDownloadManager = (force) => {
                     card.style.opacity = 0.5;
                     
                     card.querySelector(`#downloadicon`).classList.add(`d-none`);
-                    card.querySelector(`#checkmarkicon`).classList.remove(`d-none`);
-            
-                    const clear = () => {
-                        mainQueue.action({
-                            action: `remove`,
-                            id: card.id.split(`-`)[1]
-                        })
-                    };
+                    //card.querySelector(`#checkmarkicon`).classList.remove(`d-none`);
+                    card.querySelector(`#fileicon`).classList.remove(`d-none`);
 
                     const btn2 = card.querySelector(`#pausePlayButton`);
                 
@@ -126,7 +120,12 @@ var initDownloadManager = (force) => {
                     btn2.classList.remove(`d-none`);
                     btn2.classList.add(`d-flex`);
                     
-                    card.querySelector(`#formatDownload`).onclick = clear
+                    //card.querySelector(`#formatDownload`).onclick = () => mainQueue.action({ action: `remove`, id: card.id.split(`-`)[1] })
+                    
+                    card.querySelector(`#formatDownload`).onclick = () => {
+                        mainQueue.openDir(card.id.split(`-`)[1]);
+                        mainQueue.action({ action: `remove`, id: card.id.split(`-`)[1] });
+                    }
                 },
                 active: (card) => {
                     downloadCardStates.reset(card);

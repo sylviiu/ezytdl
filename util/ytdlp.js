@@ -1255,7 +1255,7 @@ module.exports = {
             const fullYtdlpFilename = sanitize(await new Promise(res => {
                 if(info._platform == `file` && convert) {
                     const parsed = require(`path`).parse(url);
-                    res(`${parsed.name} - converted-${info.selectedConversion ? info.selectedConversion.key : `customconversion`}-${Date.now()}` + (convert.ext ? `.${convert.ext}` : parsed.ext))
+                    res(`${parsed.name} - converted-${info.selectedConversion && info.selectedConversion.key ? info.selectedConversion.key : `customconversion`}-${Date.now()}` + (convert.ext ? `.${convert.ext.startsWith(`.`) ? convert.ext.slice(1) : convert.ext}` : parsed.ext))
                 } else {
                     const filename = module.exports.getFilename(url, info, thisFormat, outputFilename + `.%(ext)s`, true);
                     if(filename.then) {
@@ -1318,6 +1318,8 @@ module.exports = {
 
                     const file = (await pfs.readdirSync(saveTo)).find(f => f.startsWith(ytdlpFilename) && !f.endsWith(`.meta`));
                     const target = file ? require(`path`).join(saveTo, file) : null;
+
+                    if(target) update({ destinationFile: target });
 
                     const isWritable = () => new Promise(async res => {
                         try {
@@ -1644,7 +1646,20 @@ module.exports = {
 
                 if(!useFile) filenames.push(...temporaryFiles);
 
-                let previousFilename = obj.destinationFile ? `ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0] : temporaryFilename + `.${ytdlpSaveExt}`;
+                //let previousFilename = obj.destinationFile ? (`ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0]) : (temporaryFilename + `.${ytdlpSaveExt}`);
+                let previousFilename = null;
+
+                if(useFile) {
+                    previousFilename = require(`path`).parse(useFile).base;
+                } else {
+                    for(const f of temporaryFiles) {
+                        const filepath = require(`path`).join(saveTo, f);
+                        if(await pfs.existsSync(filepath)) {
+                            previousFilename = f;
+                            break;
+                        }
+                    }
+                }
 
                 const fallback = async (msg, deleteFile) => {
                     try {
@@ -1841,7 +1856,7 @@ module.exports = {
                         let args2 = rawArgs2.slice(0);
 
                         if(killAttempt > 0) {
-                            update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`, url, format})
+                            update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + ext, url, format})
                             return res()
                             //purgeLeftoverFiles(saveTo)
                             //return res(`Download canceled.`, true);
@@ -1919,7 +1934,7 @@ module.exports = {
         
                         proc.on(`close`, async (code) => {
                             if(killAttempt > 0) {
-                                update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`, url, format})
+                                update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + ext, url, format})
                                 return res()
                                 //return purgeLeftoverFiles(saveTo)
                                 //return res(`Download canceled.`, true);
@@ -1929,7 +1944,7 @@ module.exports = {
                                 for(const f of temporaryFiles) {
                                     if(await pfs.existsSync(require(`path`).join(saveTo, f))) await pfs.unlinkSync(require(`path`).join(saveTo, f));
                                 }
-                                update({percentNum: 100, status: `Done!`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`, url, format});
+                                update({percentNum: 100, status: `Done!`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + ext, url, format});
                                 resolveFFmpeg()
                             } else {
                                 if(allLogs.includes(`Press [q] to stop, [?] for help`)) {
@@ -2127,7 +2142,7 @@ module.exports = {
                     }
 
                     if(killAttempt > 0) {
-                        update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`, url, format})
+                        update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + ext, url, format})
                         return res()
                         //purgeLeftoverFiles(saveTo)
                     } else if(args.includes(`-S`) && ytdlpSaveExt == ext) {
@@ -2140,7 +2155,7 @@ module.exports = {
                     res()
                 } else {
                     if(killAttempt > 0) {
-                        update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`, url, format})
+                        update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + ext, url, format})
                         return res()
                         //purgeLeftoverFiles(saveTo)
                     } else {
