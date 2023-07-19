@@ -452,7 +452,7 @@ module.exports = {
 
         if(full && root && !d.fullInfo) d.fullInfo = true;
 
-        if(!d.originalDuration && d.duration) d.originalDuration = d.duration;
+        if(!d.originalDuration && typeof d.duration == `number`) d.originalDuration = d.duration;
 
         let totalTime = 0;
 
