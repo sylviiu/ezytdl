@@ -81,6 +81,8 @@ tabs[`Convert`] = {
             if(!container.querySelector(`#listbox`)) return r(false);
             r(false)
         });
+
+        searchTagsEditCallback(container, () => centerURLBox(true))
         
         const runSearch = async (url, initialMsg, func=`ffprobe`) => {
             system.hasFFmpeg().then(has => {
@@ -953,8 +955,11 @@ tabs[`Convert`] = {
                 url = info._request_url || info.media_metadata.url.source_url || info.media_metadata.url || info.url;
                 runParse(`url is object; ${url}`)
             } else {
-                console.log(`running func ${func}`)
-                mainQueue[func](url.includes(`|`) ? url.split(`|`) : url).then(data => {
+                console.log(`running func ${func}`);
+
+                const urls = [url, ...getSearchTags()].filter(o => o);
+
+                mainQueue[func](urls.length < 2 ? urls[0] : urls).then(data => {
                     info = data;
             
                     console.log(`info received`)
@@ -1044,7 +1049,15 @@ tabs[`Convert`] = {
                 if(files) {
                     console.log(`files:`, files)
                     if(files.length > 1) {
-                        input.value = files.join(`|`);
+                        files.forEach(file => {
+                            const splitter = navigator.platform == `Win32` ? `\\` : `/`;
+        
+                            let name = file.split(splitter).slice(-1)[0];
+        
+                            if(name.length > 8) name = `${name.slice(0, 4)}...${name.slice(-4)}`
+        
+                            createSearchTag({ url: file, name });
+                        });
                         processURL();
                     } else {
                         input.value = files[0];
@@ -1066,16 +1079,12 @@ tabs[`Convert`] = {
         }
         
         const processURL = () => {
-            const url = input.value;
+            const url = input.value + getSearchTags().reduce((a, b) => a + b, ``);
         
             if(url.length > 0) {        
                 console.log (`clicc`, url)
             
-                const match = `${url}`.split(`?`)[0].match(genericURLRegex);
-            
-                console.log (`match`, match)
-            
-                runSearch(url, `Running search...`, `ffprobe`)
+                runSearch(input.value, `Running search...`, `ffprobe`)
             };
         }
         
@@ -1121,7 +1130,23 @@ tabs[`Convert`] = {
         //input.addEventListener(`focus`, () => !changesMadeToInput ? selectionBox.hide(null, true) : null);
         
         input.addEventListener(`keyup`, (e) => {
-            if((e.key == `Enter` || e.keyCode == 13) && !input.disabled) processURL();
+            if(input.disabled) return;
+
+            const enter = (e.key == `Enter` || e.keyCode == 13);
+
+            if(enter && (e.shiftKey || (navigator.platform.startsWith(`Mac`) ? e.metaKey : e.altKey)) && input.value) {
+                try {
+                    const splitter = navigator.platform == `Win32` ? `\\` : `/`;
+
+                    let name = input.value.split(splitter).slice(-1)[0];
+
+                    if(name.length > 8) name = `${name.slice(0, 4)}...${name.slice(-4)}`
+
+                    createSearchTag({ url: input.value, name })
+
+                    input.value = ``;
+                } catch(e) {}
+            } else if(enter) processURL();
         });
     }
 }

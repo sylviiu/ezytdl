@@ -144,6 +144,11 @@ const formatCardBounds = document.getElementById(`formatCard`).getBoundingClient
 
 const everything = document.getElementById(`everythingContainer`);
 
+const tagButton = document.getElementById(`tag`).cloneNode(true);
+tagButton.classList.remove(`d-none`);
+
+document.getElementById(`tag`).parentElement.removeChild(document.getElementById(`tag`));
+
 const container = document.getElementById(`mainContainer`).cloneNode(true);
 
 const backgrounds = {};
@@ -211,6 +216,8 @@ let tabStyle = {
         }
     }
 }
+
+let currentContent = document.getElementById(`mainContainer`);
 
 getTabs().then(async tabs => {
     const searchStr = window.location.search.slice(1);
@@ -325,6 +332,8 @@ getTabs().then(async tabs => {
                 };
         
                 if(!tab.content.parentElement) {
+                    currentContent = tab.content;
+
                     console.log(`appending tab "${tab.name}" to everything`)
         
                     const goingLeft = indexOfNew < indexOfCurrent;
@@ -351,10 +360,16 @@ getTabs().then(async tabs => {
                         }
                     });
                 } else transitioning = false;
-            } else console.log(`not selecting tab "${tabName}" because it is already selected or it does not exist`)
+            } else {
+                console.log(`not selecting tab "${tabName}" because it is already selected or it does not exist`);
+            }
         })();
 
-        return tab;
+        const returnValue = tab || currentTab;
+
+        console.log(`returning ${returnValue.name}`)
+
+        return returnValue;
     };
     
     for(const tabName of tabKeys) {

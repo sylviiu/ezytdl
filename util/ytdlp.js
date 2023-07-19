@@ -227,7 +227,7 @@ module.exports = {
 
         return returnArgs;
     },
-    unflatPlaylist: (extraArguments, info, customID, ignoreStderr) => new Promise(async res => {
+    unflatPlaylist: ({extraArguments, info, customID, ignoreStderr}) => new Promise(async res => {
         const id = customID || idGen(16);
 
         const instanceName = `unflatPlaylist-${id}`
@@ -267,7 +267,9 @@ module.exports = {
 
                 if(!ignoreStderr) updateStatus(`Finished fetching info of ${queue.complete.length}/${totalLength} items!` + (failed > 0 ? ` (${failed} entries failed to resolve)` : ``) + (badEntries > 0 ? ` (${badEntries} entries failed to resolve)` : ``))
 
-                res(module.exports.parseInfo(newInfo || info, true));
+                res(module.exports.parseInfo(Object.assign(newInfo || info, {
+                    entries: (newInfo || info).entries ? (newInfo || info).entries.filter(e => e) : undefined,
+                }), true));
 
                 if(!customID) downloadManager[instanceName].timeout = setTimeout(() => {
                     if(downloadManager[instanceName]) {
@@ -293,8 +295,15 @@ module.exports = {
                 // to keep the same order of songs
                 if(e) {
                     console.log(`new info!`);
-                    Object.assign(info.entries[i], module.exports.parseInfo(e, true));
-                    console.log(`added "${e.title}" (id: ${e.id} / url: ${e.url}) to index ${i}`)
+                    const newEntry = module.exports.parseInfo(e, true);
+                    if(!newEntry.formats && newEntry.entries) {
+                        info.entries[i] = null;
+                        info.entries.push(...newEntry.entries);
+                        console.log(`added "${e.title}" (id: ${e.id} / url: ${e.url}) with ${info.entries.length} entries`)
+                    } else {
+                        Object.assign(info.entries[i], newEntry);
+                        console.log(`added "${e.title}" (id: ${e.id} / url: ${e.url}) to index ${i}`)
+                    }
                 } else badEntries++;
             }, `listFormats`);
         }
@@ -305,7 +314,7 @@ module.exports = {
         if(typeof d == `object`) d = module.exports.parseInfo(d);
         if(d && forceRun) {
             console.log(`force run!`);
-            module.exports.unflatPlaylist(extraArguments, d, null, ignoreStderr).then(res)
+            module.exports.unflatPlaylist({extraArguments, info: d, ignoreStderr}).then(res)
         } else if(d && d.fullInfo == true) {
             console.log(`full info found! resolving...`);
             res(d);
@@ -327,7 +336,7 @@ module.exports = {
             if(anyNoTitle) {
                 console.log(`Missing titles!`);
                 //return module.exports.listFormats({query, extraArguments}, true).then(res)
-                module.exports.unflatPlaylist(extraArguments, d, null, ignoreStderr).then(res)
+                module.exports.unflatPlaylist({extraArguments, info: d, ignoreStderr}).then(res)
             } else {
                 res(module.exports.parseInfo(d, disableFlatPlaylist))
             }
@@ -335,7 +344,7 @@ module.exports = {
             updateStatus(`Restarting playlist search... (there were no formats returned!!)`)
             console.log(`no formats found! starting over...`);
             //return module.exports.listFormats({query, extraArguments}, true).then(res)
-            module.exports.unflatPlaylist(extraArguments, d, null, ignoreStderr).then(res)
+            module.exports.unflatPlaylist({extraArguments, info: d, ignoreStderr}).then(res)
         } else {
             sendNotification({
                 type: `error`,
@@ -380,7 +389,7 @@ module.exports = {
         const url = {
             source_url: d.webpage_url || d.url,
             artist_url: d.artist_url || d.creator_url || d.channel_url || d.uploader_url,
-            thumbnail_url: d.thumbnails ? typeof d.thumbnails[d.thumbnails.length - 1] == `object` ? d.thumbnails[d.thumbnails.length - 1].url : `${d.thumbnails[d.thumbnails.length - 1]}` : null,
+            thumbnail_url: d.thumbnails ? d.thumbnails[d.thumbnails.length - 1] && typeof d.thumbnails[d.thumbnails.length - 1] == `object` ? d.thumbnails[d.thumbnails.length - 1].url : `${d.thumbnails[d.thumbnails.length - 1]}` : null,
         };
 
         Object.entries(url).filter(o => typeof o[1] == `string` && !o[1].match(genericURLRegex)).forEach(o => { url[o[0]] = null; })
@@ -415,13 +424,13 @@ module.exports = {
 
         const paths = [ sanitizePath(...useSaveLocation) ];
 
-        let parsedURL = require(`url`).parse(info._original_url || info.url || info.webpage_url || info._request_url || ``);
-
-        let useURL = parsedURL.host ? parsedURL.host.split(`.`).slice(-2).join(`.`) : info.webpage_url_domain || null;
-
-        //if(downloadInWebsiteFolders && info._platform == `file`) paths.push(`Converted`);
-
-        if(downloadInWebsiteFolders && useURL) paths.push(useURL);
+        if(downloadInWebsiteFolders) try {
+            let parsedURL = require(`url`).parse(info._save_location_url || info._original_url || info.url || info.webpage_url || info._request_url || ``);
+    
+            let useURL = parsedURL && parsedURL.host ? parsedURL.host.split(`.`).slice(-2).join(`.`) : info.webpage_url_domain || null;
+    
+            if(useURL) paths.push(useURL);
+        } catch(e) { }
 
         if(filePath) paths.push(filePath)
 
@@ -888,47 +897,84 @@ module.exports = {
     listFormats: ({query, extraArguments, ignoreStderr}) => new Promise(async res => {
         const additional = module.exports.additionalArguments(extraArguments);
 
-        console.log(`url "${query}"; additional args: "${additional.join(`", "`)}"`)
+        if(typeof query == `object` && query.length > 0) {
+            let url = `https://various-sites/yeeeeeah` // this is a fake url, it'll just parse as "various-sites"
 
-        let args = [query, `--dump-single-json`, `--flat-playlist`, `--quiet`, `--progress`, `--verbose`, ...additional];
+            let allUrls = [];
 
-        if(ignoreStderr) args.splice(args.indexOf(`--verbose`), 1);
+            query.forEach(url => {
+                let parsedURL = require(`url`).parse(url);
 
-        const proc = execYTDLP(args, { persist: false });
+                if(parsedURL && parsedURL.host) {
+                    if(!allUrls.includes(parsedURL.host)) allUrls.push(parsedURL.host);
+                } else {
+                    allUrls.push(null)
+                }
+            });
 
-        let data = ``;
+            if(allUrls.length == 1) url = `https://${allUrls[0]}/`;
 
-        if(!ignoreStderr) sendUpdates(proc, `Starting info query of "${query}"`);
+            const now = new Date();
 
-        proc.stdout.on(`data`, d => {
-            //console.log(`output`, d.toString())
-            data += d.toString().trim();
-        });
+            const str = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()} at ${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
 
-        proc.on(`error`, e => {
-            console.log(e)
-        })
+            let info = module.exports.parseInfo({
+                title: `${query.length} links (${str})`,
+                extractor: `multiple:generic`,
+                extractor_key: `MultipleGeneric`,
+                entries: query.map(url => ({ url })),
+                url,
+            }, true);
 
-        proc.on(`close`, code => {
-            console.log(`listFormats closed with code ${code} (${query})`)
+            console.log(`forged info`, info)
 
-            try {
-                const d = Object.assign(JSON.parse(data), { _request_url: query });
-
-                if(ignoreStderr) {
-                    return res(d);
-                } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, ignoreStderr }).then(res);
-                //console.log(d)
-            } catch(e) {
-                console.error(`${e}`)
-                if(!ignoreStderr) sendNotification({
-                    type: `error`,
-                    headingText: `Error getting media info`,
-                    bodyText: `There was an issue retrieving the info. Please try again.`
-                })
-                return res(null);
-            }
-        })
+            return module.exports.unflatPlaylist({extraArguments, info, ignoreStderr}).then(o => {
+                o.entries = o.entries.map(o => Object.assign(o, { _save_location_url: url }));
+                res(o);
+            });
+        } else {
+            console.log(`url "${query}"; additional args: "${additional.join(`", "`)}"`)
+    
+            let args = [query, `--dump-single-json`, `--flat-playlist`, `--quiet`, `--progress`, `--verbose`, ...additional];
+    
+            if(ignoreStderr) args.splice(args.indexOf(`--verbose`), 1);
+    
+            const proc = execYTDLP(args, { persist: false });
+    
+            let data = ``;
+    
+            if(!ignoreStderr) sendUpdates(proc, `Starting info query of "${query}"`);
+    
+            proc.stdout.on(`data`, d => {
+                //console.log(`output`, d.toString())
+                data += d.toString().trim();
+            });
+    
+            proc.on(`error`, e => {
+                console.log(e)
+            })
+    
+            proc.on(`close`, code => {
+                console.log(`listFormats closed with code ${code} (${query})`)
+    
+                try {
+                    const d = Object.assign(JSON.parse(data), { _request_url: query });
+    
+                    if(ignoreStderr) {
+                        return res(d);
+                    } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, ignoreStderr }).then(res);
+                    //console.log(d)
+                } catch(e) {
+                    console.error(`${e}`)
+                    if(!ignoreStderr) sendNotification({
+                        type: `error`,
+                        headingText: `Error getting media info`,
+                        bodyText: `There was an issue retrieving the info. Please try again.`
+                    })
+                    return res(null);
+                }
+            })
+        }
     }),
     getFilename: (url, info, format, template, fullParse) => {
         //const { outputFilename } = require(`../getConfig`)();
@@ -1214,7 +1260,7 @@ module.exports = {
                 if(status) update({status})
                 try {
                     //const i = await module.exports.listFormats({query: url, ignoreStderr: true}, true);
-                    const i = await module.exports.unflatPlaylist(null, info, `fetchFullInfo`);
+                    const i = await module.exports.unflatPlaylist({info, customID: `fetchFullInfo`});
                     Object.assign(info, i, {
                         fullInfo: true
                     });
@@ -2576,12 +2622,14 @@ for(const entry of Object.entries(module.exports).filter(o => typeof o[1] == `fu
     module.exports[name] = (...args) => {
         const authType = !blacklistedAuths.find(o => o == name) ? authentication.check(args[0] && typeof args[0] == `object` && typeof args[0].query == `string` ? args[0].query : ``) : null
         if(args[0] && typeof args[0] == `object` && args[0].query && authType) {
+            const { ignoreStderr } = args[0];
+
             const doFunc = platforms.find(p => p.name == authType)[name];
             console.log(`authenticated request! (type: ${authType}) (function exists? ${doFunc ? true : false})`);
             if(doFunc) {
                 console.log(`running function...`)
                 return new Promise(async (res, rej) => {
-                    updateStatus(`Getting authentication token...`)
+                    if(!ignoreStderr) updateStatus(`Getting authentication token...`)
                     authentication.getToken(authType).then(token => {
                         if(token) {
                             doFunc(token, ...args).then(o => {
@@ -2594,8 +2642,8 @@ for(const entry of Object.entries(module.exports).filter(o => typeof o[1] == `fu
                                 }));
     
                                 if(!parsed.entries) {
-                                    module.exports.findEquivalent(parsed, false, false, true).then(equivalent => {
-                                        module.exports.verifyPlaylist(Object.assign({}, equivalent, {fullInfo: false}), { forceRun: true }).then(o => res(Object.assign(parsed, {
+                                    module.exports.findEquivalent(parsed, ignoreStderr, false, true).then(equivalent => {
+                                        module.exports.verifyPlaylist(Object.assign({}, equivalent, {fullInfo: false}), { forceRun: true, ignoreStderr }).then(o => res(Object.assign(parsed, {
                                             formats: o.formats,
                                         }))).catch(rej);
                                     }).catch(rej);

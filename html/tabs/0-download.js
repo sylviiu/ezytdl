@@ -148,6 +148,8 @@ if(!tabs[`Download`]) tabs[`Download`] = {
             r(false)
         });
 
+        searchTagsEditCallback(container, () => centerURLBox(true))
+
         let lastSearch = null;
         
         const runSearch = async (url, initialMsg, func) => {
@@ -1143,8 +1145,10 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                 url = info._request_url || info.media_metadata.url.source_url || info.media_metadata.url || info.url;
                 runParse(`url is object`)
             } else {
+                const urls = [url, ...getSearchTags()].filter(o => o);
+
                 let opt = {
-                    query: url,
+                    query: urls.length < 2 ? urls[0] : urls,
                     extraArguments: extraArguments.value || ``
                 };
             
@@ -1159,6 +1163,8 @@ if(!tabs[`Download`]) tabs[`Download`] = {
             
                 console.log(`selectionBox / hiding from parseinfo`)
                 selectionBox.hide(false, true);
+
+                console.log(`urls`, urls, `opt`, opt)
             
                 mainQueue[func || `getInfo`](opt).then(data => {
                     info = data;
@@ -1303,19 +1309,29 @@ if(!tabs[`Download`]) tabs[`Download`] = {
         };
         
         const processURL = () => {
-            const url = input.value;
+            const currentSearchTags = getSearchTags(container);
+
+            const url = input.value + currentSearchTags.reduce((a, b) => a + b, ``);
         
-            if(url.length > 0) {        
-                console.log (`clicc`, url)
-            
-                const match = `${url}`.split(`?`)[0].match(genericURLRegex);
+            if(url.length > 0) {
+                const match = `${input.value}`.split(`?`)[0].match(genericURLRegex);
             
                 console.log (`match`, match)
             
                 if(match) {
-                    runSearch(url, `Fetching info...`, `getInfo`)
+                    runSearch(input.value, `Fetching info...`, `getInfo`)
+                } else if(!match && searchTags.length > 0) {
+                    if(currentSearchTags.length === 1) {
+                        clearSearchTags();
+                        input.value = currentSearchTags[0];
+                        runSearch(input.value, `Fetching info...`, `getInfo`)
+                    } else {
+                        input.value = ``;
+                        runSearch(``, `Fetching info...`, `getInfo`)
+                    }
                 } else {
-                    runSearch(url, `Running search...`, `search`)
+                    clearSearchTags();
+                    runSearch(input.value, `Running search...`, `search`)
                 }
             };
         };
@@ -1365,7 +1381,29 @@ if(!tabs[`Download`]) tabs[`Download`] = {
             //inp.addEventListener(`focus`, () => !changesMadeToInput ? selectionBox.hide(null, true) : null);
             
             inp.addEventListener(`keyup`, (e) => {
-                if((e.key == `Enter` || e.keyCode == 13) && !input.disabled) processURL();
+                if(input.disabled) return;
+
+                const enter = (e.key == `Enter` || e.keyCode == 13);
+
+                if(enter && (e.shiftKey || (navigator.platform.startsWith(`Mac`) ? e.metaKey : e.altKey))) {
+                    try {
+                        const url = new URL(input.value);
+
+                        console.log(`url:`, url)
+
+                        let afterHostname = url.pathname + (url.search || ``);
+
+                        if(afterHostname.length > 15) afterHostname = url.pathname + `?...`
+
+                        if(afterHostname.length > 15) afterHostname = afterHostname.slice(0, 15) + `...`
+
+                        const args = { url: inp.value, name: (url.hostname.split(`.`).slice(-2)[0]) + `: ` + afterHostname }
+    
+                        createSearchTag(args);
+
+                        input.value = ``;
+                    } catch(e) {}
+                } else if(enter) processURL();
             });
         })
             

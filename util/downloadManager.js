@@ -400,9 +400,9 @@ sessions = {
 
                                 const finishedObj = { status: `Finished "${downloadFunc}"`, progressNum: 100 }
 
-                                obj.updateFunc(update.latest ? Object.assign(update, {
+                                obj.updateFunc(update && update.latest ? Object.assign(update, {
                                     latest: Object.assign(update.latest, finishedObj)
-                                }) : Object.assign(update, finishedObj));
+                                }) : Object.assign(update || {}, finishedObj));
 
                                 rawUpdateFunc(update);
                             }
