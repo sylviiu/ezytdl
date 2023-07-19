@@ -21,8 +21,10 @@ module.exports = {
             if(body.tracks) while(body.tracks.next) {
                 n++;
                 console.log(`next page (${n})`);
-                updateStatus(`Retrieving additional tracks...`);
-                updateStatusPercent([body.tracks.items.length, body.tracks.total]);
+                if(!ignoreStderr) {
+                    updateStatus(`Retrieving additional tracks...`);
+                    updateStatusPercent([body.tracks.items.length, body.tracks.total]);
+                }
                 const next = await superagent.get(body.tracks.next).set('Authorization', `${token_type} ${access_token}`);
                 body.tracks.items = body.tracks.items.concat(next.body.tracks.items);
                 body.tracks.next = next.body.tracks.next;
@@ -35,8 +37,10 @@ module.exports = {
             while(body.next) {
                 n++;
                 console.log(`next page (${n})`);
-                updateStatus(`Retrieving additional entries...`);
-                updateStatusPercent([body.items.length, body.total]);
+                if(!ignoreStderr) {
+                    updateStatus(`Retrieving additional tracks...`);
+                    updateStatusPercent([body.items.length, body.total]);
+                }
                 const next = await superagent.get(body.next).set('Authorization', `${token_type} ${access_token}`);
                 body.items = body.items.concat(next.body.items);
                 body.next = next.body.next;
@@ -68,8 +72,10 @@ module.exports = {
 
                 let url = `https://api.spotify.com/v1/${endpoint.includes(`%(url)s`) ? endpoint.replace(`%(url)s`, encodeURIComponent(use)) : endpoint + `/${encodeURIComponent(use)}`}`;
 
-                updateStatus(`Resolving ${endpoint.endsWith(`s`) ? endpoint.slice(0, -1) : endpoint} with "${use}"...`);
-                updateStatusPercent([i+1, endpoints.length]);
+                if(!ignoreStderr) {
+                    updateStatus(`Resolving ${endpoint.endsWith(`s`) ? endpoint.slice(0, -1) : endpoint} with "${use}"...`);
+                    updateStatusPercent([i+1, endpoints.length]);
+                }
 
                 console.log(url)
 
