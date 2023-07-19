@@ -353,7 +353,6 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                     listbox.querySelector(`#mediaTitle`).innerHTML = ``;
         
                     let type = `${info.extractor_key || info.extractor || info.webpage_url_domain}`.split(/(?=[A-Z])/).slice(0, -1).join(``);
-                    let icon;
                     let iconExtra = ``;
 
                     info._ezytdl_ui_icon = `arrow-alt-circle-down`;
@@ -364,41 +363,59 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                         console.log(`checking if icon "fab fa-${name}" exists (from ${original}) -- extra: ${extra || `(none)`}`);
                         if(faIconExists(`fab`, name)) {
                             console.log(`icon exists! setting icon...`)
-                            icon = document.createElement(`i`);
+                            let icon = document.createElement(`i`);
                             icon.style.fontWeight = `normal`;
                             icon.style.marginRight = `12px`;
                             icon.classList.add(`fab`);
                             icon.classList.add(`fa-${name}`);
                             if(typeof extra == `string`) iconExtra = `/ ` + extra;
-                            return true;
+                            return icon;
                         } else {
                             console.log(`icon does not exist!`)
                             return false;
                         }
                     };
-        
-                    const getIcon = (entry) => {
-                        switch(typeof entry == `object` ? entry.ezytdl_type : ``) {
-                            case `user`:
-                                return `fa-user-circle`;
-                            case `playlist`:
-                                return `fa-list`;
-                            case `video`:
-                                return `fa-video`;
-                            case `audio`:
-                                return `fa-music`;
-                            case `media`:
-                                return `fa-play-circle`;
-                            default:
-                                return `fa-link`;
-                        }
+
+                    const findIcon = (entry) => {
+                        let useIcon;
+
+                        if(!useIcon && entry.webpage_url_domain) useIcon = setIcon(entry.webpage_url_domain.split(`.`).slice(-2, -1)[0].toLowerCase(), `webpage_url_domain`);
+                        if(!useIcon && entry.extractor) useIcon = setIcon(entry.extractor.split(`:`)[0].toLowerCase(), `extractor`, entry.extractor.split(`:`).slice(1).map(s => s[0].toUpperCase() + s.slice(1)).join(` `));
+                        if(!useIcon) useIcon = setIcon(type.toLowerCase(), type);
+                        if(!useIcon) useIcon = setIcon(type.split(/(?=[A-Z])/)[0].toLowerCase(), `"${type}" split by capital letters`, type.split(/(?=[A-Z])/).slice(1).join(``));
+                        if(!useIcon && entry.webpage_url_domain && entry.webpage_url_domain.split(`.`).slice(-2, -1)[0].toLowerCase().endsWith(`app`)) useIcon = setIcon(entry.webpage_url_domain.split(`.`).slice(-2, -1)[0].toLowerCase().slice(0, -3), `webpage_url_domain (without app at end)`);
+
+                        return useIcon;
                     }
         
-                    if(!icon && info.webpage_url_domain) setIcon(info.webpage_url_domain.split(`.`).slice(-2, -1)[0].toLowerCase(), `webpage_url_domain`);
-                    if(!icon && info.extractor) setIcon(info.extractor.split(`:`)[0].toLowerCase(), `extractor`, info.extractor.split(`:`).slice(1).map(s => s[0].toUpperCase() + s.slice(1)).join(` `));
-                    if(!icon) setIcon(type.toLowerCase(), type);
-                    if(!icon) setIcon(type.split(/(?=[A-Z])/)[0].toLowerCase(), `"${type}" split by capital letters`, type.split(/(?=[A-Z])/).slice(1).join(``));
-                    if(!icon && info.webpage_url_domain && info.webpage_url_domain.split(`.`).slice(-2, -1)[0].toLowerCase().endsWith(`app`)) setIcon(info.webpage_url_domain.split(`.`).slice(-2, -1)[0].toLowerCase().slice(0, -3), `webpage_url_domain (without app at end)`);
+                    const getIcon = (entry) => {
+                        const generic = () => {
+                            switch(typeof entry == `object` ? entry.ezytdl_type : ``) {
+                                case `user`:
+                                    return `fas fa-user-circle`;
+                                case `playlist`:
+                                    return `fas fa-list`;
+                                case `video`:
+                                    return `fas fa-video`;
+                                case `audio`:
+                                    return `fas fa-music`;
+                                case `media`:
+                                    return `fas fa-play-circle`;
+                                default:
+                                    return `fas fa-link`;
+                            }
+                        }
+
+                        if(info.extractor == `multiple:generic`) {
+                            const brandIcon = findIcon(entry);
+
+                            if(brandIcon) {
+                                return brandIcon.className;
+                            } else return generic();
+                        } else return generic();
+                    }
+        
+                    let icon = findIcon(info);
         
                     if(icon) listbox.querySelector(`#mediaTitle`).appendChild(icon);
         
@@ -755,8 +772,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                             card.querySelector(`#videoIcon`).classList.add(`d-none`);
         
                             if(entry.media_metadata.url.source_url) {
-                                card.querySelector(`#linkIcon`).classList.remove(`fa-link`);
-                                card.querySelector(`#linkIcon`).classList.add(getIcon(entry));
+                                card.querySelector(`#linkIcon`).className = getIcon(entry);
                                 card.querySelector(`#linkIcon`).classList.remove(`d-none`);
         
                                 card.querySelector(`#nameDiv`).style.cursor = `pointer`;
