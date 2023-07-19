@@ -26,8 +26,8 @@ module.exports = {
                     updateStatusPercent([body.tracks.items.length, body.tracks.total]);
                 }
                 const next = await superagent.get(body.tracks.next).set('Authorization', `${token_type} ${access_token}`);
-                body.tracks.items = body.tracks.items.concat(next.body.tracks.items);
-                body.tracks.next = next.body.tracks.next;
+                body.tracks.items = body.tracks.items.concat(next.body.items);
+                body.tracks.next = next.body.next;
             };
 
             if(body.tracks && body.tracks.items && body.tracks.items[0].track) body.tracks.items = body.tracks.items.map((o, i) => Object.assign(body.tracks.items[i], o.track, {track: null}));
