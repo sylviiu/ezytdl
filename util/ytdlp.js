@@ -267,9 +267,11 @@ module.exports = {
 
                 if(!ignoreStderr) updateStatus(`Finished fetching info of ${queue.complete.length}/${totalLength} items!` + (failed > 0 ? ` (${failed} entries failed to resolve)` : ``) + (badEntries > 0 ? ` (${badEntries} entries failed to resolve)` : ``))
 
-                res(module.exports.parseInfo(Object.assign(newInfo || info, {
-                    entries: (newInfo || info).entries ? (newInfo || info).entries.filter(e => e) : undefined,
-                }), true));
+                const parsed = module.exports.parseInfo(Object.assign(newInfo, {
+                    entries: newInfo.entries ? newInfo.entries.filter(e => e && typeof e == `object`) : undefined,
+                }), true);
+
+                res(parsed);
 
                 if(!customID) downloadManager[instanceName].timeout = setTimeout(() => {
                     if(downloadManager[instanceName]) {
@@ -297,8 +299,10 @@ module.exports = {
                     console.log(`new info!`);
                     const newEntry = module.exports.parseInfo(e, true);
                     if(!newEntry.formats && newEntry.entries) {
+                        const entries = newEntry.entries.filter(o => o && typeof o == `object`)
+                        console.log(entries.slice(0, 2).map(o => o.thumbnails))
                         info.entries[i] = null;
-                        info.entries.push(...newEntry.entries);
+                        info.entries.push(...entries);
                         console.log(`added "${e.title}" (id: ${e.id} / url: ${e.url}) with ${info.entries.length} entries`)
                     } else {
                         Object.assign(info.entries[i], newEntry);
@@ -537,7 +541,7 @@ module.exports = {
         d.ezytdl_key_type = key.split(/(?=[A-Z])/).slice(-1)[0];
 
         if(!root && rawInfo) {
-            for(const key of Object.keys(rawInfo)) {
+            for(const key of Object.keys(rawInfo).filter(s => typeof rawInfo[s] != `object`)) {
                 if(rawInfo[key]) d[`playlist-${key}`] = rawInfo[key];
             }
         }
