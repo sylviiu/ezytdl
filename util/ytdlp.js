@@ -918,13 +918,13 @@ module.exports = {
 
             const str = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()} at ${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
 
-            let info = {
+            let info = module.exports.parseInfo({
                 title: `${query.length} links (${str})`,
                 extractor: `multiple:generic`,
                 extractor_key: `MultipleGeneric`,
                 entries: query.map(url => ({ url })),
                 url,
-            };
+            }, true);
 
             console.log(`forged info`, info)
 
