@@ -1,6 +1,7 @@
 {
     "saveLocation": "Set the directory where media files are saved.",
     "outputFilename": "Change the format of the output filename. You can find the full list of fields at [yt-dlp's README](https://github.com/yt-dlp/yt-dlp#output-template)",
+    "proxy": "Set the proxy to use when downloading media.\n\n**NOTE:** This will only work if yt-dlp supports the proxy type you are using. You can find a list of supported proxy types [here](https://github.com/yt-dlp/yt-dlp/#network-options)",
     "downloadInWebsiteFolders": "When enabled, ezytdl will download media files in a folder named after the website it was downloaded from.",
     "downloadFromClipboard": "When enabled, ezytdl will automatically prompt you to download media from your clipboard when it detects a valid URL.",
     "checkForUpdates": "Each setting here controls what parts of ezytdl will have updates checked for. If you want to disable all auto update checking, disable all of these settings.",

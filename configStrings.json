@@ -1,6 +1,7 @@
 {
     "saveLocation": "Save Location",
     "outputFilename": "File Name Format",
+    "proxy": "Proxy",
     "downloadInWebsiteFolders": "Create Folders for Websites",
     "downloadFromClipboard": "Allow Checking Clipboard for URLs",
     "checkForUpdates": "Check for Updates",

@@ -64,7 +64,11 @@ class wsprocess extends events.EventEmitter {
             }
         };
         
-        bridge.create().then(() => {
+        bridge.create().then(async () => {
+            const { proxy } = await require(`../../getConfig`)();
+
+            if(proxy) this.args.push(`--proxy`, proxy);
+
             bridge.idHooks.push({ id: this.processID, func: hook, args: this.args, complete: (code) => this._complete(code) });
     
             const obj = {
