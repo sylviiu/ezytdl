@@ -288,7 +288,7 @@ sessions = {
                         info: opt && typeof opt.info == `object` ? {
                             webpage_url_domain: opt.info.webpage_url_domain,
                             title: opt.info.title,
-                            thumbnails: opt.info.thumbnails ? opt.info.thumbnails.sort((a,b) => b.width - a.width).slice(0, 3) : opt.info.thumbnails,
+                            thumbnails: opt.info.thumbnails && typeof opt.info.thumbnails.length == `number` && opt.info.thumbnails.filter(o => o && o.width).length > 0 ? opt.info.thumbnails.filter(o => o && o.width).sort((a,b) => b.width - a.width).slice(0, 3) : opt.info.thumbnails,
                             thumbnail: opt.info.thumbnail,
                             output_name: opt.info.output_name,
                             _ezytdl_ui_icon: opt.info._ezytdl_ui_icon,
