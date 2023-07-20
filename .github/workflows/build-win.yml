@@ -24,10 +24,10 @@ jobs:
       - name: build
         continue-on-error: true
         run: |
-          npm run nightly -- --build-number 1
+          node build pack
 
       - name: Upload
         uses: actions/upload-artifact@v3
         with:
             name: ezytdl-win32.exe
-            path: dist/ezytdl-win32.exe
+            path: dist/win-unpacked/
