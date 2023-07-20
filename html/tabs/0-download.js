@@ -1464,7 +1464,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
         });
 
         extraArguments.addEventListener(`blur`, () => {
-            if(extraArguments.value) configuration.set(`ytdlpExtraArgs`, { args: extraArguments.value });
+            configuration.set(`ytdlpExtraArgs`, { args: extraArguments.value });
         });
 
         configuration.get(`ytdlpExtraArgs`).then(({ args }) => {
