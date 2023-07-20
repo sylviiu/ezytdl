@@ -189,6 +189,7 @@ module.exports = {
     hasFFmpegPromise: () => refreshFFmpegPromise(),
     sanitizePath: (...args) => sanitizePath(...args),
     additionalArguments: (args) => {
+        if(typeof args != `string`) return [];
         //if(!args || typeof args != `object` || typeof args.length != `number`) args = [];
 
         const returnArgs = [];
