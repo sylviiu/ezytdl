@@ -189,7 +189,7 @@ module.exports = {
     hasFFmpegPromise: () => refreshFFmpegPromise(),
     sanitizePath: (...args) => sanitizePath(...args),
     additionalArguments: (args) => {
-        if(!args || typeof args != `object` || typeof args.length != `number`) args = [];
+        //if(!args || typeof args != `object` || typeof args.length != `number`) args = [];
 
         const returnArgs = [];
 
@@ -919,7 +919,7 @@ module.exports = {
                 res(o);
             });
         } else {
-            console.log(`url "${query}"; additional args: "${additional.join(`", "`)}"`)
+            console.log(`url "${query}"; additional args: "${additional.join(`", "`)}" (${extraArguments})`)
     
             let args = [query, `--dump-single-json`, `--flat-playlist`, `--quiet`, `--progress`, `--verbose`, ...additional];
     
