@@ -953,6 +953,7 @@ tabs[`Convert`] = {
             if(url && typeof url == `object` && typeof url.length != `number`) {
                 info = url;
                 url = info._request_url || info.media_metadata.url.source_url || info.media_metadata.url || info.url;
+                clearSearchTags(container);
                 runParse(`url is object; ${url}`)
             } else {
                 console.log(`running func ${func}`);

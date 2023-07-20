@@ -1159,6 +1159,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
             if(url && typeof url == `object`) {
                 info = url;
                 url = info._request_url || info.media_metadata.url.source_url || info.media_metadata.url || info.url;
+                clearSearchTags(container);
                 runParse(`url is object`)
             } else {
                 const urls = [url, ...getSearchTags()].filter(o => o);
