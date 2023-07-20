@@ -13,4 +13,10 @@ module.exports = {
         allowChangedDefaults: false,
         values: false,
     }, o)),
+    ytdlpExtraArgs: (conf, o={}) => require(`../getConfig`)(conf, Object.assign({
+        source: `./util/ytdlpExtraArgs.json`,
+        target: `ytdlpExtraArgs.json`,
+        allowNonexistentRemoval: true,
+        allowChangedDefaults: true,
+    }, o)),
 }

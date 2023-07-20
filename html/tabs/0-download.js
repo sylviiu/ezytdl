@@ -1462,6 +1462,14 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                 } else if(enter) processURL();
             });
         });
+
+        extraArguments.addEventListener(`blur`, () => {
+            if(extraArguments.value) configuration.set(`ytdlpExtraArgs`, { args: extraArguments.value });
+        });
+
+        configuration.get(`ytdlpExtraArgs`).then(({ args }) => {
+            if(!extraArguments.value) extraArguments.value = args;
+        })
             
         resultsCountInput.addEventListener(`keyup`, (e) => {
             if(e.key == `Enter` || e.keyCode == 13) processURL();
