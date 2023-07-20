@@ -382,9 +382,13 @@ const createPopout = ({
                             return closeWindow();
                         } else if(closeOnNavigate) console.log(`navigation detected (${loads}) & closeOnNavigate is true; not closing`)
 
+                        h.contentWindow.config = config;
+
                         h.contentWindow.repositionNotifications = (...c) => repositionNotifications(...c);
                         h.contentWindow.addNotification = (...c) => repositionNotifications(...c);
                         h.contentWindow.createNotification = (...c) => createNotification(...c);
+
+                        h.contentWindow.rawAnimeFunc = typeof rawAnimeFunc != `undefined` ? rawAnimeFunc : anime;
 
                         h.contentWindow.useHref = typeof useHref != `undefined` ? useHref : closeOnNavigate;
                         h.contentWindow.console.log = (...content) => console.log(`iframe ${name}:`, ...content);

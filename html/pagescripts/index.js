@@ -15,7 +15,7 @@ const popoutButtons = createPopout({
             if(JSON.stringify(previousConfig) != JSON.stringify(newConf)) {
                 console.log(`config has changed!`);
         
-                if(currentInfo) createNotification({
+                if(typeof currentInfo != `undefined`) createNotification({
                     headingText: `Config updated!`,
                     bodyText: `The configuration has been updated. The changes will take effect next search / info retrieval.`,
                 })
