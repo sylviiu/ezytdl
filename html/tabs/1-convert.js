@@ -189,6 +189,8 @@ tabs[`Convert`] = {
         
                 const throwToURL = (node, card, entry) => {
                     const url = entry.media_metadata.url.source_url;
+                    
+                    clearSearchTags();
         
                     button.disabled = false;
                     

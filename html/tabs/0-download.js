@@ -257,6 +257,8 @@ if(!tabs[`Download`]) tabs[`Download`] = {
         
                 const throwToURL = (node, card, entry) => {
                     const url = entry.media_metadata.url.source_url;
+
+                    clearSearchTags();
         
                     mainInput.enable();
                     
