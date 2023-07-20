@@ -13,28 +13,33 @@ var disableAnimations = () => {
         console.log(`Disabling animations (crudely)`)
     
         anime = (obj) => {
-            if(obj.complete) {
-                obj.complete();
-                obj.complete = undefined;
-            }
-    
-            //return rawAnimeFunc(Object.assign({}, obj, { duration: 0 }))
-
-            const parseTargetStyle = (target) => {
+            /*const parseTargetStyle = (target) => {
                 if(target && target.style) {
                     const computedStyle = window.getComputedStyle(target);
                     for(const key of Object.keys(obj)) {
-                        if(typeof computedStyle[key] != `undefined`) target.style[key] = obj[key];
+                        if(typeof computedStyle[key] != `undefined`) {
+                            console.log(key, obj[key])
+
+                            if(typeof obj[key] == `object` && typeof obj[key].length == `number`) {
+                                target.style[key] = `${obj[key].slice(-1)[0]}`;
+                            } else {
+                                target.style[key] = `${obj[key]}`;
+                            };
+
+                            //delete obj[key];
+                        }
                     }
                 }
             }
 
             if(obj.targets && obj.targets.forEach) {
                 obj.targets.forEach(parseTargetStyle)
-            } else parseTargetStyle(obj.targets || obj.target)
+            } else parseTargetStyle(obj.targets || obj.target)*/
 
             return rawAnimeFunc(Object.assign(obj, { 
-                duration: 0
+                easing: `linear`,
+                duration: 0,
+                delay: 0,
             }))
         };
         
@@ -42,7 +47,7 @@ var disableAnimations = () => {
     
         //anime.remove = () => null;
     } else {
-        console.log(`Keeping animations`);
+        console.log(`Keeping animations (config: ${typeof config})`);
 
         anime = rawAnimeFunc;
 
@@ -50,6 +55,6 @@ var disableAnimations = () => {
     }
 }
 
-configuration.hook(disableAnimations);
+disableAnimations();
 
-disableAnimations()
+configuration.hook(disableAnimations);
