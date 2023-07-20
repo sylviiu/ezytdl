@@ -24,7 +24,7 @@ jobs:
       - name: build
         continue-on-error: true
         run: |
-          npm run dist
+          npm run nightly -- --build-number 1
 
       - name: Upload
         uses: actions/upload-artifact@v3
