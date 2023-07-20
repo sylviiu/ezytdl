@@ -1355,8 +1355,8 @@ if(!tabs[`Download`]) tabs[`Download`] = {
         tabs[`Download`].processURL = processURL;
         
         button.onclick = () => processURL();
-        
-        pasteButton.onclick = () => {
+
+        const pasteClick = () => {
             if(!input.disabled) navigator.clipboard.readText().then(text => {
                 input.value = text;
                 input.oninput();
@@ -1364,16 +1364,66 @@ if(!tabs[`Download`]) tabs[`Download`] = {
             });
         };
         
+        pasteButton.onclick = pasteClick
+        
         const refreshSelectionBox = () => {
             if(!progressObj) {
+                const icon = pasteButton.querySelector(`#icon`);
+
+                console.log(`plus icon classname`, icon.className)
+
                 selectionBox.show(null, false);
+
                 if(input.value.split(`?`)[0].match(genericURLRegex) && input.value.length > 0) {
                     console.log(`matches url`)
                     selectionBox.hide(null, false);
+
+                    if(icon.className != `fas fa-plus-circle`) {
+                        icon.className = `fas fa-plus-circle`;
+                        pasteButton.onclick = () => {
+                            console.log(`paste button clicked with plus icon -- ${input.disabled}`)
+                            if(!input.disabled) {
+                                const result = addURL(input.value)
+                                if(result) {
+                                    console.log(`added url (result: ${result})`)
+                                    input.value = ``;
+                                    refreshSelectionBox();
+                                } else console.log(`failed to add url (result: ${result})`)
+                            }
+                        }
+                    }
                 } else {
                     console.log(`does not match url`)
                     selectionBox.show(null, false);
+
+                    if(icon.className != `far fa-clipboard`) {
+                        icon.className = `far fa-clipboard`;
+                        pasteButton.onclick = pasteClick;
+                    }
                 }
+            }
+        }
+
+        const addURL = (str) => {
+            try {
+                const url = new URL(str);
+
+                console.log(`url:`, url)
+
+                let afterHostname = url.pathname + (url.search || ``);
+
+                if(afterHostname.length > 15) afterHostname = url.pathname + `?...`
+
+                if(afterHostname.length > 15) afterHostname = afterHostname.slice(0, 15) + `...`
+
+                const args = { url: str, name: (url.hostname.split(`.`).slice(-2)[0]) + `: ` + afterHostname }
+
+                createSearchTag(args);
+                
+                return true;
+            } catch(e) {
+                console.error(`addURL: ${e}`)
+                return false;
             }
         }
         
@@ -1402,26 +1452,13 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                 const enter = (e.key == `Enter` || e.keyCode == 13);
 
                 if(enter && (e.shiftKey || (navigator.platform.startsWith(`Mac`) ? e.metaKey : e.altKey))) {
-                    try {
-                        const url = new URL(input.value);
-
-                        console.log(`url:`, url)
-
-                        let afterHostname = url.pathname + (url.search || ``);
-
-                        if(afterHostname.length > 15) afterHostname = url.pathname + `?...`
-
-                        if(afterHostname.length > 15) afterHostname = afterHostname.slice(0, 15) + `...`
-
-                        const args = { url: inp.value, name: (url.hostname.split(`.`).slice(-2)[0]) + `: ` + afterHostname }
-    
-                        createSearchTag(args);
-
+                    if(addURL(input.value)) {
                         input.value = ``;
-                    } catch(e) {}
+                        refreshSelectionBox();
+                    }
                 } else if(enter) processURL();
             });
-        })
+        });
             
         resultsCountInput.addEventListener(`keyup`, (e) => {
             if(e.key == `Enter` || e.keyCode == 13) processURL();
