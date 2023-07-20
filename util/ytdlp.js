@@ -10,25 +10,7 @@ const getPath = require(`../util/getPath`);
 
 const outputTemplateRegex = /%\(\s*([^)]+)\s*\)s/g;
 
-const libPath = getPath(`./html/lib.js`, true);
-
-var animeFunc;
-
-if(libPath) {
-    const lib = `//` + (fs.readFileSync(libPath).toString().split(`//`)[1].split(`// `)[0].trim());
-
-    console.log(lib);
-
-    const currentModule = module;
-
-    animeFunc = eval(`module = {exports: null}; ${lib}; module.exports`);
-
-    module = currentModule;
-} else {
-    animeFunc = require(`animejs`);
-}
-
-const durationCurve = animeFunc.easing(`easeInExpo`);
+const durationCurve = require(`./durationCurve`)
 
 const platforms = fs.readdirSync(getPath(`./util/platforms`)).map(f => 
     Object.assign(require(`../util/platforms/${f}`), {

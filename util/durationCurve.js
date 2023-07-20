@@ -1,0 +1,1 @@
+module.exports = (x) => Math.min(1, (x === 0 ? 0 : Math.pow(2, 10 * x - 10)))
