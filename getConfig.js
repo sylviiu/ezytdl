@@ -32,6 +32,7 @@ module.exports = (configObject, {
     allowChangedDefaults=true,
     waitForPromise=true,
     values=false,
+    clearConfigCache=true,
 }={}) => {
     const custom = source != `./defaultConfig.json` && target != `config.json` ? true : false;
 
@@ -44,10 +45,12 @@ module.exports = (configObject, {
         } else {
             return postConfigExtensions(configCache.get(key));
         }
-    } else if(configObject) {
+    } else if(configObject && clearConfigCache) {
         console.log(`[CONFIG / ${key}] config object passed! clearing cache...`)
         configCache.clear();
-    } else console.log(`[CONFIG / ${key}] config not cached! creating...`)
+    } else if(configObject) {
+        console.log(`[CONFIG / ${key}] config object passed! not clearing cache...`)
+    } else console.log(`[CONFIG / ${key}] config not cached! creating...`);
 
     const promise = new Promise(async res => {
         const started = Date.now();

@@ -18,5 +18,6 @@ module.exports = {
         target: `ytdlpExtraArgs.json`,
         allowNonexistentRemoval: true,
         allowChangedDefaults: true,
+        clearConfigCache: false,
     }, o)),
 }
