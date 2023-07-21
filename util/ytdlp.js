@@ -282,7 +282,7 @@ module.exports = {
                     console.log(`new info!`);
                     const newEntry = module.exports.parseInfo(e, true);
                     if(!newEntry.formats && newEntry.entries) {
-                        const entries = newEntry.entries.filter(o => o && typeof o == `object`)
+                        const entries = newEntry.entries.filter(o => o && typeof o == `object`);
                         console.log(entries.slice(0, 2).map(o => o.thumbnails))
                         info.entries[i] = null;
                         info.entries.push(...entries);
@@ -2555,14 +2555,16 @@ module.exports = {
                         return result;
                     } else return undefined; // if this result doesn't have a duration, AND other results have durations, don't return it
                 } else return undefined;
-            }).filter(a => a !== undefined && a.similarity).sort((a, b) => a.similarity < b.similarity ? 1 : -1);
+            }).filter(a => a && typeof a == `object` && typeof a.similarity == `number` && a.media_metadata && a.media_metadata.url.source_url).sort((a, b) => a.similarity < b.similarity ? 1 : -1);
             
             /*resultsInfo.entries.forEach(a => {
                 console.log(`- ${a.media_metadata.general.title} - ${a.similarity}`, a.similarities)
             })*/
 
+            console.log(`all entries`, resultsInfo.entries)
+
             Object.assign(thisInfo, {
-                url: resultsInfo.entries[0].url,
+                url: resultsInfo.entries[0].media_metadata.url.source_url,
                 formats: resultsInfo.entries[0].formats,
                 _needs_original: false,
             });
@@ -2620,13 +2622,17 @@ for(const entry of Object.entries(module.exports).filter(o => typeof o[1] == `fu
                     authentication.getToken(authType).then(token => {
                         if(token) {
                             doFunc(token, ...args).then(o => {
-                                const parsed = module.exports.parseInfo(Object.assign(o, {
+                                const parseObj = (o) => Object.assign(o, {
                                     extractor: authType.toLowerCase() + (o.type ? `:${o.type.toLowerCase()}` : ``),
                                     extractor_key: authType[0].toUpperCase() + authType.slice(1) + (o.type ? o.type[0].toUpperCase() + o.type.slice(1) : ``),
                                     _off_platform: true,
                                     _platform: authType,
                                     _needs_original: true,
-                                }));
+                                })
+
+                                const parsed = module.exports.parseInfo(parseObj(o));
+
+                                if(parsed.entries) parsed.entries = parsed.entries.filter(o => o && typeof o == `object`).map(parseObj)
     
                                 if(!parsed.entries) {
                                     module.exports.findEquivalent(parsed, ignoreStderr, false, true).then(equivalent => {
