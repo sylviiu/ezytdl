@@ -8,19 +8,21 @@
     <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="assets/css/Alata.css">
     <link rel="stylesheet" href="assets/css/btn.css">
+    <link rel="stylesheet" href="assets/css/disablehover.css">
     <link rel="stylesheet" href="assets/css/rotating.compiled.css">
     <link rel="stylesheet" href="assets/css/scroll.css">
     <link rel="stylesheet" href="assets/css/scrollbar.compiled.css">
     <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/theme.css">
     <link rel="stylesheet" href="assets/css/waves.css">
 </head>
 
-<body class="d-flex flex-column justify-content-center align-items-start" id="disableNotifications" style="-webkit-app-region: drag;background: rgb(10,10,10);width: 100vw;font-family: Alata, sans-serif;overflow-x: hidden;overflow-y: hidden;height: 100vh;">
+<body class="d-flex flex-column justify-content-center align-items-start ez-bg" id="disableNotifications" style="-webkit-app-region: drag;width: 100vw;font-family: Alata, sans-serif;overflow-x: hidden;overflow-y: hidden;height: 100vh;">
     <div id="contentDiv" style="padding: 36px;">
-        <h1 id="title" style="color: rgb(255,255,255);font-weight: bold;text-align: left;font-size: 38px;">title</h1>
-        <p id="content" style="-webkit-app-region: no-drag;color: rgb(255,255,255);text-align: left;">body</p>
-        <div class="d-flex flex-column" id="inputs"><input class="d-flex justify-content-center align-items-center d-none" type="text" id="inputText" style="-webkit-app-region: no-drag;background: rgba(88,88,88,0.11);border-width: 0px;border-radius: 100px;color: rgb(255,255,255);height: 36px;text-align: left;outline: none;width: calc(100vw - 72px);padding: 6px 16px;margin-top: 12px;margin-bottom: 12px;"></div>
-        <div class="d-flex" id="buttons"><button class="btn btn-primary d-flex justify-content-center align-items-center" id="button" type="button" style="-webkit-app-region: no-drag;background: rgb(23,23,23);border-style: none;border-radius: 100px;height: 36px;margin-right: 12px;font-size: 17px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-32 0 512 512" width="1em" height="1em" fill="currentColor" class="d-none" id="check" style="margin-right: 6px;">
+        <h1 id="title" class="ez-text" style="color: rgb(255,255,255);font-weight: bold;text-align: left;font-size: 38px;">title</h1>
+        <p id="content" class="ez-text" style="-webkit-app-region: no-drag;color: rgb(255,255,255);text-align: left;">body</p>
+        <div class="d-flex flex-column" id="inputs"><input class="d-flex justify-content-center align-items-center d-none ez-default" type="text" id="inputText" style="-webkit-app-region: no-drag;background: rgba(88,88,88,0.11);border-width: 0px;border-radius: 100px;color: rgb(255,255,255);height: 36px;text-align: left;outline: none;width: calc(100vw - 72px);padding: 6px 16px;margin-top: 12px;margin-bottom: 12px;"></div>
+        <div class="d-flex" id="buttons"><button class="btn btn-primary d-flex justify-content-center align-items-center ez-default" id="button" type="button" style="-webkit-app-region: no-drag;background: rgb(23,23,23);border-style: none;border-radius: 100px;height: 36px;margin-right: 12px;font-size: 17px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-32 0 512 512" width="1em" height="1em" fill="currentColor" class="d-none" id="check" style="margin-right: 6px;">
                     <!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. -->
                     <path d="M438.6 105.4C451.1 117.9 451.1 138.1 438.6 150.6L182.6 406.6C170.1 419.1 149.9 419.1 137.4 406.6L9.372 278.6C-3.124 266.1-3.124 245.9 9.372 233.4C21.87 220.9 42.13 220.9 54.63 233.4L159.1 338.7L393.4 105.4C405.9 92.88 426.1 92.88 438.6 105.4H438.6z"></path>
                 </svg>&nbsp;<svg xmlns="http://www.w3.org/2000/svg" viewBox="-96 0 512 512" width="1em" height="1em" fill="currentColor" class="d-none" id="cross" style="margin-right: 6px;">

@@ -1,0 +1,9 @@
+.btn:hover, .btn:focus, .btn:active, .nav-item:hover .nav-link, .nav-link:hover, .form-control:focus, .list-group-item:hover, .list-group-item:focus, .dropdown-item:hover, .dropdown-item:focus, .carousel:hover .carousel-control-next, .carousel:hover .carousel-control-prev, .carousel:hover .carousel-control-next-icon, .carousel:hover .carousel-control-prev-icon, .carousel:hover .carousel-control-next-icon:focus, .carousel:hover .carousel-control-prev-icon:focus {
+  background-color: initial;
+  border-color: initial;
+  color: initial;
+  /*box-shadow: none;*/
+  text-decoration: none;
+  /*cursor: auto;*/
+}
+

@@ -1,0 +1,67 @@
+.ez-navbar {
+  background-color: rgba(0,0,0,0.5) !important;
+  color: rgb(255,255,255);
+}
+
+.ez-bg {
+  background-color: rgba(10,10,10,0);
+}
+
+.ez-default {
+  background-color: rgb(255,255,255,0.05) !important;
+  color: rgb(255,255,255) !important;
+}
+
+.ez-defaultg2 {
+  background-color: rgb(255,255,255,0.035) !important;
+  color: rgb(255,255,255) !important;
+}
+
+.ez-defaultop {
+  background-color: rgb(15,15,15,0.25) !important;
+  color: rgb(255,255,255) !important;
+}
+
+.ez-default2 {
+  background-color: rgba(255,255,255,0.85) !important;
+  color: rgb(0,0,0) !important;
+}
+
+.ez-selected {
+  background-color: rgb(255,255,255, 0.85) !important;
+  color: rgb(0,0,0) !important;
+}
+
+.ez-card {
+  background-color: rgba(30,30,30,0.35);
+}
+
+.ez-card2 {
+  background-color: rgba(45,45,45,0.35);
+}
+
+.ez-ifc {
+  color: rgb(255,255,255);
+}
+
+.ez-icon {
+  background-color: rgb(255,255,255) !important;
+  color: rgb(0,0,0) !important;
+}
+
+.ez-text {
+  color: rgba(255,255,255,0.85) !important;
+}
+
+a {
+  color: rgba(255,255,255) !important;
+}
+
+.ez-progressbg {
+  background-color: rgba(50, 50, 50, 0.35);
+}
+
+.ez-progress {
+  background-color: rgba(255, 255, 255, 0.75);
+}
+
