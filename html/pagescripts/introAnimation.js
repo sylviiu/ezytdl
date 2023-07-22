@@ -34,7 +34,7 @@ ajax.onload = async () => {
     h.innerHTML = ajax.responseText;
     
     for (node of h.querySelectorAll(`head > *`)) {
-        document.head.appendChild(node);
+        if(!(node.href && node.href.endsWith(`theme.css`))) document.head.appendChild(node);
     }
 
     const finish = () => new Promise(async res => {
@@ -43,6 +43,8 @@ ajax.onload = async () => {
         searchHighlights(h.querySelector(`body`));
     
         document.body = h.querySelector(`body`);
+
+        document.body.style.background = `rgb(10,10,10)`
 
         await scripts.topjs();
         await scripts.pagescript(htmlFile.split(`.`).slice(0, -1).join(`.`))

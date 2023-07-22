@@ -8,6 +8,7 @@
     "updateCheckDaysInterval": "Update Check Interval (Days)",
     "reduceAnimations": "Reduce Animations",
     "disableAnimations": "Disable All Animations",
+    "theme": "Theme",
     "lastMediaConversionOutputs": "Default Media Conversion",
     "lastMediaConversionOutputsExtended": {
         "audio": "Audio Format",

@@ -25,11 +25,13 @@ tabs[`Convert`] = {
         const openFileButton = createButton(`openFile`, {
             icon: `file`,
             label: `Select files...`,
+            primaryColor: true,
         }, { paddingLeft: `30px`, paddingRight: `30px` });
 
         const openFolderButton = createButton(`openFolder`, {
             icon: `folder`,
             label: `Open folder...`,
+            primaryColor: true,
         }, { paddingLeft: `30px`, paddingRight: `30px` });
         
         const searchSelectionBox = container.querySelector(`#searchSelectionBox`);
@@ -46,7 +48,6 @@ tabs[`Convert`] = {
 
         container.querySelector(`#urlPaste`).remove();
         
-        button.style.background = `rgb(${colorScheme.light.r}, ${colorScheme.light.g}, ${colorScheme.light.b})`;
         openFileButton.style.background = `rgb(${colorScheme.light.r}, ${colorScheme.light.g}, ${colorScheme.light.b})`;
         openFolderButton.style.background = `rgb(${colorScheme.light.r}, ${colorScheme.light.g}, ${colorScheme.light.b})`;
         
@@ -615,7 +616,11 @@ tabs[`Convert`] = {
                             
                             highlightButton(convertDownload, colorScheme);
                         };*/
-                        if(card.querySelector(`#confirmDownload`)) highlightButton(card.querySelector(`#confirmDownload`), colorScheme)
+                        if(card.querySelector(`#confirmDownload`)) {
+                            //highlightButton(card.querySelector(`#confirmDownload`), colorScheme)
+                            if(!card.querySelector(`#confirmDownload`).classList.contains(`ez-selected`)) card.querySelector(`#confirmDownload`).classList.add(`ez-selected`);
+                            //if(!btn.classList.contains(`ez-selected`)) btn.classList.add(`ez-selected`);
+                        }
         
                         formatList.appendChild(card);
                     };

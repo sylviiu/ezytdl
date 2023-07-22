@@ -17,28 +17,6 @@ if(typeof config == `undefined`) {
     }
 }
 
-if(window == useWindow) {
-    const postChangeHook = () => {
-        if(typeof useWindow.disableAnimations == `function`) {
-            console.log(`Disabling animations (via useWindow)`)
-            useWindow.disableAnimations()
-        } else if(typeof disableAnimations == `function`) {
-            console.log(`Disabling animations`)
-            disableAnimations()
-        } 
-    }
-
-    configuration.get().then(newConf => { 
-        Object.assign(config, newConf);
-        postChangeHook();
-    });
-    
-    configuration.hook(newConf => {
-        Object.assign(config, newConf);
-        postChangeHook();
-    });
-}
-
 var systemColors = parseSystemColors(system.colors());
 console.log(`systemColors: `, systemColors)
 
@@ -50,3 +28,32 @@ version.get().then(v => appVersion = v);
 var genericURLRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/i;
 
 var markdown = new showdown.Converter({ parseImgDimensions: true });
+
+var postChangeHook = () => {
+    if(typeof theme == `function`) {
+        console.log(`Updating theme`)
+        theme()
+    };
+
+    if(typeof useWindow.disableAnimations == `function`) {
+        console.log(`Disabling animations (via useWindow)`)
+        useWindow.disableAnimations()
+    } else if(typeof disableAnimations == `function`) {
+        console.log(`Disabling animations`)
+        disableAnimations()
+    };
+}
+
+if(window == useWindow) {
+    configuration.get().then(newConf => { 
+        Object.assign(config, newConf);
+        postChangeHook();
+    });
+} else if(typeof config != `undefined`) postChangeHook();
+
+useWindow.configuration.hook(newConf => {
+    Object.assign(config, newConf);
+    postChangeHook();
+});
+
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => typeof theme == `function` ? theme() : null);

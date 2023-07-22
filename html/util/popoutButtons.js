@@ -87,6 +87,8 @@ const createPopout = ({
             overlayCloseText.style.width = `100vw`;
             overlayCloseText.style.textAlign = `center`;
             overlayCloseText.style.opacity = 0;
+
+            overlayCloseText.classList.add(`ez-text`);
             
             overlayCloseText.innerText = `Click anywhere to close.`;
 
@@ -151,7 +153,7 @@ const createPopout = ({
                                                     easing: `easeOutExpo`
                                                 });
                 
-                                                overlayCloseText.innerText = `Click to close.`;
+                                                overlayCloseText.innerText = `Click anywhere to close.`;
                     
                                                 anime({
                                                     targets: overlayCloseText,
@@ -401,7 +403,8 @@ const createPopout = ({
     
                         headingTxt.style.padding = `24px`;
                         headingTxt.style.width = `100vw`;
-                        headingTxt.style.color = `white`;
+                        
+                        headingTxt.classList.add(`ez-text`)
 
                         headingTxt.innerText = o.heading || heading;
 

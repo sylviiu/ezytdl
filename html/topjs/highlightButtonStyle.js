@@ -5,7 +5,9 @@ var highlightButton = (target, colorScheme=currentColorScheme) => {
 }
 
 var filterFunc = (target) => {
-    if(target.classList.contains('btn') && target.classList.contains('highlight')) highlightButton(target);
+    if(target.classList.contains('btn') && target.classList.contains('highlight')) {
+        if(!target.classList.contains(`ez-selected`)) target.classList.add(`ez-selected`);
+    }
 }
 
 var searchHighlights = (node) => {

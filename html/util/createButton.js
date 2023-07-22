@@ -1,6 +1,7 @@
 const createButton = (id, {
     icon,
     label,
+    primaryColor = false,
 }={}, extraStyleOpts={}) => {
     const button = useDocument.createElement(`a`);
     button.classList.add(`btn`);
@@ -14,6 +15,8 @@ const createButton = (id, {
     button.style.marginBottom = `16px`;
     button.style.marginRight = `6px`;
     button.style.color = `rgb(0,0,0)`;
+
+    if(primaryColor) button.classList.add(`ez-selected`)
 
     if(icon) {
         console.log(`icon requested, label: ${icon}`)

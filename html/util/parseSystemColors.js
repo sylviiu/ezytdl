@@ -32,6 +32,7 @@ const parseSystemColors = ({ r, g, b }) => {
         const dark = colors[index[1]];
         const darker = tinycolor(`#` + colors[index[1]]).saturate(-15).toHexString().replace(`#`, ``);
         const light = tinycolor(`#` + colors[index[2]]).toHexString().replace(`#`, ``);
+        const lighter = tinycolor(`#` + colors[index[2]]).saturate(45).toHexString().replace(`#`, ``);
 
         const colorsObj = {
             standard: {
@@ -43,6 +44,11 @@ const parseSystemColors = ({ r, g, b }) => {
                 r: range(parseInt(light.slice(0, 2), 16)),
                 g: range(parseInt(light.slice(2, 4), 16)),
                 b: range(parseInt(light.slice(4, 6), 16)),
+            },
+            lighter: {
+                r: range(parseInt(lighter.slice(0, 2), 16)),
+                g: range(parseInt(lighter.slice(2, 4), 16)),
+                b: range(parseInt(lighter.slice(4, 6), 16)),
             },
             dark: {
                 r: range(parseInt(dark.slice(0, 2), 16)),

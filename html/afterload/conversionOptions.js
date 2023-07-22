@@ -185,12 +185,12 @@ const setupConvertDownload = (node, info, colorScheme) => {
 
                         anime.remove(btn);
 
-                        const targetColor = colorScheme.light
+                        if(!btn.classList.contains(`ez-selected`)) btn.classList.add(`ez-selected`);
 
                         anime({
                             targets: btn,
                             scale: 1.1,
-                            backgroundColor: `rgb(${targetColor.r}, ${targetColor.g}, ${targetColor.b})`,
+                            //backgroundColor: `rgb(${targetColor.r}, ${targetColor.g}, ${targetColor.b})`,
                             duration: instant ? 0 : 300,
                             easing: `easeOutCirc`,
                         });
@@ -202,11 +202,13 @@ const setupConvertDownload = (node, info, colorScheme) => {
                         }
                     } else if(btn.id == previousSelected || previousSelected == null) {
                         anime.remove(btn);
+
+                        if(btn.classList.contains(`ez-selected`)) btn.classList.remove(`ez-selected`);
                         
                         anime({
                             targets: btn,
                             scale: 0.94,
-                            backgroundColor: `rgba(255,255,255,0.85)`,
+                            //backgroundColor: `rgba(255,255,255,0.85)`,
                             opacity: 0.9,
                             duration: instant ? 0 : 300,
                             easing: `easeOutCirc`,

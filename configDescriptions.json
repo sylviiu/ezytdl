@@ -8,6 +8,7 @@
     "updateCheckDaysInterval": "Set the amount of days between each update check. This is useful if you want to reduce the amount of times ezytdl checks for updates.",
     "reduceAnimations": "Remove some animations that may perform poorly on some systems.",
     "disableAnimations": "Disables all of the animations in the app (in a crude manner). This will not disable smaller things like progress bars, but is still useful if you want to reduce the amount of resources ezytdl uses, though reducing the animations should have a similar effect.",
+    "theme": "Set the theme of ezytdl.\n\n**OPTIONS:**\n- `system`: Use your operating system's theme.\n- `light`: Use the light theme.\n- `dark`: Use the dark theme.",
     "lastMediaConversionOutputs": "Set the format ezytdl should convert media files to.",
     "lastMediaConversionOutputsExtended": {
         "audio": "The audio format to convert to.",

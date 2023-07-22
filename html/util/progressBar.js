@@ -8,6 +8,9 @@ const addProgressBar = (node, width, height, {
 
     const bar = document.createElement(`div`);
     bar.id = `progressBar`;
+
+    bar.classList.add(`ez-progressbg`)
+
     bar.style.width = width || `100%`;
     bar.style.height = dotSize;
 
@@ -16,7 +19,6 @@ const addProgressBar = (node, width, height, {
 
     bar.style.marginTop = `5px`;
 
-    bar.style.background = `rgba(50, 50, 50, 0.35)`;
     bar.style.borderRadius = `100px`;
 
     const fill = document.createElement(`div`);
