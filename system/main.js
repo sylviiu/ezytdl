@@ -1,5 +1,7 @@
 const { app, ipcMain } = require(`electron`);
 
+const getPath = require(`../util/getPath`)
+
 module.exports = async () => {
     const locked = app.requestSingleInstanceLock();
     
@@ -18,8 +20,14 @@ module.exports = async () => {
         }, 30000)
     
         app.on(`second-instance`, (e, argv, wd, additionalData) => {
-            console.log(`second instance! (${argv.join(` `)})`, additionalData)
-            require(`../core/bringToFront`)()
+            if(additionalData && typeof additionalData == `object` && additionalData.type) {
+                if(getPath(`./system/${additionalData.type}.js`, true)) {
+                    require(`../system/${additionalData.type}.js`).client(additionalData);
+                } else return require(`../util/errorHandler`)(`Mode "${additionalData.type}" not found!`)
+            } else {
+                console.log(`second instance! (${argv.join(` `)})`, additionalData)
+                require(`../core/bringToFront`)()
+            }
         });
         
         require(`../core/depcheck`)().then(() => {
@@ -77,5 +85,7 @@ module.exports = async () => {
                 app.whenReady().then(start)
             } else start();
         });
+
+        process.on(`SIGINT`, require(`../core/quit`).quit);
     };
 }

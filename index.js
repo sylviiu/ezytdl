@@ -27,5 +27,3 @@ const getPath = require(`./util/getPath`);
 if(getPath(`./system/${mode}.js`, true)) {
     require(`./system/${mode}.js`)();
 } else return require(`./util/errorHandler`)(`Mode "${mode}" not found!`)
-
-process.on(`SIGINT`, require(`./core/quit`).quit);
