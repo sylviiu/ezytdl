@@ -321,9 +321,7 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
     let refreshQualityButtonSelection = () => {
         node.querySelectorAll(`.btn`).forEach((btn, i) => {
             if(currentSelected == i) {
-                //btn.style.backgroundColor = `#000000`;
-                //btn.style.color = `#ffffff`;
-                highlightButton(btn, colorScheme)
+                if(!btn.classList.contains(`ez-selected`)) btn.classList.add(`ez-selected`);
                 anime.remove(btn);
                 anime({
                     targets: btn,
@@ -333,8 +331,7 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
                     easing: `easeOutCirc`,
                 });
             } else {
-                btn.style.backgroundColor = defaultColors.background;
-                //btn.style.color = defaultColors.color;
+                if(btn.classList.contains(`ez-selected`)) btn.classList.remove(`ez-selected`);
                 anime.remove(btn);
                 anime({
                     targets: btn,

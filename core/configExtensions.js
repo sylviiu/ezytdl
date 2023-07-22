@@ -1,5 +1,6 @@
 const pfs = require(`../util/promisifiedFS`);
 const getPath = require(`../util/getPath`);
+const { nativeTheme } = require('electron');
 
 module.exports = {
     defaults: {

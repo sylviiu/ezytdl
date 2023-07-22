@@ -719,7 +719,11 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                             
                             highlightButton(convertDownload, colorScheme);
                         };*/
-                        if(card.querySelector(`#confirmDownload`)) highlightButton(card.querySelector(`#confirmDownload`), colorScheme)
+                        if(card.querySelector(`#confirmDownload`)) {
+                            //highlightButton(card.querySelector(`#confirmDownload`), colorScheme)
+                            if(!card.querySelector(`#confirmDownload`).classList.contains(`ez-selected`)) card.querySelector(`#confirmDownload`).classList.add(`ez-selected`);
+                            //if(!btn.classList.contains(`ez-selected`)) btn.classList.add(`ez-selected`);
+                        }
         
                         formatList.appendChild(card);
                     };
@@ -1209,7 +1213,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
             anime.remove(btn)
             let duration = noAnim ? 0 : 500;
             if(enabled) {
-                highlightButton(btn, colorScheme);
+                if(!btn.classList.contains(`ez-selected`)) btn.classList.add(`ez-selected`);
                 btn.style.color = `rgb(0,0,0)`;
                 anime({
                     targets: btn,
@@ -1218,7 +1222,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                     easing: `easeOutExpo`
                 })
             } else {
-                btn.style.backgroundColor = `rgb(255,255,255,0.05)`;
+                if(btn.classList.contains(`ez-selected`)) btn.classList.remove(`ez-selected`);
                 btn.style.color = `rgb(255,255,255)`;
                 anime({
                     targets: btn,

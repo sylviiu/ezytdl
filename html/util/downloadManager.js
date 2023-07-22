@@ -514,7 +514,8 @@ var initDownloadManager = (force) => {
                     repositionNotifications(currentHeight, true)
             
                     //downloadsList.style.background = `rgba(255,255,255,1)`;
-                    highlightButton(downloadsList)
+                    //highlightButton(downloadsList)
+                    if(!downloadsList.classList.contains(`ez-selected`)) downloadsList.classList.add(`ez-selected`);
                     downloadsList.style.color = `rgba(0,0,0,1)`;
                     
                     console.log(`removing document click listener`)

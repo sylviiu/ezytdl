@@ -58,13 +58,23 @@ console.log(`wavesHeight`, wavesHeight)
 waves.style.bottom = (wavesHeight * -1) + `px`;
 
 const setBackgroundColor = (color) => {
+    const currentBG = window.getComputedStyle(document.body).backgroundColor;
+
     anime({
         targets: document.body,
-        backgroundColor: `rgb(${color.darker.r}, ${color.darker.g}, ${color.darker.b})`,
+        backgroundColor: [currentBG, `rgb(${color.r}, ${color.g}, ${color.b})`],
         duration: 4000,
         easing: `easeOutExpo`
     });
 }
+
+themeHook(({lightMode, colorScheme}) => {
+    if(lightMode) {
+        setBackgroundColor(colorScheme.light);
+    } else {
+        setBackgroundColor(colorScheme.darker);
+    }
+})
 
 let selectedTab = null;
 
@@ -219,6 +229,17 @@ let tabStyle = {
 
 let currentContent = document.getElementById(`mainContainer`);
 
+let wavesThemeHook = ({lightMode, colorScheme}) => {
+    console.log(`colorScheme`, colorScheme)
+    if(lightMode) {
+        setWavesColor({r: 255, g: 255, b: 255});
+    } else {
+        setWavesColor(colorScheme.standard);
+    }
+}
+
+themeHook(wavesThemeHook);
+
 getTabs().then(async tabs => {
     const searchStr = window.location.search.slice(1);
 
@@ -298,17 +319,20 @@ getTabs().then(async tabs => {
     
                 const colorScheme = systemColors[tab.colorScheme];
     
-                currentColorScheme = colorScheme
+                currentColorScheme = colorScheme;
+
+                theme();
     
-                setBackground(tabName);
+                //setBackground(tabName);
     
-                setBackgroundColor(colorScheme);
-                setWavesColor(colorScheme.standard);
+                //setBackgroundColor(colorScheme.darker);
+                //setWavesColor(colorScheme.standard);
         
                 initializeTab(tab);
     
                 console.log(`new color scheme`, colorScheme);
                 
+                if(tab.button.classList.contains(`ez-default`)) tab.button.classList.remove(`ez-default`)
                 tab.button.style.background = `rgb(${colorScheme.light.r},${colorScheme.light.g},${colorScheme.light.b})`;
                 tab.button.style.color = `rgb(0,0,0)`;
     
@@ -320,6 +344,7 @@ getTabs().then(async tabs => {
                 };
         
                 if(currentTab) {
+                    if(!currentTab.button.classList.contains(`ez-default`)) currentTab.button.classList.add(`ez-default`)
                     currentTab.button.style.background = tabButton.style.background;
                     currentTab.button.style.color = tabButton.style.color;
     

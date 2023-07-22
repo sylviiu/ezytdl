@@ -97,6 +97,8 @@ const createCard = (key, string, description, config, parentNode, showSaveButton
             newCard.querySelector(`#name`).style.removeProperty(`min-width`);
             newCard.querySelector(`#name`).style.marginRight = `16px`;
 
+            newCard.classList.remove(`ez-card2`);
+
             newCard.style.padding = `0px`
             newCard.style.margin = `0px`
             newCard.style.marginTop = `0px`
@@ -237,15 +239,15 @@ const createCard = (key, string, description, config, parentNode, showSaveButton
         opt.style.borderBottomLeftRadius = disableInputs ? saveBtn.style.borderBottomRightRadius : `0px`;
         opt.style.borderBottomRightRadius = disableInputs ? saveBtn.style.borderBottomRightRadius : `0px`;
         opt.style.borderWidth = `2px`;
-        opt.style.borderColor = saveBtn.style.backgroundColor
+        opt.style.borderColor = window.getComputedStyle(saveBtn).backgroundColor;
         opt.style.borderStyle = `solid`
         optHolder.appendChild(saveBtn)
         
-        const bgc = depth+1 % 2 == 1 ? `rgb(35,35,35)` : `rgb(40,40,40)`;
+        //const bgc = depth+1 % 2 == 1 ? `rgb(35,35,35)` : `rgb(40,40,40)`;
 
-        console.log(`bgc: ${bgc}`);
+        //console.log(`bgc: ${bgc}`);
 
-        opt.style.backgroundColor = bgc;
+        //opt.style.backgroundColor = bgc;
 
         const getObject = (optionsObj) => {
             const obj = {};
