@@ -51,7 +51,7 @@ if(window == useWindow) {
     });
 } else if(typeof config != `undefined`) postChangeHook();
 
-configuration.hook(newConf => {
+useWindow.configuration.hook(newConf => {
     Object.assign(config, newConf);
     postChangeHook();
 });

@@ -3,6 +3,13 @@ const getPath = require(`../util/getPath`);
 const { nativeTheme } = require('electron');
 
 module.exports = {
+    verify: {
+        theme: (userConfig) => {
+            console.log(`verifying theme...`)
+            if(userConfig.theme != `system` && userConfig.theme != `dark` && userConfig.theme != `light`) userConfig.theme = `system`;
+            return userConfig
+        },
+    },
     defaults: {
         nightly: (defaultConfig) => Object.assign(defaultConfig, {
             nightlyUpdates: require(`../package.json`).version.includes(`-dev.`) ? true : false

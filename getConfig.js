@@ -166,6 +166,8 @@ module.exports = (configObject, {
                 const config = JSON.parse(await pfs.readFileSync(`${global.configPath}/${target}`));
     
                 const checkedConfig = checkKeys(`> `, `updated config object`, configObject, defaultConfig);
+
+                if(!custom) for(const verification of Object.entries(require(`./core/configExtensions.js`).verify)) verification[1](checkedConfig);
                 
                 fs.writeFileSync(`${global.configPath}/${target}`, JSON.stringify(Object.assign({}, config, checkedConfig), null, 4), { encoding: `utf-8` });
     

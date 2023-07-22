@@ -321,7 +321,7 @@ getTabs().then(async tabs => {
     
                 currentColorScheme = colorScheme;
 
-                theme();
+                theme({from: `manual`});
     
                 //setBackground(tabName);
     

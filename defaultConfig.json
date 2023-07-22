@@ -8,6 +8,7 @@
     "updateCheckDaysInterval": 1,
     "reduceAnimations": false,
     "disableAnimations": false,
+    "theme": "system",
     "lastMediaConversionOutputs": {
         "audio": "mp3",
         "video": "mp4"

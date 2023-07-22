@@ -14,12 +14,28 @@ var parseRules = (rules) => {
     return str
 }
 
-var theme = (useLightMode) => {
+var theme = ({
+    from=`auto`
+}={}) => {
     if(typeof currentColorScheme == `object`) {
-        const lightMode = typeof useLightMode == `boolean` ? useLightMode : ((window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? false : true);
+        let lightMode = false;
+
+        if(typeof config == `object`) switch(config.theme) {
+            case `dark`:
+                lightMode = false;
+                break;
+            case `light`:
+                lightMode = true;
+                break;
+            default:
+                lightMode = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? false : true;
+                break;
+        };
+
+        if(from == `auto` && usingLightMode == lightMode) return;
 
         usingLightMode = lightMode;
-
+    
         const styleElement = document.getElementById(`themeStyle`) || document.createElement(`style`);
 
         styleElement.id = `themeStyle`;
@@ -97,7 +113,7 @@ var theme = (useLightMode) => {
 if(typeof themeHooks == `undefined`) {
     themeHooks = [];
     themeHook = (cb) => themeHooks.push(cb);
-    usingLightMode = false;
+    usingLightMode = null;
     configuration.hook(theme);
 }
 
