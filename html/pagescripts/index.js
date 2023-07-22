@@ -323,7 +323,7 @@ getTabs().then(async tabs => {
 
                 theme({from: `manual`});
     
-                //setBackground(tabName);
+                setBackground(tabName);
     
                 //setBackgroundColor(colorScheme.darker);
                 //setWavesColor(colorScheme.standard);
