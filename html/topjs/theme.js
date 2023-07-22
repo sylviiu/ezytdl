@@ -28,7 +28,7 @@ var theme = ({
                 lightMode = true;
                 break;
             default:
-                lightMode = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? false : true;
+                lightMode = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)') && window.matchMedia('(prefers-color-scheme: dark)').matches) ? false : true;
                 break;
         };
 
