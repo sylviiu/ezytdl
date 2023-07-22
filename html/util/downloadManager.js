@@ -513,10 +513,7 @@ var initDownloadManager = (force) => {
             
                     repositionNotifications(currentHeight, true)
             
-                    //downloadsList.style.background = `rgba(255,255,255,1)`;
-                    //highlightButton(downloadsList)
                     if(!downloadsList.classList.contains(`ez-selected`)) downloadsList.classList.add(`ez-selected`);
-                    downloadsList.style.color = `rgba(0,0,0,1)`;
                     
                     console.log(`removing document click listener`)
                     document.removeEventListener(`click`, documentClick);
@@ -534,8 +531,7 @@ var initDownloadManager = (force) => {
                 } else {     
                     console.log(`sliding out`)       
             
-                    downloadsList.style.background = `rgba(25,25,25,0.3)`;
-                    downloadsList.style.color = `rgba(255,255,255,1)`;
+                    if(downloadsList.classList.contains(`ez-selected`)) downloadsList.classList.remove(`ez-selected`);
             
                     observerEnabled = false;
                     
