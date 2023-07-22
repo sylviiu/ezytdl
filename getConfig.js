@@ -167,9 +167,11 @@ module.exports = (configObject, {
     
                 const checkedConfig = checkKeys(`> `, `updated config object`, configObject, defaultConfig);
 
-                if(!custom) for(const verification of Object.entries(require(`./core/configExtensions.js`).verify)) verification[1](checkedConfig);
+                const resultingConfig = Object.assign({}, config, checkedConfig)
+
+                if(!custom) for(const verification of Object.entries(require(`./core/configExtensions.js`).verify)) verification[1](resultingConfig);
                 
-                fs.writeFileSync(`${global.configPath}/${target}`, JSON.stringify(Object.assign({}, config, checkedConfig), null, 4), { encoding: `utf-8` });
+                fs.writeFileSync(`${global.configPath}/${target}`, JSON.stringify(resultingConfig, null, 4), { encoding: `utf-8` });
     
                 if(!custom && configObject.alwaysUseLightIcon != undefined) require(`./core/downloadIcon.js`).set();
             };
