@@ -2471,6 +2471,8 @@ module.exports = {
             if(queue.complete.length == totalLength) {
                 console.log(`queue complete!`);
 
+                if(info && info.entries) info.entries = info.entries.filter(o => !o._needs_original)
+
                 res(module.exports.parseInfo(info, true));
 
                 downloadManager[instanceName].timeout = setTimeout(() => {
@@ -2555,40 +2557,42 @@ module.exports = {
                         return result;
                     } else return undefined; // if this result doesn't have a duration, AND other results have durations, don't return it
                 } else return undefined;
-            }).filter(a => a && typeof a == `object` && typeof a.similarity == `number` && a.media_metadata && a.media_metadata.url.source_url).sort((a, b) => a.similarity < b.similarity ? 1 : -1);
+            });
+
+            //fs.writeFileSync(`./resultsInfo-${idGen(24)}.json`, JSON.stringify(resultsInfo, null, 4))
+
+            resultsInfo.entries = resultsInfo.entries.filter(a => a && a !== undefined && typeof a == `object` && typeof a.similarity == `number`).sort((a, b) => b.similarity - a.similarity);
+
+            //fs.writeFileSync(`./${resultsInfo.entries[0] ? resultsInfo.entries[0].id : `unknown`}.json`, JSON.stringify(resultsInfo, null, 4))
             
             /*resultsInfo.entries.forEach(a => {
                 console.log(`- ${a.media_metadata.general.title} - ${a.similarity}`, a.similarities)
             })*/
 
-            console.log(`all entries`, resultsInfo.entries)
-
-            Object.assign(thisInfo, {
-                url: resultsInfo.entries[0].media_metadata.url.source_url,
-                formats: resultsInfo.entries[0].formats,
-                _needs_original: false,
-            });
-
-            return module.exports.parseInfo(thisInfo, true);
-        }
+            if(resultsInfo && resultsInfo.entries && resultsInfo.entries[0] && (resultsInfo.entries[0].media_metadata || resultsInfo.entries[0].url)) {
+                return module.exports.parseInfo(Object.assign(thisInfo, {
+                    url: resultsInfo.entries[0].media_metadata ? resultsInfo.entries[0].media_metadata.url.source_url : resultsInfo.entries[0].url,
+                    formats: resultsInfo.entries[0].formats,
+                    _needs_original: false,
+                }), true);
+            } else return Object.assign(thisInfo, { _needs_original: true });
+        };
 
         if(info.entries) for(const i in info.entries) {
             const entry = info.entries[i];
 
-            manager.createDownload([{query: `"${e.artist}" - "${e.title}"`, from: `youtube`, count: 15, noVerify: true, ignoreStderr}, false], (e) => {
+            manager.createDownload([{query: `"${e.artist}" - ${e.title}`, from: `youtube`, count: 15, noVerify: true, ignoreStderr}, false], (e) => {
                 if(e) {
                     console.log(`new info!`);
-                    match(entry, module.exports.parseInfo(e));
-                    entry.searchResults = e;
+                    const match = match(entry, module.exports.parseInfo(e));
                     console.log(`added "${entry.title}" (id: ${entry.id} / url: ${entry.url}) to index ${i}`)
                 } else badEntries++;
             }, `search`);
         } else {
-            manager.createDownload([{query: `"${info.artist}" - "${info.title}"`, from: `youtube`, count: 15, noVerify: true, ignoreStderr}, false], (e) => {
+            manager.createDownload([{query: `"${info.artist}" - ${info.title}`, from: `youtube`, count: 15, noVerify: true, ignoreStderr}, false], (e) => {
                 if(e) {
                     console.log(`new info!`);
                     match(info, module.exports.parseInfo(e));
-                    info.searchResults = e;
                     console.log(`added "${info.title}" (id: ${info.id} / url: ${info.url})`)
                 } else badEntries++;
             }, `search`);
