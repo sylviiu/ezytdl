@@ -104,7 +104,7 @@ module.exports = {
             if(obj.copyrights) retObj.license = obj.copyrights[0].text;
 
             const parseTrack = (track, extend) => {
-                if(!track.album && obj.type == `album`) track.album = Object.assign({}, obj, { tracks: null, items: null });
+                if(!track.album && obj.type == `album`) track.album = obj;
 
                 const parsed = {
                     title: track.name,
