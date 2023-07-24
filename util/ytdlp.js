@@ -1187,6 +1187,16 @@ module.exports = {
             })
         }) : [];
     },
+    mergeInfo: (info, newInfo, full=true) => {
+        const newParsed = module.exports.parseInfo(newInfo, full);
+
+        if(info._off_platform) {
+            Object.assign(info, newParsed, { media_metadata: info.media_metadata })
+        } else {
+            const newMeta = recursiveAssign({}, info.media_metadata, newParsed.media_metadata);
+            Object.assign(info, newParsed, { media_metadata: newMeta });
+        };
+    },
     download: ({url, format, ext, convert, filePath, addMetadata, info, extraArguments}, updateFunc) => new Promise(async resolve => {
         const temporaryFilename = `ezytdl-` + idGen(24);
         
@@ -1286,12 +1296,10 @@ module.exports = {
                 if(status) update({status})
                 try {
                     const i = await module.exports.unflatPlaylist({info, customID: `fetchFullInfo`});
-                    Object.assign(info, i, {
-                        fullInfo: true
-                    });
-                    getFilename();
+                    module.exports.mergeInfo(info, i);
                     res(true);
                 } catch(e) {
+                    console.error(e);
                     sendNotification({
                         type: `warn`,
                         headingText: `Failed to get full media info`,
@@ -1321,28 +1329,33 @@ module.exports = {
 
             const originalFormat = format;
 
-            if(info.formats) {
-                if(info.is_live && !info.formats.find(f => f.format_id == format)) {
-                    format = null;
-                    thisFormat = info.formats[0]
-                } else if(format == `ba`) {
-                    format = null;
+            const getFormat = (format) => {
+                let useFormat = null;
 
-                    if(ext && info.formats.filter(o => o.ext == ext).length > 0) info.formats = info.formats.filter(o => o.ext == ext);
+                if(info.formats) {
+                    let useFormatsArr = info.formats.slice();
 
-                    thisFormat = info.formats.filter(f => !f.video && f.audio).sort((a,b) => ((parseInt(b.abr) || 1) * (parseInt(b.asr) || 1)) - ((parseInt(a.abr) || 1) * (parseInt(a.asr) || 1)))[0]
-                    if(!thisFormat) thisFormat = info.formats.find(f => !f.video && f.audio)
-                    if(!thisFormat) thisFormat = info.formats[0]
-                } else if(format == `bv`) {
-                    format = null;
+                    if(info.is_live && !useFormatsArr.find(f => f.format_id == format)) {
+                        useFormat = useFormatsArr[0]
+                    } else if(format == `ba`) {
+                        if(ext && useFormatsArr.filter(o => o.ext == ext).length > 0) useFormatsArr = useFormatsArr.filter(o => o.ext == ext);
+    
+                        useFormat = useFormatsArr.filter(f => !f.video && f.audio).sort((a,b) => ((parseInt(b.abr) || 1) * (parseInt(b.asr) || 1)) - ((parseInt(a.abr) || 1) * (parseInt(a.asr) || 1)))[0]
+                        if(!useFormat) useFormat = useFormatsArr.find(f => !f.video && f.audio)
+                        if(!useFormat) useFormat = useFormatsArr[0]
+                    } else if(format == `bv`) {
+                        if(ext && useFormatsArr.filter(o => o.ext == ext).length > 0) useFormatsArr = useFormatsArr.filter(o => o.ext == ext);
+    
+                        useFormat = useFormatsArr.filter(f => f.video && !f.audio).sort((a,b) => ((b.vbr || 1) * (b.fps || 1) * (b.width || 1) * (b.height || 1)) - ((a.vbr || 1) * (a.fps || 1) * (a.width || 1) * (a.height || 1)))[0]
+                        if(!useFormat) useFormat = useFormatsArr.find(f => f.video && !f.audio)
+                        if(!useFormat) useFormat = useFormatsArr[0]
+                    } else useFormat = useFormatsArr.find(f => f.format_id == format) || useFormatsArr.filter(o => typeof o.quality == `number`).sort((a,b) => a.quality - b.quality)[0] || useFormatsArr[0];
+                };
 
-                    if(ext && info.formats.filter(o => o.ext == ext).length > 0) info.formats = info.formats.filter(o => o.ext == ext);
+                return useFormat;
+            }
 
-                    thisFormat = info.formats.filter(f => f.video && !f.audio).sort((a,b) => ((b.vbr || 1) * (b.fps || 1) * (b.width || 1) * (b.height || 1)) - ((a.vbr || 1) * (a.fps || 1) * (a.width || 1) * (a.height || 1)))[0]
-                    if(!thisFormat) thisFormat = info.formats.find(f => f.video && !f.audio)
-                    if(!thisFormat) thisFormat = info.formats[0]
-                } else thisFormat = info.formats.find(f => f.format_id == format) || info.formats.filter(o => typeof o.quality == `number`).sort((a,b) => a.quality - b.quality)[0] || info.formats[0];
-            };
+            thisFormat = getFormat(format);
 
             if(thisFormat) {
                 console.log(`format ${originalFormat}: found (out of ${info.formats.length} formats)`, thisFormat)
@@ -1354,7 +1367,7 @@ module.exports = {
 
             let fullYtdlpFilename = null
 
-            let ytdlpSaveExt = thisFormat.ext || info.ext || null
+            let ytdlpSaveExt = (thisFormat ? thisFormat.ext : null) || info.ext || null
 
             let ytdlpFilename = null
 
@@ -1370,7 +1383,7 @@ module.exports = {
         
                         fullYtdlpFilename = sanitize(fullYtdlpFilename);
         
-                        ytdlpSaveExt = thisFormat.ext || info.ext || fullYtdlpFilename.split(`.`).slice(-1)[0];
+                        ytdlpSaveExt = (thisFormat ? thisFormat.ext : null) || info.ext || fullYtdlpFilename.split(`.`).slice(-1)[0];
         
                         ytdlpFilename = fullYtdlpFilename.split(`.`).slice(0, -1).join(`.`);
 
@@ -1386,7 +1399,7 @@ module.exports = {
     
                     fullYtdlpFilename = sanitize(fullYtdlpFilename);
     
-                    ytdlpSaveExt = thisFormat.ext || info.ext || fullYtdlpFilename.split(`.`).slice(-1)[0];
+                    ytdlpSaveExt = (thisFormat ? thisFormat.ext : null) || info.ext || fullYtdlpFilename.split(`.`).slice(-1)[0];
     
                     ytdlpFilename = fullYtdlpFilename.split(`.`).slice(0, -1).join(`.`);
                 }
@@ -1538,7 +1551,7 @@ module.exports = {
                                     
                                     setProgress(`tags`, {progressNum: 30, status: `Adding ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}...`})
 
-                                    console.log(`adding tags: ${tags.map(t => `\n- ${t[0]} - ${t[1]}`).join(`, `)}`)
+                                    //console.log(`adding tags: ${tags.map(t => `\n- ${t[0]} - ${t[1]}`).join(`, `)}`)
         
                                     const meta = [];
         
@@ -1744,11 +1757,17 @@ module.exports = {
 
                 let streamingFromURL = false;
 
-                if(useFile && !useFile.match(genericURLRegex)) {
-                    previousFilename = require(`path`).parse(useFile).base;
-                } else if(useFile && useFile.split(`?`)[0].match(genericURLRegex)) {
-                    previousFilename = temporaryFilename + `.${ytdlpSaveExt}`;
+                try {
+                    const parsed = new URL(useFile);
                     streamingFromURL = true;
+                } catch(e) {
+                    streamingFromURL = false;
+                }
+
+                if(useFile && !streamingFromURL) {
+                    previousFilename = require(`path`).parse(useFile).base;
+                } else if(useFile && streamingFromURL) {
+                    previousFilename = temporaryFilename + `.${ytdlpSaveExt}`;
                 } else {
                     for(const f of temporaryFiles) {
                         const filepath = require(`path`).join(saveTo, f);
@@ -1965,7 +1984,14 @@ module.exports = {
                             //return res(`Download canceled.`, true);
                         };
 
-                        let keywords = [`converting`];
+                        let keywords = [];
+
+                        if(convert.additionalOutputArgs) {
+                            const i = convert.additionalOutputArgs.indexOf(`-c`);
+                            if(i > -1 && convert.additionalOutputArgs[i+1] == `copy`) {
+                                keywords.push(`saving`)
+                            } else keywords.push(`converting`)
+                        } else keywords.push(`converting`)
 
                         if(convert.trimFrom || convert.trimTo) keywords.unshift(`trimming`);
 
@@ -2346,15 +2372,8 @@ module.exports = {
 
                 proc.once('info', newInfo => {
                     console.log(`INFODUMP RECEIVED`);
-
-                    const newParsed = module.exports.parseInfo(newInfo, true);
-
-                    if(info._off_platform) {
-                        Object.assign(info, newParsed, { media_metadata: info.media_metadata })
-                    } else {
-                        const newMeta = recursiveAssign({}, info.media_metadata, newParsed.media_metadata);
-                        Object.assign(info, newParsed, { media_metadata: newMeta });
-                    };
+                    
+                    module.exports.mergeInfo(info, newInfo);
 
                     getFilename();
                 })
@@ -2527,42 +2546,52 @@ module.exports = {
                 console.log(`running raw conversion -- inputArgs`, inputArgs, `outputArgs`, outputArgs)
 
                 runThroughFFmpeg(0, inputArgs, outputArgs, url).then(res);
-            } else if(downloadWithFFmpeg && (convert || (module.exports.ffmpegPath && (await pfs.existsSync(module.exports.ffmpegPath)))) && thisFormat && thisFormat.url) {
-                await getFilename(true);
+            } else if(downloadWithFFmpeg && (convert || (thisFormat && thisFormat.url))) {
+                await fetchFullInfo(`Getting original format (downloading with FFmpeg)...`);
 
-                const inputArgs = [];
+                const originalFormat = thisFormat
+                thisFormat = getFormat(originalFormat) || originalFormat;
 
-                if(proxy) inputArgs.push(`-http_proxy`, proxy);
+                getFilename();
 
-                const headers = Object.entries(useHeaders).map(o => `${o[0]}: ${o[1]}`);
-
-                if(headers.length > 0) inputArgs.push(`-headers`, (headers.join(`\r\n`) + `\r\n`))
-
-                const convertExists = convert && Object.keys(convert).filter(s => convert[s]).length > 0;
-
-                console.log(`downloading${convertExists ? ` AND converting` : ``} with ffmpeg`, headers);
-
-                if(!convertExists) {
-                    convert = {
-                        ext: ytdlpSaveExt,
-                        forceSoftware: true,
-                        additionalOutputArgs: [`-c`, `copy`]
-                    };
-
-                    if(originalFormat) switch(originalFormat) {
-                        case `bv`:
-                            convert.additionalOutputArgs.push(`-map`, `0`, `-map`, `-0:a`)
-                            break;
-                        case `ba`:
-                            convert.additionalOutputArgs.push(`-map`, `0`, `-map`, `-0:v`)
-                            break;
+                if(thisFormat && thisFormat.url) {
+                    const inputArgs = [];
+    
+                    if(proxy) inputArgs.push(`-http_proxy`, proxy);
+    
+                    const headers = Object.entries(useHeaders).map(o => `${o[0]}: ${o[1]}`);
+    
+                    if(headers.length > 0) inputArgs.push(`-headers`, (headers.join(`\r\n`) + `\r\n`))
+    
+                    const convertExists = convert && Object.keys(convert).filter(s => convert[s]).length > 0;
+    
+                    console.log(`downloading${convertExists ? ` AND converting` : ``} with ffmpeg`, headers);
+    
+                    if(!convertExists) {
+                        convert = {
+                            ext: ytdlpSaveExt,
+                            forceSoftware: true,
+                            additionalOutputArgs: [`-c`, `copy`]
+                        };
+    
+                        if(originalFormat) switch(originalFormat) {
+                            case `bv`:
+                                convert.additionalOutputArgs.push(`-map`, `0`, `-map`, `-0:a`)
+                                break;
+                            case `ba`:
+                                convert.additionalOutputArgs.push(`-map`, `0`, `-map`, `-0:v`)
+                                break;
+                        }
                     }
-                }
-
-                runThroughFFmpeg(0, inputArgs, [], thisFormat.url, true).then(res).catch(() => {
-                    if(!convertExists) convert = null;
+    
+                    runThroughFFmpeg(0, inputArgs, [], thisFormat.url, true).then(res).catch(() => {
+                        if(!convertExists) convert = null;
+                        runYtdlp();
+                    });
+                } else {
+                    console.log(`failed to fetch format`, thisFormat, info)
                     runYtdlp();
-                });
+                }
             } else runYtdlp();
         } catch(e) {
             console.error(e);
