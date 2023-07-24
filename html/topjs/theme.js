@@ -72,7 +72,7 @@ var theme = ({
                 "color": `${lightMode ? `rgb(0,0,0)` : `rgb(255,255,255)`} !important`,
             },
             ".ez-selected": {
-                "background-color": `${parseRGB(lightMode ? dark : light, 0.85)} !important`,
+                "background-color": `${parseRGB(lightMode ? dark : light)} !important`,
                 "color": `${lightMode ? `rgb(255,255,255)` : `rgb(0,0,0)`} !important`,
             },
             ".ez-card": {
