@@ -1386,7 +1386,7 @@ module.exports = {
     
                     fullYtdlpFilename = sanitize(fullYtdlpFilename);
     
-                    ytdlpSaveExt = fullYtdlpFilename.split(`.`).slice(-1)[0];
+                    ytdlpSaveExt = thisFormat.ext || info.ext || fullYtdlpFilename.split(`.`).slice(-1)[0];
     
                     ytdlpFilename = fullYtdlpFilename.split(`.`).slice(0, -1).join(`.`);
                 }
