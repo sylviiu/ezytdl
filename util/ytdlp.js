@@ -1354,7 +1354,7 @@ module.exports = {
 
             let fullYtdlpFilename = null
 
-            let ytdlpSaveExt = null
+            let ytdlpSaveExt = thisFormat.ext || info.ext || null
 
             let ytdlpFilename = null
 
@@ -1370,7 +1370,7 @@ module.exports = {
         
                         fullYtdlpFilename = sanitize(fullYtdlpFilename);
         
-                        ytdlpSaveExt = fullYtdlpFilename.split(`.`).slice(-1)[0];
+                        ytdlpSaveExt = thisFormat.ext || info.ext || fullYtdlpFilename.split(`.`).slice(-1)[0];
         
                         ytdlpFilename = fullYtdlpFilename.split(`.`).slice(0, -1).join(`.`);
 
@@ -2096,7 +2096,7 @@ module.exports = {
 
                     if(convert.videoCodec || destinationCodec.videoCodec) {
                         if(useFile) {
-                            const fileExt = (streamingFromURL ? (thisFormat.ext || info.ext || ytdlpSaveExt) : null) || useFile.split(`?`)[0].split(`.`).slice(0, -1)[0];
+                            const fileExt = (streamingFromURL ? (ytdlpSaveExt) : null) || useFile.split(`?`)[0].split(`.`).slice(0, -1)[0];
 
                             console.log(`adding ext ${fileExt}`)
 
@@ -2544,7 +2544,7 @@ module.exports = {
 
                 if(!convertExists) {
                     convert = {
-                        ext: thisFormat.ext || info.ext || ytdlpSaveExt,
+                        ext: ytdlpSaveExt,
                         forceSoftware: true,
                         additionalOutputArgs: [`-c`, `copy`]
                     };
