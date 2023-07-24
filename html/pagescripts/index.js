@@ -332,9 +332,10 @@ getTabs().then(async tabs => {
     
                 console.log(`new color scheme`, colorScheme);
                 
-                if(tab.button.classList.contains(`ez-default`)) tab.button.classList.remove(`ez-default`)
-                tab.button.style.background = `rgb(${colorScheme.light.r},${colorScheme.light.g},${colorScheme.light.b})`;
-                tab.button.style.color = `rgb(0,0,0)`;
+                if(tab.button.classList.contains(`ez-default`)) tab.button.classList.remove(`ez-default`);
+                if(!tab.button.classList.contains(`ez-selected`)) tab.button.classList.add(`ez-selected`);
+                //tab.button.style.background = `rgb(${colorScheme.light.r},${colorScheme.light.g},${colorScheme.light.b})`;
+                //tab.button.style.color = `rgb(0,0,0)`;
     
                 if(tab.button.querySelector(`#icon`).classList.contains(`far`)) {
                     tab.button.querySelector(`#icon`).classList.remove(`far`);
@@ -344,9 +345,10 @@ getTabs().then(async tabs => {
                 };
         
                 if(currentTab) {
-                    if(!currentTab.button.classList.contains(`ez-default`)) currentTab.button.classList.add(`ez-default`)
-                    currentTab.button.style.background = tabButton.style.background;
-                    currentTab.button.style.color = tabButton.style.color;
+                    if(currentTab.button.classList.contains(`ez-selected`)) currentTab.button.classList.remove(`ez-selected`);
+                    if(!currentTab.button.classList.contains(`ez-default`)) currentTab.button.classList.add(`ez-default`);
+                    //currentTab.button.style.background = tabButton.style.background;
+                    //currentTab.button.style.color = tabButton.style.color;
     
                     currentTab.button.onmouseout();
     
