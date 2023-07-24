@@ -979,7 +979,7 @@ module.exports = {
     
                     if(ignoreStderr) {
                         return res(d);
-                    } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, ignoreStderr, forceRun: ignoreStderr ? false : true }).then(res);
+                    } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, ignoreStderr, /*forceRun: ignoreStderr ? false : true*/ }).then(res);
                     //console.log(d)
                 } catch(e) {
                     console.error(`${e}`)
