@@ -400,9 +400,9 @@ module.exports = {
             if(typeof url.thumbnail_url == `object`) url.thumbnail_url = url.thumbnail_url.url;
         }
 
-        Object.entries(url).filter(o => typeof o[1] == `string` && !o[1].match(genericURLRegex)).forEach(o => { url[o[0]] = null; })
+        Object.entries(url).filter(o => typeof o[1] == `string` && !o[1].match(genericURLRegex)).forEach(o => { url[o[0]] = null; });
 
-        let newMetadata = recursiveAssign(d.media_metadata ? d.media_metadata : {}, {
+        const assembled = {
             general,
             album: {
                 album: d.album || d.playlist_title || d['playlist-title'] || d.playlist_name || d.playlist || (d['playlist-media_metadata'] && d['playlist-media_metadata'].album.album ? d['playlist-media_metadata'].album.album : null),
@@ -410,7 +410,9 @@ module.exports = {
                 track: (d.media_metadata ? d.media_metadata.album.track : null) || ((typeof d.entry_number == `number` && typeof (d.entry_total || d['playlist-playlist_count']) == `number`) ? `${d.entry_number}/${d.entry_total || d['playlist-playlist_count']}` : null),
             },
             url,
-        });
+        };
+
+        let newMetadata = d._off_platform ? recursiveAssign({}, assembled, d.media_metadata ? d.media_metadata : {}) : recursiveAssign({}, d.media_metadata ? d.media_metadata : {}, assembled);
 
         return Object.assign(d, {
             media_metadata: newMetadata
@@ -1271,11 +1273,11 @@ module.exports = {
             } else {
                 if(status) update({status})
                 try {
-                    //const i = await module.exports.listFormats({query: url, ignoreStderr: true}, true);
                     const i = await module.exports.unflatPlaylist({info, customID: `fetchFullInfo`});
                     Object.assign(info, i, {
                         fullInfo: true
                     });
+                    getFilename();
                     res(true);
                 } catch(e) {
                     sendNotification({
@@ -1310,21 +1312,28 @@ module.exports = {
                 } else thisFormat = info.formats.find(f => f.format_id == format) || info.formats[0]
             }
 
-            const fullYtdlpFilename = sanitize(await new Promise(res => {
+            let fullYtdlpFilename = null
+
+            let ytdlpSaveExt = null
+
+            let ytdlpFilename = null
+
+            const getFilename = () => {
                 if(info._platform == `file` && convert) {
                     const parsed = require(`path`).parse(url);
-                    res(`${parsed.name} - converted-${info.selectedConversion && info.selectedConversion.key ? info.selectedConversion.key : `customconversion`}-${Date.now()}` + (convert.ext ? `.${convert.ext.startsWith(`.`) ? convert.ext.slice(1) : convert.ext}` : parsed.ext))
+                    fullYtdlpFilename = `${parsed.name} - converted-${info.selectedConversion && info.selectedConversion.key ? info.selectedConversion.key : `customconversion`}-${Date.now()}` + (convert.ext ? `.${convert.ext.startsWith(`.`) ? convert.ext.slice(1) : convert.ext}` : parsed.ext)
                 } else {
-                    const filename = module.exports.getFilename(url, info, thisFormat, outputFilename + `.%(ext)s`, true);
-                    if(filename.then) {
-                        return filename.then(res)
-                    } else return res(filename);
-                }
-            }))
+                    fullYtdlpFilename = module.exports.getFilename(url, info, thisFormat, outputFilename + `.%(ext)s`, false);
+                };
 
-            const ytdlpSaveExt = fullYtdlpFilename.split(`.`).slice(-1)[0];
+                fullYtdlpFilename = sanitize(fullYtdlpFilename);
 
-            let ytdlpFilename = fullYtdlpFilename.split(`.`).slice(0, -1).join(`.`);
+                ytdlpSaveExt = fullYtdlpFilename.split(`.`).slice(-1)[0];
+
+                ytdlpFilename = fullYtdlpFilename.split(`.`).slice(0, -1).join(`.`);
+            };
+
+            getFilename();
 
             if(!thisFormat) thisFormat = {
                 ext: ytdlpSaveExt,
@@ -1391,7 +1400,7 @@ module.exports = {
                     })
 
                     if(run && addMetadata && module.exports.ffmpegPath && file && (await pfs.existsSync(target))) {
-                        console.log(`adding metadata...`)
+                        console.log(`adding metadata...`, addMetadata)
 
                         let totalTasks = Object.values(addMetadata).filter(v => v).length + 1;
                         let current = 0;
@@ -1607,49 +1616,28 @@ module.exports = {
                                                 if(thumbnail.preference) extension += ` (priority ${thumbnail.preference})`;
     
                                                 progressNum = 15;
-                                                setProgress(`thumbnail`, {progressNum, status: `Downloading thumbnail` + extension + `...`});
-                                                //update({status: `Downloading thumbnail` + extension + `...`})
-    
-                                                const req = require(`superagent`).get(thumbnail.url);
-                    
-                                                req.pipe(await pfs.createWriteStream(target + `.songcover`));
+                                                setProgress(`thumbnail`, {progressNum, status: `Converting thumbnail` + extension + `...`})
+                                                //update({status: `Converting thumbnail` + extension + `...`})
             
-                                                req.on(`data`, () => {
+                                                const imgConvertProc = child_process.execFile(module.exports.ffmpegPath, [`-y`, `-i`, thumbnail.url, `-update`, `1`, `-vf`, `crop=min(in_w\\,in_h):min(in_w\\,in_h)`, target + `.png`]);
+            
+                                                imgConvertProc.stdout.on(`data`, d => {
+                                                    //console.log(d.toString().trim())
                                                     progressNum += 1;
-                                                    if(progressNum > 30) progressNum = 30;
+                                                    if(progressNum > 60) progressNum = 60;
                                                     setProgress(`thumbnail`, {progressNum})
                                                 })
-                    
-                                                req.once(`error`, e => {
-                                                    //console.log(e)
-                                                    res(1)
+            
+                                                //imgConvertProc.stderr.on(`data`, d => {
+                                                //    console.error(d.toString().trim())
+                                                //})
+            
+                                                imgConvertProc.once(`close`, c => {
+                                                    successfulThumbnail = c == 0 ? thumbnail : successfulThumbnail;
+                                                    res(c)
                                                 });
-                    
-                                                req.once(`end`, () => {
-                                                    progressNum = 35;
-                                                    setProgress(`thumbnail`, {progressNum, status: `Converting thumbnail` + extension + `...`})
-                                                    //update({status: `Converting thumbnail` + extension + `...`})
-                
-                                                    const imgConvertProc = child_process.execFile(module.exports.ffmpegPath, [`-y`, `-i`, target + `.songcover`, `-update`, `1`, `-vf`, `crop=min(in_w\\,in_h):min(in_w\\,in_h)`, target + `.png`]);
-                
-                                                    imgConvertProc.stdout.on(`data`, d => {
-                                                        //console.log(d.toString().trim())
-                                                        progressNum += 1;
-                                                        if(progressNum > 60) progressNum = 60;
-                                                        setProgress(`thumbnail`, {progressNum})
-                                                    })
-                
-                                                    //imgConvertProc.stderr.on(`data`, d => {
-                                                    //    console.error(d.toString().trim())
-                                                    //})
-                
-                                                    imgConvertProc.once(`close`, c => {
-                                                        successfulThumbnail = c == 0 ? thumbnail : successfulThumbnail;
-                                                        res(c)
-                                                    });
-    
-                                                    imgConvertProc.once(`error`, e => res(1));
-                                                })
+
+                                                imgConvertProc.once(`error`, e => res(1));
                                             });
     
                                             if(code == 0) break;
@@ -2285,10 +2273,19 @@ module.exports = {
 
                 proc.once('info', newInfo => {
                     console.log(`INFODUMP RECEIVED`);
+
                     const newParsed = module.exports.parseInfo(newInfo, true);
-                    const newMeta = recursiveAssign({}, info.media_metadata, newParsed.media_metadata);
-                    console.log(`oldmeta: `, info.media_metadata, `newmeta: `, newParsed.media_metadata, `combined: `, newMeta)
-                    Object.assign(info, newParsed, { media_metadata: newMeta });
+
+                    if(info._off_platform) {
+                        console.log(`preserving meta:`, info.media_metadata)
+                        Object.assign(info, newParsed, { media_metadata: info.media_metadata })
+                    } else {
+                        const newMeta = recursiveAssign({}, info.media_metadata, newParsed.media_metadata);
+                        console.log(`oldmeta: `, info.media_metadata, `newmeta: `, newParsed.media_metadata, `combined: `, newMeta)
+                        Object.assign(info, newParsed, { media_metadata: newMeta });
+                    };
+
+                    getFilename();
                 })
         
                 proc.stderr.on(`data`, data => {
@@ -2579,15 +2576,7 @@ module.exports = {
                 } else return undefined;
             });
 
-            //fs.writeFileSync(`./resultsInfo-${idGen(24)}.json`, JSON.stringify(resultsInfo, null, 4))
-
             resultsInfo.entries = resultsInfo.entries.filter(a => a && a !== undefined && typeof a == `object` && typeof a.similarity == `number`).sort((a, b) => b.similarity - a.similarity);
-
-            //fs.writeFileSync(`./${resultsInfo.entries[0] ? resultsInfo.entries[0].id : `unknown`}.json`, JSON.stringify(resultsInfo, null, 4))
-            
-            /*resultsInfo.entries.forEach(a => {
-                console.log(`- ${a.media_metadata.general.title} - ${a.similarity}`, a.similarities)
-            })*/
 
             if(resultsInfo && resultsInfo.entries && resultsInfo.entries[0] && (resultsInfo.entries[0].media_metadata || resultsInfo.entries[0].url)) {
                 return module.exports.parseInfo(Object.assign(thisInfo, {

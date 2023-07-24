@@ -1132,7 +1132,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
         
                     const saveAsAlbum = listbox.querySelector(`#opt-saveAsAlbum`);
         
-                    if(!info.entries) disableAlbumSave = true;
+                    if(!info.media_metadata.album.album && !info.media_metadata.album.track) disableAlbumSave = true;
                     if(func == `search`) disableAlbumSave = true;
                     if(info.extractor.includes(`search`)) disableAlbumSave = true;
         
