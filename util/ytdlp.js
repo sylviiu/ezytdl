@@ -12,6 +12,7 @@ const durationCurve = require(`./durationCurve`);
 const recursiveAssign = require(`./recursiveAssign`)
 
 const outputTemplateRegex = /%\(\s*([^)]+)\s*\)s/g;
+const genericURLRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/i;
 
 const platforms = fs.readdirSync(getPath(`./util/platforms`)).map(f => 
     Object.assign(require(`../util/platforms/${f}`), {
@@ -364,8 +365,6 @@ module.exports = {
         return template;
     },
     parseMetadata: (d, playlistRoot=false) => {
-        const genericURLRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/i;
-
         const useDescription = d.description || (d['playlist-media_metadata'] && d['playlist-media_metadata'].general.comment ? d['playlist-media_metadata'].general.comment : null);
 
         const splitDescription = useDescription ? useDescription.split(`\n`) : [];
@@ -1686,8 +1685,13 @@ module.exports = {
                 //let previousFilename = obj.destinationFile ? (`ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0]) : (temporaryFilename + `.${ytdlpSaveExt}`);
                 let previousFilename = null;
 
-                if(useFile) {
+                let streamingFromURL = false;
+
+                if(useFile && !useFile.match(genericURLRegex)) {
                     previousFilename = require(`path`).parse(useFile).base;
+                } else if(useFile && useFile.split(`?`)[0].match(genericURLRegex)) {
+                    previousFilename = temporaryFilename + `.${ytdlpSaveExt}`;
+                    streamingFromURL = true;
                 } else {
                     for(const f of temporaryFiles) {
                         const filepath = require(`path`).join(saveTo, f);
@@ -1897,9 +1901,25 @@ module.exports = {
                             return res()
                             //purgeLeftoverFiles(saveTo)
                             //return res(`Download canceled.`, true);
+                        };
+
+                        let keywords = [`converting`];
+
+                        if(convert.trimFrom || convert.trimTo) keywords.unshift(`trimming`);
+
+                        if(streamingFromURL) keywords.unshift(`streaming`);
+
+                        let prefix = ``;
+
+                        if(keywords.length == 1) {
+                            prefix = `${keywords[0][0].toUpperCase() + keywords[0].slice(1)}`;
+                        } else if(keywords.length == 2) {
+                            prefix = `${keywords[0][0].toUpperCase() + keywords[0].slice(1)} and ${keywords[1]}`;
+                        } else {
+                            prefix = `${keywords.slice(0, -1).map((s, i) => i == 0 ? s[0].toUpperCase() + s.slice(1) : s).join(`, `)} and ${keywords.slice(-1)[0]}`;
                         }
 
-                        let status = `Converting to ${(destinationCodec ? destinationCodec.name : null) || `${ext}`.toUpperCase()} using ${name}...`;
+                        let status = `${prefix} to ${(destinationCodec ? destinationCodec.name : null) || `${ext}`.toUpperCase()} using ${name}...`;
 
                         const additionalArgsFromConvert = [...(convert.additionalInputArgs || []), ...(convert.additionalOutputArgs || [])];
 
@@ -2202,9 +2222,33 @@ module.exports = {
                 }
             };
 
-            //console.log(`--- DOWNLOADING FORMAT (${format}) ---\n`, thisFormat)
+            console.log(`--- DOWNLOADING FORMAT (${format}) ---\n`, info, thisFormat);
 
-            if(info._platform != `file`) {
+            if(info._platform == `file`) {
+                if(!(await pfs.existsSync(module.exports.ffmpegPath))) return resolve(update({ failed: true, status: `FFmpeg was not found on your system -- conversion aborted.` }));
+                if(!(await pfs.existsSync(url))) return resolve(update({ failed: true, status: `File not found -- conversion aborted.` }));
+
+                const inputArgs = [];
+                const outputArgs = [];
+
+                //console.log(info, format, convert)
+
+                if(info.format_note && typeof info.format_index == `number`) outputArgs.push(`-map`, `0:${info.format_index}`)
+
+                console.log(`running raw conversion -- inputArgs`, inputArgs, `outputArgs`, outputArgs)
+
+                runThroughFFmpeg(0, inputArgs, outputArgs, url);
+            } else if(convert && thisFormat && thisFormat.url) {
+                const inputArgs = [];
+
+                const headers = Object.entries(thisFormat && thisFormat.http_headers ? thisFormat.http_headers : info && info.http_headers ? info.http_headers : {}).map(o => `${o[0]}: ${o[1]}`);
+
+                if(headers.length > 0) inputArgs.push(`-headers`, headers.join(`\r\n`) + `\r\n`)
+
+                console.log(`downloading AND converting with ffmpeg`, headers);
+
+                runThroughFFmpeg(0, inputArgs, [], thisFormat.url);
+            } else {
                 args = [`-f`, format, url, `-o`, require(`path`).join(saveTo, temporaryFilename) + `.%(ext)s`, `--no-mtime`, ...additionalArgs];
 
                 if(!format) args.splice(0, 2)
@@ -2440,20 +2484,6 @@ module.exports = {
                         }
                     } else runThroughFFmpeg(code);
                 })
-            } else {
-                if(!(await pfs.existsSync(module.exports.ffmpegPath))) return resolve(update({ failed: true, status: `FFmpeg was not found on your system -- conversion aborted.` }));
-                if(!(await pfs.existsSync(url))) return resolve(update({ failed: true, status: `File not found -- conversion aborted.` }));
-
-                const inputArgs = [];
-                const outputArgs = [];
-
-                //console.log(info, format, convert)
-
-                if(info.format_note && typeof info.format_index == `number`) outputArgs.push(`-map`, `0:${info.format_index}`)
-
-                console.log(`running raw conversion -- inputArgs`, inputArgs, `outputArgs`, outputArgs)
-
-                runThroughFFmpeg(0, inputArgs, outputArgs, url);
             }
         } catch(e) {
             console.error(e);
