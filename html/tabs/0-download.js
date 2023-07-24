@@ -734,7 +734,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                         }
         
                         for (const i in info.entries) {
-                            const entry = info.entries[i];
+                            const entry = Object.assign({}, /*info, { entries: undefined, formats: undefined },*/ info.entries[i]);
         
                             parseProgress.setProgress((i/info.entries.length)*100, `Parsing entry ${i}/${info.entries.length}`);
         
@@ -899,7 +899,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
         
                                 //console.log(`running conversionOptions`)
             
-                                conversionOptions(card, Object.assign({}, info, entry), colorScheme)
+                                conversionOptions(card, entry, colorScheme)
                             }
         
                             let visible = false;
