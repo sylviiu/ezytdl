@@ -1292,7 +1292,7 @@ module.exports = {
         try {
             const currentConfig = await require(`../getConfig`)();
 
-            const { disableHWAcceleratedConversion, outputFilename, hardwareAcceleratedConversion, advanced } = currentConfig;
+            const { disableHWAcceleratedConversion, outputFilename, hardwareAcceleratedConversion, advanced, proxy } = currentConfig;
 
             //console.log(`download started! (url: ${url})`, info)
 
@@ -2193,7 +2193,7 @@ module.exports = {
 
                         return fallback(msg + quickResolve);
                     }
-                } else if(!convert) {
+                } else {
                     for(const file of temporaryFiles) {
                         if(await pfs.existsSync(require(`path`).join(saveTo, file))) await pfs.renameSync(require(`path`).join(saveTo, file), require(`path`).join(saveTo, file.includes(temporaryFilename) ? file.replace(temporaryFilename, ytdlpFilename) : (ytdlpFilename + `.${file.split(`.`).slice(-1)[0]}`)));
                     }
@@ -2210,15 +2210,6 @@ module.exports = {
                         update({code, saveLocation: saveTo, url, format, status: `${ext} was not provided by this website (downloaded ${ytdlpSaveExt} instead${reasonConversionNotDone ? ` -- ${reasonConversionNotDone}` : ``})`});
                     } else update({code, saveLocation: saveTo, url, format, status: `Done!`});
                     res()
-                } else {
-                    if(killAttempt > 0) {
-                        update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + ext, url, format})
-                        return res()
-                        //purgeLeftoverFiles(saveTo)
-                    } else {
-                        update({code, saveLocation: saveTo, url, format, status: `Done!`})
-                        res()
-                    }
                 }
             };
 
@@ -2240,6 +2231,8 @@ module.exports = {
                 runThroughFFmpeg(0, inputArgs, outputArgs, url);
             } else if(convert && thisFormat && thisFormat.url) {
                 const inputArgs = [];
+
+                if(proxy) inputArgs.push(`-http_proxy`, proxy);
 
                 const headers = Object.entries(thisFormat && thisFormat.http_headers ? thisFormat.http_headers : info && info.http_headers ? info.http_headers : {}).map(o => `${o[0]}: ${o[1]}`);
 
