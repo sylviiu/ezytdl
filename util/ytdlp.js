@@ -2563,8 +2563,6 @@ module.exports = {
                     if(!convertExists) convert = null;
                     runYtdlp();
                 });
-            } else if(thisFormat && thisFormat.url) {
-
             } else runYtdlp();
         } catch(e) {
             console.error(e);
