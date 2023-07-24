@@ -197,12 +197,18 @@ module.exports = {
                     let existingData = ``;
 
                     module.exports.bridgeProc.stdout.on(`data`, data => {
-                        if(!data.toString().includes(`\n\r`)) {
-                            existingData += data.toString();
+                        try {
+                            data = decodeURIComponent(escape(data.toString('binary')));
+                        } catch(e) {
+                            data = data.toString('utf8');
+                        }
+
+                        if(!data.includes(`\n\r`)) {
+                            existingData += data;
                             return;
                         } else {
                             if(existingData) {
-                                data = existingData + data.toString();
+                                data = existingData + data;
                                 existingData = ``;
                             }
 
@@ -213,7 +219,7 @@ module.exports = {
                                 };
                             }
 
-                            data.toString().trim().split(`\n\r`).forEach((msg, i) => {
+                            data.trim().split(`\n\r`).forEach((msg, i) => {
                                 try {
                                     parse(msg)
                                 } catch(e) {

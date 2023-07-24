@@ -2,6 +2,7 @@
     "saveLocation": "Save Location",
     "outputFilename": "File Name Format",
     "proxy": "Proxy",
+    "downloadWithFFmpeg": "Allow Downloading with FFmpeg",
     "downloadInWebsiteFolders": "Create Folders for Websites",
     "downloadFromClipboard": "Allow Checking Clipboard for URLs",
     "checkForUpdates": "Check for Updates",
