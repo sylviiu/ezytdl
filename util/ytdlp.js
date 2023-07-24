@@ -381,8 +381,24 @@ module.exports = {
         const url = {
             source_url: d.webpage_url || d.url,
             artist_url: d.artist_url || d.creator_url || d.channel_url || d.uploader_url,
-            thumbnail_url: d.thumbnails ? d.thumbnails[d.thumbnails.length - 1] && typeof d.thumbnails[d.thumbnails.length - 1] == `object` ? d.thumbnails[d.thumbnails.length - 1].url : `${d.thumbnails[d.thumbnails.length - 1]}` : null,
+            //thumbnail_url: d.thumbnails ? d.thumbnails[d.thumbnails.length - 1] && typeof d.thumbnails[d.thumbnails.length - 1] == `object` ? d.thumbnails[d.thumbnails.length - 1].url : `${d.thumbnails[d.thumbnails.length - 1]}` : null,
+            thumbnail_url: null,
         };
+
+        if(d.thumbnails && d.thumbnails.length > 0) {
+            const filtered = d.thumbnails.filter(o => o && typeof o == `object` && o.url && o.width && o.height);
+
+            const preferredFilter = [...filtered.filter(o => o.width >= 512 && o.height >= 512), ...filtered];
+
+            const highestGivenResolution = preferredFilter.sort((a, b) => ((a.width || 1) * (a.height || 1)) < ((b.width || 1) * (b.height || 1)) ? 1 : -1)[0];
+            const fallback = d.thumbnails[d.thumbnails.length - 1];
+
+            url.thumbnail_url = (highestGivenResolution || fallback);
+
+            console.log(`found thumbnail in media_metadata`, url.thumbnail_url);
+
+            if(typeof url.thumbnail_url == `object`) url.thumbnail_url = url.thumbnail_url.url;
+        }
 
         Object.entries(url).filter(o => typeof o[1] == `string` && !o[1].match(genericURLRegex)).forEach(o => { url[o[0]] = null; })
 
@@ -1501,9 +1517,9 @@ module.exports = {
                             //console.log(`--------------\nfoundCodec: ${foundCodec}\nvcodec: ${vcodec}\ninfo.video: ${info.video}\n--------------`)
 
                             if(addMetadata.thumbnail && !vcodec) {
-                                if(!(info.media_metadata.url.thumbnail_url || info.thumbnails) && info.fullInfo) {
+                                if(!(info.media_metadata.url.thumbnail_url || (info.thumbnails && info.thumbnails.length > 0)) && info.fullInfo) {
                                     skipped.thumbnail = `No thumbnail found`;
-                                } else if(info.thumbnails || info.media_metadata.url.thumbnail_url) await new Promise(async r => {
+                                } else if((info.thumbnails && info.thumbnails.length > 0) || info.media_metadata.url.thumbnail_url) await new Promise(async r => {
                                     try {
                                         let progressNum = 15;
         
@@ -1648,9 +1664,9 @@ module.exports = {
                                         cleanup(true).then(r);
                                     }
                                 });
-                            } else if(vcodec) {
+                            }/* else if(vcodec) {
                                 skipped.thumbnail = `Video detected`;
-                            }
+                            }*/
                         }
                     } else {
                         console.log(`no metadata to add! (run: ${run}) (ffmpeg installed: ${module.exports.ffmpegPath ? true : false}) (file: ${file ? true : false})`);
@@ -2270,10 +2286,9 @@ module.exports = {
                 proc.once('info', newInfo => {
                     console.log(`INFODUMP RECEIVED`);
                     const newParsed = module.exports.parseInfo(newInfo, true);
-                    console.log(`oldmeta: `, info.media_metadata)
-                    const newMeta = recursiveAssign({}, newParsed.media_metadata, info.media_metadata);
-                    console.log(`newmeta: `, newParsed.media_metadata, `combined: `, newMeta)
-                    Object.assign(info, newParsed, { media_metadata: recursiveAssign(newParsed.media_metadata, info.media_metadata) });
+                    const newMeta = recursiveAssign({}, info.media_metadata, newParsed.media_metadata);
+                    console.log(`oldmeta: `, info.media_metadata, `newmeta: `, newParsed.media_metadata, `combined: `, newMeta)
+                    Object.assign(info, newParsed, { media_metadata: newMeta });
                 })
         
                 proc.stderr.on(`data`, data => {
