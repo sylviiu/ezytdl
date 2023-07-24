@@ -8,9 +8,10 @@ const downloadManager = require(`./downloadManager`);
 const authentication = require(`../core/authentication`);
 const getPath = require(`../util/getPath`);
 
-const outputTemplateRegex = /%\(\s*([^)]+)\s*\)s/g;
+const durationCurve = require(`./durationCurve`);
+const recursiveAssign = require(`./recursiveAssign`)
 
-const durationCurve = require(`./durationCurve`)
+const outputTemplateRegex = /%\(\s*([^)]+)\s*\)s/g;
 
 const platforms = fs.readdirSync(getPath(`./util/platforms`)).map(f => 
     Object.assign(require(`../util/platforms/${f}`), {
@@ -365,12 +366,16 @@ module.exports = {
     parseMetadata: (d, playlistRoot=false) => {
         const genericURLRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/i;
 
+        const useDescription = d.description || (d['playlist-media_metadata'] && d['playlist-media_metadata'].general.comment ? d['playlist-media_metadata'].general.comment : null);
+
+        const splitDescription = useDescription ? useDescription.split(`\n`) : [];
+
         const general = {
             title: d.title || d.webpage_url || d.url,
             artist: d.artist || d.album_artist || d.creator || d.uploader || d.channel,
             genre: d.genre,
-            copyright: d.license || (d['playlist-media_metadata'] ? d['playlist-media_metadata'].general.copyright : null),
-            comment: d.description || (d['playlist-media_metadata'] && d['playlist-media_metadata'].general.comment ? d['playlist-media_metadata'].general.comment : null),
+            copyright: (d['playlist-media_metadata'] ? d['playlist-media_metadata'].general.copyright : null) || d.license || splitDescription.find(s => s.includes(`license`) || s.includes(`\u00A9`)),
+            comment: useDescription,
         };
 
         const url = {
@@ -381,16 +386,18 @@ module.exports = {
 
         Object.entries(url).filter(o => typeof o[1] == `string` && !o[1].match(genericURLRegex)).forEach(o => { url[o[0]] = null; })
 
+        let newMetadata = recursiveAssign(d.media_metadata ? d.media_metadata : {}, {
+            general,
+            album: {
+                album: d.album || d.playlist_title || d['playlist-title'] || d.playlist_name || d.playlist || (d['playlist-media_metadata'] && d['playlist-media_metadata'].album.album ? d['playlist-media_metadata'].album.album : null),
+                album_artist: playlistRoot ? general.artist : (d['playlist-media_metadata'] && d['playlist-media_metadata'].general.artist ? d['playlist-media_metadata'].general.artist : null),
+                track: (d.media_metadata ? d.media_metadata.album.track : null) || ((typeof d.entry_number == `number` && typeof (d.entry_total || d['playlist-playlist_count']) == `number`) ? `${d.entry_number}/${d.entry_total || d['playlist-playlist_count']}` : null),
+            },
+            url,
+        });
+
         return Object.assign(d, {
-            media_metadata: {
-                general,
-                album: {
-                    album: d.album || d.playlist_title || d['playlist-title'] || d.playlist_name || d.playlist || (d['playlist-media_metadata'] && d['playlist-media_metadata'].album.album ? d['playlist-media_metadata'].album.album : null),
-                    album_artist: playlistRoot ? general.artist : (d['playlist-media_metadata'] && d['playlist-media_metadata'].general.artist ? d['playlist-media_metadata'].general.artist : null),
-                    track: ((typeof d.entry_number == `number` && typeof (d['playlist-playlist_count'] || d.entry_total) == `number`) ? `${d.entry_number}/${d['playlist-playlist_count'] || d.entry_total}` : null),
-                },
-                url,
-            }
+            media_metadata: newMetadata
         })
     },
     getSavePath: (info, filePath) => {
@@ -443,8 +450,10 @@ module.exports = {
 
         let totalTime = 0;
 
-        if(typeof entry_number == `number` && !root) d.entry_number = entry_number;
-        if(typeof entry_total == `number` && !root) d.entry_total = entry_total;
+        if(typeof entry_number == `number` && !root && typeof d.entry_number != `number`) d.entry_number = entry_number;
+        if(typeof entry_total == `number` && !root && typeof d.entry_total != `number`) d.entry_total = entry_total;
+
+        console.log(`root: ${root}; entry number: ${entry_number}; info entry: ${d.entry_number}; total entries: ${entry_total}; info total: ${d.entry_total}`)
 
         if(d.duration && !root) totalTime += typeof d.duration == `object` ? d.duration.units.ms : d.duration*1000;
 
@@ -1319,6 +1328,8 @@ module.exports = {
                 await refreshFFmpegPromise();
                 console.log(`ffmpeg refreshed!`)
             }
+
+            console.log(`downloading ${url};`, info && info.media_metadata ? info.media_metadata : `(no metadata)`);
     
             //console.log(saveLocation, filePath, ytdlpFilename)
 
@@ -1423,16 +1434,16 @@ module.exports = {
                             if(addMetadata.tags) await new Promise(async r => {
                                 try {
                                     await pfs.renameSync(target, target + `.ezytdl`);
-        
-                                    let tags = [];
     
                                     if(!info.fullInfo) {
                                         setProgress(`tags`, {progressNum: -1, status: `Getting full metadata...`})
                                         //update({status: `Getting full metadata...`})
                                         await fetchFullInfo();
                                     }
+
+                                    console.log(`metadata:`, info.media_metadata)
     
-                                    tags = [];
+                                    let tags = [];
     
                                     const general = Object.entries(info.media_metadata.general).filter(v => v[1]);
                                     const album = Object.entries(info.media_metadata.album).filter(v => v[1]);
@@ -1441,21 +1452,10 @@ module.exports = {
                                     for(const entry of general) tags.push([entry[0], entry[1]]);
     
                                     if(addMetadata['opt-saveAsAlbum']) for(const entry of album) tags.push([entry[0], entry[1]]);
-    
-                                    /*if(info.track || info.title) tags.push([`title`, info.track || info.title]);
-                                    if(info.artist || info.album_artist || info.creator || info.uploader || info.channel) tags.push([`artist`, info.artist || info.album_artist || info.creator || info.uploader || info.channel]);
-    
-                                    if(addMetadata['opt-saveAsAlbum']) {
-                                        if(info.album || info['playlist-title']) tags.push([`album`, info.album || info['playlist-title']]);
-                                        if((info.entry_number) && (info[`playlist-playlist_count`] || info.entry_total)) tags.push([`track`, `${info.entry_number}/${info[`playlist-playlist_count`] || info.entry_total}`]);
-                                    }
-    
-                                    if(info.genre) tags.push([`genre`, info.genre]);
-                                    if(info.license) tags.push([`copyright`, info.license]);
-                                    if(info.description) tags.push([`comment`, info.description]);*/
                                     
                                     setProgress(`tags`, {progressNum: 30, status: `Adding ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}...`})
-                                    //update({status: `Adding ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}...`})
+
+                                    console.log(`adding tags: ${tags.map(t => `\n- ${t[0]} - ${t[1]}`).join(`, `)}`)
         
                                     const meta = [];
         
@@ -1463,7 +1463,7 @@ module.exports = {
             
                                     const args = [`-y`, `-ignore_unknown`, `-i`, target + `.ezytdl`, `-id3v2_version`, `3`, `-write_id3v1`, `1`, ...meta, `-c`, `copy`, target];
             
-                                    ////console.log(args);
+                                    //console.log(args);
             
                                     const proc = child_process.execFile(module.exports.ffmpegPath, args);
     
@@ -2178,12 +2178,12 @@ module.exports = {
                         update({failed: true, percentNum: 100, status: `Download canceled.`, saveLocation: saveTo, destinationFile: require(`path`).join(saveTo, ytdlpFilename) + ext, url, format})
                         return res()
                         //purgeLeftoverFiles(saveTo)
+                    } else if(reasonConversionNotDone) {
+                        update({code, saveLocation: saveTo, url, format, status: `Could not convert: ${reasonConversionNotDone}`});
                     } else if(args.includes(`-S`) && ytdlpSaveExt == ext) {
                         update({code, saveLocation: saveTo, url, format, status: `Downloaded best quality provided for ${ext} format (no conversion done${reasonConversionNotDone ? ` -- ${reasonConversionNotDone}` : ``})`});
                     } else if(args.includes(`-S`) && ytdlpSaveExt != ext) {
                         update({code, saveLocation: saveTo, url, format, status: `${ext} was not provided by this website (downloaded ${ytdlpSaveExt} instead${reasonConversionNotDone ? ` -- ${reasonConversionNotDone}` : ``})`});
-                    } else if(reasonConversionNotDone) {
-                        update({code, saveLocation: saveTo, url, format, status: `Could not convert: ${reasonConversionNotDone}`});
                     } else update({code, saveLocation: saveTo, url, format, status: `Done!`});
                     res()
                 } else {
@@ -2208,6 +2208,7 @@ module.exports = {
                 args.push(`--ffmpeg-location`, ``);
         
                 if(!(await pfs.existsSync(module.exports.ffmpegPath))) {
+                    console.log(`ffmpeg not found`);
                     if(convert && convert.ext) {
                         ext = convert.ext
                         convert = false;
@@ -2268,7 +2269,11 @@ module.exports = {
 
                 proc.once('info', newInfo => {
                     console.log(`INFODUMP RECEIVED`);
-                    Object.assign(info, module.exports.parseInfo(newInfo, true), info._off_platform ? { media_metadata: info.media_metadata } : {});
+                    const newParsed = module.exports.parseInfo(newInfo, true);
+                    console.log(`oldmeta: `, info.media_metadata)
+                    const newMeta = recursiveAssign({}, newParsed.media_metadata, info.media_metadata);
+                    console.log(`newmeta: `, newParsed.media_metadata, `combined: `, newMeta)
+                    Object.assign(info, newParsed, { media_metadata: recursiveAssign(newParsed.media_metadata, info.media_metadata) });
                 })
         
                 proc.stderr.on(`data`, data => {
