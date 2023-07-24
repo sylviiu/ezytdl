@@ -9,10 +9,13 @@ const start = async () => {
 
         let lastText = null;
 
-        console.log(`Starting clipboard listener`)
+        console.log(`Starting clipboard listener`);
+
+        let sendNotifsEverTrue = false;
 
         while(true) await new Promise(async res => {
-            if(global.downloadFromClipboard && global.sendNotifs) try {
+            if(global.downloadFromClipboard && (global.sendNotifs || sendNotifsEverTrue)) try {
+                sendNotifsEverTrue = true;
                 const text = clipboard.readText();
                 if(typeof text == `string` && text != lastText && text.split(`?`)[0].match(genericUrlRegex)) {
                     console.log(`new clipboard text, is url!`)
