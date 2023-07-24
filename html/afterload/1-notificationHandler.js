@@ -191,17 +191,20 @@ if(window.parent != window) {
                 container.style.background = `rgba(176,29,29,0.5)`
             } else if(type == `warn`) {
                 container.style.background = `rgba(217,81,23,0.5)`
-            } else container.style.background = `rgba(0,0,0,0.5)`
+            //} else container.style.background = `rgba(0,0,0,0.5)`
+            } else container.classList.add(`ez-card`)
             
             const heading = useDocument.createElement(`h5`);
             heading.id = `errorHeading`;
             heading.innerText = headingText || title || `An internal error has occurred!`;
             heading.style.marginBottom = `6px`;
+            heading.classList.add(`ez-text`);
             container.appendChild(heading);
         
             const body = useDocument.createElement(`p`);
             body.id = `errorBody`
             body.innerHTML = markdown.makeHtml((bodyText || content || `-- unknown --`).trim());
+            body.classList.add(`ez-text`);
             container.appendChild(body);
     
             container.style.paddingBottom = `0px`;
@@ -223,7 +226,8 @@ if(window.parent != window) {
                 icon.style.marginRight = `6px`;
     
                 button.appendChild(icon);
-                button.appendChild(useDocument.createTextNode(`Report on GitHub`));
+                
+                button.innerHTML += `Report on GitHub`
     
                 container.appendChild(button);
             }

@@ -16,7 +16,11 @@ const createButton = (id, {
     button.style.marginRight = `6px`;
     button.style.color = `rgb(0,0,0)`;
 
-    if(primaryColor) button.classList.add(`ez-selected`)
+    if(primaryColor) {
+        button.classList.add(`ez-selected`)
+    } else {
+        button.classList.add(`ez-defaultop`)
+    }
 
     if(icon) {
         console.log(`icon requested, label: ${icon}`)
