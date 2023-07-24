@@ -2527,7 +2527,7 @@ module.exports = {
                 console.log(`running raw conversion -- inputArgs`, inputArgs, `outputArgs`, outputArgs)
 
                 runThroughFFmpeg(0, inputArgs, outputArgs, url).then(res);
-            } else if(downloadWithFFmpeg && (convert/* || (module.exports.ffmpegPath && (await pfs.existsSync(module.exports.ffmpegPath)))*/) && thisFormat && thisFormat.url) {
+            } else if(downloadWithFFmpeg && (convert || (module.exports.ffmpegPath && (await pfs.existsSync(module.exports.ffmpegPath)))) && thisFormat && thisFormat.url) {
                 await getFilename(true);
 
                 const inputArgs = [];
