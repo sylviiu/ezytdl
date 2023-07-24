@@ -238,7 +238,8 @@ var initDownloadManager = (force) => {
             pageButtons.appendChild(previousPage);
         
             const pageNumText = document.createElement(`h6`);
-            pageNumText.style.color = `white`
+            //pageNumText.style.color = `white`
+            pageNumText.classList.add(`ez-text`)
             pageNumText.innerHTML = `Page 1/1`;
             pageButtons.appendChild(pageNumText);
         
