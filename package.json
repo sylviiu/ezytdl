@@ -6,7 +6,7 @@
   "dependencies": {
     "electron-updater": "^6.1.1",
     "sanitize-filename": "^1.6.3",
-    "sharp": "^0.32.3",
+    "sharp": "^0.32.4",
     "shell-env": "^4.0.1",
     "string-similarity": "^4.0.4",
     "superagent": "^8.0.9",
