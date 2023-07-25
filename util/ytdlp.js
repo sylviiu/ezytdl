@@ -2041,14 +2041,19 @@ module.exports = {
                             //return res(`Download canceled.`, true);
                         };
 
+                        let destinationStr = `to ${(destinationCodec ? destinationCodec.name : null) || `${ext}`.toUpperCase()} using ${name}...`
+
                         let keywords = [];
 
                         if(convert.additionalOutputArgs) {
-                            const i = convert.additionalOutputArgs.indexOf(`-c`);
+                            let i = convert.additionalOutputArgs.indexOf(`-c`);
+                            let i2 = convert.additionalOutputArgs.indexOf(`-c:v`);
                             if(i > -1 && convert.additionalOutputArgs[i+1] == `copy`) {
-                                keywords.push(`saving`)
-                            } else keywords.push(`converting`)
-                        } else keywords.push(`converting`)
+                                keywords.push(`saving (with original video & audio format)`)
+                            } else if(i2 > -1 && convert.additionalOutputArgs[i2+1] == `copy`) {
+                                keywords.push(`saving (with original video format; converting audio${destinationCodec && ` to ${destinationCodec.audioCodec}` ? destinationCodec.audioCodec : ``})`)
+                            } else keywords.push(`converting ${destinationStr}`)
+                        } else keywords.push(`converting ${destinationStr}`)
 
                         if(convert.trimFrom || convert.trimTo) keywords.unshift(`trimming`);
 
@@ -2073,17 +2078,15 @@ module.exports = {
                             keywords.unshift(strings)
                         }
 
-                        let prefix = ``;
+                        let status = ``;
 
                         if(keywords.length == 1) {
-                            prefix = `${keywords[0][0].toUpperCase() + keywords[0].slice(1)}`;
+                            status = `${keywords[0][0].toUpperCase() + keywords[0].slice(1)}`;
                         } else if(keywords.length == 2) {
-                            prefix = `${keywords[0][0].toUpperCase() + keywords[0].slice(1)} and ${keywords[1]}`;
+                            status = `${keywords[0][0].toUpperCase() + keywords[0].slice(1)} and ${keywords[1]}`;
                         } else {
-                            prefix = `${keywords.slice(0, -1).map((s, i) => i == 0 ? s[0].toUpperCase() + s.slice(1) : s).join(`, `)} and ${keywords.slice(-1)[0]}`;
+                            status = `${keywords.slice(0, -1).map((s, i) => i == 0 ? s[0].toUpperCase() + s.slice(1) : s).join(`, `)} and ${keywords.slice(-1)[0]}`;
                         }
-
-                        let status = `${prefix} to ${(destinationCodec ? destinationCodec.name : null) || `${ext}`.toUpperCase()} using ${name}...`;
 
                         console.log(`status: ${status}`)
 
@@ -2091,7 +2094,7 @@ module.exports = {
 
                         const additionalOpts = additionalArgsFromConvert.filter(s => s.startsWith(`-`)).map(s => s.slice(1));
 
-                        if(advanced) {
+                        if(advanced && keywords.includes(`converting`)) {
                             status += (additionalArgsFromConvert.length > 0 ? `<br>(using extra processing: ${additionalOpts.join(`, `)})` : ``) + `<br><br>- ${Object.keys(convert).filter(s => convert[s]).map(s => `${s}: ${convert[s] || `(no conversion)`}`).join(`<br>- `)}`
                         }
     
@@ -2354,7 +2357,7 @@ module.exports = {
                     
                     if(!onlyGPUConversion || convert.forceSoftware) {
                         attemptArgs.push({
-                            string: `${originalCodec || originalExtension.toUpperCase()} (CPU) -> ${targetCodec || ext.slice(1).toUpperCase()} (CPU)`,
+                            string: convert.videoCodec ? `${originalCodec || originalExtension.toUpperCase()} (CPU) -> ${targetCodec || convert.videoCodec || ext.slice(1).toUpperCase()} (CPU)` : `no conversion`,
                             hardware: `None`,
                             decoder: `Software`,
                             encoder: `Software`,
