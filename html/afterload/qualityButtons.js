@@ -451,7 +451,7 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
     if(downloadBest) {
         const { downloadWithFFmpeg } = config;
 
-        const bestQualityStr = downloadBest.innerHTML.split(`Quick Download`)[0] + `Best Quality*`;
+        const bestQualityStr = downloadBest.innerHTML.split(`Quick Download`)[0] + `Full Quality*`;
         const possibleBestQualityStr = downloadBest.innerHTML.split(`Quick Download`)[0] + `Quick Download*`;
         const defaultStr = downloadBest.innerHTML.split(`Quick Download`)[0] + `Quick Download`;
 
@@ -459,7 +459,7 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
     
         if(hasFFmpeg && downloadWithFFmpeg && downloadBest && downloadBest.innerHTML != bestQualityStr) {
             downloadBest.innerHTML = bestQualityStr
-            downloadBest.setAttribute(`title`, `The best video & audio quality (when applicable) will be downloaded simultaneously and merged together utilizing FFmpeg when necessary.\n\nIf FFmpeg is not present when the download begins, the best quality that contains both audio and video (when applicable) will be downloaded instead with yt-dlp, which will usually result in a lower quality on certain platforms.\n\nYou can disable this in the settings through the "${config.strings.downloadWithFFmpeg}" option!`)
+            downloadBest.setAttribute(`title`, `The best video & audio quality (when applicable) will be downloaded simultaneously and merged together utilizing FFmpeg when necessary.\n\nIf FFmpeg is not present when the download begins, the best quality that contains both audio and video (when applicable) will be downloaded instead with yt-dlp, which will usually result in a lower quality on certain platforms.\n\nPlease note that downloading with FFmpeg may end up being slower than downloading with yt-dlp, as it would likely be downloading multiple streams at once. You can disable this in the settings through the "${config.strings.downloadWithFFmpeg}" option!`)
         } else if(hasFFmpeg && !downloadWithFFmpeg && downloadBest && downloadBest.innerHTML != possibleBestQualityStr) {
             downloadBest.innerHTML = possibleBestQualityStr
             downloadBest.setAttribute(`title`, `The option "${config.strings.downloadWithFFmpeg}" is disabled; the best quality that contains both audio and video (when applicable) will be downloaded instead with yt-dlp, which will usually result in a lower quality on certain platforms in comparison to downloading with FFmpeg (which will simultaneously download the best audio AND video format).`)
