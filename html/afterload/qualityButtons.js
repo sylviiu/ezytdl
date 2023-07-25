@@ -444,10 +444,33 @@ const qualityButtons = ({node, card, info, overrideDownloadObj, centerURLBox, re
                 saveOptionsAnimations.fadeIn(null, qualityButtonsDropdown, (i) => btnClick(btn, i), node).then(() => { })
             })
         }
+    };
+
+    const downloadBest = node.querySelector(`#downloadBest`);
+
+    if(downloadBest) {
+        const { downloadWithFFmpeg } = config;
+
+        const bestQualityStr = downloadBest.innerHTML.split(`Quick Download`)[0] + `Best Quality*`;
+        const possibleBestQualityStr = downloadBest.innerHTML.split(`Quick Download`)[0] + `Quick Download*`;
+        const defaultStr = downloadBest.innerHTML.split(`Quick Download`)[0] + `Quick Download`;
+
+        console.log(`downloadBest strings`, bestQualityStr, possibleBestQualityStr, defaultStr)
+    
+        if(hasFFmpeg && downloadWithFFmpeg && downloadBest && downloadBest.innerHTML != bestQualityStr) {
+            downloadBest.innerHTML = bestQualityStr
+            downloadBest.setAttribute(`title`, `The best video & audio quality (when applicable) will be downloaded simultaneously and merged together utilizing FFmpeg when necessary.\n\nIf FFmpeg is not present when the download begins, the best quality that contains both audio and video (when applicable) will be downloaded instead with yt-dlp, which will usually result in a lower quality on certain platforms.\n\nYou can disable this in the settings through the "${config.strings.downloadWithFFmpeg}" option!`)
+        } else if(hasFFmpeg && !downloadWithFFmpeg && downloadBest && downloadBest.innerHTML != possibleBestQualityStr) {
+            downloadBest.innerHTML = possibleBestQualityStr
+            downloadBest.setAttribute(`title`, `The option "${config.strings.downloadWithFFmpeg}" is disabled; the best quality that contains both audio and video (when applicable) will be downloaded instead with yt-dlp, which will usually result in a lower quality on certain platforms in comparison to downloading with FFmpeg (which will simultaneously download the best audio AND video format).`)
+        } else if(downloadBest.innerHTML != defaultStr) {
+            downloadBest.innerHTML = defaultStr
+            if(downloadBest.hasAttribute(`title`)) downloadBest.removeAttribute(`title`);
+        }
     }
 
-    //highlightButton(node.querySelector(`#downloadBest`), colorScheme)
-    if(node.querySelector(`#downloadBest`)) node.querySelector(`#downloadBest`).onclick = () => btnClick(node.querySelector(`#downloadBest`), 0);
+    //highlightButton(downloadBest, colorScheme)
+    if(downloadBest) downloadBest.onclick = () => btnClick(downloadBest, 0);
     if(node.querySelector(`#downloadBestAudio`)) node.querySelector(`#downloadBestAudio`).onclick = () => btnClick(node.querySelector(`#downloadBestAudio`), 1);
     if(node.querySelector(`#downloadBestVideo`)) node.querySelector(`#downloadBestVideo`).onclick = () => btnClick(node.querySelector(`#downloadBestVideo`), 2);
 
