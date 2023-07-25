@@ -1456,7 +1456,7 @@ module.exports = {
 
             const saveTo = module.exports.getSavePath(info, filePath);
 
-            update({ deleteFiles: () => purgeLeftoverFiles(saveTo), live: info.is_live ? true : false, destinationFilename: ytdlpFilename, formatID: format })
+            update({ deleteFiles: () => purgeLeftoverFiles(saveTo), live: info.is_live ? true : false, destinationFilename: ytdlpFilename, formatID: thisFormat ? thisFormat.format_id : originalFormat })
     
             console.log(`saveTo: ${saveTo} (making dir)`)
 
@@ -2417,6 +2417,8 @@ module.exports = {
             const runYtdlp = async () => {
                 thisFormat = originalFormatObj;
 
+                update({formatID: thisFormat ? (`${thisFormat.format_id}` + (thisFormat.audioFormat ? `/${thisFormat.audioFormat.format_id}` : ``)) : originalFormat})
+
                 args = [`-f`, format, url, `-o`, require(`path`).join(saveTo, temporaryFilename) + `.%(ext)s`, `--no-mtime`, ...additionalArgs];
 
                 if(!format) args.splice(0, 2)
@@ -2665,6 +2667,8 @@ module.exports = {
     
                     for(var attempt = 0; attempt < Math.min(3, info.formats.length); attempt++) {
                         thisFormat = module.exports.getFormat({info, format: originalFormat, ext, depth: attempt}) || originalFormatObj;
+
+                        update({formatID: thisFormat ? (`${thisFormat.format_id}` + (thisFormat.audioFormat ? `/${thisFormat.audioFormat.format_id}` : ``)) : originalFormat})
         
                         getFilename();
         
