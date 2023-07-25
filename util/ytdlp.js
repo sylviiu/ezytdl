@@ -1220,7 +1220,7 @@ module.exports = {
             let useFormatsArr = info.formats.slice();
 
             if(info.is_live && !useFormatsArr.find(f => f.format_id == format)) {
-                useFormat = useFormatsArr[depth]
+                useFormat = useFormatsArr[depth] || useFormatsArr[0]
             } else if(format == `bv*+ba/b`) {
                 useFormat = module.exports.getFormat({info, format: `bv`, ext, depth});
 
@@ -1231,13 +1231,15 @@ module.exports = {
                     useFormat = module.exports.getFormat({info, format: `ba`, depth});
                 }
             } else if(format == `ba`) {
+                useFormatsArr = useFormatsArr.filter(f => f.audio)
+
                 if(ext && useFormatsArr.filter(o => o.ext == ext).length > 0) useFormatsArr = useFormatsArr.filter(o => o.ext == ext);
 
-                useFormat = useFormatsArr.filter(f => !f.video && f.audio).sort((a,b) => ((parseInt(b.abr) || 1) * (parseInt(b.asr) || 1)) - ((parseInt(a.abr) || 1) * (parseInt(a.asr) || 1)))[depth]
-                if(!useFormat) useFormat = useFormatsArr.filter(f => !f.video && f.audio)[depth]
-                if(!useFormat) useFormat = useFormatsArr[depth]
+                useFormat = useFormatsArr[depth]
                 if(!useFormat) useFormat = useFormatsArr[0]
             } else if(format == `bv`) {
+                useFormatsArr = useFormatsArr.filter(f => f.video)
+
                 if(ext && useFormatsArr.filter(o => o.ext == ext).length > 0) useFormatsArr = useFormatsArr.filter(o => o.ext == ext);
 
                 useFormat = useFormatsArr.filter(f => f.video && !f.audio).sort((a,b) => ((b.vbr || 1) * (b.fps || 1) * (b.width || 1) * (b.height || 1)) - ((a.vbr || 1) * (a.fps || 1) * (a.width || 1) * (a.height || 1)))[depth]
@@ -1247,7 +1249,7 @@ module.exports = {
             } else useFormat = useFormatsArr.find(f => f.format_id == format) || useFormatsArr.filter(o => typeof o.quality == `number`).sort((a,b) => a.quality - b.quality)[depth] || useFormatsArr[depth] || useFormatsArr[0];
         };
 
-        return useFormat;
+        return useFormat || null;
     },
     download: ({url, format, ext, convert, filePath, addMetadata, info, extraArguments}, updateFunc) => new Promise(async resolve => {
         const temporaryFilename = `ezytdl-` + idGen(24);
@@ -2065,13 +2067,21 @@ module.exports = {
                             urls.forEach((o,i) => {
                                 let thisStr = i > 0 ? `,` : i == (urls.length-1) ? ` and` : ``
 
-                                if(o.video && !o.audio) {
-                                    thisStr += ` ${o.resolution} video`
+                                let toAppend = ``
+
+                                if(o.video && o.resolution) {
+                                    toAppend += ` ${o.resolution} video`
                                 };
                                 
-                                if(!o.video && o.audio) {
-                                    thisStr += ` ${o.abr || `(unknown)`} abr @ ${o.asr || `(unknown)`} asr audio`
-                                } ;
+                                if(o.audio && (o.abr || o.asr)) {
+                                    if(o.abr && o.asr) {
+                                        toAppend += (toAppend ? ` with` : ``) + ` ${o.abr || `(unknown)`} abr @ ${o.asr || `(unknown)`} asr audio`
+                                    } else if(o.asr) {
+                                        toAppend += (toAppend ? ` with` : ``) + ` ${o.asr || `(unknown)`} asr audio`
+                                    } else if(o.abr) {
+                                        toAppend += (toAppend ? ` with` : ``) + ` ${o.abr || `(unknown)`} abr audio`
+                                    }
+                                };
 
                                 strings += thisStr;
                             })
@@ -2158,7 +2168,7 @@ module.exports = {
     
                             let speed = [];
     
-                            if(keywords.includes(`converting`) && data.includes(`fps=`)) speed.push(data.trim().split(`fps=`)[1].trim().split(` `)[0] + `fps`);
+                            if(keywords.includes(`converting`) && data.includes(`fps=`) && data.split(`fps=`)[1].split(` `).trim() != `0.0`) speed.push(data.trim().split(`fps=`)[1].trim().split(` `)[0] + `fps`);
         
                             if(data.includes(`speed=`)) try {
                                 let number = Number(data.trim().split(`speed=`)[1].trim().split(` `)[0].match(numRegex)[0]);
