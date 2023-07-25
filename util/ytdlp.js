@@ -1076,9 +1076,11 @@ module.exports = {
 
                 if(headers.length > 0) args.unshift(`-headers`, (headers.join(`\r\n`) + `\r\n`))
 
+                console.log(args)
+
                 child_process.execFile(ffprobePath, args, (err, stdout, stderr) => {
                     if(err) {
-                        console.error(err);
+                        console.error(`${err}`);
                         return res(null);
                     } else {
                         let a = stdout.toString().trim();
@@ -1092,12 +1094,22 @@ module.exports = {
             }
         } else return res(null)
     }),
-    getResolution: (path) => new Promise(async res => {
-        const proc = child_process.execFile((await require(`./filenames/ffmpeg`).getFFprobePromise()), [`-v`, `error`, `-select_streams`, `v:0`, `-show_entries`, `stream=width,height`, `-of`, `csv=s=x:p=0`, path]);
+    getResolution: (path, headersObj) => new Promise(async res => {
+        const args = [`-v`, `error`, `-select_streams`, `v:0`, `-show_entries`, `stream=width,height`, `-of`, `csv=s=x:p=0`, path];
+
+        const headers = Object.entries(headersObj && typeof headersObj == `object` ? headersObj : {}).map(o => `${o[0]}: ${o[1]}`);
+
+        if(headers.length > 0) args.unshift(`-headers`, (headers.join(`\r\n`) + `\r\n`))
+
+        console.log(args)
+
+        const proc = child_process.execFile((await require(`./filenames/ffmpeg`).getFFprobePromise()), args);
 
         let output = ``;
 
         proc.stdout.on(`data`, d => output += d.toString().trim() + `\n`);
+
+        proc.on(`error`, (e) => { console.error(`${e}`) })
 
         proc.on(`close`, () => {
             if(output) {
@@ -1196,6 +1208,42 @@ module.exports = {
             const newMeta = recursiveAssign({}, info.media_metadata, newParsed.media_metadata);
             Object.assign(info, newParsed, { media_metadata: newMeta });
         };
+    },
+    getFormat: ({info, format, ext, depth=0}) => {
+        let useFormat = null;
+
+        if(info.formats) {
+            let useFormatsArr = info.formats.slice();
+
+            if(info.is_live && !useFormatsArr.find(f => f.format_id == format)) {
+                useFormat = useFormatsArr[depth]
+            } else if(format == `bv*+ba/b`) {
+                useFormat = module.exports.getFormat({info, format: `bv`, ext, depth});
+
+                if(useFormat) {
+                    useFormat.audioFormat = module.exports.getFormat({info, format: `ba`, depth});
+                    if(useFormat.audioFormat.format_id == useFormat.format_id) delete useFormat.audioFormat;
+                } else {
+                    useFormat = module.exports.getFormat({info, format: `ba`, depth});
+                }
+            } else if(format == `ba`) {
+                if(ext && useFormatsArr.filter(o => o.ext == ext).length > 0) useFormatsArr = useFormatsArr.filter(o => o.ext == ext);
+
+                useFormat = useFormatsArr.filter(f => !f.video && f.audio).sort((a,b) => ((parseInt(b.abr) || 1) * (parseInt(b.asr) || 1)) - ((parseInt(a.abr) || 1) * (parseInt(a.asr) || 1)))[depth]
+                if(!useFormat) useFormat = useFormatsArr.filter(f => !f.video && f.audio)[depth]
+                if(!useFormat) useFormat = useFormatsArr[depth]
+                if(!useFormat) useFormat = useFormatsArr[0]
+            } else if(format == `bv`) {
+                if(ext && useFormatsArr.filter(o => o.ext == ext).length > 0) useFormatsArr = useFormatsArr.filter(o => o.ext == ext);
+
+                useFormat = useFormatsArr.filter(f => f.video && !f.audio).sort((a,b) => ((b.vbr || 1) * (b.fps || 1) * (b.width || 1) * (b.height || 1)) - ((a.vbr || 1) * (a.fps || 1) * (a.width || 1) * (a.height || 1)))[depth]
+                if(!useFormat) useFormat = useFormatsArr.filter(f => f.video && !f.audio)[depth]
+                if(!useFormat) useFormat = useFormatsArr[depth]
+                if(!useFormat) useFormat = useFormatsArr[0]
+            } else useFormat = useFormatsArr.find(f => f.format_id == format) || useFormatsArr.filter(o => typeof o.quality == `number`).sort((a,b) => a.quality - b.quality)[depth] || useFormatsArr[depth] || useFormatsArr[0];
+        };
+
+        return useFormat;
     },
     download: ({url, format, ext, convert, filePath, addMetadata, info, extraArguments}, updateFunc) => new Promise(async resolve => {
         const temporaryFilename = `ezytdl-` + idGen(24);
@@ -1319,6 +1367,8 @@ module.exports = {
 
             let { onlyGPUConversion } = currentConfig;
 
+            const originalFormat = format;
+
             let thisFormat;
 
             if(format == `bv*+ba/b`/* && (!module.exports.ffmpegPath || !convert)*/) format = null;
@@ -1327,43 +1377,13 @@ module.exports = {
 
             console.log(`format: ${format} / ext: ${ext}`)
 
-            const originalFormat = format;
-
-            const getFormat = (format) => {
-                let useFormat = null;
-
-                if(info.formats) {
-                    let useFormatsArr = info.formats.slice();
-
-                    if(info.is_live && !useFormatsArr.find(f => f.format_id == format)) {
-                        useFormat = useFormatsArr[0]
-                    } else if(format == `ba`) {
-                        if(ext && useFormatsArr.filter(o => o.ext == ext).length > 0) useFormatsArr = useFormatsArr.filter(o => o.ext == ext);
-    
-                        useFormat = useFormatsArr.filter(f => !f.video && f.audio).sort((a,b) => ((parseInt(b.abr) || 1) * (parseInt(b.asr) || 1)) - ((parseInt(a.abr) || 1) * (parseInt(a.asr) || 1)))[0]
-                        if(!useFormat) useFormat = useFormatsArr.find(f => !f.video && f.audio)
-                        if(!useFormat) useFormat = useFormatsArr[0]
-                    } else if(format == `bv`) {
-                        if(ext && useFormatsArr.filter(o => o.ext == ext).length > 0) useFormatsArr = useFormatsArr.filter(o => o.ext == ext);
-    
-                        useFormat = useFormatsArr.filter(f => f.video && !f.audio).sort((a,b) => ((b.vbr || 1) * (b.fps || 1) * (b.width || 1) * (b.height || 1)) - ((a.vbr || 1) * (a.fps || 1) * (a.width || 1) * (a.height || 1)))[0]
-                        if(!useFormat) useFormat = useFormatsArr.find(f => f.video && !f.audio)
-                        if(!useFormat) useFormat = useFormatsArr[0]
-                    } else useFormat = useFormatsArr.find(f => f.format_id == format) || useFormatsArr.filter(o => typeof o.quality == `number`).sort((a,b) => a.quality - b.quality)[0] || useFormatsArr[0];
-                };
-
-                return useFormat;
-            }
-
-            thisFormat = getFormat(format);
+            thisFormat = module.exports.getFormat({info, format, ext});
 
             if(thisFormat) {
                 console.log(`format ${originalFormat}: found (out of ${info.formats.length} formats)`, thisFormat)
             } else {
                 console.log(`format ${originalFormat}: not found (out of ${info.formats ? info.formats.length : `${info.formats}`} formats)`, info)
             }
-
-            const useHeaders = thisFormat && thisFormat.http_headers ? thisFormat.http_headers : info && info.http_headers ? info.http_headers : {};
 
             let fullYtdlpFilename = null
 
@@ -1409,12 +1429,11 @@ module.exports = {
 
             if(!thisFormat) thisFormat = {
                 ext: ytdlpSaveExt,
-                format_id: `unknown`,
                 format_note: `unknown`,
                 format: `unknown`
             };
 
-            thisFormat.format_id = format || thisFormat.format_id;
+            thisFormat.format_id = thisFormat.format_id || format;
             
             filenames.push(fullYtdlpFilename)
             filenames.push(temporaryFilename)
@@ -1748,6 +1767,15 @@ module.exports = {
             };
 
             const runThroughFFmpeg = (code, replaceInputArgs, replaceOutputArgs, useFile=null, callback) => new Promise(async (res, rej) => {
+                if(useFile && (typeof useFile != `object` || typeof useFile.length != `number`)) useFile = [useFile];
+
+                if(useFile && typeof useFile == `object`) for(const { url } of useFile) {
+                    while(useFile.filter(u => u.url == url).length > 1) {
+                        console.log(`duplicate url ${url} in useFile! removing...`)
+                        useFile.splice(useFile.findIndex(u => u.url == url), 1);
+                    }
+                }
+
                 const temporaryFiles = useFile ? [] : (await pfs.readdirSync(saveTo)).filter(f => f.startsWith(temporaryFilename) && !f.endsWith(`.part`) && !f.endsWith(`.meta`));
 
                 if(!useFile) filenames.push(...temporaryFiles);
@@ -1755,17 +1783,21 @@ module.exports = {
                 //let previousFilename = obj.destinationFile ? (`ezytdl` + obj.destinationFile.split(`ezytdl`).slice(-1)[0]) : (temporaryFilename + `.${ytdlpSaveExt}`);
                 let previousFilename = null;
 
-                let streamingFromURL = false;
+                let streamingFromURL = 0;
 
-                try {
-                    const parsed = new URL(useFile);
-                    streamingFromURL = true;
-                } catch(e) {
-                    streamingFromURL = false;
-                }
+                if(useFile) for(const { url, http_headers } of useFile) {
+                    if(http_headers && Object.keys(http_headers).length > 0) {
+                        streamingFromURL++
+                    } else try {
+                        const parsed = new URL(url);
+                        streamingFromURL++;
+                    } catch(e) { }
+                };
+
+                console.log(`streaming from url: ${streamingFromURL}`);
 
                 if(useFile && !streamingFromURL) {
-                    previousFilename = require(`path`).parse(useFile).base;
+                    previousFilename = require(`path`).parse(useFile[0].url).base;
                 } else if(useFile && streamingFromURL) {
                     previousFilename = temporaryFilename + `.${ytdlpSaveExt}`;
                 } else {
@@ -1777,6 +1809,8 @@ module.exports = {
                         }
                     }
                 }
+
+                let updatedKillfunc = false;
 
                 const fallback = async (msg, deleteFile) => {
                     try {
@@ -1790,7 +1824,9 @@ module.exports = {
                                 if(await pfs.existsSync(require(`path`).join(saveTo, file))) await pfs.renameSync(require(`path`).join(saveTo, file), require(`path`).join(saveTo, file.includes(temporaryFilename) ? file.replace(temporaryFilename, ytdlpFilename) : (ytdlpFilename + `.${file.split(`.`).slice(-1)[0]}`)));
                             }
                         }
-                    } catch(e) { console.log(e) }
+                    } catch(e) { console.log(e) };
+
+                    if(updatedKillfunc) await obj.kill();
 
                     if(callback) {
                         rej(msg);
@@ -1803,7 +1839,7 @@ module.exports = {
                     }
                 };
 
-                console.log(`temporary (target) files`, useFile)
+                console.log(`temporary (target) files`, useFile || temporaryFiles)
 
                 if(temporaryFiles.length == 0 && !useFile) return fallback(`No files were found, aborting conversion.`, false);
     
@@ -1832,7 +1868,7 @@ module.exports = {
 
                     //if(!destinationCodec.compatible) return fallback(`Could not convert to ${ext.toUpperCase()} -- unable to find muxer details.`, true);
 
-                    const inputArgs = replaceInputArgs || [];
+                    const inputArgs = (replaceInputArgs || []).slice();
 
                     let totalDuration = [0, info.duration ? info.duration.units.ms : (info.originalDuration ? info.originalDuration*1000 : 0)];
 
@@ -1863,10 +1899,15 @@ module.exports = {
                     }
 
                     if(useFile) {
-                        inputArgs.push(`-i`, useFile);
-                    } else for(const file of temporaryFiles) {
-                        if(await pfs.existsSync(require(`path`).join(saveTo, file))) {
-                            inputArgs.push(`-i`, require(`path`).join(saveTo, file));
+                        for(const { url, http_headers } of useFile) {
+                            if(!inputArgs.includes(url)) {
+                                if(http_headers && Object.keys(http_headers).length > 0) inputArgs.push(`-headers`, Object.entries(http_headers).map(s => `${s[0]}: ${s[1]}`).join(`\r\n`) + `\r\n`)
+                                inputArgs.push(`-i`, url);
+                            }
+                        }
+                    } else for(const file of temporaryFiles.map(f => require(`path`).join(saveTo, f))) {
+                        if(await pfs.existsSync(file)) {
+                            if(!inputArgs.includes(file)) inputArgs.push(`-i`, file);
                         }
                     }
 
@@ -1892,7 +1933,11 @@ module.exports = {
 
                     if(convert.additionalInputArgs) inputArgs.unshift(...convert.additionalInputArgs);
 
-                    const outputArgs = [...(replaceOutputArgs || []), require(`path`).join(saveTo, ytdlpFilename) + ext];
+                    if(streamingFromURL) inputArgs.unshift(`-protocol_whitelist`, `file,http,https,tcp,tls,crypto`);
+
+                    const outputArgs = (replaceOutputArgs || []).slice();
+
+                    outputArgs.push(require(`path`).join(saveTo, ytdlpFilename) + ext);
 
                     if(convert.audioBitrate) outputArgs.unshift(`-b:a`, convert.audioBitrate);
                     if(convert.audioSampleRate) outputArgs.unshift(`-ar`, convert.audioSampleRate);
@@ -1908,8 +1953,14 @@ module.exports = {
 
                         var width, height;
 
-                        for(const file of (useFile ? [useFile] : temporaryFiles.map(f => require(`path`).join(saveTo, f)))) {
-                            if(!width || !height) var { width, height } = await module.exports.getResolution(file);
+                        for(const file of (useFile ? useFile : temporaryFiles.map(f => require(`path`).join(saveTo, f)))) {
+                            if(!width || !height) {
+                                if(typeof file == `object`) {
+                                    var { width, height } = await module.exports.getResolution(file.url, file.http_headers);
+                                } else {
+                                    var { width, height } = await module.exports.getResolution(file);
+                                }
+                            }
                         };
 
                         if(width && height) {
@@ -1995,7 +2046,28 @@ module.exports = {
 
                         if(convert.trimFrom || convert.trimTo) keywords.unshift(`trimming`);
 
-                        if(streamingFromURL) keywords.unshift(`streaming`);
+                        if(streamingFromURL) {
+                            let strings = `streaming`;
+
+                            const urls = useFile.filter(o => o.url && o.http_headers)
+
+                            urls.forEach((o,i) => {
+                                let thisStr = i > 0 ? `,` : i == (urls.length-1) ? ` and` : ``
+
+                                if(o.video && !o.audio) {
+                                    thisStr += ` ${o.resolution} video`
+                                };
+                                
+                                if(!o.video && o.audio) {
+                                    thisStr += ` ${o.abr || `(unknown)`} abr @ ${o.asr || `(unknown)`} asr audio`
+                                } ;
+
+                                strings += thisStr;
+                            })
+
+                            //keywords.unshift(`streaming from ${streamingFromURL} source${streamingFromURL == 1 ? `` : `s`}`);
+                            keywords.unshift(strings)
+                        }
 
                         let prefix = ``;
 
@@ -2008,6 +2080,8 @@ module.exports = {
                         }
 
                         let status = `${prefix} to ${(destinationCodec ? destinationCodec.name : null) || `${ext}`.toUpperCase()} using ${name}...`;
+
+                        console.log(`status: ${status}`)
 
                         const additionalArgsFromConvert = [...(convert.additionalInputArgs || []), ...(convert.additionalOutputArgs || [])];
 
@@ -2022,13 +2096,21 @@ module.exports = {
                         console.log(args2)
     
                         proc = child_process.execFile(module.exports.ffmpegPath, [`-y`, ...args2]);
+
+                        let closed = false;
+
+                        proc.once(`close`, () => { closed = true })
                         
-                        update({kill: () => {
+                        update({kill: () => new Promise(r => {
+                            if(closed) return r();
                             console.log(`killing ffmpeg conversion...`)
                             killAttempt++
-                            proc.stdin.write(`q`)
+                            proc.stdin.write(`q`);
+                            proc.once(`close`, r);
                             //proc.kill(`SIGINT`);
-                        }})
+                        })});
+
+                        updatedKillfunc = true;
         
                         let duration = null;
 
@@ -2122,21 +2204,23 @@ module.exports = {
 
                     if(convert.videoCodec || destinationCodec.videoCodec) {
                         if(useFile) {
-                            const fileExt = (streamingFromURL ? (ytdlpSaveExt) : null) || useFile.split(`?`)[0].split(`.`).slice(0, -1)[0];
-
-                            console.log(`adding ext ${fileExt}`)
-
-                            originalExtensions.push(fileExt);
-
-                            codecPromises.push(new Promise(async r => {
-                                originalVideoCodec = await module.exports.getCodec(useFile, null, streamingFromURL ? useHeaders : null);
-                                r();
-                            }));
-                            
-                            codecPromises.push(new Promise(async r => {
-                                originalAudioCodec = await module.exports.getCodec(useFile, true, streamingFromURL ? useHeaders : null);
-                                r();
-                            }));
+                            for(const { url, http_headers } of useFile) {
+                                const fileExt = (streamingFromURL ? (ytdlpSaveExt) : null) || url.split(`?`)[0].split(`.`).slice(0, -1)[0];
+    
+                                console.log(`adding ext ${fileExt}`)
+    
+                                if(!originalExtensions.includes(fileExt)) originalExtensions.push(fileExt);
+    
+                                codecPromises.push(new Promise(async r => {
+                                    originalVideoCodec = await module.exports.getCodec(url, false, http_headers);
+                                    r();
+                                }));
+                                
+                                codecPromises.push(new Promise(async r => {
+                                    originalAudioCodec = await module.exports.getCodec(url, true, http_headers);
+                                    r();
+                                }));
+                            }
                         } else for(const f of temporaryFiles) {
                             if(await pfs.existsSync(require(`path`).join(saveTo, f))) {
                                 const fileExt = f.split(`.`).slice(0, -1)[0];
@@ -2157,11 +2241,13 @@ module.exports = {
                             };
                         }
                     } else if(useFile) {
-                        const fileExt = useFile.split(`.`).slice(-1)[0];
-
-                        console.log(`adding ext ${fileExt}`)
-
-                        originalExtensions.push(fileExt);
+                        for(const { url } of useFile) {
+                            const fileExt = (streamingFromURL ? (ytdlpSaveExt) : null) || url.split(`?`)[0].split(`.`).slice(0, -1)[0];
+    
+                            console.log(`adding ext ${fileExt}`)
+    
+                            originalExtensions.push(fileExt);
+                        }
                     } else for(const f of temporaryFiles) {
                         if(await pfs.existsSync(require(`path`).join(saveTo, f))) {
                             const fileExt = f.split(`.`).slice(-1)[0];
@@ -2303,7 +2389,11 @@ module.exports = {
 
             console.log(`--- DOWNLOADING FORMAT (${format}) ---\n`, thisFormat);
 
+            const originalFormatObj = thisFormat;
+
             const runYtdlp = async () => {
+                thisFormat = originalFormatObj;
+
                 args = [`-f`, format, url, `-o`, require(`path`).join(saveTo, temporaryFilename) + `.%(ext)s`, `--no-mtime`, ...additionalArgs];
 
                 if(!format) args.splice(0, 2)
@@ -2375,7 +2465,7 @@ module.exports = {
                     
                     module.exports.mergeInfo(info, newInfo);
 
-                    getFilename();
+                    //getFilename();
                 })
         
                 proc.stderr.on(`data`, data => {
@@ -2507,7 +2597,7 @@ module.exports = {
                                     }});
     
                                     if(convert) {
-                                        runThroughFFmpeg(code);
+                                        runThroughFFmpeg(code).then(res);
                                     } else {
                                         if(await pfs.existsSync(require(`path`).join(saveTo, temporaryFilename + `.${ytdlpSaveExt}`))) await pfs.unlinkSync(require(`path`).join(saveTo, temporaryFilename + `.${ytdlpSaveExt}`));
                                         update({code, saveLocation: saveTo, url, format, status: `Done!`})
@@ -2518,11 +2608,11 @@ module.exports = {
                         } else {
                             let ffmpegInputArgs = [`-i`, thisFormat.url || url];
     
-                            if(useHeaders) {
+                            /*if(useHeaders) {
                                 console.log(`using http headers:`, useHeaders);
             
                                 ffmpegInputArgs.unshift(`-headers`, Object.keys(useHeaders).map(s => `${s}: ${useHeaders[s]}`).join(`\r\n`))
-                            }
+                            }*/
     
                             killAttempt = 0;
     
@@ -2545,52 +2635,76 @@ module.exports = {
 
                 console.log(`running raw conversion -- inputArgs`, inputArgs, `outputArgs`, outputArgs)
 
-                runThroughFFmpeg(0, inputArgs, outputArgs, url).then(res);
-            } else if(downloadWithFFmpeg && (convert || (thisFormat && thisFormat.url))) {
-                await fetchFullInfo(`Getting original format (downloading with FFmpeg)...`);
-
-                const originalFormat = thisFormat
-                thisFormat = getFormat(originalFormat) || originalFormat;
-
-                getFilename();
-
-                if(thisFormat && thisFormat.url) {
-                    const inputArgs = [];
+                runThroughFFmpeg(0, inputArgs, outputArgs, [{url}]).then(res);
+            } else if(downloadWithFFmpeg && (convert || originalFormat == `bv*+ba/b` || (thisFormat && thisFormat.url))) {
+                try {
+                    await fetchFullInfo(`Getting original format (streaming with FFmpeg)...`);
     
-                    if(proxy) inputArgs.push(`-http_proxy`, proxy);
+                    for(var attempt = 0; attempt < Math.min(3, info.formats.length); attempt++) {
+                        thisFormat = module.exports.getFormat({info, format: originalFormat, ext, depth: attempt}) || originalFormatObj;
+        
+                        getFilename();
+        
+                        console.log(`ffmpeg is downloading format:`, thisFormat)
+        
+                        const inputArgs = [`-v`, `verbose`];
+        
+                        if(proxy) inputArgs.push(`-http_proxy`, proxy);
+        
+                        //if(Object.keys(useHeaders).length > 0) inputArgs.push(`-headers`, (Object.entries(useHeaders).map(o => `${o[0]}: ${o[1]}`).join(`\r\n`) + `\r\n`))
+        
+                        const convertExists = convert && Object.keys(convert).filter(s => convert[s]).length > 0;
+        
+                        console.log(`streaming${convertExists ? ` AND converting` : ``} with ffmpeg`);
+        
+                        if(thisFormat && thisFormat.url && thisFormat.audioFormat && typeof thisFormat.audioFormat == `object` && thisFormat.audioFormat.url && thisFormat.audioFormat.url != thisFormat.url) {
+                            if(!convertExists) {
+                                convert = {
+                                    ext: thisFormat.ext || ytdlpSaveExt,
+                                    forceSoftware: true,
+                                    additionalOutputArgs: [`-c:v`, `copy`]
+                                };
+                            };
     
-                    const headers = Object.entries(useHeaders).map(o => `${o[0]}: ${o[1]}`);
+                            try {
+                                const r = await runThroughFFmpeg(0, inputArgs, [], [thisFormat, thisFormat.audioFormat], true);
+                                return res(r);
+                            } catch(e) {
+                                console.error(`failed ffmpeg attempt ${Number(attempt)+1}: ${e}`)
+                            }
+                        } else if(thisFormat && thisFormat.url) {
+                            if(!convertExists) {
+                                convert = {
+                                    ext: thisFormat.ext || ytdlpSaveExt,
+                                    forceSoftware: true,
+                                    additionalOutputArgs: [`-c`, `copy`]
+                                };
+            
+                                if(originalFormat) switch(originalFormat) {
+                                    case `bv`:
+                                        convert.additionalOutputArgs.push(`-map`, `0`, `-map`, `-0:a`)
+                                        break;
+                                    case `ba`:
+                                        convert.additionalOutputArgs.push(`-map`, `0`, `-map`, `-0:v`)
+                                        break;
+                                }
+                            }
     
-                    if(headers.length > 0) inputArgs.push(`-headers`, (headers.join(`\r\n`) + `\r\n`))
-    
-                    const convertExists = convert && Object.keys(convert).filter(s => convert[s]).length > 0;
-    
-                    console.log(`downloading${convertExists ? ` AND converting` : ``} with ffmpeg`, headers);
-    
-                    if(!convertExists) {
-                        convert = {
-                            ext: ytdlpSaveExt,
-                            forceSoftware: true,
-                            additionalOutputArgs: [`-c`, `copy`]
-                        };
-    
-                        if(originalFormat) switch(originalFormat) {
-                            case `bv`:
-                                convert.additionalOutputArgs.push(`-map`, `0`, `-map`, `-0:a`)
-                                break;
-                            case `ba`:
-                                convert.additionalOutputArgs.push(`-map`, `0`, `-map`, `-0:v`)
-                                break;
+                            try {
+                                const r = await runThroughFFmpeg(0, inputArgs, [], [thisFormat], true);
+                                return res(r);
+                            } catch(e) {
+                                console.error(`failed ffmpeg attempt ${Number(attempt)+1}: ${e}`)
+                            }
+                        } else {
+                            console.log(`failed to fetch format`, thisFormat, info)
                         }
-                    }
+                    };
     
-                    runThroughFFmpeg(0, inputArgs, [], thisFormat.url, true).then(res).catch(() => {
-                        if(!convertExists) convert = null;
-                        runYtdlp();
-                    });
-                } else {
-                    console.log(`failed to fetch format`, thisFormat, info)
-                    runYtdlp();
+                    return runYtdlp();
+                } catch(e) {
+                    console.error(`failed to download with FFmpeg (at root): ${e}`);
+                    return runYtdlp();
                 }
             } else runYtdlp();
         } catch(e) {
