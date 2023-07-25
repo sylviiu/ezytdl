@@ -1648,11 +1648,13 @@ module.exports = {
                                 }
                             });
 
-                            let vcodec = thisFormat && typeof thisFormat.video == `boolean` ? thisFormat.video : (typeof info.video == `boolean` ? info.video : null);
+                            let vcodec = null;
 
-                            if(typeof vcodec != `boolean`) {
+                            try {
                                 const foundCodec = await module.exports.getCodec(target);
                                 vcodec = (foundCodec && !`${foundCodec}`.includes(`jpeg`) && !`${foundCodec}`.includes(`png`))
+                            } catch(e) {
+                                vcodec = thisFormat && typeof thisFormat.video == `boolean` ? thisFormat.video : (typeof info.video == `boolean` ? info.video : null)
                             }
 
                             //console.log(`--------------\nfoundCodec: ${foundCodec}\nvcodec: ${vcodec}\ninfo.video: ${info.video}\n--------------`)
