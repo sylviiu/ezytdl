@@ -1100,7 +1100,7 @@ module.exports = {
     getCodec: (file, audio, headersObj) => new Promise(async res => {
         let ffprobePath = await require(`./filenames/ffmpeg`).getFFprobePromise();
 
-        console.log(`getCodec / ffprobePath: ${ffprobePath}`, new Error().stack)
+        console.log(`getCodec / ffprobePath: ${ffprobePath}`)
         
         if(ffprobePath && await pfs.existsSync(ffprobePath) && file) {
             try {
@@ -2101,8 +2101,16 @@ module.exports = {
 
                                 let toAppend = ``
 
-                                if(o.video && o.resolution) {
-                                    toAppend += ` ${o.resolution} video`
+                                if(o.video && (o.resolution || o.fps)) {
+                                    if(o.resolution && o.fps) {
+                                        toAppend += ` ${o.resolution} @ ${o.fps}fps`
+                                    } else if(o.fps) {
+                                        toAppend += ` ${o.fps}fps`
+                                    } else if(o.resolution) {
+                                        toAppend += ` ${o.resolution}`
+                                    }
+
+                                    toAppend += ` video`
                                 };
                                 
                                 if(o.audio && (o.abr || o.asr)) {
@@ -2279,22 +2287,42 @@ module.exports = {
 
                     if(convert.videoCodec || destinationCodec.videoCodec) {
                         if(useFile) {
-                            for(const { url, http_headers } of useFile) {
-                                const fileExt = (streamingFromURL ? (ytdlpSaveExt) : null) || url.split(`?`)[0].split(`.`).slice(0, -1)[0];
+                            for(const file of useFile) {
+                                const fileExt = (streamingFromURL ? (ytdlpSaveExt) : null) || file.url.split(`?`)[0].split(`.`).slice(0, -1)[0];
     
                                 console.log(`adding ext ${fileExt}`)
     
                                 if(!originalExtensions.includes(fileExt)) originalExtensions.push(fileExt);
-    
-                                codecPromises.push(new Promise(async r => {
-                                    originalVideoCodec = await module.exports.getCodec(url, false, http_headers);
-                                    r();
-                                }));
-                                
-                                codecPromises.push(new Promise(async r => {
-                                    originalAudioCodec = await module.exports.getCodec(url, true, http_headers);
-                                    r();
-                                }));
+
+                                if(file.video || file.audio) {
+                                    if(!originalVideoCodec && file.vcodec) {
+                                        originalVideoCodec = file.vcodec.split(`.`)[0];
+                                    } else if(file.video) {
+                                        codecPromises.push(new Promise(async r => {
+                                            if(!originalVideoCodec) originalVideoCodec = await module.exports.getCodec(file.url, false, file.http_headers);
+                                            r();
+                                        }));
+                                    };
+
+                                    if(!originalAudioCodec && file.acodec) {
+                                        originalAudioCodec = file.acodec.split(`.`)[0];
+                                    } else if(file.audio) {
+                                        codecPromises.push(new Promise(async r => {
+                                            if(!originalAudioCodec) originalAudioCodec = await module.exports.getCodec(file.url, true, file.http_headers);
+                                            r();
+                                        }));
+                                    };
+                                } else {
+                                    codecPromises.push(new Promise(async r => {
+                                        originalVideoCodec = await module.exports.getCodec(file.url, false, file.http_headers);
+                                        r();
+                                    }));
+
+                                    codecPromises.push(new Promise(async r => {
+                                        originalAudioCodec = await module.exports.getCodec(file.url, true, file.http_headers);
+                                        r();
+                                    }));
+                                }
                             }
                         } else for(const f of temporaryFiles) {
                             if(await pfs.existsSync(require(`path`).join(saveTo, f))) {
