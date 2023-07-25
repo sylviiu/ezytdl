@@ -1883,7 +1883,6 @@ module.exports = {
 
                     if(info.duration && info.duration.units && info.duration.units.ms) {
                         if(convert.trimFrom) {
-                            //inputArgs.push(`-ss`, convert.trimFrom);
                             seekArgs[0] = convert.trimFrom;
                             const ms = time(convert.trimFrom).units.ms;
                             seek.push(Math.ceil(ms/1000));
@@ -1891,7 +1890,6 @@ module.exports = {
                         } else seek.push(0);
     
                         if(convert.trimTo) {
-                            //inputArgs.push(`-to`, convert.trimTo);
                             seekArgs[1] = convert.trimTo;
                             const ms = time(convert.trimTo).units.ms;
                             seek.push(Math.ceil(ms/1000))
@@ -1909,13 +1907,11 @@ module.exports = {
                         for(const { url, http_headers } of useFile) {
                             if(!inputArgs.includes(url)) {
                                 if(http_headers && Object.keys(http_headers).length > 0) inputArgs.push(`-headers`, Object.entries(http_headers).map(s => `${s[0]}: ${s[1]}`).join(`\r\n`) + `\r\n`)
-                                //if(seekArgs[0]) inputArgs.push(`-ss`, seekArgs[0]);
                                 inputArgs.push(`-i`, url);
                             }
                         }
                     } else for(const file of temporaryFiles.map(f => require(`path`).join(saveTo, f))) {
                         if(await pfs.existsSync(file) && !inputArgs.includes(file)) {
-                            //if(seekArgs[0]) inputArgs.push(`-ss`, seekArgs[0]);
                             if(!inputArgs.includes(file)) inputArgs.push(`-i`, file);
                         }
                     }
@@ -1944,8 +1940,6 @@ module.exports = {
                     }
 
                     if(convert.additionalInputArgs) inputArgs.unshift(...convert.additionalInputArgs);
-
-                    //if(streamingFromURL) inputArgs.unshift(`-http_persistent`, `0`);
 
                     const outputArgs = (replaceOutputArgs || []).slice();
 
