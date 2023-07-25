@@ -2101,7 +2101,7 @@ module.exports = {
 
                                 let toAppend = ``
 
-                                if(o.video && (o.resolution || o.fps)) {
+                                if(o.resolution || o.fps) {
                                     if(o.resolution && o.fps) {
                                         toAppend += ` ${o.resolution} @ ${o.fps}fps`
                                     } else if(o.fps) {
@@ -2113,7 +2113,7 @@ module.exports = {
                                     toAppend += ` video`
                                 };
                                 
-                                if(o.audio && (o.abr || o.asr)) {
+                                if(o.abr || o.asr) {
                                     if(o.abr && o.asr) {
                                         toAppend += (toAppend ? ` with` : ``) + ` ${o.abr || `(unknown)`} abr @ ${o.asr || `(unknown)`} asr audio`
                                     } else if(o.asr) {
@@ -2123,7 +2123,7 @@ module.exports = {
                                     }
                                 };
 
-                                strings += thisStr;
+                                strings += thisStr + toAppend;
                             })
 
                             //keywords.unshift(`streaming from ${streamingFromURL} source${streamingFromURL == 1 ? `` : `s`}`);
