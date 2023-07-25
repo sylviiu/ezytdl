@@ -517,18 +517,48 @@ module.exports = {
             const sortByQuality = (a, b) => {
                 // go by a.quality and b.quality, higher should go first
                 // if there is no quality, send before the ones with quality
-                if(a.quality && b.quality) {
+                if(a.quality || b.quality) {
                     if(a.quality == b.quality) {
                         return 0;
                     } else if(a.quality > b.quality) {
                         return -1;
                     } else if(a.quality < b.quality) {
                         return 1;
-                    }
-                } else if(a.quality) {
-                    return -1;
-                } else if(b.quality) {
-                    return 1;
+                    } else if(a.quality) {
+                        return -1;
+                    } else if(b.quality) {
+                        return 1;
+                    } else return 0;
+                } else if((a.asr || a.abr) || (b.asr || b.abr)) {
+                    if(((a.asr || 1) * (a.abr || 1)) > ((b.asr || 1) * (b.abr || 1))) {
+                        return -1;
+                    } else if(((a.asr || 1) * (a.abr || 1)) < ((b.asr || 1) * (b.abr || 1))) {
+                        return 1;
+                    } else if((a.asr || a.abr)) {
+                        return -1;
+                    } else if((b.asr || b.abr)) {
+                        return 1;
+                    } else return 0;
+                } else if((a.width || a.height) || (b.width || b.height)) {
+                    if(((a.width || 1) * (a.height || 1)) > ((b.width || 1) * (b.height || 1))) {
+                        return -1;
+                    } else if(((a.width || 1) * (a.height || 1)) < ((b.width || 1) * (b.height || 1))) {
+                        return 1;
+                    } else if((a.width || a.height)) {
+                        return -1;
+                    } else if((b.width || b.height)) {
+                        return 1;
+                    } else return 0;
+                } else if(a.fps || b.fps) {
+                    if(a.fps > b.fps) {
+                        return -1;
+                    } else if(a.fps < b.fps) {
+                        return 1;
+                    } else if(a.fps) {
+                        return -1;
+                    } else if(b.fps) {
+                        return 1;
+                    } else return 0;
                 } else return 0;
             }
 
