@@ -1483,7 +1483,7 @@ module.exports = {
 
                     if(killAttempt > 0) run = false;
 
-                    const file = (await pfs.readdirSync(saveTo)).find(f => f.startsWith(ytdlpFilename) && !f.endsWith(`.meta`));
+                    const file = (await pfs.existsSync(obj.destinationFile) ? require(`path`).basename(obj.destinationFile) : null) || (await pfs.readdirSync(saveTo)).find(f => f.startsWith(ytdlpFilename) && !f.endsWith(`.meta`));
                     const target = file ? require(`path`).join(saveTo, file) : null;
 
                     if(target) update({ destinationFile: target });
@@ -2139,6 +2139,11 @@ module.exports = {
         
                         proc.stderr.on(`data`, d => {
                             const data = `${d}`;
+
+                            if(data.includes(`Output #0`) && data.includes(`to '`)) {
+                                const filename = data.split(`Output #0`)[1].split(`to '`)[1].split(`:`).slice(0, -1).join(`:`).slice(0, -1);
+                                if(obj.destinationFile != filename) update({ destinationFile: filename })
+                            }
 
                             if(data.includes(`Opening`)) {
                                 requests++;
