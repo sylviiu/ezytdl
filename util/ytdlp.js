@@ -68,9 +68,11 @@ const refreshVideoCodecs = () => {
 }
 
 var refreshFFmpeg = () => {
+    const originalPath = module.exports.ffmpegPath;
+
     if(!module.exports.ffmpegPath || !fs.existsSync(module.exports.ffmpegPath)) module.exports.ffmpegPath = require(`./filenames/ffmpeg`).getPath();
 
-    if(module.exports.ffmpegPath && !ffmpegVideoCodecs) {
+    if(module.exports.ffmpegPath && (!ffmpegVideoCodecs || originalPath != module.exports.ffmpegPath)) {
         refreshVideoCodecs();
         return true;
     } else if(module.exports.ffmpegPath) {
@@ -108,9 +110,11 @@ const refreshVideoCodecsPromise = () => new Promise(async res => {
 })
 
 var refreshFFmpegPromise = () => new Promise(async res => {
+    const originalPath = module.exports.ffmpegPath;
+
     if(!module.exports.ffmpegPath || !(await pfs.existsSync(module.exports.ffmpegPath))) module.exports.ffmpegPath = await require(`./filenames/ffmpeg`).getPathPromise();
 
-    if(module.exports.ffmpegPath && !ffmpegVideoCodecs) {
+    if(module.exports.ffmpegPath && (!ffmpegVideoCodecs || originalPath != module.exports.ffmpegPath)) {
         refreshVideoCodecsPromise().then(() => res(true));
     } else if(module.exports.ffmpegPath) {
         res(true);
@@ -1437,12 +1441,14 @@ module.exports = {
             
             filenames.push(fullYtdlpFilename)
             filenames.push(temporaryFilename)
+
+            const ffmpegExists = await refreshFFmpegPromise();
     
-            if(!module.exports.ffmpegPath || !ffmpegVideoCodecs) {
+            /*if(!module.exports.ffmpegPath || !ffmpegVideoCodecs) {
                 console.log(`ffmpeg not installed or codecs not present! refreshing...`);
-                await refreshFFmpegPromise();
+                ffmpegExists = await refreshFFmpegPromise();
                 console.log(`ffmpeg refreshed!`)
-            }
+            } else ffmpegExists = (module.exports.ffmpegPath ? await pfs.existsSync(module.exports.ffmpegPath) : false);*/
 
             //console.log(`downloading ${url};`, info && info.media_metadata ? info.media_metadata : `(no metadata)`);
     
@@ -2400,7 +2406,7 @@ module.exports = {
     
                 args.push(`--ffmpeg-location`, ``);
         
-                if(!(await pfs.existsSync(module.exports.ffmpegPath))) {
+                if(!ffmpegExists) {
                     console.log(`ffmpeg not found`);
                     if(convert && convert.ext) {
                         ext = convert.ext
@@ -2623,7 +2629,7 @@ module.exports = {
             }
 
             if(info._platform == `file`) {
-                if(!(await pfs.existsSync(module.exports.ffmpegPath))) return resolve(update({ failed: true, status: `FFmpeg was not found on your system -- conversion aborted.` }));
+                if(!ffmpegExists) return resolve(update({ failed: true, status: `FFmpeg was not found on your system -- conversion aborted.` }));
                 if(!(await pfs.existsSync(url))) return resolve(update({ failed: true, status: `File not found -- conversion aborted.` }));
 
                 const inputArgs = [];
@@ -2636,7 +2642,7 @@ module.exports = {
                 console.log(`running raw conversion -- inputArgs`, inputArgs, `outputArgs`, outputArgs)
 
                 runThroughFFmpeg(0, inputArgs, outputArgs, [{url}]).then(res);
-            } else if(downloadWithFFmpeg && (convert || originalFormat == `bv*+ba/b` || (thisFormat && thisFormat.url))) {
+            } else if(downloadWithFFmpeg && ffmpegExists && (convert || originalFormat == `bv*+ba/b` || (thisFormat && thisFormat.url))) {
                 try {
                     await fetchFullInfo(`Getting original format (streaming with FFmpeg)...`);
     
