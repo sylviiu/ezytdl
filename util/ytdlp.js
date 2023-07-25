@@ -2051,7 +2051,9 @@ module.exports = {
                             if(i > -1 && convert.additionalOutputArgs[i+1] == `copy`) {
                                 keywords.push(`saving (with original video & audio format)`)
                             } else if(i2 > -1 && convert.additionalOutputArgs[i2+1] == `copy`) {
-                                keywords.push(`saving (with original video format; converting audio${destinationCodec && ` to ${destinationCodec.audioCodec}` ? destinationCodec.audioCodec : ``})`)
+                                let ia = convert.additionalOutputArgs.indexOf(`-c:a`);
+                                let newacodec = ia > -1 ? convert.additionalOutputArgs[ia+1] : null;
+                                keywords.push(`saving (with original video format; converting audio${newacodec || (destinationCodec && ` to ${destinationCodec.audioCodec}` ? destinationCodec.audioCodec : ``)})`)
                             } else keywords.push(`converting ${destinationStr}`)
                         } else keywords.push(`converting ${destinationStr}`)
 
