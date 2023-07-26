@@ -2774,7 +2774,7 @@ module.exports = {
                             };
     
                             try {
-                                const r = await runThroughFFmpeg(0, inputArgs, [], [thisFormat, thisFormat.audioFormat], true);
+                                const r = await runThroughFFmpeg(0, inputArgs, [`-map`, `0:v`, `-map`, `1:a`], [Object.assign({}, thisFormat, {abr: null, asr: null}), Object.assign({}, thisFormat.audioFormat, {resolution: null, fps: null})], true);
                                 return res(r);
                             } catch(e) {
                                 if(!convertExists && thisFormat.video == true) {
@@ -2785,7 +2785,7 @@ module.exports = {
                                     };
 
                                     try {
-                                        const r = await runThroughFFmpeg(0, inputArgs, [], [thisFormat, thisFormat.audioFormat], true);
+                                        const r = await runThroughFFmpeg(0, inputArgs, [`-map`, `0:v`, `-map`, `1:a`], [Object.assign({}, thisFormat, {abr: null, asr: null}), Object.assign({}, thisFormat.audioFormat, {resolution: null, fps: null})], true);
                                         return res(r);
                                     } catch(e) {
                                         console.error(`failed ffmpeg attempt ${Number(attempt)+1}: ${e}`)
@@ -2802,10 +2802,10 @@ module.exports = {
             
                                 if(originalFormat) switch(originalFormat) {
                                     case `bv`:
-                                        convert.additionalOutputArgs.push(`-map`, `0`, `-map`, `-0:a`)
+                                        convert.additionalOutputArgs.unshift(`-map`, `0:v`)
                                         break;
                                     case `ba`:
-                                        convert.additionalOutputArgs.push(`-map`, `0`, `-map`, `-0:v`)
+                                        convert.additionalOutputArgs.unshift(`-map`, `0:a`)
                                         break;
                                 }
                             }
