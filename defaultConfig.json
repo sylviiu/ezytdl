@@ -1,6 +1,7 @@
 {
     "saveLocation": "",
     "outputFilename": "[ %(webpage_url_domain)s ] %(format_id)s - %(fulltitle)s",
+    "browserConnector": false,
     "proxy": "",
     "downloadWithFFmpeg": true,
     "downloadInWebsiteFolders": false,

@@ -1,6 +1,7 @@
 {
     "saveLocation": "Save Location",
     "outputFilename": "File Name Format",
+    "browserConnector": "Enable Browser Connector",
     "proxy": "Proxy",
     "downloadWithFFmpeg": "Allow Downloading with FFmpeg",
     "downloadInWebsiteFolders": "Create Folders for Websites",

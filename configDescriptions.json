@@ -1,7 +1,8 @@
 {
     "saveLocation": "Set the directory where media files are saved.",
     "outputFilename": "Change the format of the output filename. You can find the full list of fields at [yt-dlp's README](https://github.com/yt-dlp/yt-dlp#output-template)",
-    "proxy": "Set the proxy to use when downloading media.\n\n**NOTE:** This will only work if yt-dlp supports the proxy type you are using. You can find a list of supported proxy types [here](https://github.com/yt-dlp/yt-dlp/#network-options)",
+    "browserConnector": "When enabled, ezytdl will allow the [ezytdl browser connector](https://github.com/sylviiu/ezytdl-browser-connector) extension to connect to the app. This is useful if you want to download media from websites that offer authwalled features, such as YouTube's \"Enhanced Bitrate\" feature",
+    "proxy": "Set the proxy to use when downloading media.\n\n**NOTE:** This will only work if yt-dlp supports the proxy type you are using. You can find a list of supported proxy types at [yt-dlp's README](https://github.com/yt-dlp/yt-dlp/#network-options)",
     "downloadWithFFmpeg": "When enabled, ezytdl will download media using FFmpeg instead of yt-dlp, even when not converting any media.\n\nWhen downloading the best quality media, this will make the destination file's quality MUCH higher on certain platforms (e.g. YouTube), but please note that downloading with FFmpeg may end up being slower than downloading with yt-dlp, as it would likely be downloading multiple streams at once.\n\n**NOTE:** This option will have no effect if FFmpeg is not found on your system.",
     "downloadInWebsiteFolders": "When enabled, ezytdl will download media files in a folder named after the website it was downloaded from.",
     "downloadFromClipboard": "When enabled, ezytdl will automatically prompt you to download media from your clipboard when it detects a valid URL.",
