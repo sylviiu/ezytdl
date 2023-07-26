@@ -314,12 +314,7 @@ var initDownloadManager = (force) => {
     
                             if(icon) mediaIcons.appendChild(icon);
 
-                            if(o.opt.info._ezytdl_ui_type) {
-                                const index = (tabs[o.opt.info._ezytdl_ui_type] ? tabs[o.opt.info._ezytdl_ui_type].colorScheme : 0)
-                                const targetColor = systemColors[index];
-                                console.log(`targetColor of ${index} (found: ${tabs[o.opt.info._ezytdl_ui_type] ? true : false}; ${Object.keys(tabs).length} tabs registered)`, targetColor)
-                                mediaIcons.style.background = `rgb(${targetColor.light.r}, ${targetColor.light.g}, ${targetColor.light.b})`
-                            }
+                            if(o.opt.info._ezytdl_ui_type) mediaIcons.classList.add(`ez-selected-${o.opt.info._ezytdl_ui_type}`, `ez-selected-${o.opt.info._ezytdl_ui_type}-light`)
 
                             mediaIcons.style.maxWidth = 16 + 12 + `px`
                             mediaIcons.style.minWidth = 16 + 12 + `px`
