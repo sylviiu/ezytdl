@@ -1,4 +1,5 @@
 const fs = require('fs');
+const pfs = require(`../util/promisifiedFS`)
 const path = require('path');
 
 const { safeStorage } = require(`electron`)
@@ -17,7 +18,7 @@ const clients = require(`fs`).readdirSync(require(`../util/getPath`)(`./core/aut
     return retObj;
 });
 
-console.log(`---------------------\n${clients.length} authentication clients found:\n${clients.map(o => `${o.name} / [${o.urls.join(` | `)}]`).join(`\n`)}\n---------------------`)
+console.log(`---------------------\n${clients.length} authentication clients found:\n${clients.map(o => `${o.name} / [${o.urls ? o.urls.join(` | `) : `(no urls)`}]`).join(`\n`)}\n---------------------`)
 
 module.exports = {
     check: (arg) => {
@@ -31,16 +32,22 @@ module.exports = {
 
         return false;
     },
-    list: () => {
+    list: () => new Promise(async res => {
         const retObj = {};
 
-        clients.forEach(c => retObj[c.name] = {
-            urls: c.urls,
-            authSaved: fs.existsSync(path.join(global.configPath, `auth`, c.name))
-        });
+        for(const c of clients.filter(o => !o.hidden)) {
+            retObj[c.name] = Object.assign({}, c, {
+                authSaved: await pfs.existsSync(path.join(global.configPath, `auth`, c.name)),
+                reset: null,
+                getToken: null,
+                setup: null
+            });
+        }
 
-        return retObj;
-    },
+        console.log(`returning list:`, retObj)
+
+        return res(retObj);
+    }),
     remove: (rawService) => {
         const service = module.exports.check(rawService);
         const client = clients.find(c => c.name == service);
@@ -58,18 +65,20 @@ module.exports = {
         const service = module.exports.check(rawService);
         console.log(`searching for auth service ${service} / ${rawService}`)
         if(clients.find(c => c.name == service)) {
+            const client = clients.find(c => c.name == service)
+
             console.log(`using ${service} authentication client`);
     
             const returnMsg = (error) => sendNotification({
                 type: error ? `warn` : `info`,
-                headingText: `Authentication to ${service[0].toUpperCase() + service.slice(1)}`,
-                bodyText: `Authentication to ${service[0].toUpperCase() + service.slice(1)} has ${error ? `failed` : `been completed`}.` + (error ? `\n\n${error}` : ``)
+                headingText: `Authentication for "${service[0].toUpperCase() + service.slice(1)}"`,
+                bodyText: (client[error ? `error` : `complete`] ? client[error ? `error` : `complete`] : `Authentication for "${service[0].toUpperCase() + service.slice(1)}" has ${error ? `failed` : `been completed`}.`) + (error ? `\n\n${error}` : ``)
             })
     
             if(!fs.existsSync(path.join(global.configPath, `auth`, service)) || force) {
                 console.log(`auth file does not exist / force: ${force}, running setup`)
     
-                clients.find(c => c.name == service).setup().then(r => {
+                client.setup().then(r => {
                     fs.mkdirSync(path.join(global.configPath, `auth`), { recursive: true });
     
                     console.log(r)
@@ -99,7 +108,7 @@ module.exports = {
                 } catch(e) {
                     console.log(`authentication failed: ${e} - restarting authentication`);
                     fs.unlinkSync(path.join(global.configPath, `auth`, service));
-                    return module.exports(service, force).then(res);
+                    return module.exports.getKey(service, force).then(res);
                 }
             };
         } else res(null);
@@ -109,19 +118,24 @@ module.exports = {
 
         const key = await module.exports.getKey(service, force);
 
-        if(key && clients.find(c => c.name == service)) {
-            if(clients.find(c => c.name == service) && clients.find(c => c.name == service).getToken) {
-                clients.find(c => c.name == service).getToken(key).then(r => {
-                    console.log(`got token`)
+        const client = clients.find(c => c.name == service);
+
+        if(key && client) {
+            if(client && client.getToken) {
+                client.getToken(key).then(r => {
+                    console.log(`auth/${service}: got token`)
                     res(r.value);
                 }).catch(e => {
-                    console.log(`failed to get token: ${e}`)
+                    console.log(`auth/${service}: failed to get token: ${e}`)
                     res(null);
                 })
             } else {
-                console.log(`no getToken function found`)
+                console.log(`auth/${service}: no getToken function found`)
                 res(key);
             }
-        } else res(null);
+        } else {
+            console.log(`auth/${service}: no key or client found`)
+            res(null);
+        }
     })
 }
