@@ -7,7 +7,7 @@ module.exports = () => new Promise(async res => {
 
     const path = await require(`./util/getPath`)(`./init`, true, false, true)
 
-    const initScripts = await pfs.readdirSync(path);
+    const initScripts = (await pfs.readdirSync(path)).filter(f => f.endsWith(`.js`));
 
     console.log(`Scripts: ${initScripts.join(`, `)}`)
 
