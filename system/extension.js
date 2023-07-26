@@ -7,15 +7,33 @@ const idGen = require(`../util/idGen`);
 
 const ENCRYPT_TYPE = `rsa`;
 
-module.exports = async () => {
-    let sessionKey = null;
+const cleanup = (PIPEPATH, type) => new Promise(async res => {
+    console.log(`[${PIPEPATH}/${type}] cleanup`)
 
+    if(await pfs.existsSync(PIPEPATH)) try {
+        await pfs.unlinkSync(PIPEPATH);
+        console.log(`[${PIPEPATH}/${type}] pipe deleted`);
+    } catch(e) {
+        console.log(`[${PIPEPATH}/${type}] failed to delete pipe: ${e.message}`);
+    } else console.log(`[${PIPEPATH}/${type}] pipe file doesn't exist`);
+
+    res();
+})
+
+const encryptSocket = (socket, key) => Object.assign({}, socket, {
+    write: data => socket.write(crypto.publicEncrypt(key, Buffer.from(typeof data == `object` ? JSON.stringify(data) : data))),
+    on: (event, func) => socket.on(event, data => func(crypto.privateDecrypt(key, Buffer.from(data)))),
+    once: (event, func) => socket.once(event, data => func(crypto.privateDecrypt(key, Buffer.from(data)))),
+    close: () => socket.close ? socket.close() : socket.end(),
+})
+
+module.exports = async () => {
     const PIPEPATH = (process.platform == `win32` ? `\\\\.\\pipe\\ezytdl-pipe` : `/tmp/ezytdl-sock`) + `-` + idGen(16);
 
-    const server = net.createServer(s => {
+    const server = net.createServer(socket => {
         console.log(`[${PIPEPATH}/server] client connected`);
 
-        s.once('data', data => {
+        socket.once('data', data => {
             console.log(`[${PIPEPATH}/server] initial setup -- received data of length ${data.length}`);
 
             const str = data.toString().trim();
@@ -26,26 +44,28 @@ module.exports = async () => {
                 const o = JSON.parse(str);
 
                 if(o.type == `key-exchange`) {
-                    sessionKey = crypto.randomBytes(32).toString(`hex`);
+                    const sessionKey = crypto.randomBytes(32).toString(`hex`);
 
                     const encrypted = crypto.publicEncrypt(o.key, Buffer.from(sessionKey));
-
-                    //crypto.publicEncrypt( < string > , Buffer.from(sessionKey));
+                    
+                    // ^ this is how to encrypt any message with the public key
 
                     console.log(`[${PIPEPATH}/server] encrypted key: ${sessionKey}`);
 
-                    s.write(JSON.stringify({ type: `key-exchange`, key: encrypted }));
+                    socket.write(JSON.stringify({ type: `key-exchange`, key: encrypted }));
+
+                    return require(`./extension/connector`)(encryptSocket(socket, sessionKey), (...d) => console.log(`[${PIPEPATH}/server]`, ...d));
                 } else {
                     console.log(`[${PIPEPATH}/server] received invalid non-exchanged type: "${o.type}"`);
-                    server.close();
                 }
             } catch(e) {
                 console.error(`[${PIPEPATH}/server] failed at exchange process: ${e.message}`);
-                server.close();
             }
+
+            server.close();
         });
 
-        s.on('end', () => {
+        socket.on('end', () => {
             console.log(`[${PIPEPATH}/server] client disconnected`);
             server.close();
         });
@@ -54,12 +74,7 @@ module.exports = async () => {
     server.once('close', async () => {
         console.log(`[${PIPEPATH}/server] server closed`);
 
-        if(await pfs.existsSync(PIPEPATH)) try {
-            await pfs.unlinkSync(PIPEPATH);
-            console.log(`[${PIPEPATH}/server] pipe deleted`);
-        } catch(e) {
-            console.log(`[${PIPEPATH}/server] failed to delete pipe: ${e.message}`);
-        } else console.log(`[${PIPEPATH}/server] pipe file doesn't exist`);
+        await cleanup(PIPEPATH, `server`);
         
         process.exit(0);
     });
@@ -76,17 +91,23 @@ module.exports = async () => {
     }
 };
 
-module.exports.client = ({ PIPEPATH }) => {
-    const { publicKey, privateKey } = crypto.generateKeyPairSync(ENCRYPT_TYPE, {
-        modulusLength: 4096,
-        publicKeyEncoding: {
-            type: 'spki',
-            format: 'pem',
-        },
-        privateKeyEncoding: {
-            type: 'pkcs8',
-            format: 'pem',
-        },
+module.exports.client = async ({ PIPEPATH }) => {
+    const { publicKey, privateKey } = await new Promise(async res => {
+        crypto.generateKeyPair(ENCRYPT_TYPE, {
+            modulusLength: 4096,
+            publicKeyEncoding: {
+                type: 'spki',
+                format: 'pem',
+            },
+            privateKeyEncoding: {
+                type: 'pkcs8',
+                format: 'pem',
+            },
+        }, (err, publicKey, privateKey) => {
+            if(err) throw err;
+
+            res({ publicKey, privateKey });
+        });
     });
 
     console.log(`[${PIPEPATH}/client] generated keypair`);
@@ -106,41 +127,34 @@ module.exports.client = ({ PIPEPATH }) => {
         }));
     });
 
-    let exchanged = false;
-
-    client.on('data', data => {
+    client.once('data', data => {
         const str = data.toString().trim();
 
-        console.log(`[${PIPEPATH}/client] received data of length ${str.length}`);
+        console.log(`[${PIPEPATH}/client] key not set, attempting exchange process... (data of length ${str.length})`);
 
-        if(!exchanged) {
-            console.log(`[${PIPEPATH}/client] key not set, attempting exchange process...`);
+        try {
+            const o = JSON.parse(str);
 
-            try {
-                const o = JSON.parse(str);
+            if(o.type == `key-exchange`) {
+                console.log(`[${PIPEPATH}/client] received key`);
 
-                if(o.type == `key-exchange`) {
-                    console.log(`[${PIPEPATH}/client] received key`);
+                const decrypted = crypto.privateDecrypt(privateKey, Buffer.from(o.key));
 
-                    const decrypted = crypto.privateDecrypt(privateKey, Buffer.from(o.key));
+                console.log(`[${PIPEPATH}/client] decrypted key: ${decrypted.toString()}`);
 
-                    console.log(`[${PIPEPATH}/client] decrypted key: ${decrypted.toString()}`);
-
-                    exchanged = true;
-                } else console.log(`[${PIPEPATH}/client] received invalid non-exchanged type: "${o.type}"`);
-            } catch(e) {
-                console.error(`[${PIPEPATH}/client] failed at exchange process: ${e.message}`);
-            }
-        } else try {
-            const o = JSON.parse(crypto.privateDecrypt(privateKey, Buffer.from(str)).toString());
-            console.log(`[${PIPEPATH}/client]`, o);
+                return require(`./extension/main`)(encryptSocket(client, decrypted.toString()), (...d) => console.log(`[${PIPEPATH}/client]`, ...d));
+            } else console.log(`[${PIPEPATH}/client] received invalid non-exchanged type: "${o.type}"`);
         } catch(e) {
-            console.error(`[${PIPEPATH}/client] failed to parse JSON: ${e.message} (from extension pipe)`);
+            console.error(`[${PIPEPATH}/client] failed at exchange process: ${e.message}`);
         }
+
+        return client.end();
     });
 
-    client.on('end', () => {
+    client.on('end', async () => {
         console.log(`[${PIPEPATH}/client] disconnected`);
+        
+        await cleanup(PIPEPATH, `server`);
     });
 
     client.on('error', err => {

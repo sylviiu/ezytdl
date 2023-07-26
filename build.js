@@ -96,6 +96,7 @@ const config = {
         "core/depcheck/*.js",
         "core/*.js",
         "system/*.js",
+        "system/*/*.js",
         "devscripts/testrun.js",
         "devscripts/*/*.js",
         "checks/*.js"
