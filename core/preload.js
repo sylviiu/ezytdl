@@ -147,9 +147,19 @@ contextBridge.exposeInMainWorld(`version`, {
     openUpdatePage: () => send(`openUpdatePage`)
 });
 
-const configHooks = [ (conf) => localStorage.setItem(`systemConfig`, JSON.stringify(conf)) ];
-
 let preloadedConfig = localStorage.getItem(`systemConfig`) ? JSON.parse(localStorage.getItem(`systemConfig`)) : null;
+
+const configHooks = [
+    (conf) => {
+        localStorage.setItem(`systemConfig`, JSON.stringify(conf));
+        preloadedConfig = conf;
+    }
+];
+
+on(`configHook`, (_e, config) => {
+    console.log(`configHook`, config);
+    configHooks.forEach(cb => cb(config))
+});
 
 if(!preloadedConfig) invoke(`getConfig`).then(conf => {
     localStorage.setItem(`systemConfig`, JSON.stringify(conf));
@@ -160,22 +170,14 @@ const exposedConfiguration = {
     action: (name) => invoke(`configAction`, name),
     actionUpdate: (key, cb) => on(`configActionUpdate-${key}`, cb),
     get: (name) => new Promise(async res => {
-        if(preloadedConfig) {
+        if(!name && preloadedConfig) {
             res(preloadedConfig)
             preloadedConfig = null;
         } else invoke(`getConfig`, name).then(data => {
-            if(!name) configHooks.forEach(cb => cb(data));
             res(data);
         })
     }),
-    set: (name, newObj) => new Promise(async res => {
-        invoke(`setConfig`, [name, newObj]).then(data => {
-            if(!name) {
-                configHooks.forEach(cb => cb(data));
-                res(data);
-            } else exposedConfiguration.get().then(() => res(data));
-        })
-    }),
+    set: (name, newObj) => invoke(`setConfig`, [name, newObj]),
     hook: (cb) => configHooks.push(cb)
 }
 
