@@ -92,6 +92,7 @@ const config = {
         "core/*.json",
         "core/ipc/*/*.js",
         "core/authentication/*.js",
+        "core/authentication/*.json",
         "core/depcheck/*/*.js",
         "core/depcheck/*.js",
         "core/*.js",

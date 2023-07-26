@@ -8,7 +8,7 @@ const sendNotification = require(`../core/sendNotification`);
 
 let websiteMap = new Map();
 
-const clients = require(`fs`).readdirSync(require(`../util/getPath`)(`./core/authentication`, true) || []).map(f => {
+const clients = require(`fs`).readdirSync(require(`../util/getPath`)(`./core/authentication`, true) || []).filter(f => f.endsWith(`.js`)).map(f => {
     const module = require(`./authentication/${f}`);
 
     const retObj = Object.assign(module, { name: f.split(`.`).slice(0, -1).join(`.`) });

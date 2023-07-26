@@ -3,6 +3,7 @@ const superagent = require(`superagent`);
 let token = null;
 
 module.exports = {
+    hoist: require(`./strings.json`).external,
     urls: [`spotify.com`, `open.spotify.com`, `www.spotify.com`, `play.spotify.com`],
     tokenTimeout: null,
     reset: () => {
@@ -78,5 +79,5 @@ module.exports = {
                 });
             } else res(`Authentication was canceled.`)
         });
-    })
+    }),
 }

@@ -2,6 +2,10 @@ const systemConfiguration = useWindow.configuration
 
 const cards = [];
 
+const separator = document.getElementById(`separator`).cloneNode(true);
+
+const bottomContentSeparator = separator.cloneNode(true);
+
 const bottomContent = document.getElementById(`bottomContent`);
 
 const detailsStr = document.getElementById(`detailsStr`);
@@ -363,7 +367,7 @@ const createCards = (config) => {
 
     for (entry of Object.entries(strings)) createCard(entry[0], entry[1], descriptions[entry[0]], config, document.getElementById(`settingsList`), true, 0)
 
-    if(bottomContent) document.getElementById(`settingsList`).appendChild(bottomContent)
+    if(bottomContent) document.getElementById(`settingsList`).append(bottomContentSeparator, bottomContent)
 }
 
 const createServices = () => {
@@ -371,11 +375,52 @@ const createServices = () => {
 
     const list = servicesBox.querySelector(`#list`);
 
-    authentication.list().then(services => {
-        for(const name of Object.keys(services)) {
-            const obj = services[name];
+    authentication.list().then(originalServices => {
+        const useServices = {
+            default: [],
+        };
+        
+        const keys = Object.keys(originalServices).sort((a,b) => (originalServices[a].hoist || 0) - (originalServices[b].hoist || 0))
+
+        keys.forEach(o => {
+            const hoist = originalServices[o].hoist || `default`;
+
+            if(!useServices[hoist]) useServices[hoist] = [];
+
+            useServices[hoist].push(o);
+        })
+
+        const services = Object.values(useServices).reduce((a,b) => a.concat(b), []);
+
+        console.log(`service:`, `services organized`, useServices, `services array`, services, `original keys`, keys.map(s => `${s}: ${originalServices[s].hoist || 0}`))
+
+        for(const i of Object.keys(services)) {
+            const name = keys[i];
+
+            const obj = originalServices[name];
+
+            console.log(`service:`, i, name, obj)
 
             if(!list.querySelector(`#auth-` + name)) {
+                let addedSeparator = false;
+                
+                const separatorID = `separator-${i}`
+
+                if(!list.querySelector(`#${separatorID}`)) {
+                    const thisSeparator = separator.cloneNode(true);
+                    thisSeparator.id = separatorID;
+                    thisSeparator.style.margin = `${i == 0 ? `0px` : `16px`} 4px 16px 4px`
+
+                    const title = thisSeparator.querySelector(`#title`)
+                    title.innerHTML = obj.hoist;
+
+                    list.appendChild(thisSeparator);
+
+                    console.log(`service: ${i} / ${name} adding separator with name ${separatorID}`)
+
+                    addedSeparator = true;
+                }
+
                 const prettyName = name[0].toUpperCase() + name.slice(1);
 
                 const element = settingsBox.cloneNode(true);
@@ -384,6 +429,13 @@ const createServices = () => {
 
                 element.style.margin = `0px`
                 element.style.borderRadius = (parseInt(list.style.borderRadius) - (parseInt(settingsBox.style.borderRadius) - parseInt(list.style.borderRadius))) + `px`;
+
+                if(i > 0 && !addedSeparator) {
+                    console.log(`service: ${i} / ${name} adding marginTop`)
+                    element.style.marginTop = `16px`;
+                } else {
+                    console.log(`service: ${i} / ${name} not adding marginTop`)
+                }
 
                 element.id = `auth-` + name;
 
@@ -412,7 +464,11 @@ const createServices = () => {
                     } else {
                         description.innerHTML = `Handles ` + obj.urls.join(`, `).slice(0, -1) + `, and ` + obj.urls.slice(-1)[0];
                     }
-                };
+                } else if(obj.description) {
+                    description.innerHTML = obj.description;
+                } else {
+                    description.innerHTML = `Handles ${prettyName} ???? (syl forgot to add a description to this one LOL)`;
+                }
 
                 const btn = element.querySelector(`#save`).cloneNode(true);
                 element.querySelector(`#save`).remove();
@@ -425,15 +481,22 @@ const createServices = () => {
                 // link / unlink button
 
                 const unlink = btn.cloneNode(true);
-                unlink.innerHTML = faIconExists(`fas`, `unlink`, true, { marginRight: `8px` }).outerHTML + ` Unlink`;
+
+                const unlinkContent = [
+                    faIconExists(`fas`, obj.icons && obj.icons[0] ? obj.icons[0] : `unlink`, true, { marginRight: `8px` }).outerHTML,
+                    obj.buttons && obj.buttons[0] ? obj.buttons[0] : `Unlink`
+                ]
+
+                unlink.innerHTML = unlinkContent.join(` `);
+
                 unlink.id = `unlink`;
 
                 unlink.onclick = () => {
                     authentication.remove(name).then(() => {
                         createServices();
                         createNotification({
-                            headingText: `Unlinked ${prettyName} account.`,
-                            bodyText: `Your ${prettyName} account was unlinked successfully.`
+                            headingText: `Removed ${prettyName}.`,
+                            bodyText: `Your ${prettyName} account was removed successfully.`
                         })
                     })
                 }
@@ -441,7 +504,14 @@ const createServices = () => {
                 element.querySelector(`#options`).appendChild(unlink);
 
                 const link = btn.cloneNode(true);
-                link.innerHTML = faIconExists(`fas`, `link`, true, { marginRight: `8px` }).outerHTML + ` Link`;
+                
+                const linkContent = [
+                    faIconExists(`fas`, obj.icons && obj.icons[1] ? obj.icons[1] : `link`, true, { marginRight: `8px` }).outerHTML,
+                    obj.buttons && obj.buttons[1] ? obj.buttons[1] : `Link`
+                ]
+
+                link.innerHTML = linkContent.join(` `)
+
                 link.id = `link`;
 
                 link.onclick = () => {
@@ -449,8 +519,8 @@ const createServices = () => {
                         if(key) {
                             createServices();
                             createNotification({
-                                headingText: `Linked ${prettyName} account.`,
-                                bodyText: `Your ${prettyName} account was linked successfully.`
+                                headingText: `Added ${prettyName} service.`,
+                                bodyText: `Your ${prettyName} service was created successfully.`
                             })
                         }
                     })
