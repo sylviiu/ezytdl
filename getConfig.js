@@ -190,6 +190,17 @@ module.exports = (configObject, {
                 }
 
                 global.lastConfig = userConfig;
+
+                require(`./util/getPath`)(`./core/confighooks`, true, null, true).then(path => {
+                    pfs.readdirSync(path).then(files => files.filter(f => f.endsWith(`.js`))).then(files => {
+                        for(const file of files) try {
+                            require(`./core/confighooks/${file}`)(userConfig);
+                            console.log(`ran config hook ${file}`)
+                        } catch(e) {
+                            console.error(`failed running config hook ${file}: ${e}`);
+                        }
+                    })
+                })
             }
     
             const returnValue = values ? Object.values(userConfig) : userConfig;
