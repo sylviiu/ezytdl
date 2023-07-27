@@ -21,6 +21,8 @@ global.configPath = app.getPath('userData');
 process.on(`uncaughtException`, (err) => (global.testrun ? require(`./util/errorAndExit`) : require(`./util/errorHandler`))(`${typeof err == `object` ? JSON.stringify(err, null, 4) : err}\n\n${err.stack? err.stack : `(no stack)`}`))
 process.on(`unhandledRejection`, (err) => (global.testrun ? require(`./util/errorAndExit`) : require(`./util/errorHandler`))(`${typeof err == `object` ? JSON.stringify(err, null, 4) : err}\n\n${err.stack? err.stack : `(no stack)`}`))
 
+process.on(`exit`, (code) => console.log(`Process exiting with code ${code}`))
+
 const fs = require(`fs`);
 const getPath = require(`./util/getPath`);
 

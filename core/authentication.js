@@ -36,8 +36,16 @@ module.exports = {
         const retObj = {};
 
         for(const c of clients.filter(o => !o.hidden)) {
+            let extendedDescription = null;
+
+            if(c.extendedDescription) {
+                const ext = await c.extendedDescription();
+                if(ext) extendedDescription = ext;
+            }
+
             retObj[c.name] = Object.assign({}, c, {
                 authSaved: await pfs.existsSync(path.join(global.configPath, `auth`, c.name)),
+                extendedDescription,
                 reset: null,
                 getToken: null,
                 setup: null

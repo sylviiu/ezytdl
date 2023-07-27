@@ -17,9 +17,11 @@ var parseRules = (rules) => {
 var theme = ({
     from=`auto`
 }={}) => {
+    if(typeof config != `object`) return;
+
     let lightMode = false;
 
-    if(typeof config == `object`) switch(config.theme) {
+    switch(config.theme) {
         case `dark`:
             lightMode = false;
             break;

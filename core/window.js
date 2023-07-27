@@ -1,4 +1,4 @@
-const { BrowserWindow, app, globalShortcut, session, contextBridge, ipcRenderer } = require('electron');
+const { BrowserWindow, app, nativeTheme } = require('electron');
 
 let currentWindow = null;
 
@@ -79,14 +79,19 @@ module.exports = (notDefault, overrideArgs) => new Promise(async res => {
     if(currentWindow && !notDefault) return res(currentWindow);
 
     if(notDefault && currentWindow) {
+        const lightTheme = (conf.theme == `light` ? true : (nativeTheme.shouldUseDarkColors ? false : true));
+
+        const bg = lightTheme ? `rgb(245,245,245)` : `rgb(10,10,10)`;
+
         Object.assign(args, {
             parent: currentWindow,
             modal: true,
             frame: false,
+            backgroundColor: bg,
             titleBarStyle: `hidden`,
             titleBarOverlay: {
-                color: `#0a0a0a`,
-                symbolColor: `white`,
+                color: bg,
+                symbolColor: lightTheme ? `black` : `white`,
             },
             fullscreenable: false,
             //titleBarStyle: `hidden-inset`,

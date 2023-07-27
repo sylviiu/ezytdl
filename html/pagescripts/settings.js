@@ -496,7 +496,7 @@ const createServices = () => {
                         createServices();
                         createNotification({
                             headingText: `Removed ${prettyName}.`,
-                            bodyText: `Your ${prettyName} account was removed successfully.`
+                            bodyText: `Your ${prettyName} service was removed successfully.`
                         })
                     })
                 }
@@ -546,7 +546,7 @@ const createServices = () => {
                 connected.style.marginTop = `12px`;
                 connected.style.color = `rgba(255,255,255,0.85)`;
                 connected.appendChild(icon);
-                connected.innerHTML += ` Connected`;
+                connected.innerHTML += ` Active`;
 
                 element.querySelector(`#strings`).insertBefore(connected, element.querySelector(`#description`));
 
@@ -563,12 +563,27 @@ const createServices = () => {
                 connected.style.marginTop = `12px`;
                 connected.style.color = `rgba(255,255,255,0.85)`;
                 connected.appendChild(icon);
-                connected.innerHTML += ` Not Connected`;
+                connected.innerHTML += ` Inactive`;
 
                 element.querySelector(`#strings`).insertBefore(connected, element.querySelector(`#description`));
 
                 element.querySelector(`#link`).disabled = false;
                 element.querySelector(`#unlink`).disabled = true;
+            }
+
+            if(obj.extendedDescription) {
+                if(!element.querySelector(`#extendedDescription`)) {
+                    const extendedDescription = element.querySelector(`#description`).cloneNode(true);
+                    extendedDescription.id = `extendedDescription`;
+                    extendedDescription.style.marginTop = `12px`;
+                    extendedDescription.style.marginBottom = `-10px`;
+                    extendedDescription.style.fontSize = `0.8em`;
+                    element.querySelector(`#description`).after(extendedDescription);
+                }
+
+                element.querySelector(`#extendedDescription`).innerHTML = markdown.makeHtml(obj.extendedDescription);
+            } else if(element.querySelector(`#extendedDescription`)) {
+                element.querySelector(`#extendedDescription`).remove();
             }
         }
     })

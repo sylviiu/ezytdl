@@ -7,7 +7,7 @@ module.exports = {
         console.log(`getting dialog ${id}`);
         return dialogs[id]
     },
-    createDialog: (content) => new Promise(async res => {
+    createDialog: ( content, returnCallback ) => new Promise(async res => {
         const id = idGen(16);
 
         console.log(`creating dialog ${id}`);
@@ -41,7 +41,7 @@ module.exports = {
             }
         }
 
-        dialogs[id] = { callback };
+        dialogs[id] = { id, callback };
     
         const title = content.title || `ezytdl`;
         const body = content.body;
@@ -71,7 +71,7 @@ module.exports = {
             height: 250,
             minWidth: 600,
             minHeight: 250,
-            resizable: false
+            resizable: false,
         });
 
         const loadURLPath = await require(`../util/getPath`)(`html/dialog.html`, true, false, true)
@@ -91,5 +91,7 @@ module.exports = {
 
             console.log(`sent`, sendObj)
         });
+
+        if(returnCallback && typeof returnCallback == `function`) returnCallback(dialogs[id])
     }),
 }
