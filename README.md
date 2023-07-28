@@ -29,3 +29,9 @@ You can either run the portable version, or install it to your system!
 - Install the package dependencies using `npm i` in the terminal.
 - If you want to run the program from source code, you can just use `npm start`.
 - If you want to *build* a portable program, running `npm run dist` will package up the program into an executable. The resulting package will be found in a newly-created `dist` directory
+
+---
+
+#### obligatory note
+
+by using this program (ezytdl), you assume all responsibility for the use of it, including (but not limited to) any legal issues that may arise from it. the author of this program is not responsible for any damages caused by the use of this program.
