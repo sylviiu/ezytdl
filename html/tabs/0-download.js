@@ -588,6 +588,8 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                         }
         
                         if(info._off_platform) addMetaItem(`fa-info-circle`, `Off-platform.`, (`This content was found on a platform not supported by yt-dlp. ` + (info.entries ? `ezytdl will attempt to find equivalent media on supported platforms during download, however there's no guarantees it'll be 100% accurate.` : `This is the most suitable equivalent ezytdl was able to find on another platform.`)), `off-platform`)
+
+                        if(info._headers && info._headers.Cookie) addMetaItem(`fa-cookie-bite`, `Authorization used`, `The app used the account cookie(s) from your browser (sent through the browser connector) to get this information, and will be used for downloading as well.`, `cookie`)
         
                         if(info.media_metadata.general.artist) addMetaItem(`fa-user`, parseCreator(info, `by `), null, `creator`);
         
