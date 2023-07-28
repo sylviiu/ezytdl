@@ -118,13 +118,11 @@ contextBridge.exposeInMainWorld(`system`, {
     bridgeNeedsDownload: () => invoke(`bridgeNeedsDownload`),
     pickFile: (opt) => invoke(`pickFile`, opt),
     pickFolder: (opt) => invoke(`pickFolder`, opt),
+    on: (type, cb) => on(`system-${type}`, (_e, obj) => cb(obj)),
 });
 
 let dialogPromise = new Promise(r => {
-    on(`dialog`, (_e, obj) => {
-        r(obj);
-        //console.log(`dialog`, obj);
-    })
+    on(`dialog`, (_e, obj) => r(obj))
 });
 
 contextBridge.exposeInMainWorld(`dialog`, {

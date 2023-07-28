@@ -8,6 +8,8 @@ const downloadManager = require(`./downloadManager`);
 const authentication = require(`../core/authentication`);
 const getPath = require(`../util/getPath`);
 
+const qualitySorter = require(`./ytdlpUtil/qualitySorter`);
+const { filterHeaders } = require(`./ytdlpUtil/headers`);
 const durationCurve = require(`./durationCurve`);
 const recursiveAssign = require(`./recursiveAssign`)
 
@@ -515,51 +517,17 @@ module.exports = {
             });
 
             const sortByQuality = (a, b) => {
-                // go by a.quality and b.quality, higher should go first
-                // if there is no quality, send before the ones with quality
-                if(a.quality || b.quality) {
-                    if(a.quality == b.quality) {
-                        return 0;
-                    } else if(a.quality > b.quality) {
-                        return -1;
-                    } else if(a.quality < b.quality) {
-                        return 1;
-                    } else if(a.quality) {
-                        return -1;
-                    } else if(b.quality) {
-                        return 1;
-                    } else return 0;
-                } else if((a.asr || a.abr) || (b.asr || b.abr)) {
-                    if(((a.asr || 1) * (a.abr || 1)) > ((b.asr || 1) * (b.abr || 1))) {
-                        return -1;
-                    } else if(((a.asr || 1) * (a.abr || 1)) < ((b.asr || 1) * (b.abr || 1))) {
-                        return 1;
-                    } else if((a.asr || a.abr)) {
-                        return -1;
-                    } else if((b.asr || b.abr)) {
-                        return 1;
-                    } else return 0;
-                } else if((a.width || a.height) || (b.width || b.height)) {
-                    if(((a.width || 1) * (a.height || 1)) > ((b.width || 1) * (b.height || 1))) {
-                        return -1;
-                    } else if(((a.width || 1) * (a.height || 1)) < ((b.width || 1) * (b.height || 1))) {
-                        return 1;
-                    } else if((a.width || a.height)) {
-                        return -1;
-                    } else if((b.width || b.height)) {
-                        return 1;
-                    } else return 0;
-                } else if(a.fps || b.fps) {
-                    if(a.fps > b.fps) {
-                        return -1;
-                    } else if(a.fps < b.fps) {
-                        return 1;
-                    } else if(a.fps) {
-                        return -1;
-                    } else if(b.fps) {
-                        return 1;
-                    } else return 0;
-                } else return 0;
+                let retVal = 0;
+
+                for(const [ name, func ] of Object.entries(qualitySorter)) {
+                    retVal = func(a,b);
+                    if(retVal != 0) {
+                        console.log(`${d.id || d.url} sorted by ${name}!`);
+                        break;
+                    }
+                };
+
+                return retVal;
             }
 
             d.formats = [...modifiedFormats.filter(o => o.audio && o.video).sort(sortByQuality), ...modifiedFormats.filter(o => o.audio && !o.video).sort(sortByQuality), ...modifiedFormats.filter(o => !o.audio && o.video).sort(sortByQuality), ...modifiedFormats.filter(o => !o.audio && !o.video).sort(sortByQuality)];
@@ -945,7 +913,7 @@ module.exports = {
             } else return res(null);
         }
     }),
-    listFormats: ({query, extraArguments, ignoreStderr}) => new Promise(async res => {
+    listFormats: ({query, extraArguments, headers={}, ignoreStderr}) => new Promise(async res => {
         const additional = module.exports.additionalArguments(extraArguments);
 
         if(typeof query == `object` && query.length > 0) {
@@ -974,6 +942,7 @@ module.exports = {
                 extractor: `multiple:generic`,
                 extractor_key: `MultipleGeneric`,
                 entries: query.map(url => ({ url })),
+                headers,
                 url,
             }, true);
 
@@ -984,9 +953,17 @@ module.exports = {
                 res(o);
             });
         } else {
+            const attachInfo = { _headers: headers }
+
             console.log(`url "${query}"; additional args: "${additional.join(`", "`)}" (${extraArguments})`)
     
             let args = [query, `--dump-single-json`, `--flat-playlist`, `--quiet`, `--progress`, `--verbose`, ...additional];
+
+            const headersArgs = Object.entries(headers).map(([key, value]) => [`--add-header`, `${key}:${value}`]).flat();
+
+            console.log(`headersArgs`, headersArgs)
+
+            args.push(...headersArgs)
     
             if(ignoreStderr) args.splice(args.indexOf(`--verbose`), 1);
     
@@ -1009,8 +986,10 @@ module.exports = {
                 console.log(`listFormats closed with code ${code} (${query})`)
     
                 try {
-                    const d = Object.assign(JSON.parse(data), { _request_url: query });
-    
+                    const d = Object.assign(JSON.parse(data), attachInfo, { _request_url: query });
+
+                    if(d.entries) d.entries = d.entries.map(o => Object.assign(o, attachInfo));
+
                     if(ignoreStderr) {
                         return res(d);
                     } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, ignoreStderr, /*forceRun: ignoreStderr ? false : true*/ }).then(res);
@@ -1281,6 +1260,17 @@ module.exports = {
 
         return useFormat || null;
     },
+    getFormatInstance: (updateFunc, originalFormat) => {
+        return (...data) => {
+            const thisFormat = module.exports.getFormat(...data);
+
+            if(thisFormat) {
+                updateFunc({ formatID: thisFormat ? (`${thisFormat.format_id}` + (thisFormat.audioFormat ? `/${thisFormat.audioFormat.format_id}` : ``)) : originalFormat })
+            };
+
+            return thisFormat;
+        }
+    },
     download: ({url, format, ext, convert, filePath, addMetadata, info, extraArguments}, updateFunc) => new Promise(async resolve => {
         const temporaryFilename = `ezytdl-` + idGen(24);
         
@@ -1405,15 +1395,19 @@ module.exports = {
 
             const originalFormat = format;
 
+            const getFormat = module.exports.getFormatInstance(updateFunc, originalFormat);
+
             let thisFormat;
 
             if(format == `bv*+ba/b`/* && (!module.exports.ffmpegPath || !convert)*/) format = null;
 
             if(info.is_live && (format == `bv*+ba/b` || format == `bv` || format == `ba`)) format = null;
 
-            console.log(`format: ${format} / ext: ${ext}`)
+            console.log(`format: ${format} / ext: ${ext}`);
 
-            thisFormat = module.exports.getFormat({info, format, ext});
+            const originalFilteredFormat = format;
+
+            thisFormat = getFormat({info, originalFilteredFormat, ext});
 
             if(thisFormat) {
                 console.log(`format ${originalFormat}: found (out of ${info.formats.length} formats)`, thisFormat)
@@ -1488,7 +1482,7 @@ module.exports = {
 
             const saveTo = module.exports.getSavePath(info, filePath);
 
-            update({ deleteFiles: () => purgeLeftoverFiles(saveTo), live: info.is_live ? true : false, destinationFilename: ytdlpFilename, formatID: thisFormat ? thisFormat.format_id : originalFormat })
+            update({ deleteFiles: () => purgeLeftoverFiles(saveTo), live: info.is_live ? true : false, destinationFilename: ytdlpFilename })
     
             console.log(`saveTo: ${saveTo} (making dir)`)
 
@@ -1806,7 +1800,30 @@ module.exports = {
                     //if(Object.keys(skipped).length == Object.keys(addMetadata || {}).filter(v => v).length) deleteProgress(`metadata`);
                     const status = resolveStatus + (Object.keys(skipped).length > 0 ? `<br><br>${Object.entries(skipped).map(s => `- Skipped ${s[0]} embed: ${s[1]}`).join(`<br>`)}` : ``);
                     //console.log(`-------------\n${status}\n-------------`)
-                    resolve(update({ status, percentNum: 100 }))
+
+                    let replacementStatus = ``;
+
+                    if(!obj.failed && thisFormat && thisFormat.note) {
+                        const getFormatType = ({audio, video}) => {
+                            if(audio && video) {
+                                return `audio & video`;
+                            } else if(audio) {
+                                return `audio`;
+                            } else if(video) {
+                                return `video`;
+                            } else {
+                                return `(unknown type)`;
+                            }
+                        }
+
+                        if(thisFormat.audioFormat) {
+                            replacementStatus = `Downloaded format ${thisFormat.format_note} (video) & ${thisFormat.audioFormat.format_note} (audio)`;
+                        } else {
+                            replacementStatus = `Downloaded format ${thisFormat.format_note} (${getFormatType(thisFormat)})`;
+                        }
+                    }
+
+                    resolve(update({ status: replacementStatus || status, percentNum: 100 }))
                 })
             };
 
@@ -1938,8 +1955,9 @@ module.exports = {
                     };
 
                     if(useFile) {
-                        for(const { url, http_headers } of useFile) {
+                        for(let { url, http_headers={} } of useFile) {
                             if(!inputArgs.includes(url)) {
+                                http_headers = Object.assign({}, filterHeaders(info._headers), (http_headers || {}));
                                 if(http_headers && Object.keys(http_headers).length > 0) inputArgs.push(`-headers`, Object.entries(http_headers).map(s => `${s[0]}: ${s[1]}`).join(`\r\n`) + `\r\n`)
                                 inputArgs.push(`-i`, url);
                             }
@@ -1996,7 +2014,7 @@ module.exports = {
                         for(const file of (useFile ? useFile : temporaryFiles.map(f => require(`path`).join(saveTo, f)))) {
                             if(!width || !height) {
                                 if(typeof file == `object`) {
-                                    var { width, height } = await module.exports.getResolution(file.url, file.http_headers);
+                                    var { width, height } = await module.exports.getResolution(file.url, Object.assign({}, filterHeaders(info._headers), file.http_headers));
                                 } else {
                                     var { width, height } = await module.exports.getResolution(file);
                                 }
@@ -2299,7 +2317,7 @@ module.exports = {
                                         originalVideoCodec = file.vcodec.split(`.`)[0];
                                     } else if(file.video) {
                                         codecPromises.push(new Promise(async r => {
-                                            if(!originalVideoCodec) originalVideoCodec = await module.exports.getCodec(file.url, false, file.http_headers);
+                                            if(!originalVideoCodec) originalVideoCodec = await module.exports.getCodec(file.url, false, Object.assign({}, filterHeaders(info._headers), file.http_headers));
                                             r();
                                         }));
                                     };
@@ -2308,18 +2326,18 @@ module.exports = {
                                         originalAudioCodec = file.acodec.split(`.`)[0];
                                     } else if(file.audio) {
                                         codecPromises.push(new Promise(async r => {
-                                            if(!originalAudioCodec) originalAudioCodec = await module.exports.getCodec(file.url, true, file.http_headers);
+                                            if(!originalAudioCodec) originalAudioCodec = await module.exports.getCodec(file.url, true, Object.assign({}, filterHeaders(info._headers), file.http_headers));
                                             r();
                                         }));
                                     };
                                 } else {
                                     codecPromises.push(new Promise(async r => {
-                                        originalVideoCodec = await module.exports.getCodec(file.url, false, file.http_headers);
+                                        originalVideoCodec = await module.exports.getCodec(file.url, false, Object.assign({}, filterHeaders(info._headers), file.http_headers));
                                         r();
                                     }));
 
                                     codecPromises.push(new Promise(async r => {
-                                        originalAudioCodec = await module.exports.getCodec(file.url, true, file.http_headers);
+                                        originalAudioCodec = await module.exports.getCodec(file.url, true, Object.assign({}, filterHeaders(info._headers), file.http_headers));
                                         r();
                                     }));
                                 }
@@ -2480,7 +2498,7 @@ module.exports = {
                         return res()
                         //purgeLeftoverFiles(saveTo)
                     } else if(reasonConversionNotDone) {
-                        update({code, saveLocation: saveTo, url, format, status: `Could not convert: ${reasonConversionNotDone}`});
+                        update({failed: true, code, saveLocation: saveTo, url, format, status: `Could not convert: ${reasonConversionNotDone}`});
                     } else if(args.includes(`-S`) && ytdlpSaveExt == ext) {
                         update({code, saveLocation: saveTo, url, format, status: `Downloaded best quality provided for ${ext} format (no conversion done${reasonConversionNotDone ? ` -- ${reasonConversionNotDone}` : ``})`});
                     } else if(args.includes(`-S`) && ytdlpSaveExt != ext) {
@@ -2495,9 +2513,7 @@ module.exports = {
             const originalFormatObj = thisFormat;
 
             const runYtdlp = async () => {
-                thisFormat = originalFormatObj;
-
-                update({formatID: thisFormat ? (`${thisFormat.format_id}` + (thisFormat.audioFormat ? `/${thisFormat.audioFormat.format_id}` : ``)) : originalFormat})
+                thisFormat = getFormat({info, originalFilteredFormat, ext}) || originalFormatObj;
 
                 args = [`-f`, format, url, `-o`, require(`path`).join(saveTo, temporaryFilename) + `.%(ext)s`, `--no-mtime`, ...additionalArgs];
 
@@ -2742,13 +2758,13 @@ module.exports = {
 
                 runThroughFFmpeg(0, inputArgs, outputArgs, [{url}]).then(res);
             } else if(downloadWithFFmpeg && ffmpegExists && (convert || originalFormat == `bv*+ba/b` || (thisFormat && thisFormat.url))) {
+                const convertExists = convert && Object.keys(convert).filter(s => convert[s]).length > 0;
+
                 try {
                     await fetchFullInfo(`Getting original format (streaming with FFmpeg)...`);
     
-                    for(var attempt = 0; attempt < Math.min(3, info.formats.length); attempt++) {
-                        thisFormat = module.exports.getFormat({info, format: originalFormat, ext, depth: attempt}) || originalFormatObj;
-
-                        update({formatID: thisFormat ? (`${thisFormat.format_id}` + (thisFormat.audioFormat ? `/${thisFormat.audioFormat.format_id}` : ``)) : originalFormat})
+                    for(var attempt = 0; attempt < Math.min(5, info.formats.length); attempt++) {
+                        thisFormat = getFormat({info, format: originalFormat, ext, depth: attempt}) || originalFormatObj;
         
                         getFilename();
         
@@ -2759,8 +2775,6 @@ module.exports = {
                         if(proxy) inputArgs.push(`-http_proxy`, proxy);
         
                         //if(Object.keys(useHeaders).length > 0) inputArgs.push(`-headers`, (Object.entries(useHeaders).map(o => `${o[0]}: ${o[1]}`).join(`\r\n`) + `\r\n`))
-        
-                        const convertExists = convert && Object.keys(convert).filter(s => convert[s]).length > 0;
         
                         console.log(`streaming${convertExists ? ` AND converting` : ``} with ffmpeg`);
         
@@ -2824,6 +2838,9 @@ module.exports = {
                     return runYtdlp();
                 } catch(e) {
                     console.error(`failed to download with FFmpeg (at root): ${e}`);
+
+                    if(!convertExists) convert = {};
+
                     return runYtdlp();
                 }
             } else runYtdlp();

@@ -152,7 +152,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
 
         let lastSearch = null;
         
-        const runSearch = async (url, initialMsg, func) => {
+        const runSearch = async (url, initialMsg, func, providedOpts) => {
             system.hasFFmpeg().then(has => {
                 hasFFmpeg = has;
             });
@@ -1168,7 +1168,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                 clearSearchTags(container);
                 runParse(`url is object`)
             } else {
-                const urls = [url, ...getSearchTags()].filter(o => o);
+                const urls = [url, ...getSearchTags()].filter(Boolean);
 
                 let opt = {
                     query: urls.length < 2 ? urls[0] : urls,
@@ -1188,14 +1188,22 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                 selectionBox.hide(false, true);
 
                 console.log(`urls`, urls, `opt`, opt)
-            
-                mainQueue[func || `getInfo`](opt).then(data => {
-                    info = data;
-            
-                    console.log(`info received`)
-            
-                    runParse(`queue function`)
-                });
+
+                if(func && func.then) {
+                    console.log(`func is promise`);
+    
+                    func.then(data => {
+                        console.log(`func promise resolved`, data)
+                        info = data;
+                        runParse(`func is promise`)
+                    });
+                } else {
+                    (func && typeof mainQueue[func] == `function` ? mainQueue[func] : mainQueue.getInfo)(providedOpts && typeof providedOpts == `object` ? providedOpts : opt).then(data => {
+                        info = data;
+                        console.log(`info received`)
+                        runParse(`queue function`)
+                    });
+                }
             }
             
             button.disabled = true;
@@ -1206,6 +1214,11 @@ if(!tabs[`Download`]) tabs[`Download`] = {
         
             centerURLBox(true).then(() => runParse(`centerURLBox`));
         }
+
+        system.on(`listFormats`, (opts) => {
+            console.log(`listFormats from system event`, opts)
+            runSearch(opts.query, `Fetching info...`, `listFormats`, opts)
+        });
         
         const resultsCountInput = container.querySelector(`#resultsCountInput`);
         
