@@ -1,5 +1,7 @@
 const parseLog = (prefix, func=`log`, ...data) => data.forEach(d => console[func](prefix, typeof d == `string` ? d.split(`\n`).join(`\n${prefix} `) : d));
 
+const bringToFront = require(`./bringToFront`)
+
 module.exports = ({ session, id }) => {
     const log = (...data) => parseLog(`[extension/${id}]`, `log`, ...data);
     const elog = (...data) => parseLog(`[extension/${id}]`, `error`, ...data);
@@ -14,6 +16,8 @@ module.exports = ({ session, id }) => {
                 data.headers = require(`../util/ytdlpUtil/headers`).filterHeaders(data.headers || {});
 
                 console.log(`[extension/${id} AUTHED] sending data (${data.query})`, data);
+
+                bringToFront();
 
                 if(global.window && global.window.webContents) {
                     global.window.webContents.send(`system-listFormats`, Object.assign(data, { force: true }));
