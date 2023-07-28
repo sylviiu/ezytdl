@@ -6,10 +6,7 @@ const package = require(`../../package.json`);
 
 const getPath = require(`../../util/getPath`);
 
-const sendNotification = require(`../../core/sendNotification`);
 const { createDialog } = require(`../../core/createDialog`);
-
-const { inspect } = require(`util`);
 
 let wss = null;
 
@@ -66,81 +63,83 @@ module.exports = async ({ browserConnector }) => {
     
                 console.log(`[browserConnector/${id}] creating keypair for encryption...`);
     
-                const { fingerprint, decrypt, generatePublicKey } = await authentication.getToken(`browserConnector`);
+                const { fingerprint, decryptSymmetric, generatePublicKey } = await authentication.getToken(`browserConnector`);
     
                 console.log(`[browserConnector/${id}] retrieved keypair! (fingerprint: ${fingerprint})`);
 
                 messageHandler = msg => {
                     try {
-                        const obj = JSON.parse(decrypt(msg));
+                        const obj = JSON.parse(msg.toString());
 
-                        if(obj.type == `ready`) {
-                            messageHandler = () => {};
+                        if(obj.type == `pair`) {
+                            const strings = [
+                                `A browser connector is trying to pair with this instance of ezytdl.`,
+                                `To continue, please verify that the information presented here matches the one shown in the browser. If all looks well, click "Pair" in the browser to continue.`,
+                                `**Encryption Fingerprint:** \`${fingerprint}\``,
+                                `Connection details:\n- ${Object.entries(session).reverse().map(([k, v]) => `\`${k}\`: \`${v}\``).join(`\n- `)}`
+                            ]
 
-                            if(ws.dialog && ws.dialog.window) {
-                                ws.dialog.window.close();
+                            createDialog({
+                                title: `Browser Connector Pairing`,
+                                body: strings.join(`\n\n`),
+                            }, o => {
+                                ws.dialog = o;
+                            }).then(() => {
                                 ws.dialog = null;
+                            });
+                            
+                            return console.log(`[browserConnector/${id}] started pairing process!`, obj);
+                        } else if(obj.type == `key`) {
+                            console.log(`[browserConnector/${id}] generating public key!`, obj);
+
+                            const data = generatePublicKey();
+
+                            console.log(`[browserConnector/${id}] sending public key!`);
+
+                            return ws.send(JSON.stringify({ type: `key`, data }));
+                        } else if(obj.key) {
+                            try {
+                                const obj = JSON.parse(decryptSymmetric(msg));
+        
+                                if(obj.type == `ready`) {
+                                    messageHandler = () => {};
+        
+                                    if(ws.dialog && ws.dialog.window) {
+                                        ws.dialog.window.close();
+                                        ws.dialog = null;
+                                    }
+        
+                                    console.log(`[browserConnector/${id}] received encrypted ready message!`);
+        
+                                    const handler = require(`../browserConnectorHandler`)({ session, id })
+        
+                                    messageHandler = msg => {
+                                        let decrypted = null;
+        
+                                        try {
+                                            decrypted = JSON.parse(decryptSymmetric(msg));
+                                        } catch(e) {
+                                            return console.error(`[browserConnector/${id}] failed decrypting msg: ${e}`)
+                                        };
+        
+                                        try {
+                                            handler(decrypted);
+                                        } catch(e) {
+                                            console.error(`[browserConnector/${id}] failed to handle authenticated msg: ${e}`)
+                                        }
+                                    };
+        
+                                    return ws.send(JSON.stringify({ type: `ready` }))
+                                } else console.log(`[browserConnector/${id}] received unknown (ENCRYPTED) message type: ${obj.type}`, obj);
+                            } catch(e2) {
+                                console.error(`[browserConnector/${id}] failed to decrypt message!`, e2);
                             }
+                        } else console.log(`[browserConnector/${id}] received unknown message type: ${obj.type}`, obj);
+                    } catch(e2) {
+                        console.error(`[browserConnector/${id}] failed to decrypt mid-handshake message!`, e2);
+                    };
 
-                            console.log(`[browserConnector/${id}] received encrypted ready message!`);
-
-                            const handler = require(`../browserConnectorHandler`)({ session, id })
-
-                            messageHandler = msg => {
-                                let decrypted = null;
-
-                                try {
-                                    decrypted = JSON.parse(decrypt(msg));
-                                } catch(e) {
-                                    return console.error(`[browserConnector/${id}] failed decrypting msg: ${e}`)
-                                };
-
-                                try {
-                                    handler(JSON.parse(decrypted));
-                                } catch(e) {
-                                    console.error(`[browserConnector/${id}] failed to handle authenticated msg: ${e}`)
-                                }
-                            };
-
-                            ws.send(JSON.stringify({ type: `ready` }))
-                        }
-                    } catch(e) {
-                        try {
-                            const obj = JSON.parse(msg.toString());
-    
-                            if(obj.type == `pair`) {
-                                const strings = [
-                                    `A browser connector is trying to pair with this instance of ezytdl.`,
-                                    `To continue, please verify that the information presented here matches the one shown in the browser. If all looks well, click "Pair" in the browser to continue.`,
-                                    `**Encryption Fingerprint:** \`${fingerprint}\``,
-                                    `Connection details:\n- ${Object.entries(session).reverse().map(([k, v]) => `\`${k}\`: \`${v}\``).join(`\n- `)}`
-                                ]
-    
-                                createDialog({
-                                    title: `Browser Connector Pairing`,
-                                    body: strings.join(`\n\n`),
-                                }, o => {
-                                    ws.dialog = o;
-                                }).then(() => {
-                                    ws.dialog = null;
-                                });
-                                
-                                return console.log(`[browserConnector/${id}] started pairing process!`, obj);
-                            } else if(obj.type == `key`) {
-                                console.log(`[browserConnector/${id}] generating public key!`, obj);
-
-                                const data = generatePublicKey();
-
-                                console.log(`[browserConnector/${id}] sending public key!`);
-
-                                return ws.send(JSON.stringify({ type: `key`, data }));
-                            } else console.log(`[browserConnector/${id}] received unknown message type: ${obj.type}`, obj);
-                        } catch(e2) {
-                            console.error(`[browserConnector/${id}] failed to decrypt mid-handshake message!`, e, e2);
-                        };
-
-                        ws.close();
-                    }
+                    ws.close();
                 };
 
                 ws.send(JSON.stringify({

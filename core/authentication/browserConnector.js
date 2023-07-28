@@ -29,12 +29,61 @@ module.exports = {
 
             console.log(`Took [${Date.now() - started}ms] to create public key!`)
 
+            const tools = {
+                generatePublicKey: () => crypto.createPublicKey(privateKey).export(cryptoArgs.generateArgs.publicKeyEncoding),
+                decrypt: (data) => crypto.privateDecrypt(Object.assign({ key: privateKey }, (cryptoArgs.decryptArgs || {})), Buffer.isBuffer(data) ? data : Buffer.from(data)),
+                encrypt: (data, key) => crypto.publicEncrypt(Object.assign({ key: key || tools.generatePublicKey() }, (cryptoArgs.encryptArgs || {})), Buffer.isBuffer(data) ? data : Buffer.from(data)),
+            }
+
+            tools.decryptSymmetric = (data) => {
+                if(Buffer.isBuffer(data)) data = data.toString();
+
+                if(data.type == `Buffer`) {
+                    data = Buffer.from(data.data).toString();
+                }
+
+                if(typeof data == `string`) try {
+                    data = JSON.parse(data);
+                    for(const key of Object.keys(data)) data[key] = Array.isArray(data[key]) ? new Uint8Array(data[key]) : data[key];
+                } catch(e) {
+                    throw new Error(`failed to stringify data! (${e})`);
+                }
+
+                console.log(`decryptSymmetric (${typeof data}):`, data);
+
+                if(data.key && data.data) {
+                    let key;
+
+                    try {
+                        key = tools.decrypt(data.key);
+                        console.log(`decrypted key (${key.byteLength} bytes)`, Uint8Array.from(key));
+                    } catch(e) {
+                        throw new Error(`failed to decrypt key! (${e})`);
+                    }
+    
+                    try {
+                        const decipher = crypto.createDecipheriv('aes-256-cbc', key, Buffer.from(data.iv));
+
+                        const buf = Buffer.from(data.data);
+
+                        console.log(`deciphering data (${buf.byteLength} bytes)...`, Uint8Array.from(buf));
+
+                        const decryptedData = Buffer.concat([
+                            decipher.update(buf), 
+                            decipher.final()
+                        ]).toString('utf-8');
+
+                        return decryptedData;
+                    } catch(e) {
+                        throw new Error(`failed to decrypt message from symmetric key! (${e})`);
+                    }
+                } else {
+                    throw new Error(`missing key or data!`);
+                }
+            }
+
             res({
-                value: Object.assign({
-                    generatePublicKey: () => crypto.createPublicKey(privateKey).export(cryptoArgs.generateArgs.publicKeyEncoding),
-                    decrypt: (data) => crypto.privateDecrypt(Object.assign({ key: privateKey }, (cryptoArgs.decryptArgs || {})), Buffer.isBuffer(data) ? data : Buffer.from(data)),
-                    encrypt: (data, key) => crypto.publicEncrypt(Object.assign({ key: key }, (cryptoArgs.encryptArgs || {})), Buffer.isBuffer(data) ? data : Buffer.from(data)),
-                }, { cryptoArgs, privateKey, fingerprint }),
+                value: Object.assign(tools, { cryptoArgs, privateKey, fingerprint }),
                 message: null
             })
         } else res({ value: null, message: `missing keys, or privatekey.` });
