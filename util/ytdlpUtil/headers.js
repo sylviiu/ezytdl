@@ -3,7 +3,7 @@ module.exports = {
     filterHeaders: (headers={}, filter=module.exports.filter) => {
         const newHeaders = {};
 
-        Object.keys(headers).forEach(key => {
+        Object.keys(headers || {}).forEach(key => {
             if(filter.includes(key)) newHeaders[key] = headers[key];
         });
 
