@@ -277,7 +277,7 @@ module.exports = {
             }
         });
 
-        if(info.url && !info.fullInfo) manager.createDownload([{query: info.url, extraArguments, ignoreStderr: true}, false], (i) => {
+        if(info.url && !info.fullInfo) manager.createDownload([{query: info.url, headers: info._headers || {}, extraArguments, ignoreStderr: true}, false], (i) => {
             if(i) {
                 console.log(`new info!`)
                 delete i.entries;
@@ -288,7 +288,7 @@ module.exports = {
         if(info.entries) for(const i in info.entries.filter(e => e && !e.fullInfo)) {
             const e = info.entries[i];
 
-            manager.createDownload([{query: e.url, extraArguments, ignoreStderr: true}, false], (e) => {
+            manager.createDownload([{query: e.url, headers: info._headers || {}, extraArguments, ignoreStderr: true}, false], (e) => {
                 // to keep the same order of songs
                 if(e) {
                     console.log(`new info!`);
@@ -334,7 +334,6 @@ module.exports = {
 
             if(anyNoTitle) {
                 console.log(`Missing titles!`);
-                //return module.exports.listFormats({query, extraArguments}, true).then(res)
                 module.exports.unflatPlaylist({extraArguments, info: d, ignoreStderr}).then(res)
             } else {
                 res(module.exports.parseInfo(d, disableFlatPlaylist))
@@ -342,7 +341,6 @@ module.exports = {
         } else if(!disableFlatPlaylist) {
             updateStatus(`Restarting playlist search... (there were no formats returned!!)`)
             console.log(`no formats found! starting over...`);
-            //return module.exports.listFormats({query, extraArguments}, true).then(res)
             module.exports.unflatPlaylist({extraArguments, info: d, ignoreStderr}).then(res)
         } else {
             sendNotification({
