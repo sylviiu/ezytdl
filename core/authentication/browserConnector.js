@@ -49,14 +49,14 @@ module.exports = {
                     throw new Error(`failed to stringify data! (${e})`);
                 }
 
-                console.log(`decryptSymmetric (${typeof data}):`, data);
+                //console.log(`decryptSymmetric (${typeof data}):`, data);
 
                 if(data.key && data.data) {
                     let key;
 
                     try {
                         key = tools.decrypt(data.key);
-                        console.log(`decrypted key (${key.byteLength} bytes)`, Uint8Array.from(key));
+                        //console.log(`decrypted key (${key.byteLength} bytes)`, Uint8Array.from(key));
                     } catch(e) {
                         throw new Error(`failed to decrypt key! (${e})`);
                     }
@@ -66,7 +66,7 @@ module.exports = {
 
                         const buf = Buffer.from(data.data);
 
-                        console.log(`deciphering data (${buf.byteLength} bytes)...`, Uint8Array.from(buf));
+                        //console.log(`deciphering data (${buf.byteLength} bytes)...`, Uint8Array.from(buf));
 
                         const decryptedData = Buffer.concat([
                             decipher.update(buf), 
