@@ -3,16 +3,17 @@ const sorters = {
     // if there is no quality, send before the ones with quality
     qualityIndex: {
         func: (a,b) => {
-            if(!a.quality) a.quality = 0;
-            if(!b.quality) b.quality = 0;
-
             if(a.quality || b.quality) {
                 if(a.quality == b.quality) {
                     return 0;
                 } else if(a.quality > b.quality) {
-                    return 1;
-                } else if(a.quality < b.quality) {
                     return -1;
+                } else if(a.quality < b.quality) {
+                    return 1;
+                } else if(a.quality && !b.quality) {
+                    return -1;
+                } else if(b.quality && !a.quality) {
+                    return 1;
                 } else return 0;
             } else return 0;
         },
