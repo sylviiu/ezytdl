@@ -20,7 +20,15 @@ module.exports = ({ session, id }) => {
                 bringToFront();
 
                 if(global.window && global.window.webContents) {
-                    global.window.webContents.send(`system-listFormats`, Object.assign(data, { force: true }));
+                    global.window.webContents.send(`system-listFormats`, {
+                        query: data.query,
+                        force: true,
+                        cookies: {
+                            txt: data.cookies.cookiesTxt,
+                            header: data.cookies.cookiesHeader,
+                        },
+                        headers: data.headers,
+                    });
                     console.log(`[extension/${id} AUTHED] sent listFormats response! (${data.query})`);
                 } else elog(`[extension/${id} AUTHED] failed to send listFormats response! (window not ready) (${data.query})`);
             } else elog(`[extension/${id} AUTHED] received (unknown) message! (type: ${type})`, data);

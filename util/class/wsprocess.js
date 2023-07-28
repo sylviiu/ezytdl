@@ -1,6 +1,10 @@
 const events = require(`events`);
 const stream = require(`stream`);
 const idGen = require(`../idGen`);
+const pfs = require(`../promisifiedFS`);
+const path = require(`path`);
+
+const tempPath = require(`electron`).app.getPath('temp');
 
 class wsprocess extends events.EventEmitter {
     constructor(args, opt) {
@@ -14,6 +18,9 @@ class wsprocess extends events.EventEmitter {
         this.stderr = new stream.PassThrough();
 
         this.persist = opt && typeof opt.persist == `boolean` ? opt.persist : true;
+        
+        this.cookies = opt && opt.cookies ? opt.cookies : null;
+        this.headers = opt && opt.headers ? opt.headers : null;
 
         this._spawn();
     }
@@ -28,10 +35,18 @@ class wsprocess extends events.EventEmitter {
         }));
     }
 
-    _complete(code = 0) {
+    async _complete(code = 0) {
         const bridge = require(`../pythonBridge`);
 
-        console.log(`[${this.processID}] complete (code: ${code})`)
+        console.log(`[${this.processID}] complete (code: ${code})`);
+
+        if(this.cookiePath) try {
+            console.log(`[${this.processID}] Removing cookie file`)
+            await pfs.unlink(this.cookiePath);
+        } catch(e) {
+            console.error(`[${this.processID}] error removing cookie file`, e);
+        }
+
         this.emit(`close`, code);
 
         console.log(`[${this.processID}] Removing hook`)
@@ -69,6 +84,21 @@ class wsprocess extends events.EventEmitter {
 
             if(proxy) this.args.push(`--proxy`, proxy);
 
+            if(this.headers) Object.entries(this.headers).forEach(([ key, value ]) => this.args.push(`--add-headers`, `${key}:${value}`));
+
+            this.cookiePath = null;
+
+            if(this.cookies && this.cookies.txt) {
+                this.cookiePath = path.join(tempPath, `${idGen(24)}.txt`);
+                console.log(`[${this.processID}] Writing cookie file to ${this.cookiePath}`)
+                await pfs.writeFile(this.cookiePath, this.cookies.txt);
+                this.args.push(`--cookies`, this.cookiePath);
+            };
+
+            if(this.cookies && this.cookies.header) {
+                this.args.push(`--add-headers`, `Cookie: ${this.cookies.header}`);
+            }
+
             bridge.idHooks.push({ id: this.processID, func: hook, args: this.args, complete: (code) => this._complete(code) });
     
             const obj = {
@@ -76,7 +106,7 @@ class wsprocess extends events.EventEmitter {
                 args: this.args,
             }
     
-            console.log(`spawned ${JSON.stringify(obj)}`);
+            console.log(`spawned ${obj.id}`, obj);
 
             bridge.resObj.send(JSON.stringify(obj));
         });

@@ -239,6 +239,9 @@ module.exports = {
 
         manager.queueEventEmitter.removeAllListeners(`queueUpdate`);
 
+        const useCookies = info._cookies;
+        const useHeaders = info._headers;
+
         let newInfo = {};
 
         let badEntries = 0;
@@ -277,7 +280,7 @@ module.exports = {
             }
         });
 
-        if(info.url && !info.fullInfo) manager.createDownload([{query: info.url, headers: info._headers || {}, extraArguments, ignoreStderr: true}, false], (i) => {
+        if(info.url && !info.fullInfo) manager.createDownload([{query: info.url, cookies: useCookies, headers: useHeaders, extraArguments, ignoreStderr: true}, false], (i) => {
             if(i) {
                 console.log(`new info!`)
                 delete i.entries;
@@ -288,7 +291,7 @@ module.exports = {
         if(info.entries) for(const i in info.entries.filter(e => e && !e.fullInfo)) {
             const e = info.entries[i];
 
-            manager.createDownload([{query: e.url, headers: info._headers || {}, extraArguments, ignoreStderr: true}, false], (e) => {
+            manager.createDownload([{query: e.url, cookies: useCookies, headers: useHeaders, extraArguments, ignoreStderr: true}, false], (e) => {
                 // to keep the same order of songs
                 if(e) {
                     console.log(`new info!`);
@@ -911,7 +914,7 @@ module.exports = {
             } else return res(null);
         }
     }),
-    listFormats: ({query, extraArguments, headers={}, ignoreStderr}) => new Promise(async res => {
+    listFormats: ({query, extraArguments, cookies=null, headers=null, ignoreStderr}) => new Promise(async res => {
         const additional = module.exports.additionalArguments(extraArguments);
 
         if(typeof query == `object` && query.length > 0) {
@@ -951,21 +954,15 @@ module.exports = {
                 res(o);
             });
         } else {
-            const attachInfo = { _headers: headers }
+            const attachInfo = { _cookies: cookies, _headers: headers }
 
             console.log(`url "${query}"; additional args: "${additional.join(`", "`)}" (${extraArguments})`)
     
             let args = [query, `--dump-single-json`, `--flat-playlist`, `--quiet`, `--progress`, `--verbose`, ...additional];
-
-            const headersArgs = Object.entries(headers).map(([key, value]) => [`--add-header`, `${key}:${value}`]).flat();
-
-            console.log(`headersArgs`, headersArgs)
-
-            args.push(...headersArgs)
     
             if(ignoreStderr) args.splice(args.indexOf(`--verbose`), 1);
     
-            const proc = execYTDLP(args, { persist: false });
+            const proc = execYTDLP(args, { persist: false, cookies, headers });
     
             let data = ``;
     
@@ -1027,7 +1024,7 @@ module.exports = {
         
                 //console.log(args)
         
-                const proc = execYTDLP(args);
+                const proc = execYTDLP(args, { cookies: info._cookies, headers: info._headers });
         
                 let data = ``;
         
@@ -2549,7 +2546,7 @@ module.exports = {
                 
                 console.log(`saveTo: ` + saveTo, `\n- ` + args.join(`\n- `))
         
-                proc = execYTDLP(args);
+                proc = execYTDLP(args, { cookies: info._cookies, headers: info._headers });
         
                 update({saveLocation: saveTo, url, format, kill: () => {
                     console.log(`killing yt-dlp download...`)
