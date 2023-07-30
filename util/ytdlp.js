@@ -2000,6 +2000,8 @@ module.exports = {
                     const numRegex = /-?\d+(\.\d+)?/g;
 
                     if(convert.videoResolution && numRegex.test(convert.videoResolution)) {
+                        const videoSizeCalculations = [];
+
                         convert.videoResolution = convert.videoResolution.replace(/x/g, `:`).trim();
 
                         console.log(`raw; videoResolution: ${convert.videoResolution}`)
@@ -2037,17 +2039,41 @@ module.exports = {
                             console.log(`after; newWidth: ${newWidth}; newHeight: ${newHeight}`)
 
                             if(newWidth > -1 || newHeight > -1) {
-                                const newScaledWidth = newWidth > -1 ? newWidth : Math.round((newHeight / height) * width);
-                                const newScaledHeight = newHeight > -1 ? newHeight : Math.round((newWidth / width) * height);
-                                
-                                const newScale = newScaledWidth > newScaledHeight ? `${newScaledWidth}:-1` : `-1:${newScaledHeight}`;
+                                let newScaledWidth, newScaledHeight;
 
-                                const newCrop = `${newWidth}:${newHeight}`;
-        
-                                //outputArgs.unshift(`-vf`, `scale=${Number(convert.videoResolution) ? `${convert.videoResolution}:-1` : convert.videoResolution.trim().replace(/x/g, `:`)}`);
-                                outputArgs.unshift(`-vf`, `scale=${newScale},crop=${newCrop}`);
-    
-                                //convert.videoResolution = `${newWidth}x${newHeight}`;
+                                if(newWidth > newHeight) {
+                                    newScaledWidth = newWidth;
+                                    newScaledHeight = Math.round((newWidth / width) * height);
+                                } else {
+                                    newScaledHeight = newHeight;
+                                    newScaledWidth = Math.round((newHeight / height) * width);
+                                }
+
+                                console.log(`uncorrected calculated scales: ${newScaledWidth}:${newScaledHeight}`)
+
+                                if(newWidth > newScaledWidth) {
+                                    newScaledWidth = newWidth;
+                                    newScaledHeight = Math.round((newWidth / width) * height);
+                                } else if(newHeight > newScaledHeight) {
+                                    newScaledHeight = newHeight;
+                                    newScaledWidth = Math.round((newHeight / height) * width);
+                                }
+
+                                //const newScaledWidth = newWidth > -1 ? newWidth : Math.round((newHeight / height) * width);
+                                //const newScaledHeight = newHeight > -1 ? newHeight : Math.round((newWidth / width) * height);
+
+                                console.log(`calculated scales: ${newScaledWidth}:${newScaledHeight}`)
+                                
+                                //const newScale = newScaledWidth > newScaledHeight ? `${newScaledWidth}:-1` : `-1:${newScaledHeight}`;
+                                videoSizeCalculations.push(`scale=${newScaledWidth}:${newScaledHeight}`)
+
+                                if(newScaledWidth == newWidth && newScaledHeight == newHeight) {
+                                    console.log(`(no crop) new width: ${newWidth}; new height: ${newHeight}`)
+                                } else {
+                                    videoSizeCalculations.push(`crop=${newWidth}:${newHeight}`)
+                                }
+
+                                if(videoSizeCalculations.length > 0) outputArgs.unshift(`-vf`, videoSizeCalculations.join(`,`));
                             } else {
                                 console.log(`(invalid videoResolution) new width: ${newWidth}; new height: ${newHeight}`)
                             }
