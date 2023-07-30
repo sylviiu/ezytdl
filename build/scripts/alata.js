@@ -16,7 +16,7 @@ module.exports = {
         const fontfiles = fs.readdirSync(`./node_modules/@fontsource/alata/files`);
 
         for(const fontfile of fontfiles) {
-            fs.copyFileSync(`./node_modules/alata/fonts/${fontfile}`, `./html/assets/fonts/${fontfile}`);
+            fs.copyFileSync(`./node_modules/@fontsource/alata/files/${fontfile}`, `./html/assets/fonts/${fontfile}`);
         }
 
         console.log(`copied Alata fonts`);
