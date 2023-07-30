@@ -104,15 +104,37 @@ const config = {
     extraMetadata: {},
 };
 
+let fullMetadataDone = false;
+
 const getFullMetadata = () => new Promise(async res => {
-    const git = await which(`git`, { nothrow: true });
+    if(fullMetadataDone) return res(config);
+
+    const pkg = require(`./package.json`)
 
     const obj = {
         commitHash: `unk`,
         fullCommitHash: `unknown`,
         branch: null,
         buildNumber: buildArgs.buildNumber || -1,
+        buildInfo: {
+            "ezytdl": {
+                "Version": pkg.version,
+                "Commit Hash": pkg.fullCommitHash || `unknown`,
+                "Built": pkg.buildDate || global.startTime,
+            },
+            "Electron": {
+                "Version": pkg.devDependencies.electron.replace(`^`, ``),
+                "Built with": `electron-builder ` + pkg.devDependencies['electron-builder'].replace(`^`, ``),
+            },
+            "Libraries": {}
+        },
+    };
+
+    for(const [name, value] of Object.keys(pkg.devDependencies).concat(Object.keys(pkg.dependencies)).sort().map(n => [n, pkg.devDependencies[n] || pkg.dependencies[n]]).filter(([name]) => !name.toLowerCase().includes(`electron`))) {
+        obj.buildInfo.Libraries[name] = value.replace(`^`, ``);
     }
+
+    const git = await which(`git`, { nothrow: true });
 
     if(git) {
         const toAppend = {};
@@ -150,6 +172,10 @@ const getFullMetadata = () => new Promise(async res => {
     }
 
     Object.assign(config.extraMetadata, obj);
+
+    fullMetadataDone = true;
+
+    console.log(`extra metadata`, config.extraMetadata)
 
     return res(config);
 })
