@@ -7,11 +7,12 @@ const idGen = require(`../util/idGen`);
 const downloadManager = require(`./downloadManager`);
 const authentication = require(`../core/authentication`);
 const getPath = require(`../util/getPath`);
+const configs = require(`./configs`);
 
 const qualitySorter = require(`./ytdlpUtil/qualitySorter`);
 const { filterHeaders } = require(`./ytdlpUtil/headers`);
 const durationCurve = require(`./durationCurve`);
-const recursiveAssign = require(`./recursiveAssign`)
+const recursiveAssign = require(`./recursiveAssign`);
 
 const outputTemplateRegex = /%\(\s*([^)]+)\s*\)s/g;
 const genericURLRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/i;
@@ -2187,6 +2188,10 @@ module.exports = {
 
                         if(advanced && keywords.includes(`converting`)) {
                             status += (additionalArgsFromConvert.length > 0 ? `<br>(using extra processing: ${additionalOpts.join(`, `)})` : ``) + `<br><br>- ${Object.keys(convert).filter(s => convert[s]).map(s => `${s}: ${convert[s] || `(no conversion)`}`).join(`<br>- `)}`
+                        };
+
+                        if(advanced) {
+                            status += `<br><br>Using output arguments:<br>${rawArgs2.slice(rawArgs2.lastIndexOf(`-i`)+2).map(s => s.includes(` `) ? `"${s}"` : s).join(` `)}`
                         }
     
                         update({status, percentNum: -1, eta: `--`});
@@ -2427,61 +2432,97 @@ module.exports = {
 
                     let attemptArgs = [];
 
-                    if(!convert.forceSoftware && compatibleDecoders.length > 0 && compatibleEncoders.length > 0) {
-                        for(const decoder of compatibleDecoders) {
-                            for(const encoder of compatibleEncoders) {
-                                const o = {
-                                    string: `${originalCodec || originalExtension.toUpperCase()}_${decoder.string} -> ${targetCodec || ext.slice(1).toUpperCase()}_${encoder.string}`,
-                                    hardware: `Full`,
-                                    decoder: decoder.name,
-                                    encoder: encoder.name,
-                                    args: [...decoder.pre, ...inputArgs, ...encoder.post, ...outputArgs]
-                                };
+                    const appendArgs = (obj, argumentsArr) => {
+                        arguments = argumentsArr.filter(a => a && Array.isArray(a) && a.length > 0);
 
-                                if(!attemptArgs.find(a => a.decoder == o.decoder && a.encoder == o.encoder)) attemptArgs.push(o);
-                            }
-                        }
-                    };
-
-                    if(!convert.forceSoftware && compatibleDecoders.length > 0) {
-                        for(const decoder of compatibleDecoders) {
-                            const o = {
-                                string: `${originalCodec || originalExtension.toUpperCase()}_${decoder.string} -> ${targetCodec || ext.slice(1).toUpperCase()} (CPU)`,
-                                hardware: `Partial`,
-                                decoder: decoder.name,
-                                encoder: `Software`,
-                                args: [...decoder.pre, ...inputArgs, ...(convert.videoCodec ? [`-c:v`, `${convert.videoCodec}`] : []), ...outputArgs]
-                            };
-
-                            if(!attemptArgs.find(a => a.decoder == o.decoder && a.encoder == o.encoder)) attemptArgs.push(o);
-                        }
-                    };
-
-                    if(!convert.forceSoftware && compatibleEncoders.length > 0) {
-                        for(const encoder of compatibleEncoders) {
-                            const o = {
-                                string: `${originalCodec || originalExtension.toUpperCase()} (CPU) -> ${targetCodec || ext.slice(1).toUpperCase()}_${encoder.string}`,
-                                hardware: `Partial`,
-                                decoder: `Software`,
-                                encoder: encoder.name,
-                                args: [...inputArgs, ...encoder.post, ...outputArgs]
-                            };
-
-                            if(!attemptArgs.find(a => a.decoder == o.decoder && a.encoder == o.encoder)) attemptArgs.push(o);
-                        }
-                    };
-                    
-                    if(!onlyGPUConversion || convert.forceSoftware) {
-                        attemptArgs.push({
-                            string: convert.videoCodec ? `${originalCodec || originalExtension.toUpperCase()} (CPU) -> ${targetCodec || convert.videoCodec || ext.slice(1).toUpperCase()} (CPU)` : `no conversion`,
-                            hardware: `None`,
-                            decoder: `Software`,
-                            encoder: `Software`,
-                            args: [...inputArgs, ...(convert.videoCodec ? [`-c:v`, `${convert.videoCodec}`] : []), ...outputArgs]
+                        if(!attemptArgs.find(a => a.decoder == obj.decoder && a.encoder == obj.encoder)) arguments.forEach((args, i) => {
+                            const o = Object.assign({}, obj, { string: (arguments.length > 1 ? (obj.string + ` [${Number(i)+1}/${arguments.length}]`) : obj.string), args })
+                            attemptArgs.push(o);
                         });
                     }
 
-                    console.log(attemptArgs);
+                    if(!convert.forceSoftware) {
+                        const codecArgs = await configs.ffmpegCodecArgs();
+
+                        const originalCodecArgs = (codecArgs[originalCodec || ``] || {});
+                        const targetCodecArgs = (codecArgs[targetCodec || ``] || {});
+
+                        console.log(`codecArgs: `, codecArgs)
+
+                        if(compatibleDecoders.length > 0 && compatibleEncoders.length > 0) {
+                            for(const decoder of compatibleDecoders) {
+                                const decoderArgs = (originalCodecArgs[decoder.string] || originalCodecArgs[`default`] || {}).pre;
+
+                                for(const encoder of compatibleEncoders) {
+                                    const encoderArgs = (originalCodecArgs[encoder.string] || originalCodecArgs[`default`] || {}).post;
+    
+                                    console.log(`codecArgs for decoder (${originalCodec} / ${decoder.string}):`, decoderArgs)
+                                    console.log(`codecArgs for encoder (${targetCodec} / ${encoder.string}):`, encoderArgs)
+
+                                    appendArgs({
+                                        string: `${originalCodec || originalExtension.toUpperCase()}_${decoder.string} -> ${targetCodec || ext.slice(1).toUpperCase()}_${encoder.string}`,
+                                        hardware: `Full`,
+                                        decoder: decoder.name,
+                                        encoder: encoder.name
+                                    }, [
+                                        (decoderArgs && encoderArgs ? [...decoder.pre, ...decoderArgs, ...inputArgs, ...encoder.post, ...encoderArgs, ...outputArgs] : null), 
+                                        (encoderArgs ? [...decoder.pre, ...inputArgs, ...encoder.post, ...encoderArgs, ...outputArgs] : null), 
+                                        (decoderArgs ? [...decoder.pre, ...decoderArgs, ...inputArgs, ...encoder.post, ...outputArgs] : null), 
+                                        [...decoder.pre, ...inputArgs, ...encoder.post, ...outputArgs]
+                                    ]);
+                                }
+                            }
+                        };
+    
+                        if(compatibleDecoders.length > 0) {
+                            for(const decoder of compatibleDecoders) {
+                                const decoderArgs = (originalCodecArgs[decoder.string] || originalCodecArgs[`default`] || {}).pre;
+                                
+                                console.log(`codecArgs for decoder (${originalCodec} / ${decoder.string}):`, decoderArgs)
+                                
+                                appendArgs({
+                                    string: `${originalCodec || originalExtension.toUpperCase()}_${decoder.string} -> ${targetCodec || ext.slice(1).toUpperCase()} (CPU)`,
+                                    hardware: `Partial`,
+                                    decoder: decoder.name,
+                                    encoder: `Software`
+                                }, [
+                                    (decoderArgs ? [...decoder.pre, ...decoderArgs, ...inputArgs, ...(convert.videoCodec ? [`-c:v`, `${convert.videoCodec}`] : []), ...outputArgs] : null), 
+                                    [...decoder.pre, ...inputArgs, ...(convert.videoCodec ? [`-c:v`, `${convert.videoCodec}`] : []), ...outputArgs]
+                                ]);
+                            }
+                        };
+    
+                        if(compatibleEncoders.length > 0) {
+                            for(const encoder of compatibleEncoders) {
+                                const encoderArgs = (originalCodecArgs[encoder.string] || originalCodecArgs[`default`] || {}).post;
+
+                                console.log(`codecArgs for encoder (${targetCodec} / ${encoder.string}):`, encoderArgs)
+
+                                appendArgs({
+                                    string: `${originalCodec || originalExtension.toUpperCase()} (CPU) -> ${targetCodec || ext.slice(1).toUpperCase()}_${encoder.string}`,
+                                    hardware: `Partial`,
+                                    decoder: `Software`,
+                                    encoder: encoder.name
+                                }, [
+                                    (encoderArgs ? [...inputArgs, ...encoder.post, ...encoderArgs, ...outputArgs] : null), 
+                                    [...inputArgs, ...encoder.post, ...outputArgs]
+                                ]);
+                            }
+                        };
+                    }
+                    
+                    if(!onlyGPUConversion || convert.forceSoftware) {
+                        appendArgs({
+                            string: convert.videoCodec ? `${originalCodec || originalExtension.toUpperCase()} (CPU) -> ${targetCodec || convert.videoCodec || ext.slice(1).toUpperCase()} (CPU)` : `no conversion`,
+                            hardware: `None`,
+                            decoder: `Software`,
+                            encoder: `Software`
+                        }, [
+                            [...inputArgs, ...(convert.videoCodec ? [`-c:v`, `${convert.videoCodec}`] : []), ...outputArgs]
+                        ]);
+                    }
+
+                    console.log(`attemptArgs`, attemptArgs);
 
                     for(const i in attemptArgs) {
                         const { string, hardware, args } = attemptArgs[i];

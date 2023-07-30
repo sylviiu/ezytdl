@@ -13,6 +13,13 @@ module.exports = {
         allowChangedDefaults: false,
         values: false,
     }, o)),
+    ffmpegCodecArgs: (conf, o={}) => require(`../getConfig`)(conf, Object.assign({
+        source: `./util/ffmpegCodecArgs.json`,
+        target: `ffmpegCodecArgs.json`,
+        allowNonexistentRemoval: false,
+        allowChangedDefaults: false,
+        values: false,
+    }, o)),
     ytdlpExtraArgs: (conf, o={}) => require(`../getConfig`)(conf, Object.assign({
         source: `./util/ytdlpExtraArgs.json`,
         target: `ytdlpExtraArgs.json`,
