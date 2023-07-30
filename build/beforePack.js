@@ -5,6 +5,6 @@ module.exports = (context) => {
 
     scripts.forEach(file => {
         console.log(`\n\n----------------- running script ${file}`);
-        require(`./scripts/${file}`).beforePack(context);
+        require(`./scripts/${file}`).beforePack ? require(`./scripts/${file}`).beforePack(context) : null;
     })
 }
