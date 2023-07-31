@@ -2270,9 +2270,7 @@ module.exports = {
                                 speed.push(data.trim().split(`speed=`)[1].trim().split(` `)[0]);
                             }
 
-                            if(requests > 0 && speed.length == 0) {
-                                speed.push(`${requests} segment${requests == 1 ? `` : `s`}`);
-                            } else if(requests > 0) {
+                            if(requests > 0 && speed.length > 0) {
                                 speed.push(`${requests} req${requests == 1 ? `` : `s`}`);
                             }
                             
