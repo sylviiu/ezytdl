@@ -155,7 +155,7 @@ module.exports = {
 
                         if(str.length > 500) str = str.slice(0, 500) + `...`
 
-                        //console.log(prefix + str.trim().split(`\n`).join(`\n` + prefix));
+                        console.log(prefix + str.trim().split(`\n`).join(`\n` + prefix));
 
                         if(d.toString().trim().includes(`Bridge ready`) && !resolved) {
                             currentStep++;

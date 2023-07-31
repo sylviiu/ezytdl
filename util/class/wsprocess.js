@@ -89,10 +89,11 @@ class wsprocess extends events.EventEmitter {
             this.cookiePath = null;
 
             if(this.cookies && this.cookies.txt) {
-                this.cookiePath = path.join(tempPath, `${idGen(24)}.txt`);
-                console.log(`[${this.processID}] Writing cookie file to ${this.cookiePath}`)
-                await pfs.writeFile(this.cookiePath, this.cookies.txt);
-                this.args.push(`--cookies`, this.cookiePath);
+                //this.cookiePath = path.join(tempPath, `${idGen(24)}.txt`);
+                //console.log(`[${this.processID}] Writing cookie file to ${this.cookiePath}`)
+                //await pfs.writeFile(this.cookiePath, this.cookies.txt);
+                //this.args.push(`--cookies`, this.cookiePath);
+                this.args.push(`--cookies`, this.cookies.txt)
             };
 
             if(this.cookies && this.cookies.header) {
