@@ -40,7 +40,7 @@
     "animejs": "^3.2.1",
     "color-scheme": "^1.0.1",
     "electron": "^25.3.2",
-    "electron-builder": "^24.4.0",
+    "electron-builder": "^24.6.3",
     "showdown": "^2.1.0",
     "tinycolor2": "^1.6.0",
     "uglify-js": "^3.17.4"
