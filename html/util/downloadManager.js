@@ -464,6 +464,9 @@ var initDownloadManager = (force) => {
             };
         
             const updateButtonStates = (disableAnyways) => {
+                const completeAndNotFailed = totalQueue.filter(o => o.state == `complete` && !o.status.failed);
+                const completeAndFailed = totalQueue.filter(o => o.state == `complete` && o.status.failed);
+
                 console.log(`updating button states`)
         
                 pageNumText.innerHTML = `Page ${pageNum + 1}/${totalPages + 1}`;
@@ -490,6 +493,17 @@ var initDownloadManager = (force) => {
                 } else {
                     clearCompletedButton.opacity = 0.5;
                     clearCompletedButton.disabled = true;
+                }
+
+                if(completeAndNotFailed.length > 0 && !disableAnyways) {
+                    clearCompletedButton.innerHTML = `Clear Completed (${completeAndNotFailed.length})`;
+                    clearCompletedButton.onclick = () => clearFromQueue(completeAndNotFailed);
+                } else if(completeAndFailed.length > 0 && !disableAnyways) {
+                    clearCompletedButton.innerHTML = `Clear Failed (${completeAndFailed.length})`;
+                    clearCompletedButton.onclick = () => clearFromQueue(completeAndFailed);
+                } else {
+                    clearCompletedButton.innerHTML = `Clear Completed`;
+                    clearCompletedButton.onclick = () => {};
                 }
         
                 if(totalQueue.filter(o => o.state != `active` && o.state != `paused` && o.state != `complete`).length > 0 && !disableAnyways) {
@@ -518,7 +532,17 @@ var initDownloadManager = (force) => {
         
             const clearFromQueue = async (queue) => mainQueue.action({ action: `remove`, id: queue.map(o => o.id) });
         
-            clearCompletedButton.onclick = () => clearFromQueue(totalQueue.filter(o => o.state == `complete`))
+            clearCompletedButton.onclick = () => {
+                const completeAndNotFailed = totalQueue.filter(o => o.state == `complete` && !o.status.failed);
+                const completeAndFailed = totalQueue.filter(o => o.state == `complete` && o.status.failed);
+
+                if(completeAndNotFailed.length > 0) {
+                    clearFromQueue(completeAndNotFailed)
+                } else if(completeAndFailed.length > 0) {
+                    clearFromQueue(completeAndFailed)
+                };
+            };
+            
             openFolder.onclick = () => mainQueue.openDir();
             clearQueueButton.onclick = () => clearFromQueue(totalQueue.filter(o => o.state != `active` && o.state != `paused` && o.state != `complete`));
         
