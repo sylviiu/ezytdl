@@ -1059,7 +1059,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
         
                                 console.log(format.format_id)
         
-                                startDownload(card, getSaveOptions(card, format))
+                                startDownload(card, getSaveOptions(card, Object.assign({}, info, { formats: [ format ] }), { format: format.format_id }))
                             }
         
                             //card.querySelector(`#convertDownload`).parentElement.removeChild(card.querySelector(`#convertDownload`));
