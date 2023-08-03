@@ -509,9 +509,18 @@ var initDownloadManager = (force) => {
                 if(totalQueue.filter(o => o.state != `active` && o.state != `paused` && o.state != `complete`).length > 0 && !disableAnyways) {
                     clearQueueButton.opacity = 1;
                     clearQueueButton.disabled = false;
+                    clearQueueButton.innerHTML = `Clear Queue (${totalQueue.filter(o => o.state != `active` && o.state != `paused` && o.state != `complete`).length})`;
+                    clearQueueButton.onclick = () => clearFromQueue(totalQueue.filter(o => o.state != `active` && o.state != `paused` && o.state != `complete`));
+                } else if(completeAndFailed.length > 0 && !disableAnyways) {
+                    clearQueueButton.opacity = 1;
+                    clearQueueButton.disabled = false;
+                    clearQueueButton.innerHTML = `Restart Failed (${completeAndFailed.length})`;
+                    clearQueueButton.onclick = () => mainQueue.action({ action: `requeue`, id: completeAndFailed.map(o => o.id) })
                 } else {
                     clearQueueButton.opacity = 0.5;
                     clearQueueButton.disabled = true;
+                    clearQueueButton.innerHTML = `Clear Queue`;
+                    clearQueueButton.onclick = () => {}
                 }
             }
         

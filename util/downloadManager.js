@@ -199,17 +199,25 @@ sessions = {
                             }
                         },
                         requeue: ({id}) => {
-                            for (state of Object.keys(queue)) {
-                                let o = queue[state].findIndex(e => e.id == id);
-
-                                console.log(`requeueing ${id} from ${state}... (${o})`, queue[state])
-                    
-                                if(o != -1) {
-                                    queue[state].splice(o, 1)[0].queueAgain();
-                                    queueModified = true;
-                                    removedItems = true;
-                                }
+                            const queueID = (id) => {
+                                for (state of Object.keys(queue)) {
+                                    let o = queue[state].findIndex(e => e.id == id);
+    
+                                    console.log(`requeueing ${id} from ${state}... (${o})`, queue[state])
+                        
+                                    if(o != -1) {
+                                        queue[state].splice(o, 1)[0].queueAgain();
+                                        queueModified = true;
+                                        removedItems = true;
+                                    }
+                                };
                             };
+
+                            if(typeof id == `object`) {
+                                for (i of id) queueID(i)
+                            } else {
+                                queueID(id)
+                            }
                         }
                     }
 
