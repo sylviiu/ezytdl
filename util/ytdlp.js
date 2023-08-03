@@ -524,7 +524,7 @@ module.exports = {
                 for(const [ name, func ] of Object.entries(qualitySorter)) {
                     retVal = func(a,b);
                     if(retVal != 0) {
-                        console.log(`${d.id || d.url} sorted by ${name}!`);
+                        //console.log(`${d.id || d.url} sorted by ${name}!`);
                         break;
                     }
                 };
@@ -1949,27 +1949,35 @@ module.exports = {
                             ytdlpFilename = ytdlpFilename.trim() + `.trimmed (${seek[0]}-${seek[1]})`;
                         }
                     };
+                    const localCount = useFile ? useFile.filter(o => o.local).length : temporaryFiles.length;
+                    const onlineCount = useFile ? useFile.filter(o => !o.local).length : 0;
 
                     if(useFile) {
                         for(let { url, http_headers={} } of useFile) {
                             if(!inputArgs.includes(url)) {
                                 http_headers = Object.assign({}, filterHeaders(info._headers), (http_headers || {}));
                                 if(http_headers && Object.keys(http_headers).length > 0) inputArgs.push(`-headers`, Object.entries(http_headers).map(s => `${s[0]}: ${s[1]}`).join(`\r\n`) + `\r\n`)
+
+                                if(!onlineCount) {
+                                    if(seekArgs[0]) inputArgs.push(`-ss`, seekArgs[0]);
+                                    if(seekArgs[1]) inputArgs.push(`-to`, seekArgs[1]);
+                                }
+
                                 inputArgs.push(`-i`, url);
                             }
                         }
                     } else for(const file of temporaryFiles.map(f => require(`path`).join(saveTo, f))) {
                         if(await pfs.existsSync(file) && !inputArgs.includes(file)) {
+                            if(seekArgs[0]) inputArgs.push(`-ss`, seekArgs[0]);
+                            if(seekArgs[1]) inputArgs.push(`-to`, seekArgs[1]);
                             if(!inputArgs.includes(file)) inputArgs.push(`-i`, file);
                         }
                     }
 
-                    if(seekArgs[0]) inputArgs.push(`-ss`, seekArgs[0]);
-                    if(seekArgs[1]) inputArgs.push(`-to`, seekArgs[1]);
+                    if(seekArgs[0] && !inputArgs.includes(`-ss`)) inputArgs.push(`-ss`, seekArgs[0]);
+                    if(seekArgs[1] && !inputArgs.includes(`-to`)) inputArgs.push(`-to`, seekArgs[1]);
 
                     console.log(inputArgs)
-
-                    console.log(`convert`, convert)
 
                     if(typeof convert.additionalInputArgs == `string`) {
                         const yargsResult = yargs(convert.additionalInputArgs.replace(/-(\w+)/g, '--$1')).argv
@@ -2190,9 +2198,9 @@ module.exports = {
                             status += (additionalArgsFromConvert.length > 0 ? `<br>(using extra processing: ${additionalOpts.join(`, `)})` : ``) + `<br><br>- ${Object.keys(convert).filter(s => convert[s]).map(s => `${s}: ${convert[s] || `(no conversion)`}`).join(`<br>- `)}`
                         };
 
-                        if(advanced) {
+                        /*if(advanced) {
                             status += `<br><br>Using output arguments:<br>${rawArgs2.slice(rawArgs2.lastIndexOf(`-i`)+2).map(s => s.includes(` `) ? `"${s}"` : s).join(` `)}`
-                        }
+                        }*/
     
                         update({status, percentNum: -1, eta: `--`});
 
@@ -2214,6 +2222,10 @@ module.exports = {
                         })});
 
                         updatedKillfunc = true;
+
+                        let speed = {};
+
+                        let startedEncode = false;
         
                         let duration = null;
 
@@ -2249,15 +2261,17 @@ module.exports = {
                             };
 
                             const sendObj = {}
+
+                            if(data.includes(`frame=`) && !data.includes(`frame=\t0`)) {
+                                startedEncode = true;
+                            }
         
                             if(data.includes(`time=`)) {
                                 const timestamp = time(data.trim().split(`time=`)[1].trim().split(` `)[0]).units.ms;
                                 sendObj.percentNum = (Math.round((timestamp / (totalTrimmedDuration || duration)) * 1000))/10;
                             } else sendObj.percentNum = obj.percentNum || `-1`;
     
-                            let speed = [];
-    
-                            if(keywords.includes(`converting`) && data.includes(`fps=`) && data.split(`fps=`)[1].split(` `).trim() != `0.0`) speed.push(data.trim().split(`fps=`)[1].trim().split(` `)[0] + `fps`);
+                            if(keywords.includes(`converting`) && data.includes(`fps=`) && data.split(`fps=`)[1].split(` `).trim() != `0.0`) speed.fps = data.trim().split(`fps=`)[1].trim().split(` `)[0] + `fps`
         
                             if(data.includes(`speed=`)) try {
                                 let number = Number(data.trim().split(`speed=`)[1].trim().split(` `)[0].match(numRegex)[0]);
@@ -2265,16 +2279,24 @@ module.exports = {
                                 if(number > 99) number = `>99`;
                                 else if(number < 0.01) number = `<0.01`;
 
-                                speed.push(`${number}x`);
+                                speed.speed = `${number}x`
                             } catch(e) {
-                                speed.push(data.trim().split(`speed=`)[1].trim().split(` `)[0]);
+                                speed.speed = data.trim().split(`speed=`)[1].trim().split(` `)[0]
                             }
 
-                            if(requests > 0 && speed.length > 0) {
-                                speed.push(`${requests} req${requests == 1 ? `` : `s`}`);
-                            }
+                            if(!startedEncode) {
+                                sendObj.status = status + `<br><br>Buffering...`;
+                            } else if(Number(sendObj.percentNum) < 0 && seekArgs[0]) {
+                                sendObj.status = status + `<br><br>Seeking to ${seekArgs[0]}...`;
+                            } else if(Number(sendObj.percentNum) > 0 && Number(sendObj.percentNum) < 1 && seekArgs[1]) {
+                                sendObj.status = status + `<br><br>Encoding to ${seekArgs[1]}...`;
+                            } else if(Number(sendObj.percentNum) > 0 && Number(sendObj.percentNum) < 1) {
+                                sendObj.status = status + `<br><br>Encoding...`;
+                            } else sendObj.status = status;
+
+                            if(requests > 0) speed.requests = `${requests} req${requests == 1 ? `` : `s`}`;
                             
-                            if(speed && speed.length > 0) Object.assign(sendObj, {downloadSpeed: speed.join(` | `)});
+                            if(speed && Object.keys(speed).length > 0) Object.assign(sendObj, {downloadSpeed: Object.keys(speed).sort().map(k => speed[k]).join(` | `)});
 
                             if(Object.keys(sendObj).length > 0) update(sendObj)
                         });
@@ -2568,7 +2590,7 @@ module.exports = {
                 }
             });
 
-            console.log(`--- DOWNLOADING FORMAT (${format}) ---\n`, thisFormat);
+            console.log(`--- DOWNLOADING FORMAT (${format}) ---\n`);
 
             const originalFormatObj = thisFormat;
 
@@ -2803,6 +2825,8 @@ module.exports = {
                 })
             }
 
+            console.log(`downloadWithFFmpeg: `, downloadWithFFmpeg, `ffmpegExists: `, ffmpegExists, `convert: `, convert, `originalFormat: `, originalFormat, `thisFormat: `, thisFormat, `ytdlpSaveExt: `, ytdlpSaveExt, `ext: `, ext)
+
             if(info._platform == `file`) {
                 if(!ffmpegExists) return resolve(update({ failed: true, status: `FFmpeg was not found on your system -- conversion aborted.` }));
                 if(!(await pfs.existsSync(url))) return resolve(update({ failed: true, status: `File not found -- conversion aborted.` }));
@@ -2816,14 +2840,14 @@ module.exports = {
 
                 console.log(`running raw conversion -- inputArgs`, inputArgs, `outputArgs`, outputArgs)
 
-                runThroughFFmpeg(0, inputArgs, outputArgs, [{url}]).then(res);
+                runThroughFFmpeg(0, inputArgs, outputArgs, [{ url, local: true }]).then(res);
             } else if(downloadWithFFmpeg && ffmpegExists && (convert || originalFormat == `bv*+ba/b` || (thisFormat && thisFormat.url))) {
                 const convertExists = convert && Object.keys(convert).filter(s => convert[s]).length > 0;
 
                 try {
                     await fetchFullInfo(`Getting original format (streaming with FFmpeg)...`);
     
-                    for(var attempt = 0; attempt < Math.min(5, info.formats.length); attempt++) {
+                    for(var attempt = 0; attempt < Math.min(5, info.formats ? info.formats.length : 0); attempt++) {
                         thisFormat = getFormat({info, format: originalFormat, ext, depth: attempt}) || originalFormatObj;
         
                         getFilename();
@@ -2833,9 +2857,7 @@ module.exports = {
                         const inputArgs = [];
         
                         if(proxy) inputArgs.push(`-http_proxy`, proxy);
-        
-                        //if(Object.keys(useHeaders).length > 0) inputArgs.push(`-headers`, (Object.entries(useHeaders).map(o => `${o[0]}: ${o[1]}`).join(`\r\n`) + `\r\n`))
-        
+
                         console.log(`streaming${convertExists ? ` AND converting` : ``} with ffmpeg`);
         
                         if(thisFormat && thisFormat.url && thisFormat.audioFormat && typeof thisFormat.audioFormat == `object` && thisFormat.audioFormat.url && thisFormat.audioFormat.url != thisFormat.url) {
@@ -2897,7 +2919,7 @@ module.exports = {
     
                     return runYtdlp();
                 } catch(e) {
-                    console.error(`failed to download with FFmpeg (at root): ${e}`);
+                    console.error(`failed to download with FFmpeg (at root):`, e);
 
                     if(!convertExists) convert = {};
 
