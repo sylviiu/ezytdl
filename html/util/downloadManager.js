@@ -129,34 +129,61 @@ var initDownloadManager = (force) => {
                         mainQueue.action({ action: `remove`, id: card.id.split(`-`)[1] });
                     };
 
-                    if(o.status.errorMsgs && o.status.errorMsgs.length > 0 && !card.querySelector(`#errorMsgsButton`)) {
+                    if(o.status.failed) {
+                        card.querySelector(`#innerFormatCard`).style.backgroundColor = `rgba(209, 50, 85, 0.1)`;
+
                         const btn = card.querySelector(`#formatDownload`).cloneNode(true);
-        
+
                         if(btn.classList.contains(`d-none`)) btn.classList.remove(`d-none`);
-        
-                        const downloadIcon = btn.querySelector(`#downloadicon`)
-        
-                        btn.querySelectorAll(`.icon`).forEach(icon => {
-                            if(!icon.classList.contains(`d-none`)) icon.classList.add(`d-none`)
-                        });
-                
-                        downloadIcon.className = `fas fa-exclamation-triangle`;
+                        
+                        if(o.status.errorMsgs && o.status.errorMsgs.length > 0 && !card.querySelector(`#errorMsgsButton`)) {
+                            const errorMsgsBtn = btn.cloneNode(true);
+            
+                            const downloadIcon = errorMsgsBtn.querySelector(`#downloadicon`)
+            
+                            errorMsgsBtn.querySelectorAll(`.icon`).forEach(icon => {
+                                if(!icon.classList.contains(`d-none`)) icon.classList.add(`d-none`)
+                            });
+                    
+                            downloadIcon.className = `fas fa-exclamation-triangle`;
 
-                        downloadIcon.style.color = `#d13255`;
-        
-                        btn.id = `errorMsgsButton`;
-        
-                        btn.onclick = () => {
-                            console.log(`error msgs:`, o.status.errorMsgs);
+                            downloadIcon.style.color = `#d13255`;
+            
+                            errorMsgsBtn.id = `errorMsgsButton`;
+            
+                            errorMsgsBtn.onclick = () => {
+                                console.log(`error msgs:`, o.status.errorMsgs);
 
-                            dialog.create({
-                                title: `Error Logs`,
-                                body: `### [${card.querySelector(`#formatName`).innerHTML}](${o.status.url || o.status.destinationFile || ``})\n\n` + o.status.errorMsgs.map(o => `<details>\n<summary>${o.at} (@ ${o.time})</summary>\n#### \`${o.msg}\`\n\n\`\`\`\n${o.details}\n\`\`\`\n</details>`).join(`\n\n`),
-                                resizable: true
-                            })
+                                dialog.create({
+                                    title: `Error Logs`,
+                                    body: `### [${card.querySelector(`#formatName`).innerHTML}](${o.status.url || o.status.destinationFile || ``})\n\n` + o.status.errorMsgs.map(o => `<details>\n<summary>${o.at} (@ ${o.time})</summary>\n#### \`${o.msg}\`\n\n\`\`\`\n${o.details}\n\`\`\`\n</details>`).join(`\n\n`),
+                                    resizable: true
+                                })
+                            };
+
+                            card.querySelector(`#formatDownload`).after(errorMsgsBtn);
                         };
 
-                        card.querySelector(`#formatDownload`).after(btn);
+                        const requeueButton = btn.cloneNode(true);
+
+                        const downloadIcon = requeueButton.querySelector(`#downloadicon`);
+
+                        requeueButton.querySelectorAll(`.icon`).forEach(icon => {
+                            if(!icon.classList.contains(`d-none`)) icon.classList.add(`d-none`)
+                        });
+
+                        downloadIcon.className = `fas fa-redo-alt`;
+
+                        requeueButton.id = `requeueButton`;
+
+                        requeueButton.onclick = () => {
+                            mainQueue.action({
+                                action: `requeue`,
+                                id: card.id.split(`-`)[1]
+                            });
+                        };
+
+                        card.querySelector(`#formatDownload`).after(requeueButton);
                     }
                 },
                 active: (card) => {

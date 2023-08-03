@@ -163,24 +163,25 @@ sessions = {
                 let removedItems = false;
             
                 if(opt) {
-                    const { action, id, obj } = opt;
-            
-                    if(action == `add` && obj) {
-                        if(obj.length && obj.length > 0) {
-                            console.log(`Adding ${obj.length} objects to queue...`);
-                            queue.queue.push(...obj);
-                            //console.log(queue.queue[0])
-                            queueModified = true;
-                        } else {
-                            console.log(`Adding ${obj.id} to queue...`)
-                            queue.queue.push(obj);
-                            queueModified = true;
-                        }
-                    } else if(action == `remove` && id) {
-                        if(typeof id == `object`) {    
-                            for (i of id) {
+                    const { action } = opt;
+
+                    const actions = {
+                        add: ({obj}) => {
+                            if(obj.length && obj.length > 0) {
+                                console.log(`Adding ${obj.length} objects to queue...`);
+                                queue.queue.push(...obj);
+                                //console.log(queue.queue[0])
+                                queueModified = true;
+                            } else {
+                                console.log(`Adding ${obj.id} to queue...`)
+                                queue.queue.push(obj);
+                                queueModified = true;
+                            }
+                        },
+                        remove: ({id}) => {
+                            const removeEntry = (id) => {
                                 for (state of Object.keys(queue)) {
-                                    let o = queue[state].findIndex(e => e.id == i);
+                                    let o = queue[state].findIndex(e => e.id == id);
                         
                                     if(o != -1) {
                                         if(queue[state][0].ytdlpProc && !queue[state][0].ytdlpProc.killed && queue[state][0].ytdlpProc.kill) queue[state][0].ytdlpProc.kill(9)
@@ -190,19 +191,29 @@ sessions = {
                                     }
                                 }
                             }
-                        } else {
+
+                            if(typeof id == `object`) {    
+                                for (i of id) removeEntry(i)
+                            } else {
+                                removeEntry(id)
+                            }
+                        },
+                        requeue: ({id}) => {
                             for (state of Object.keys(queue)) {
                                 let o = queue[state].findIndex(e => e.id == id);
+
+                                console.log(`requeueing ${id} from ${state}... (${o})`, queue[state])
                     
                                 if(o != -1) {
-                                    if(queue[state][0].ytdlpProc && !queue[state][0].ytdlpProc.killed && queue[state][0].ytdlpProc.kill) queue[state][0].ytdlpProc.kill(9)
-                                    queue[state].splice(o, 1)
+                                    queue[state].splice(o, 1)[0].queueAgain();
                                     queueModified = true;
                                     removedItems = true;
                                 }
-                            }
+                            };
                         }
                     }
+
+                    if(actions[action]) actions[action](opt);
                 }
             
                 console.log(`Updating queue...`)
@@ -487,10 +498,19 @@ sessions = {
                 if(typeof rawUpdateFunc != `function`) rawUpdateFunc = () => {};
             
                 if(opt.entries && typeof opt.entries.map == `function`) {
-                    const objs = opt.entries.map(e => createDownloadObject(e, rawUpdateFunc, downloadFunc));
+                    const objs = opt.entries.map(e => Object.assign(createDownloadObject(e, rawUpdateFunc, downloadFunc), {
+                        queueAgain: () => {
+                            createDownload(e, rawUpdateFunc, downloadFunc);
+                        }
+                    }));
+
                     refreshQueue({ action: `add`, obj: objs })
                 } else {
-                    const obj = createDownloadObject(opt, rawUpdateFunc, downloadFunc);
+                    const obj = Object.assign(createDownloadObject(opt, rawUpdateFunc, downloadFunc), {
+                        queueAgain: () => {
+                            createDownload(opt, rawUpdateFunc, downloadFunc);
+                        }
+                    });
                     refreshQueue({ action: `add`, obj });
                 }
             });
