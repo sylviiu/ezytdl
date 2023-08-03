@@ -7,6 +7,13 @@ dialog.get().then(content => {
     console.log(`dialog id: ${content.id} (sent)`);
     
     const str = content.id;
+
+    if(content.resizable) {
+        document.body.classList.remove(`justify-content-center`);
+        document.body.classList.add(`justify-content-start`);
+        document.body.style.overflowX = `scroll`;
+        document.body.style.overflowY = `scroll`;
+    }
     
     document.getElementById(`title`).innerHTML = content.title;
     document.getElementById(`content`).innerHTML = markdown.makeHtml(content.body);
@@ -42,7 +49,20 @@ dialog.get().then(content => {
         document.getElementById(`buttons`).appendChild(btn);
     });
     
-    dialog.setHeight(str, document.getElementById(`contentDiv`).getBoundingClientRect().height + 20)
+    let resize = (str) => {
+        const args = {
+            height: document.getElementById(`contentDiv`).getBoundingClientRect().height + (content.resizable ? 0 : 20),
+            //width: document.getElementById(`contentDiv`).getBoundingClientRect().width + 20,
+        };
+    
+        console.log(`resizing ${str} to`, args)
+    
+        return dialog.setHeight(str, args);
+    }
+
+    resize(str).then(() => {
+        resize(str);
+    })
     
     console.log(content)
 })

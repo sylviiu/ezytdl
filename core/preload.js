@@ -129,7 +129,7 @@ contextBridge.exposeInMainWorld(`dialog`, {
     get: () => dialogPromise,
     create: (content) => invoke(`createDialog`, content),
     send: (id, btnID, inputs) => invoke(`dialogButton`, {id, btnID, inputs}),
-    setHeight: (id, height) => invoke(`setDialogHeight`, {id, height})
+    setHeight: (id, o) => invoke(`setDialogHeight`, {id, o})
 })
 
 contextBridge.exposeInMainWorld(`version`, {

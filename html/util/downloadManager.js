@@ -101,7 +101,9 @@ var initDownloadManager = (force) => {
                     card.querySelector(`#pausePlayButton`).onclick = () => {};
                     if(!card.querySelector(`#pausePlayButton`).classList.contains(`d-none`)) card.querySelector(`#pausePlayButton`).classList.add(`d-none`);
                 },
-                complete: (card) => {
+                complete: (card, o) => {
+                    console.log(`card ${card.id} set as complete`, o)
+
                     downloadCardStates.reset(card);
             
                     card.style.opacity = 0.5;
@@ -125,6 +127,36 @@ var initDownloadManager = (force) => {
                     card.querySelector(`#formatDownload`).onclick = () => {
                         mainQueue.openDir(card.id.split(`-`)[1]);
                         mainQueue.action({ action: `remove`, id: card.id.split(`-`)[1] });
+                    };
+
+                    if(o.status.errorMsgs && o.status.errorMsgs.length > 0 && !card.querySelector(`#errorMsgsButton`)) {
+                        const btn = card.querySelector(`#formatDownload`).cloneNode(true);
+        
+                        if(btn.classList.contains(`d-none`)) btn.classList.remove(`d-none`);
+        
+                        const downloadIcon = btn.querySelector(`#downloadicon`)
+        
+                        btn.querySelectorAll(`.icon`).forEach(icon => {
+                            if(!icon.classList.contains(`d-none`)) icon.classList.add(`d-none`)
+                        });
+                
+                        downloadIcon.className = `fas fa-exclamation-triangle`;
+
+                        downloadIcon.style.color = `#d13255`;
+        
+                        btn.id = `errorMsgsButton`;
+        
+                        btn.onclick = () => {
+                            console.log(`error msgs:`, o.status.errorMsgs);
+
+                            dialog.create({
+                                title: `Error Logs`,
+                                body: `### [${card.querySelector(`#formatName`).innerHTML}](${o.status.url || o.status.destinationFile || ``})\n\n` + o.status.errorMsgs.map(o => `<details>\n<summary>${o.at} (@ ${o.time})</summary>\n#### \`${o.msg}\`\n\n\`\`\`\n${o.details}\n\`\`\`\n</details>`).join(`\n\n`),
+                                resizable: true
+                            })
+                        };
+
+                        card.querySelector(`#formatDownload`).after(btn);
                     }
                 },
                 active: (card) => {
@@ -386,7 +418,7 @@ var initDownloadManager = (force) => {
                         }
         
                         if(downloadCardStates[o.state]) {
-                            downloadCardStates[o.state](card);
+                            downloadCardStates[o.state](card, o);
                         } else {
                             console.log(`NO DOWNLOAD CARD STATE FOR ${o.state} -- CARD ID ${card.id} LEFT AS IS`)
                         }

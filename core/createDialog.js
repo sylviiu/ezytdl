@@ -71,7 +71,7 @@ module.exports = {
             height: 250,
             minWidth: 600,
             minHeight: 250,
-            resizable: false,
+            resizable: content.resizable || false,
         });
 
         const loadURLPath = await require(`../util/getPath`)(`html/dialog.html`, true, false, true)

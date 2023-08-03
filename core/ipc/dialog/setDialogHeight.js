@@ -2,9 +2,9 @@ const { get } = require(`../../createDialog`);
 
 module.exports = {
     type: `handle`,
-    func: (event, {id, height}) => {
+    func: (event, {id, o}) => {
         const dialog = get(id);
-        console.log(height)
-        dialog.window.setSize(600, Math.round(height));
+        console.log(o)
+        dialog.window.setSize(Math.round(o.width || 600), Math.round(o.height));
     }
 }

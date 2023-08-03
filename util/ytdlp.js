@@ -1268,9 +1268,11 @@ module.exports = {
         }
     },
     download: ({url, format, ext, convert, filePath, addMetadata, info, extraArguments}, updateFunc) => new Promise(async resolve => {
+        const startedDownloadMS = Date.now();
+
         const temporaryFilename = `ezytdl-` + idGen(24);
         
-        let obj = {};
+        let obj = { errorMsgs: [] };
 
         let proc;
 
@@ -1280,6 +1282,19 @@ module.exports = {
             updateFunc(updateObj, proc);
             return updateObj;
         };
+
+        let appendError = (o) => {
+            Object.assign(o, {
+                time: time(Date.now() - startedDownloadMS).timestamp,
+                details: (o.details || []).concat(
+                    `format: ${obj.formatID || `(not established at error time)`}`
+                ).filter(o => o).join(`\n\n`)
+            });
+
+            obj.errorMsgs.push(o);
+
+            return update({ errorMsgs: obj.errorMsgs });
+        }
 
         let setProgress = (key, o) => {
             //Object.assign(obj, { progressBars: Object.assign({}, obj.progressBars, { [key]: o }) });
@@ -1370,11 +1385,22 @@ module.exports = {
                     res(true);
                 } catch(e) {
                     console.error(e);
+
+                    appendError({
+                        at: `full info fetching`,
+                        details: [
+                            `${e}`,
+                            `${e.stack ? e.stack : `${new Error().stack}\n\n(generated at error since no stack was provided)`}`
+                        ],
+                        msg: `${e}`
+                    });
+
                     sendNotification({
                         type: `warn`,
                         headingText: `Failed to get full media info`,
                         bodyText: `There was an issue retrieving the info. Please try again.`
-                    })
+                    });
+
                     res(false);
                 }
             }
@@ -1823,7 +1849,7 @@ module.exports = {
                 })
             };
 
-            const runThroughFFmpeg = (code, replaceInputArgs, replaceOutputArgs, useFile=null, callback) => new Promise(async (res, rej) => {
+            const runThroughFFmpeg = (code, replaceInputArgs, replaceOutputArgs, useFile=null, callback, ffmpegSessionDetails) => new Promise(async (res, rej) => {
                 if(useFile && (typeof useFile != `object` || typeof useFile.length != `number`)) useFile = [useFile];
 
                 if(useFile && typeof useFile == `object`) for(const { url } of useFile) {
@@ -2232,6 +2258,8 @@ module.exports = {
                         let allLogs = ``;
 
                         let requests = 0;
+
+                        let blacklistedStartingLogs = [`Input #`]
         
                         proc.stderr.on(`data`, d => {
                             const data = `${d}`;
@@ -2245,20 +2273,20 @@ module.exports = {
                                 requests++;
                             } else console.log(data)
 
-                            allLogs += data.trim() + `\n`;
+                            if(!blacklistedStartingLogs.find(s => data.startsWith(s))) allLogs += data.trim() + `\n`;
 
                             if(data.includes(`Duration:`)) {
                                 duration = time(data.trim().split(`Duration:`)[1].trim().split(`,`)[0]).units.ms;
                                 //console.log(`duration: `, duration)
                             };
 
-                            if(data.trim().startsWith(`ERROR: `)) {
+                            /*if(data.trim().startsWith(`ERROR: `)) {
                                 sendNotification({
                                     type: `error`,
                                     headingText: `yt-dlp failed to download ${url} [2]`,
                                     bodyText: `${data.trim().split(`ERROR: `)[1]}`
                                 })
-                            };
+                            };*/
 
                             const sendObj = {}
 
@@ -2322,8 +2350,18 @@ module.exports = {
                                 resolveFFmpeg()
                             } else {
                                 if(allLogs.includes(`Press [q] to stop, [?] for help`)) {
-                                    rej(allLogs.split(`Press [q] to stop, [?] for help`)[1].trim())
-                                } else rej(code)
+                                    rej(allLogs.split(`Press [q] to stop, [?] for help`)[1].trim());
+                                } else {
+                                    const lastLog = allLogs.split(`\n`).filter(Boolean).slice(-1)[0].trim();
+
+                                    console.log(`lastLog: ${lastLog}`)
+
+                                    if(lastLog.includes(`:`)) {
+                                        rej(lastLog.split(`:`).slice(-1)[0].trim())
+                                    } else {
+                                        rej(lastLog)
+                                    }
+                                }
                             }
                         })
                     });
@@ -2332,7 +2370,9 @@ module.exports = {
     
                     const transcoders = {};
 
-                    const transcodersArr = Object.entries(hardwareAcceleratedConversion).filter(v => v[1]).map(v => Object.assign({}, ffmpegGPUArgs[v[0]], { key: v[0] }));
+                    const enabledTranscoders = Object.entries(hardwareAcceleratedConversion).filter(v => v[1]).map(v => v[0]);
+
+                    const transcodersArr = enabledTranscoders.map(v => Object.assign({}, ffmpegGPUArgs[v], { key: v }));
 
                     for(const transcoder of transcodersArr) transcoders[transcoder.key] = transcoder;
 
@@ -2545,22 +2585,34 @@ module.exports = {
                     console.log(`attemptArgs`, attemptArgs);
 
                     for(const i in attemptArgs) {
-                        const { string, hardware, args } = attemptArgs[i];
+                        const { string, hardware, decoder, encoder, args } = attemptArgs[i];
 
                         try {
                             console.log(`Attempting conversion using ${hardware} hardware acceleration: ${string}`)
-                            const conversionProc = await spawnFFmpeg(args, `(${Number(i)+1}/${attemptArgs.length}) ${string}`);
+                            const conversionProc = await spawnFFmpeg([`-hide_banner`, ...args], `(${Number(i)+1}/${attemptArgs.length}) ${string}`);
                             return res(conversionProc);
                         } catch(e) {
+                            appendError({
+                                at: `ffmpeg (attempt ${Number(i)+1} of ${attemptArgs.length})` + (ffmpegSessionDetails ? ` [${ffmpegSessionDetails}]` : ``),
+                                details: [
+                                    `${hardware} hardware acceleration`,
+                                    `- decode: ${decoder}\n- encode: ${encoder}`,
+                                    `args:\n- ${args.join(`\n- `)}`
+                                ],
+                                msg: `${e}`
+                            });
+
                             console.log(`FFmpeg failed converting -- ${e}; trying again...`)
                         }
                     };
 
-                    let quickResolve = `<br><br>Are your conversion settings up to date? Visit settings and click the "Auto Detect" button under "${require(`../configStrings.json`).hardwareAcceleratedConversion}"`;
+                    let quickResolve = ``;
 
-                    if(onlyGPUConversion) quickResolve += `<br><br>Or you can try again with "${require(`../configStrings.json`).onlyGPUConversion}" disabled in settings.`;
+                    if(enabledTranscoders.length > 0) quickResolve += `<br><br>Are your conversion settings up to date? Visit settings and click the "Auto Detect" button under "${require(`../configStrings.json`).hardwareAcceleratedConversion}"`;
 
-                    if(transcodersArr.length == 0 && !convert.forceSoftware) {
+                    if(onlyGPUConversion) quickResolve += `<br><br>${quickResolve ? `Otherwise, you can` : `You can`} try again with "${require(`../configStrings.json`).onlyGPUConversion}" disabled in settings.`;
+
+                    if(enabledTranscoders.length == 0 && !convert.forceSoftware) {
                         return fallback(`Conversion failed: "${require(`../configStrings.json`).onlyGPUConversion}" is set to true, but all GPU transcoders are disabled in the settings.` + quickResolve)
                     } else {
                         let msg = null;
@@ -2679,12 +2731,19 @@ module.exports = {
                             //console.log(`not doing anything with this error`, string.trim())
                         } else if(string.toLowerCase().includes(`ffmpeg could not be found`)) {
                             fallbackToFFmpeg = true;
-                        } else sendNotification({
-                            type: `error`,
-                            headingText: `yt-dlp failed to download ${url} [1]`,
-                            bodyText: `${string.trim().split(`ERROR: `)[1]}`,
-                            stack: proc.lastTrace
-                        })
+                        } else {
+                            appendError({
+                                at: `yt-dlp download`,
+                                msg: `${string.trim().split(`ERROR: `)[1]}`
+                            });
+
+                            sendNotification({
+                                type: `error`,
+                                headingText: `yt-dlp failed to download ${url} [1]`,
+                                bodyText: `${string.trim().split(`ERROR: `)[1]}`,
+                                stack: proc.lastTrace
+                            })
+                        }
                     }
     
                     // FFMPEG LOGS BELOW (in case of something like a livestream)
@@ -2708,7 +2767,7 @@ module.exports = {
                         killAttempt++
                     }});
 
-                    if(fallbackToFFmpeg && module.exports.ffmpegPath) {
+                    if(fallbackToFFmpeg && ffmpegExists) {
                         if(!convert) {
                             // download with FFmpeg instead of yt-dlp
             
@@ -2800,7 +2859,7 @@ module.exports = {
                                     }});
     
                                     if(convert) {
-                                        runThroughFFmpeg(code).then(res);
+                                        runThroughFFmpeg(code, null, null, null, null, `converting from yt-dlp downloaded file`).then(res);
                                     } else {
                                         if(await pfs.existsSync(require(`path`).join(saveTo, temporaryFilename + `.${ytdlpSaveExt}`))) await pfs.unlinkSync(require(`path`).join(saveTo, temporaryFilename + `.${ytdlpSaveExt}`));
                                         update({code, saveLocation: saveTo, url, format, status: `Done!`})
@@ -2819,9 +2878,9 @@ module.exports = {
     
                             killAttempt = 0;
     
-                            runThroughFFmpeg(code, ffmpegInputArgs).then(res);
+                            runThroughFFmpeg(code, ffmpegInputArgs, null, null, null, `fallback from failed yt-dlp download`).then(res);
                         }
-                    } else runThroughFFmpeg(code).then(res);
+                    } else runThroughFFmpeg(code, null, null, null, null, `post yt-dlp download conversion`).then(res);
                 })
             }
 
@@ -2840,7 +2899,7 @@ module.exports = {
 
                 console.log(`running raw conversion -- inputArgs`, inputArgs, `outputArgs`, outputArgs)
 
-                runThroughFFmpeg(0, inputArgs, outputArgs, [{ url, local: true }]).then(res);
+                runThroughFFmpeg(0, inputArgs, outputArgs, [{ url, local: true }], null, `local file conversion`).then(res);
             } else if(downloadWithFFmpeg && ffmpegExists && (convert || originalFormat == `bv*+ba/b` || (thisFormat && thisFormat.url))) {
                 const convertExists = convert && Object.keys(convert).filter(s => convert[s]).length > 0;
 
@@ -2870,7 +2929,7 @@ module.exports = {
                             };
     
                             try {
-                                const r = await runThroughFFmpeg(0, inputArgs, [`-map`, `0:v`, `-map`, `1:a`], [Object.assign({}, thisFormat, {abr: null, asr: null}), Object.assign({}, thisFormat.audioFormat, {resolution: null, fps: null})], true);
+                                const r = await runThroughFFmpeg(0, inputArgs, [`-map`, `0:v`, `-map`, `1:a`], [Object.assign({}, thisFormat, {abr: null, asr: null}), Object.assign({}, thisFormat.audioFormat, {resolution: null, fps: null})], true, `video and audio stream conversion`);
                                 return res(r);
                             } catch(e) {
                                 if(!convertExists && thisFormat.video == true) {
@@ -2928,11 +2987,22 @@ module.exports = {
             } else runYtdlp();
         } catch(e) {
             console.error(e);
+
+            appendError({
+                at: `general`,
+                details: [
+                    `${e}`,
+                    `${e.stack ? e.stack : `${new Error().stack}\n\n(generated at error since no stack was provided)`}`
+                ],
+                msg: `${e.toString()}`
+            });
+
             sendNotification({
                 type: `error`,
                 headingText: `Error downloading media (${format} / ${info && info.title ? info.title : `unknown`})`,
                 bodyText: `An error occured while trying to download the media.\n\nError: ${e.toString()}`
             });
+
             resolve(update({ failed: true, status: `${e.toString()}` }))
         }
     }),
