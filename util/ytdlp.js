@@ -2352,15 +2352,17 @@ module.exports = {
                                 if(allLogs.includes(`Press [q] to stop, [?] for help`)) {
                                     rej(allLogs.split(`Press [q] to stop, [?] for help`)[1].trim());
                                 } else {
-                                    const lastLog = allLogs.split(`\n`).filter(Boolean).slice(-1)[0].trim();
+                                    const lastLog = allLogs.split(`\n`).filter(Boolean).slice(-1)[0];
 
-                                    console.log(`lastLog: ${lastLog}`)
-
-                                    if(lastLog.includes(`:`)) {
-                                        rej(lastLog.split(`:`).slice(-1)[0].trim())
-                                    } else {
-                                        rej(lastLog)
-                                    }
+                                    if(lastLog) {
+                                        console.log(`lastLog: ${lastLog.trim()}`)
+    
+                                        if(lastLog.includes(`:`)) {
+                                            rej(`${lastLog.split(`:`).slice(-1)[0]}`.trim())
+                                        } else {
+                                            rej(lastLog.trim())
+                                        }
+                                    } else rej(`unknown err (${code})`)
                                 }
                             }
                         })
