@@ -20,6 +20,13 @@ module.exports = (config) => ({
             })
         })
     },
+    browserConnector: {
+        name: `Download Browser Connector`,
+        func: () => new Promise(async res => {
+            res(null);
+            require(`electron`).shell.openExternal(`https://github.com/sylviiu/ezytdl-browser-connector/tree/main#download`)
+        })
+    },
     hardwareAcceleratedConversion: {
         name: `Auto-Detect`,
         confirmation: `This is going to send a request to **${config.system.ffmpegTestMediaLink}** download a video to test hardware acceleration. This may take a while.`,
