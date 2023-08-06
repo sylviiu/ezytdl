@@ -17,7 +17,6 @@
     },
     "concurrentDownloads": 4,
     "hardwareAcceleratedConversion": {},
-    "onlyGPUConversion": true,
     "ffmpegPresets": {},
     "closeToTray": true,
     "logsEnabled": false,

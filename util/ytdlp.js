@@ -1413,8 +1413,6 @@ module.exports = {
 
             //console.log(`download started! (url: ${url})`, info)
 
-            let { onlyGPUConversion } = currentConfig;
-
             const originalFormat = format;
 
             const getFormat = module.exports.getFormatInstance(updateFunc, originalFormat);
@@ -1922,8 +1920,6 @@ module.exports = {
                 if(killAttempt > 0) return fallback(`Download canceled.`, true);
 
                 filenames.push(ytdlpFilename)
-
-                if(useFile) onlyGPUConversion = false;
     
                 //if(!useFile && !fs.existsSync(previousFilename)) previousFilename = await module.exports.getFilename(url, info, thisFormat, temporaryFilename + `.%(ext)s`, true);
     
@@ -2573,16 +2569,14 @@ module.exports = {
                         };
                     }
                     
-                    if(!onlyGPUConversion || convert.forceSoftware) {
-                        appendArgs({
-                            string: convert.videoCodec ? `${originalCodec || originalExtension.toUpperCase()} (CPU) -> ${targetCodec || convert.videoCodec || ext.slice(1).toUpperCase()} (CPU)` : `no conversion`,
-                            hardware: `None`,
-                            decoder: `Software`,
-                            encoder: `Software`
-                        }, [
-                            [...inputArgs, ...(convert.videoCodec ? [`-c:v`, `${convert.videoCodec}`] : []), ...outputArgs]
-                        ]);
-                    }
+                    appendArgs({
+                        string: convert.videoCodec ? `${originalCodec || originalExtension.toUpperCase()} (CPU) -> ${targetCodec || convert.videoCodec || ext.slice(1).toUpperCase()} (CPU)` : `no conversion`,
+                        hardware: `None`,
+                        decoder: `Software`,
+                        encoder: `Software`
+                    }, [
+                        [...inputArgs, ...(convert.videoCodec ? [`-c:v`, `${convert.videoCodec}`] : []), ...outputArgs]
+                    ]);
 
                     console.log(`attemptArgs`, attemptArgs);
 
@@ -2612,10 +2606,8 @@ module.exports = {
 
                     if(enabledTranscoders.length > 0) quickResolve += `<br><br>Are your conversion settings up to date? Visit settings and click the "Auto Detect" button under "${require(`../configStrings.json`).hardwareAcceleratedConversion}"`;
 
-                    if(onlyGPUConversion) quickResolve += `<br><br>${quickResolve ? `Otherwise, you can` : `You can`} try again with "${require(`../configStrings.json`).onlyGPUConversion}" disabled in settings.`;
-
                     if(enabledTranscoders.length == 0 && !convert.forceSoftware) {
-                        return fallback(`Conversion failed: "${require(`../configStrings.json`).onlyGPUConversion}" is set to true, but all GPU transcoders are disabled in the settings.` + quickResolve)
+                        return fallback(`Conversion failed: all GPU transcoders are disabled in the settings.` + quickResolve)
                     } else {
                         let msg = null;
 

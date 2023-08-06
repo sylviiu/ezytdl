@@ -18,7 +18,6 @@
     },
     "concurrentDownloads": "Set the maximum amount of yt-dlp downloads & FFmpeg conversions should be running at a time.",
     "hardwareAcceleratedConversion": "Allow ezytdl to use your system's hardware to convert videos. This is useful if you want to speed up the conversion process.",
-    "onlyGPUConversion": "Prevent ezytdl from converting a video if it cannot be accelerated by any of your system's hardware. This is useful if you want to prevent ezytdl from using your CPU to convert videos.",
     "ffmpegPresets": "Show / hide FFmpeg presets. This is useful if you want to reduce the amount of options ezytdl has.",
     "closeToTray": "Allow ezytdl to close to the system tray instead of exiting when the window is closed.",
     "logsEnabled": "Allows ezytdl to log information to the console. This is useful for debugging and/or bug reporting.",
