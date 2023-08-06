@@ -31,6 +31,7 @@
     },
     "amd-amf": {
         "name": "AMD / Advanced Media Framework",
+        "description": "AMD's encoders are generally much worse in quality [(benchmarks @ tomshardware.com)](https://www.tomshardware.com/news/amd-intel-nvidia-video-encoding-performance-quality-tested) than Nvidia's or Intel's. If you have a beefy enough CPU, you should disable all hardware acceleration instead.",
         "platform": ["win32", "linux"],
         "string": "amf",
         "pre": ["-hwaccel", "auto"],
