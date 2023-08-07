@@ -2512,7 +2512,7 @@ module.exports = {
                                 const decoderArgs = (originalCodecArgs[decoder.string] || originalCodecArgs[`default`] || {}).pre;
 
                                 for(const encoder of compatibleEncoders) {
-                                    const encoderArgs = (originalCodecArgs[encoder.string] || originalCodecArgs[`default`] || {}).post;
+                                    const encoderArgs = (targetCodecArgs[encoder.string] || targetCodecArgs[`default`] || {}).post;
     
                                     console.log(`codecArgs for decoder (${originalCodec} / ${decoder.string}):`, decoderArgs)
                                     console.log(`codecArgs for encoder (${targetCodec} / ${encoder.string}):`, encoderArgs)
@@ -2552,7 +2552,7 @@ module.exports = {
     
                         if(compatibleEncoders.length > 0) {
                             for(const encoder of compatibleEncoders) {
-                                const encoderArgs = (originalCodecArgs[encoder.string] || originalCodecArgs[`default`] || {}).post;
+                                const encoderArgs = (targetCodecArgs[encoder.string] || targetCodecArgs[`default`] || {}).post;
 
                                 console.log(`codecArgs for encoder (${targetCodec} / ${encoder.string}):`, encoderArgs)
 
