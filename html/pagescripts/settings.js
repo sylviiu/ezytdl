@@ -14,6 +14,138 @@ document.getElementById(`settingsBox`).querySelector(`#options`).childNodes.forE
 const settingsBox = document.getElementById(`settingsBox`).cloneNode(true);
 document.getElementById(`settingsBox`).parentNode.removeChild(document.getElementById(`settingsBox`));
 
+const getObject = (key, optionsObj) => {
+    const obj = {};
+
+    optionsObj.childNodes.forEach(child => {
+        if(child.id && child.id != `save` && !child.classList.contains(`d-none`)) {
+            let id = typeof (key ? config[key] : config)[child.id];
+            
+            console.log(optionsObj.parentNode.id + ` > ` + optionsObj.id + ` > ` + child.id + `: ` + id)
+
+            if(id == `object`) {
+                obj[child.id] = getObject(child.id, child.querySelector(`#options`));
+            } else {
+                obj[child.id] = child.querySelector(`#${id}`).value;
+            }
+        }
+    });
+
+    console.log(`obj of ${optionsObj.id}:`, obj)
+
+    return obj;
+};
+
+const getNewConfig = () => {
+    const newObj = {};
+
+    console.log(`cardObjs: (1)`, cardObjs)
+
+    for(const key of Object.keys(cardObjs)) {
+        if(cardObjs[key] && typeof cardObjs[key] == `object`) {
+            newObj[key] = getObject(key, cardObjs[key]);
+        } else if(typeof cardObjs[key] == `function`) {
+            newObj[key] = cardObjs[key]();
+        } else newObj[key] = cardObjs[key];
+    };
+
+    console.log(`cardObjs: (2)`, newObj)
+
+    return newObj;
+}
+
+const saveConfigMessage = settingsBox.cloneNode(true);
+
+saveConfigMessage.querySelector(`#name`).style.minWidth = `240px`;
+saveConfigMessage.querySelector(`#description`).style.minWidth = `240px`;
+
+saveConfigMessage.className = `d-flex justify-content-between align-items-center ez-bg`;
+saveConfigMessage.id = `saveConfigMessage`;
+
+saveConfigMessage.style.background = ``;
+saveConfigMessage.style.opacity = 0;
+saveConfigMessage.style.bottom = `-100px`;
+saveConfigMessage.style.left = `24px`;
+saveConfigMessage.style.position = `fixed`;
+saveConfigMessage.style.maxWidth = `450px`;
+
+const btnClone = saveConfigMessage.querySelector(`#save`).cloneNode(true);
+btnClone.id = `revert`;
+btnClone.querySelector(`#icon`).className = `fas fa-undo`;
+btnClone.style.background = `rgba(255,255,255,0.8)`
+btnClone.style.borderBottomLeftRadius = btnClone.style.borderBottomRightRadius;
+btnClone.style.borderTopLeftRadius = btnClone.style.borderTopRightRadius;
+btnClone.style.borderTopRightRadius = `0px`;
+btnClone.style.borderBottomRightRadius = `0px`;
+const originalPadding = btnClone.style.paddingLeft;
+btnClone.style.paddingLeft = btnClone.style.paddingRight
+btnClone.style.paddingRight = originalPadding;
+
+saveConfigMessage.querySelector(`#save`).before(btnClone);
+
+const showSaveBox = () => {
+    if(!document.getElementById(`saveConfigMessage`)) {
+        const node = saveConfigMessage.cloneNode(true);
+
+        node.querySelector(`#save`).onclick = (e) => {
+            node.querySelector(`#save`).disabled = true;
+        
+            node.querySelector(`#name`).innerHTML = `Config has been modified`;
+            node.querySelector(`#description`).innerHTML = `Saving your changes...`;
+        
+            const newConfig = getNewConfig();
+            console.log(`newConfig:`, newConfig);
+        
+            updateConfig(newConfig).then(() => removeSaveBox(node));
+        }
+
+        node.querySelector(`#revert`).onclick = (e) => {
+            updateConfig(config, { noUpdate: true, silent: true }).then(() => removeSaveBox(node));
+        }
+
+        document.onkeyup = (e) => {
+            if(((e.ctrlKey && e.key == `s`) /*|| (e.key == `Enter` || e.keyCode == 13)*/)) {
+                node.querySelector(`#save`).onclick();
+            }
+        }
+
+        document.body.appendChild(node);
+
+        node.querySelector(`#name`).innerHTML = `Config has been modified`;
+        node.querySelector(`#description`).innerHTML = `Make sure to save your changes!`;
+
+        anime.remove(node);
+        anime({
+            targets: node,
+            opacity: 1,
+            bottom: 24,
+            duration: 500,
+            easing: `easeOutBack`,
+        });
+    }
+};
+
+const removeSaveBox = (node) => {
+    document.onkeyup = (e) => {}
+
+    if(!node) node = document.getElementById(`saveConfigMessage`);
+
+    if(node) {
+        node.id += `-removed`;
+        anime.remove(node);
+        anime({
+            targets: node,
+            opacity: 0,
+            bottom: (node.getBoundingClientRect().height + 16) * -1,
+            duration: 500,
+            easing: `easeInBack`,
+            complete: () => {
+                node.parentNode.removeChild(node);
+            }
+        });
+    }
+}
+
 const addFilenameFunctionality = () => {
     const fileNameInput = document.getElementById(`outputFilename`).querySelector(`#string`);
 
@@ -80,9 +212,11 @@ const addFilenameFunctionality = () => {
             dropHook
         });
     })
-}
+};
 
-const createCard = (key, string, description, config, parentNode, showSaveButton, depth) => {
+const cardObjs = {};
+
+const createCard = (key, string, description, config, parentNode, cardFormatting, depth) => {
     console.log(`key`, key, `name / string`, string, `config / strings`, config && config.strings ? config.strings : null, `config / descriptions`, config && config.descriptions ? config.descriptions : null);
 
     if(key.endsWith(`Extended`)) return;
@@ -91,7 +225,7 @@ const createCard = (key, string, description, config, parentNode, showSaveButton
         const newCard = settingsBox.cloneNode(true);
         newCard.id = key;
 
-        if(!showSaveButton) {
+        if(!cardFormatting) {
             newCard.querySelector(`#options`).childNodes.forEach(node => {
                 node.style.removeProperty(`border-bottom-right-radius`)
                 node.style.removeProperty(`border-top-right-radius`)
@@ -127,7 +261,7 @@ const createCard = (key, string, description, config, parentNode, showSaveButton
         card.querySelector(`#description`).innerHTML = markdown.makeHtml(description);
         if(card.querySelector(`#description`).classList.contains(`d-none`)) card.querySelector(`#description`).classList.remove(`d-none`);
         card.querySelector(`#description`).style.marginBottom = `-10px`;
-        if(!showSaveButton) {
+        if(!cardFormatting) {
             card.querySelector(`#description`).style.fontSize = `0.8em`;
             card.querySelector(`#name`).style.marginBottom = `-15px`
         }
@@ -219,6 +353,24 @@ const createCard = (key, string, description, config, parentNode, showSaveButton
         optHolder.style.maxWidth = `63%`
 
         const saveBtn = card.querySelector(`#save`);
+        
+        if(saveBtn) {
+            saveBtn.style.borderBottomLeftRadius = saveBtn.style.borderBottomRightRadius;
+            saveBtn.style.borderTopLeftRadius = `0px`;
+            saveBtn.style.borderTopRightRadius = `0px`;
+            saveBtn.style.paddingRight = ``;
+    
+            opt.style.padding = `4px 12px`;
+            opt.style.borderTopLeftRadius = saveBtn.style.borderBottomRightRadius;
+            opt.style.borderTopRightRadius = saveBtn.style.borderBottomRightRadius;
+            opt.style.borderBottomLeftRadius = saveBtn.style.borderBottomRightRadius;
+            opt.style.borderBottomRightRadius = saveBtn.style.borderBottomRightRadius;
+            opt.style.borderWidth = `2px`;
+            opt.style.borderColor = window.getComputedStyle(saveBtn).backgroundColor;
+            opt.style.borderStyle = `solid`
+
+            saveBtn.parentNode.removeChild(saveBtn);
+        };
 
         for(e of Object.entries(config[key])) {
             const name = config.strings[key + `Extended`] && config.strings[key + `Extended`][e[0]] ? config.strings[key + `Extended`][e[0]] : (e[0][0].toUpperCase() + e[0].slice(1));
@@ -232,50 +384,9 @@ const createCard = (key, string, description, config, parentNode, showSaveButton
             }, opt, false, depth+1)
         };
 
-        saveBtn.style.borderBottomLeftRadius = saveBtn.style.borderBottomRightRadius;
-        saveBtn.style.borderTopLeftRadius = `0px`;
-        saveBtn.style.borderTopRightRadius = `0px`;
-        saveBtn.style.paddingRight = ``;
-
-        opt.style.padding = `4px 12px`;
-        opt.style.borderTopLeftRadius = saveBtn.style.borderBottomRightRadius;
-        opt.style.borderTopRightRadius = saveBtn.style.borderBottomRightRadius;
-        opt.style.borderBottomLeftRadius = disableInputs ? saveBtn.style.borderBottomRightRadius : `0px`;
-        opt.style.borderBottomRightRadius = disableInputs ? saveBtn.style.borderBottomRightRadius : `0px`;
-        opt.style.borderWidth = `2px`;
-        opt.style.borderColor = window.getComputedStyle(saveBtn).backgroundColor;
-        opt.style.borderStyle = `solid`
-        optHolder.appendChild(saveBtn)
+        cardObjs[key] = opt;
         
-        //const bgc = depth+1 % 2 == 1 ? `rgb(35,35,35)` : `rgb(40,40,40)`;
-
-        //console.log(`bgc: ${bgc}`);
-
-        //opt.style.backgroundColor = bgc;
-
-        const getObject = (optionsObj) => {
-            const obj = {};
-
-            optionsObj.childNodes.forEach(child => {
-                if(child.id && child.id != `save` && !child.classList.contains(`d-none`)) {
-                    let id = typeof config[key][child.id];
-                    
-                    console.log(optionsObj.parentNode.id + ` > ` + optionsObj.id + ` > ` + child.id + `: ` + id)
-
-                    if(id == `object`) {
-                        obj[child.id] = getObject(child.querySelector(`#options`));
-                    } else {
-                        obj[child.id] = child.querySelector(`#${id}`).value;
-                    }
-                }
-            });
-
-            console.log(`obj of ${card.id}:`, obj)
-
-            return obj;
-        };
-        
-        card.querySelector(`#save`).onclick = () => updateConfig({ [key]: getObject(opt) });
+        //card.querySelector(`#save`).onclick = () => updateConfig({ [key]: getObject(key, opt) });
     } else {
         if(card.querySelector(`#strings`)) card.querySelector(`#strings`).style.width = `100%`;
 
@@ -292,12 +403,9 @@ const createCard = (key, string, description, config, parentNode, showSaveButton
 
             if(elm.getAttribute(`savekey`) != `true`) {
                 elm.setAttribute(`savekey`, `true`);
-                elm.addEventListener(`keyup`, (e) => {
-                    if(((e.ctrlKey && e.key == `s`) || (e.key == `Enter` || e.keyCode == 13)) && (card.querySelector(`#save`) || card.parentElement.parentElement.querySelector(`#save`))) {
-                        (card.querySelector(`#save`) || card.parentElement.parentElement.querySelector(`#save`)).onclick();
-                    }
-                });
             }
+
+            elm.oninput = () => showSaveBox();
         } else if(typeof config[key] == `boolean`) {
             let btn = card.querySelector(`#boolean`);
 
@@ -316,6 +424,7 @@ const createCard = (key, string, description, config, parentNode, showSaveButton
             };
 
             let updateBtn = () => {
+                showSaveBox();
                 if(btn.value == `false`) {
                     setTrue()
                 } else {
@@ -336,11 +445,15 @@ const createCard = (key, string, description, config, parentNode, showSaveButton
                 card.querySelector(`#number`).min = `1`;
                 card.querySelector(`#number`).max = `1`;
             }
+            card.querySelector(`#number`).oninput = () => showSaveBox();
         }
 
-        if(showSaveButton) {
-            card.querySelector(`#save`).onclick = () => updateConfig({ [key]: input.value });
-        } else if(card.querySelector(`#save`)) {
+        if(cardFormatting) {
+            cardObjs[key] = () => input.value;
+            //card.querySelector(`#save`).onclick = () => updateConfig({ [key]: input.value });
+        };
+        
+        if(card.querySelector(`#save`)) {
             card.querySelector(`#save`).parentNode.removeChild(card.querySelector(`#save`));
             if(input) {
                 input.style.borderBottomRightRadius = input.style.borderBottomLeftRadius;
@@ -607,7 +720,7 @@ const parse = (config) => {
     createServices();
 }
 
-const updateConfig = (json, {noUpdate, silent=false}={}) => {
+const updateConfig = (json, {noUpdate, silent=false}={}) => new Promise(res => {
     toggleButtons(false)
 
     const run = (newConf) => {
@@ -617,6 +730,7 @@ const updateConfig = (json, {noUpdate, silent=false}={}) => {
             headingText: `Settings updated.`,
             bodyText: `Your settings were saved successfully.`,
         });
+        res(newConf);
     };
 
     if(noUpdate && json) {
@@ -624,7 +738,9 @@ const updateConfig = (json, {noUpdate, silent=false}={}) => {
     } else {
         systemConfiguration.set(null, json).then(run);
     }
-}
+})
+
+useWindow.getNewConfig = getNewConfig
 
 const parseDownloadables = () => document.body.querySelector('#downloadables').childNodes.forEach(n => {
     if(!n || !n.querySelector) return;
