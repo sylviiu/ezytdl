@@ -75,116 +75,118 @@ module.exports = {
     getIcons: () => {
         if(getIconsComplete) return Promise.resolve(icons);
 
-        if(!getIconsPromise) getIconsPromise = new Promise(async res => {
-            let supportedMultipliers = [ 1, 1.25, 1.33, 1.4, 1.5, 1.8, 2 ];
-
-            if(process.platform == `win32`) supportedMultipliers = [ 1, 1.25, 1.5, 2 ];
-            // scales based on https://www.electronjs.org/docs/latest/api/native-image#high-resolution-image
-            
-            if(process.platform == `linux`) supportedMultipliers = [ 1, 1.25, 1.33, 1.4, 1.5, 1.8, 2, 2.5, 3, 4, 5 ];
-            // scales are inconsistent with linux, so we just use all supported
-
-            if(process.platform == `darwin`) supportedMultipliers = [ 1, 2 ]
-            // so far as i'm aware, tray icons only use up to 2x on macos
-
-            let sizes = supportedMultipliers.map(m => 16 * m);
+        if(!getIconsPromise) {
+            getIconsPromise = new Promise(async res => {
+                let supportedMultipliers = [ 1, 1.25, 1.33, 1.4, 1.5, 1.8, 2 ];
     
-            console.log(`Getting icons...`)
+                if(process.platform == `win32`) supportedMultipliers = [ 1, 1.25, 1.5, 2 ];
+                // scales based on https://www.electronjs.org/docs/latest/api/native-image#high-resolution-image
+                
+                if(process.platform == `linux`) supportedMultipliers = [ 1, 1.25, 1.33, 1.4, 1.5, 1.8, 2, 2.5, 3, 4, 5 ];
+                // scales are inconsistent with linux, so we just use all supported
     
-            const createIcon = (iconFile, negate, maxRes) => new Promise(async res => {
-                let nativeIcon = null;
+                if(process.platform == `darwin`) supportedMultipliers = [ 1, 2 ]
+                // so far as i'm aware, tray icons only use up to 2x on macos
     
-                console.log(`Creating ${iconFile} / negate: ${negate}`);
-
-                if(maxRes) {
-                    const icon = await iconToPNG(iconFile, 512, negate);
-                    nativeIcon = nativeImage.createFromBuffer(icon)
-                } else {
-                    nativeIcon = nativeImage.createEmpty();
-
-                    for(let i in sizes) {
-                        const size = sizes[i];
-                        const icon = await iconToPNG(iconFile, size, negate);
+                let sizes = supportedMultipliers.map(m => 16 * m);
         
-                        if(nativeIcon) {
-                            nativeIcon.addRepresentation({
-                                scaleFactor: supportedMultipliers[i],
-                                width: size,
-                                height: size,
-                                buffer: icon
-                            });
-                        } else {
-                            nativeIcon = nativeImage.createFromBuffer(icon);
-                        }
-                    };
-                }
-
-                if(process.platform == `darwin` && !maxRes) {
-                    console.log(`Setting template image`)
-                    nativeIcon.setTemplateImage(true);
-                }
+                console.log(`Getting icons...`)
+        
+                const createIcon = (iconFile, negate, maxRes) => new Promise(async res => {
+                    let nativeIcon = null;
+        
+                    console.log(`Creating ${iconFile} / negate: ${negate}`);
     
-                res(nativeIcon);
-            });
-
-            const iconPromises = [];
-
-            const originalIcons = Object.assign({}, icons);
-
-            const iconKeys = [...Object.keys(icons).map(k => k + `Inv`), ...Object.keys(icons)];
-
-            const chunkSize = Math.ceil(iconKeys.length / require('os').cpus().length);
-
-            for(let i = 0; i < iconKeys.length; i += chunkSize) {
-                const chunk = iconKeys.slice(i, i + chunkSize);
-                console.log(chunk)
-                iconPromises.push(new Promise(async res => {    
-                    const starttime = Date.now();
-
-                    for(let iconFile of chunk) await new Promise(async r => {
-                        let inv = iconFile.endsWith(`Inv`);
-
-                        if(inv) iconFile = iconFile.slice(0, -3);
-
-                        if(typeof originalIcons[iconFile] == `string`) {
-                            const str = await getPath(originalIcons[iconFile], true, false, true);
-
-                            await Promise.all([
-                                new Promise(async r => {
-                                    icons[iconFile + (inv ? `Inv` : ``)] = await createIcon(str, inv);
-                                    console.log(`(${Date.now() - starttime}ms) nativeIcon ${iconFile}${inv ? ` (inv)` : ``} complete`);
-                                    r();
-                                }),
-                                new Promise(async r => {
-                                    icons[iconFile + (inv ? `Inv` : ``) + `Max`] = await createIcon(str, inv, true);
-                                    console.log(`(${Date.now() - starttime}ms) nativeIcon [MAX] ${iconFile}${inv ? ` (inv)` : ``} complete`);
-                                    r();
-                                }),
-                            ])
+                    if(maxRes) {
+                        const icon = await iconToPNG(iconFile, 512, negate);
+                        nativeIcon = nativeImage.createFromBuffer(icon)
+                    } else {
+                        nativeIcon = nativeImage.createEmpty();
+    
+                        for(let i in sizes) {
+                            const size = sizes[i];
+                            const icon = await iconToPNG(iconFile, size, negate);
+            
+                            if(nativeIcon) {
+                                nativeIcon.addRepresentation({
+                                    scaleFactor: supportedMultipliers[i],
+                                    width: size,
+                                    height: size,
+                                    buffer: icon
+                                });
+                            } else {
+                                nativeIcon = nativeImage.createFromBuffer(icon);
+                            }
                         };
-
-                        r();
-                    });
-
-                    res();
-                }));
-            }
-
-            await Promise.all(iconPromises);
-
-            console.log(`icons done`)
+                    }
     
-            res(icons);
-        });
-
-        getIconsPromise.then(async () => {
-            for(const filename of await pfs.readdirSync(basePath)) {
-                if(!createdFilenames.includes(filename)) {
-                    console.log(`Deleting unused icon ${filename}`)
-                    await pfs.unlinkSync(path.join(basePath, filename));
+                    if(process.platform == `darwin` && !maxRes) {
+                        console.log(`Setting template image`)
+                        nativeIcon.setTemplateImage(true);
+                    }
+        
+                    res(nativeIcon);
+                });
+    
+                const iconPromises = [];
+    
+                const originalIcons = Object.assign({}, icons);
+    
+                const iconKeys = [...Object.keys(icons).map(k => k + `Inv`), ...Object.keys(icons)];
+    
+                const chunkSize = Math.ceil(iconKeys.length / require('os').cpus().length);
+    
+                for(let i = 0; i < iconKeys.length; i += chunkSize) {
+                    const chunk = iconKeys.slice(i, i + chunkSize);
+                    console.log(chunk)
+                    iconPromises.push(new Promise(async res => {    
+                        const starttime = Date.now();
+    
+                        for(let iconFile of chunk) await new Promise(async r => {
+                            let inv = iconFile.endsWith(`Inv`);
+    
+                            if(inv) iconFile = iconFile.slice(0, -3);
+    
+                            if(typeof originalIcons[iconFile] == `string`) {
+                                const str = await getPath(originalIcons[iconFile], true, false, true);
+    
+                                await Promise.all([
+                                    new Promise(async r => {
+                                        icons[iconFile + (inv ? `Inv` : ``)] = await createIcon(str, inv);
+                                        console.log(`(${Date.now() - starttime}ms) nativeIcon ${iconFile}${inv ? ` (inv)` : ``} complete`);
+                                        r();
+                                    }),
+                                    new Promise(async r => {
+                                        icons[iconFile + (inv ? `Inv` : ``) + `Max`] = await createIcon(str, inv, true);
+                                        console.log(`(${Date.now() - starttime}ms) nativeIcon [MAX] ${iconFile}${inv ? ` (inv)` : ``} complete`);
+                                        r();
+                                    }),
+                                ])
+                            };
+    
+                            r();
+                        });
+    
+                        res();
+                    }));
                 }
-            }
-        })
+    
+                await Promise.all(iconPromises);
+    
+                console.log(`icons done`)
+        
+                res(icons);
+            });
+            
+            getIconsPromise.then(async () => {
+                for(const filename of await pfs.readdirSync(basePath)) {
+                    if(!createdFilenames.includes(filename)) {
+                        console.log(`Deleting unused icon ${filename}`)
+                        await pfs.unlinkSync(path.join(basePath, filename));
+                    }
+                }
+            })
+        }
 
         return getIconsPromise;
     },
