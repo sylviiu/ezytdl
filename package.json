@@ -4,6 +4,7 @@
   "description": "Advanced electron-based frontend for yt-dlp.",
   "main": "index.js",
   "dependencies": {
+    "auto-launch": "^5.0.6",
     "electron-updater": "^6.1.1",
     "sanitize-filename": "^1.6.3",
     "sharp": "^0.32.4",
