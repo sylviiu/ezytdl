@@ -1441,7 +1441,11 @@ module.exports = {
 
             let ytdlpFilename = null
 
+            let usedFilename = false;
+
             const getFilename = (full) => {
+                if(usedFilename) return;
+
                 if(full) {
                     return new Promise(async res => {
                         if(info._platform == `file` && convert) {
@@ -1473,6 +1477,10 @@ module.exports = {
     
                     ytdlpFilename = fullYtdlpFilename.split(`.`).slice(0, -1).join(`.`);
                 }
+
+                if(!filenames.includes(fullYtdlpFilename)) filenames.push(fullYtdlpFilename);
+
+                update({ destinationFilename: ytdlpFilename })
             };
 
             getFilename();
@@ -1485,7 +1493,6 @@ module.exports = {
 
             thisFormat.format_id = thisFormat.format_id || format;
             
-            filenames.push(fullYtdlpFilename)
             filenames.push(temporaryFilename)
 
             const ffmpegExists = await refreshFFmpegPromise();
@@ -1502,7 +1509,7 @@ module.exports = {
 
             const saveTo = module.exports.getSavePath(info, filePath);
 
-            update({ deleteFiles: () => purgeLeftoverFiles(saveTo), live: info.is_live ? true : false, destinationFilename: ytdlpFilename })
+            update({ deleteFiles: () => purgeLeftoverFiles(saveTo), live: info.is_live ? true : false })
     
             console.log(`saveTo: ${saveTo} (making dir)`)
 
@@ -1919,7 +1926,7 @@ module.exports = {
     
                 if(killAttempt > 0) return fallback(`Download canceled.`, true);
 
-                filenames.push(ytdlpFilename)
+                //filenames.push(ytdlpFilename)
     
                 //if(!useFile && !fs.existsSync(previousFilename)) previousFilename = await module.exports.getFilename(url, info, thisFormat, temporaryFilename + `.%(ext)s`, true);
     
@@ -1968,6 +1975,7 @@ module.exports = {
                         totalTrimmedDuration = Math.max(0, (totalDuration[1] ? totalDuration[1] - totalDuration[0] : null));
     
                         if(seek[0] != 0 || seek[1] != Math.ceil(info.duration.units.ms/1000)) {
+                            usedFilename = true;
                             ytdlpFilename = ytdlpFilename.trim() + `.trimmed (${seek[0]}-${seek[1]})`;
                         }
                     };
@@ -2021,6 +2029,7 @@ module.exports = {
 
                     const outputArgs = (replaceOutputArgs || []).slice();
 
+                    usedFilename = true;
                     outputArgs.push(require(`path`).join(saveTo, ytdlpFilename) + ext);
 
                     if(convert.audioBitrate) outputArgs.unshift(`-b:a`, convert.audioBitrate);
@@ -2714,7 +2723,7 @@ module.exports = {
                     
                     module.exports.mergeInfo(info, newInfo);
 
-                    //getFilename();
+                    getFilename(); // it won't update if the filename was already used in writing the file
                 })
         
                 proc.stderr.on(`data`, data => {
