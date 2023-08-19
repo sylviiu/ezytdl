@@ -48,6 +48,7 @@ module.exports = {
                 extendedDescription,
                 reset: null,
                 getToken: null,
+                tokenTimeout: null,
                 setup: null
             });
         }
