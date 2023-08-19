@@ -355,17 +355,19 @@ module.exports = {
             return res(null);
         }
     }),
-    parseOutputTemplate: (info, template) => {
+    parseOutputTemplate: ({ info={}, format={} }, template) => {
         //if(!template) template = require(`../getConfig`)().outputFilename;
-        if(!template) template = info.output_name || (global.lastConfig).outputFilename;
+        if(!template) template = info.output_name || format.output_name || global.lastConfig.outputFilename;
 
         //console.log(`template: ${template}`)
       
         template = template.replace(outputTemplateRegex, (match, key) => {
             const capturedKeys = key.split(`,`).map(s => s.trim())
             for (const key of capturedKeys) {
-                if (info[key]) {
+                if(info[key]) {
                     return info[key];
+                } else if(format[key]) {
+                    return format[key];
                 }
             };
 
@@ -432,7 +434,7 @@ module.exports = {
     getSavePath: (info, playlistPath) => {
         const slash = require('os').platform() == `win32` ? `\\` : `/`;
 
-        const { saveLocation, downloadInWebsiteFolders } = global.lastConfig;
+        const { saveLocation, downloadFolders } = global.lastConfig;
 
         if(info.url == `*`) return (`*` + slash);
 
@@ -447,13 +449,17 @@ module.exports = {
 
         const paths = [ sanitizePath(...useSaveLocation) ];
 
-        if(downloadInWebsiteFolders) try {
+        if(downloadFolders.website) try {
             let parsedURL = require(`url`).parse(info._save_location_url || info._original_url || info.url || info.webpage_url || info._request_url || ``);
     
             let useURL = parsedURL && parsedURL.host ? parsedURL.host.split(`.`).slice(-2).join(`.`) : info.webpage_url_domain || null;
     
             if(useURL) paths.push(useURL);
         } catch(e) { }
+
+        if(downloadFolders.artist) paths.push(info.media_metadata?.general.artist || info.media_metadata?.album.album_artist || `Unknown Artist`);
+
+        //if(downloadFolders.album) paths.push(info.media_metadata?.album.album || `Unknown Album`);
 
         if(playlistPath) paths.push(playlistPath)
 
@@ -565,7 +571,7 @@ module.exports = {
 
         d.saveLocation = module.exports.getSavePath(d);
 
-        d.output_name = module.exports.getFilename(d._original_url, d, null, null, false);
+        d.output_name = module.exports.getFilename(d._original_url, d, null, null, false, false);
 
         return module.exports.parseMetadata(d, root);
     },
@@ -1002,7 +1008,7 @@ module.exports = {
             })
         }
     }),
-    getFilename: (url, info, format, template, fullParse) => {
+    getFilename: (url, info, format, template, fullParse, replaceUnknown=true) => {
         //const { outputFilename } = require(`../getConfig`)();
         const { outputFilename } = global.lastConfig;
 
@@ -1010,7 +1016,7 @@ module.exports = {
 
         //console.log(`getFilename / raw: "${useTempalte}"`)
 
-        useTempalte = module.exports.parseOutputTemplate(Object.assign({}, (typeof format == `object` ? format : {}), info), useTempalte);
+        useTempalte = module.exports.parseOutputTemplate({ info: info || {}, format: format || {} }, useTempalte);
 
         //console.log(`getFilename / before: "${useTempalte}"`)
 
@@ -1063,11 +1069,7 @@ module.exports = {
                 })
             })
         } else {
-            //console.log(`getFilename / no need to parse template! (or noParse is true)`)
-
-            useTempalte = useTempalte.replace(outputTemplateRegex, () => `${`Unknown`}`)
-
-            //console.log(`getFilename / after: "${useTempalte}"`)
+            if(replaceUnknown) useTempalte = useTempalte.replace(outputTemplateRegex, () => `${`Unknown`}`)
 
             return useTempalte
         }
@@ -1217,6 +1219,8 @@ module.exports = {
             const newMeta = recursiveAssign({}, info.media_metadata, newParsed.media_metadata);
             Object.assign(info, newParsed, { media_metadata: newMeta });
         };
+
+        return info;
     },
     getFormat: ({info, format, ext, depth=0}) => {
         let useFormat = null;
@@ -1307,19 +1311,6 @@ module.exports = {
             if(obj[`progress-${key}`]) delete obj[`progress-${key}`];
             return update({})
         }
-        
-        if(info && info._needs_original) {
-            console.log(`info needs original!`);
-            update({status: `Finding equivalent on supported platform...`});
-
-            const equiv = await module.exports.findEquivalent(Object.assign({}, info, { url }), true, false)
-
-            Object.assign(info, {
-                url: equiv.url || equiv.webpage_url || equiv._request_url
-            });
-
-            url = info.url;
-        }
 
         let filenames = [];
         
@@ -1376,13 +1367,13 @@ module.exports = {
 
         const fetchFullInfo = (status) => new Promise(async res => {
             if(info.fullInfo) {
-                return res(true);
+                return res(info);
             } else {
                 if(status) update({status})
                 try {
                     const i = await module.exports.unflatPlaylist({info, customID: `fetchFullInfo`});
                     module.exports.mergeInfo(info, i);
-                    res(true);
+                    res(i);
                 } catch(e) {
                     console.error(e);
 
@@ -1407,6 +1398,22 @@ module.exports = {
         })
 
         try {
+            if(info && info._needs_original) {
+                console.log(`info needs original!`);
+                
+                const equiv = await fetchFullInfo(`Finding equivalent on supported platform...`);
+
+                if(equiv) {
+                    Object.assign(info, {
+                        url: equiv.url || equiv.webpage_url || equiv._request_url || info.url
+                    });
+        
+                    url = info.url;
+                } else {
+                    throw new Error(`Failed to find equivalent on supported platform`);
+                }
+            }
+
             const currentConfig = await require(`../getConfig`)();
 
             const { disableHWAcceleratedConversion, outputFilename, hardwareAcceleratedConversion, advanced, downloadWithFFmpeg, proxy } = currentConfig;
@@ -1452,7 +1459,7 @@ module.exports = {
                             const parsed = require(`path`).parse(url);
                             fullYtdlpFilename = `${parsed.name} - converted-${info.selectedConversion && info.selectedConversion.key ? info.selectedConversion.key : `customconversion`}-${Date.now()}` + (convert.ext ? `.${convert.ext.startsWith(`.`) ? convert.ext.slice(1) : convert.ext}` : parsed.ext)
                         } else {
-                            fullYtdlpFilename = await module.exports.getFilename(url, info, thisFormat, outputFilename + `.%(ext)s`, true);
+                            fullYtdlpFilename = await module.exports.getFilename(url, info, thisFormat, (outputFilename) + `.%(ext)s`, true);
                         };
         
                         fullYtdlpFilename = sanitize(fullYtdlpFilename);
@@ -1468,7 +1475,7 @@ module.exports = {
                         const parsed = require(`path`).parse(url);
                         fullYtdlpFilename = `${parsed.name} - converted-${info.selectedConversion && info.selectedConversion.key ? info.selectedConversion.key : `customconversion`}-${Date.now()}` + (convert.ext ? `.${convert.ext.startsWith(`.`) ? convert.ext.slice(1) : convert.ext}` : parsed.ext)
                     } else {
-                        fullYtdlpFilename = module.exports.getFilename(url, info, thisFormat, outputFilename + `.%(ext)s`, false);
+                        fullYtdlpFilename = module.exports.getFilename(url, info, thisFormat, (outputFilename) + `.%(ext)s`, false);
                     };
     
                     fullYtdlpFilename = sanitize(fullYtdlpFilename);
@@ -3193,9 +3200,10 @@ for(const entry of Object.entries(module.exports).filter(o => typeof o[1] == `fu
     
                                 if(!parsed.entries) {
                                     module.exports.findEquivalent(parsed, ignoreStderr, false, true).then(equivalent => {
-                                        module.exports.verifyPlaylist(Object.assign({}, equivalent, {fullInfo: false}), { forceRun: true, ignoreStderr }).then(o => res(Object.assign(parsed, {
-                                            formats: o.formats,
-                                        }))).catch(rej);
+                                        module.exports.verifyPlaylist(Object.assign({}, equivalent, {fullInfo: false}), { forceRun: true, ignoreStderr }).then(o => {
+                                            // res(Object.assign(parsed, { formats: o.formats, }));
+                                            res(module.exports.mergeInfo(parsed, o));
+                                        }).catch(rej);
                                     }).catch(rej);
                                 } else res(parsed)
                             }).catch(rej);
