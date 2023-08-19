@@ -36,9 +36,16 @@ module.exports = async () => {
             const start = async () => {
                 console.log(`Took [${Date.now() - startTime}ms] to finish app.whenReady`);
     
-                const createWindow = require(`../core/window`)
+                const createWindow = require(`../core/window`);
+
+                let overrideArgs = {};
+
+                if(process.argv.includes(`--hidden`)) {
+                    overrideArgs.show = false;
+                    global.windowHidden = true;
+                }
             
-                const window = await createWindow();
+                const window = await createWindow(false, overrideArgs);
     
                 let requestedLoading = Date.now();
                 
