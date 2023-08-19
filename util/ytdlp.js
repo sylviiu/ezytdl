@@ -571,7 +571,7 @@ module.exports = {
 
         d.saveLocation = module.exports.getSavePath(d);
 
-        d.output_name = module.exports.getFilename(d._original_url, d, null, null, false, false);
+        d.output_name = module.exports.getFilename(d._original_url, d, null, null, false);
 
         return module.exports.parseMetadata(d, root);
     },
@@ -1008,7 +1008,7 @@ module.exports = {
             })
         }
     }),
-    getFilename: (url, info, format, template, fullParse, replaceUnknown=true) => {
+    getFilename: (url, info, format, template, fullParse) => {
         //const { outputFilename } = require(`../getConfig`)();
         const { outputFilename } = global.lastConfig;
 
@@ -1069,7 +1069,7 @@ module.exports = {
                 })
             })
         } else {
-            if(replaceUnknown) useTempalte = useTempalte.replace(outputTemplateRegex, () => `${`Unknown`}`)
+            useTempalte = useTempalte.replace(outputTemplateRegex, () => `${`Unknown`}`)
 
             return useTempalte
         }
