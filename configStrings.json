@@ -4,7 +4,11 @@
     "browserConnector": "Enable Browser Connector",
     "proxy": "Proxy",
     "downloadWithFFmpeg": "Allow Downloading with FFmpeg",
-    "downloadInWebsiteFolders": "Create Folders for Websites",
+    "downloadFolders": "Create Subfolders",
+    "downloadFoldersExtended": {
+        "website": "Website Name",
+        "artist": "Artist Name"
+    },
     "downloadFromClipboard": "Allow Checking Clipboard for URLs",
     "checkForUpdates": "Check for Updates",
     "updateCheckDaysInterval": "Update Check Interval (Days)",

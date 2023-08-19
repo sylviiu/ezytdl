@@ -4,7 +4,10 @@
     "browserConnector": false,
     "proxy": "",
     "downloadWithFFmpeg": true,
-    "downloadInWebsiteFolders": false,
+    "downloadFolders": {
+        "website": true,
+        "artist": false
+    },
     "downloadFromClipboard": false,
     "checkForUpdates": {},
     "updateCheckDaysInterval": 1,
