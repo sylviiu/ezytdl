@@ -1,5 +1,5 @@
 sessions = {
-    get: (id, { staggered, noSendErrors }={}) => {
+    get: (id, config={}) => {
         if(!id) id = `default`;
     
         if(!sessions[id]) {
@@ -255,10 +255,10 @@ sessions = {
 
                     let maxDownloads = conf.concurrentDownloads;
 
-                    if(sessions[id].concurrentDownloads) {
-                        maxDownloads = sessions[id].concurrentDownloads;
-                    } else if(sessions[id].concurrentDownloadsMult) {
-                        maxDownloads = conf.concurrentDownloads * sessions[id].concurrentDownloadsMult;
+                    if(sessions[id].config.concurrentDownloads) {
+                        maxDownloads = sessions[id].config.concurrentDownloads;
+                    } else if(sessions[id].config.concurrentDownloadsMult) {
+                        maxDownloads = conf.concurrentDownloads * sessions[id].config.concurrentDownloadsMult;
                     }
 
                     let i = 0;
@@ -266,11 +266,14 @@ sessions = {
                     while((queue.active.length + queue.paused.length) < maxDownloads && queue.queue.length > 0) {
                         const next = queue.queue.shift();
                         queue.active.push(next);
-                        if(staggered) {
+                        if(sessions[id].config.staggered) {
                             const delay = Math.max(0, addTimeout - Date.now());
-                            addTimeout = Date.now() + delay + 150;
-                            console.log(`delay:`, delay, `addTimeout:`, addTimeout)
-                            setTimeout(() => next.start(), delay);
+                            addTimeout = Date.now() + delay + sessions[id].config.staggerDelay;
+                            console.log(`[${next.id}] delay:`, delay, `addTimeout:`, addTimeout)
+                            setTimeout(() => {
+                                console.log(`[${next.id}] starting...`)
+                                next.start();
+                            }, delay);
                         } else next.start();
                         i++;
                     }
@@ -604,10 +607,13 @@ sessions = {
                 }, timeout);
             }
         
-            if(!sessions[id]) sessions[id] = {
-                config: {
+            sessions[id] = {
+                config: Object.assign({
                     concurrentDownloadsMult: 1,
-                },
+                    staggered: false,
+                    staggerDelay: 150,
+                    noSendErrors: false,
+                }, config),
                 set: (conf) => Object.assign(sessions[id].config, conf),
                 queue,
                 createDownload,
