@@ -27,6 +27,8 @@ const getPath = (path, allowNull=true) => {
     return invoke(`getPath`, [path, allowNull])
 }
 
+if(window.parent == window) require(`./ipc/renderer`)({ invoke, send, on, getPath });
+
 const addScript = (path, type) => new Promise(async (res, rej) => {
     const name = path;
 
