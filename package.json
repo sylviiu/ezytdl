@@ -7,7 +7,6 @@
     "auto-launch": "^5.0.6",
     "electron-updater": "^6.1.1",
     "sanitize-filename": "^1.6.3",
-    "sharp": "^0.32.4",
     "shell-env": "^4.0.1",
     "string-similarity": "^4.0.4",
     "superagent": "^8.0.9",
@@ -42,6 +41,7 @@
     "color-scheme": "^1.0.1",
     "electron": "^25.5.0",
     "electron-builder": "^24.6.3",
+    "sharp": "^0.32.5",
     "showdown": "^2.1.0",
     "tinycolor2": "^1.6.0",
     "uglify-js": "^3.17.4"
