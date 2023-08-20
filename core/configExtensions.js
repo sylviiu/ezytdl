@@ -8,6 +8,21 @@ module.exports = {
             if(userConfig.theme != `system` && userConfig.theme != `dark` && userConfig.theme != `light`) userConfig.theme = `system`;
             return userConfig
         },
+        font: (userConfig) => new Promise(async res => {
+            console.log(`verifying font...`)
+            if(global.window && global.window.webContents) {
+                if(userConfig.font) {
+                    global.window.webContents.send(`fontExists`, userConfig.font);
+                    require(`electron`).ipcMain.once(`fontExists-${userConfig.font}`, (event, exists) => {
+                        if(!exists) userConfig.font = `Alata`;
+                        return res(userConfig);
+                    });
+                } else {
+                    userConfig.font = `Alata`;
+                    return res(userConfig);
+                }
+            } else res(userConfig);
+        })
     },
     defaults: {
         nightly: (defaultConfig) => Object.assign(defaultConfig, {
@@ -101,6 +116,15 @@ module.exports = {
     
             return res(userConfig);
         }),
+        yeah: (userConfig) => {
+            const d = new Date();
+
+            if(d.getMonth() == 4 && d.getDate() == 1) {
+                userConfig.font = `Comic Sans MS`;
+            };
+
+            return userConfig;
+        },
         actions: (userConfig) => new Promise(async res => {
             userConfig.actions = {};
     
