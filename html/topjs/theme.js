@@ -33,9 +33,10 @@ var theme = ({
             break;
     };
 
-    if(from == `auto` && usingLightMode == lightMode) return;
+    if(from == `auto` && (usingLightMode == lightMode && usingFont == config.font)) return;
 
     usingLightMode = lightMode;
+    usingFont = config.font;
 
     const styleElement = document.getElementById(`themeStyle`) || document.createElement(`style`);
 
@@ -95,6 +96,16 @@ var theme = ({
         },
     };
 
+    const fonts = [`Alata`, `sans-serif`];
+
+    if(config.font) fonts.unshift(config.font);
+
+    console.log(`fonts`, fonts);
+
+    newRules[`*`] = {
+        "font-family": fonts.join(`, `),
+    };
+
     const currentColor = typeof currentColorScheme == `object` ? currentColorScheme : ((typeof systemColors == `object` ? systemColors : [])[0]);
 
     if(currentColor) {
@@ -144,6 +155,7 @@ if(typeof themeHooks == `undefined`) {
     themeHooks = [];
     themeHook = (cb) => themeHooks.push(cb);
     usingLightMode = null;
+    usingFont = null;
     configuration.hook(theme);
 }
 
