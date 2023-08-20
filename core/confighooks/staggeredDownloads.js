@@ -1,0 +1,1 @@
+module.exports = ({ staggeredDownloads }) => require(`../../util/downloadManager`).default.set({ staggered: staggeredDownloads })

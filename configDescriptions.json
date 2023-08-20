@@ -21,6 +21,7 @@
         "video": "The video format to convert to."
     },
     "concurrentDownloads": "Set the maximum amount of yt-dlp downloads & FFmpeg conversions should be running at a time.",
+    "staggeredDownloads": "When enabled, ezytdl will wait `150ms` in between starting downloads. This may fix certain network-related issues, as the app isn't downloading multiple links at once.",
     "hardwareAcceleratedConversion": "Allow ezytdl to use your system's hardware to convert videos. This is useful if you want to speed up the conversion process.",
     "ffmpegPresets": "Show / hide FFmpeg presets. This is useful if you want to reduce the amount of options ezytdl has.",
     "closeToTray": "Allow ezytdl to close to the system tray instead of exiting when the window is closed.",

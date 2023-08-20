@@ -19,6 +19,7 @@
         "video": "mp4"
     },
     "concurrentDownloads": 4,
+    "staggeredDownloads": false,
     "hardwareAcceleratedConversion": {},
     "ffmpegPresets": {},
     "closeToTray": true,

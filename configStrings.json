@@ -21,6 +21,7 @@
         "video": "Video Format"
     },
     "concurrentDownloads": "Maximum Concurrent Downloads",
+    "staggeredDownloads": "Staggered Downloads",
     "hardwareAcceleratedConversion": "Enable Hardware-Accelerated Video Conversion",
     "ffmpegPresets": "Visible Conversion Presets",
     "closeToTray": "Close to System Tray",
