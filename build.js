@@ -40,8 +40,6 @@ const config = {
             "dmg",
         ]
     },
-    //"beforePack": "./build/beforePack.js",
-    "afterPack": "./build/afterPack.js",
     "asar": true,
     "asarUnpack": [],
     "files": [
@@ -361,8 +359,12 @@ if(require.main == module) {
                     
                     const proc = child_process.spawn(npm, procArgs, { stdio: "inherit" });
                     
-                    proc.on(`close`, (code) => {
+                    proc.on(`close`, async (code) => {
                         console.log(`Build closed with code ${code}`);
+
+                        console.log(`Running afterPack`);
+
+                        await require(`./build/afterPack.js`)(config);
                     
                         if(fs.existsSync(`./build.json`)) fs.unlinkSync(`./build.json`);
                     })
