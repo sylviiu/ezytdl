@@ -14,6 +14,48 @@ const { filterHeaders } = require(`./ytdlpUtil/headers`);
 const durationCurve = require(`./durationCurve`);
 const recursiveAssign = require(`./recursiveAssign`);
 
+const sortByQuality = (a, b) => {
+    let retVal = 0;
+
+    for(const [ name, func ] of Object.entries(qualitySorter)) {
+        retVal = func(a,b);
+        if(retVal != 0) {
+            //console.log(`${d.id || d.url} sorted by ${name}!`);
+            break;
+        }
+    };
+
+    return retVal;
+};
+
+sortByQuality.audio = (a, b) => {
+    let retVal = 0;
+
+    for(const [ name, func ] of Object.entries(qualitySorter(`audio`))) {
+        retVal = func(a,b);
+        if(retVal != 0) {
+            //console.log(`${d.id || d.url} sorted by ${name}!`);
+            break;
+        }
+    };
+
+    return retVal;
+};
+
+sortByQuality.video = (a, b) => {
+    let retVal = 0;
+
+    for(const [ name, func ] of Object.entries(qualitySorter(`audio`))) {
+        retVal = func(a,b);
+        if(retVal != 0) {
+            //console.log(`${d.id || d.url} sorted by ${name}!`);
+            break;
+        }
+    };
+
+    return retVal;
+};
+
 const outputTemplateRegex = /%\(\s*([^)]+)\s*\)s/g;
 const genericURLRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/i;
 
@@ -523,20 +565,6 @@ module.exports = {
 
                 return o;
             });
-
-            const sortByQuality = (a, b) => {
-                let retVal = 0;
-
-                for(const [ name, func ] of Object.entries(qualitySorter)) {
-                    retVal = func(a,b);
-                    if(retVal != 0) {
-                        //console.log(`${d.id || d.url} sorted by ${name}!`);
-                        break;
-                    }
-                };
-
-                return retVal;
-            }
 
             d.formats = [...modifiedFormats.filter(o => o.audio && o.video).sort(sortByQuality), ...modifiedFormats.filter(o => o.audio && !o.video).sort(sortByQuality), ...modifiedFormats.filter(o => !o.audio && o.video).sort(sortByQuality), ...modifiedFormats.filter(o => !o.audio && !o.video).sort(sortByQuality)];
         }
@@ -1240,14 +1268,14 @@ module.exports = {
                     useFormat = module.exports.getFormat({info, format: `ba`, depth});
                 }
             } else if(format == `ba`) {
-                useFormatsArr = useFormatsArr.filter(f => f.audio)
+                useFormatsArr = useFormatsArr.filter(f => f.audio).sort(sortByQuality.audio)
 
                 if(ext && useFormatsArr.filter(o => o.ext == ext).length > 0) useFormatsArr = useFormatsArr.filter(o => o.ext == ext);
 
                 useFormat = useFormatsArr[depth]
                 if(!useFormat) useFormat = useFormatsArr[0]
             } else if(format == `bv`) {
-                useFormatsArr = useFormatsArr.filter(f => f.video)
+                useFormatsArr = useFormatsArr.filter(f => f.video).sort(sortByQuality.video)
 
                 if(ext && useFormatsArr.filter(o => o.ext == ext).length > 0) useFormatsArr = useFormatsArr.filter(o => o.ext == ext);
 
