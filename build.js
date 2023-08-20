@@ -40,7 +40,7 @@ const config = {
             "dmg",
         ]
     },
-    "beforePack": "./build/beforePack.js",
+    //"beforePack": "./build/beforePack.js",
     "afterPack": "./build/afterPack.js",
     "asar": true,
     "asarUnpack": [],
@@ -344,6 +344,10 @@ if(require.main == module) {
         
                 if(!process.argv.find(s => s == `nopack`)) {
                     config.extraMetadata.buildDate = Date.now();
+
+                    console.log(`Running beforePack...`);
+
+                    await require(`./build/beforePack.js`)(config);
         
                     fs.writeFileSync(`./build.json`, JSON.stringify(config, null, 4));
                     
