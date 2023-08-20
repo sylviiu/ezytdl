@@ -1,10 +1,12 @@
 const fs = require('fs');
 
-module.exports = (context) => {
+module.exports = (context) => new Promise(async res => {
     const scripts = fs.readdirSync(`./build/scripts/`);
 
-    scripts.forEach(file => {
+    for(const file of scripts) {
         console.log(`\n\n----------------- running script ${file}`);
-        require(`./scripts/${file}`).afterPack ? require(`./scripts/${file}`).afterPack(context) : null;
-    })
-}
+        await require(`./scripts/${file}`).afterPack ? require(`./scripts/${file}`).afterPack(context) : null;
+    }
+
+    res();
+})
