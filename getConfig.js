@@ -169,7 +169,7 @@ module.exports = (configObject, {
 
                 const resultingConfig = Object.assign({}, config, checkedConfig)
 
-                if(!custom) for(const verification of Object.entries(require(`./core/configExtensions.js`).verify)) verification[1](resultingConfig);
+                if(!custom) for(const verification of Object.entries(require(`./core/configExtensions.js`).verify)) await verification[1](resultingConfig);
                 
                 fs.writeFileSync(`${global.configPath}/${target}`, JSON.stringify(resultingConfig, null, 4), { encoding: `utf-8` });
     
