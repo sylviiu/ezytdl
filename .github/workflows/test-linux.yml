@@ -50,4 +50,4 @@ jobs:
 
       - name: Run from source
         run: |
-          npm run test -- --from-source
+          npm run test
