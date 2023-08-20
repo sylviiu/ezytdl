@@ -56,10 +56,11 @@ module.exports = {
             });
         });
 
-        Object.keys(useObj).filter(s => s.includes(`Libraries`)).forEach(pkg => {
-            details.push(``, `#### ${pkg}`);
-            Object.entries(useObj.Libraries).forEach(([k, v]) => {
-                details.push(`- [${k}](https://www.npmjs.com/package/${k}): [${v}](https://www.npmjs.com/package/${k}/v/${v})`)
+        details.push(``, `#### Libraries`);
+
+        Object.keys(useObj.Libraries).forEach(pkg => {
+            Object.entries(useObj.Libraries[pkg]).forEach(([k, v]) => {
+                details.push(`- \`[${pkg}]\` [${k}](https://www.npmjs.com/package/${k}): [${v}](https://www.npmjs.com/package/${k}/v/${v})`)
             });
         });
 
