@@ -1371,7 +1371,7 @@ module.exports = {
             } else {
                 if(status) update({status})
                 try {
-                    const i = await module.exports.unflatPlaylist({info, customID: `fetchFullInfo`});
+                    const i = await module.exports.unflatPlaylist({info});
                     module.exports.mergeInfo(info, i);
                     res(i);
                 } catch(e) {
