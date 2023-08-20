@@ -1,4 +1,4 @@
-const electronPath = require('electron').app.getAppPath();
+const electronPath = require('electron').app?.getAppPath() || require(`path`).join(__dirname, `..`);
 const fs = require('fs');
 const existsFunc = require(`./promisifiedFS/existsSync`);
 const path = require('path');
