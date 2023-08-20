@@ -143,7 +143,7 @@ module.exports = (notDefault, overrideArgs) => new Promise(async res => {
     }
 
     if(firstRun) {
-        require(`./ipcHandler`)();
+        require(`./ipc/main`)();
         console.log(`-- FIRSTRUN TASKS COMPLETE`)
     };
 
