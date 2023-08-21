@@ -39,7 +39,7 @@
     "@fortawesome/fontawesome-free": "^6.4.2",
     "animejs": "^3.2.1",
     "color-scheme": "^1.0.1",
-    "electron": "^25.5.0",
+    "electron": "^26.0.0",
     "electron-builder": "^24.6.3",
     "sharp": "^0.32.5",
     "showdown": "^2.1.0",
