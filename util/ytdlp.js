@@ -243,20 +243,23 @@ module.exports = {
     hasFFmpeg: () => refreshFFmpeg(),
     hasFFmpegPromise: () => refreshFFmpegPromise(),
     sanitizePath: (...args) => sanitizePath(...args),
-    additionalArguments: (args) => {
+    additionalArguments: (args, ffmpeg) => {
         if(typeof args != `string`) return [];
         //if(!args || typeof args != `object` || typeof args.length != `number`) args = [];
 
         const returnArgs = [];
 
-        const yargsResult = yargs(args).argv
+        const yargsResult = yargs(ffmpeg ? args.replace(/-(\w+)/g, '--$1') : args).argv
 
         const parsed = Object.entries(yargsResult)
 
         parsed.filter(o => o[1]).forEach((o, i) => {
             if(o[0] != `$0` && o[0] != `_` && o[0].toLowerCase() == o[0]) {
-                const str = [`--${o[0]}`, `${o[1]}`];
-                //console.log(str, o[0], o[1])
+                const str = [ (ffmpeg ? `-` : `--`) + `${o[0]}` ];
+                if(typeof o[1] != `boolean`) str.push(`${o[1]}`);
+
+                console.log(str, typeof o[0], typeof o[1])
+
                 returnArgs.push(...str)
             }
         });
@@ -2044,7 +2047,7 @@ module.exports = {
 
                     console.log(inputArgs)
 
-                    if(typeof convert.additionalInputArgs == `string`) {
+                    /*if(typeof convert.additionalInputArgs == `string`) {
                         const yargsResult = yargs(convert.additionalInputArgs.replace(/-(\w+)/g, '--$1')).argv
                 
                         const parsed = Object.entries(yargsResult);
@@ -2058,7 +2061,9 @@ module.exports = {
                                 convert.additionalInputArgs.push(...str)
                             }
                         });
-                    }
+                    }*/
+
+                    if(typeof convert.additionalInputArgs == `string`) convert.additionalInputArgs = module.exports.additionalArguments(convert.additionalInputArgs, true);
 
                     if(convert.additionalInputArgs) inputArgs.unshift(...convert.additionalInputArgs);
 
@@ -2159,7 +2164,7 @@ module.exports = {
                         console.log(`(invalid videoResolution) provided: ${convert.videoResolution}; test: ${numRegex.test(convert.videoResolution)}`)
                     }
 
-                    if(typeof convert.additionalOutputArgs == `string`) {
+                    /*if(typeof convert.additionalOutputArgs == `string`) {
                         const yargsResult = yargs(convert.additionalOutputArgs.replace(/-(\w+)/g, '--$1')).argv
                 
                         const parsed = Object.entries(yargsResult);
@@ -2173,7 +2178,9 @@ module.exports = {
                                 convert.additionalOutputArgs.push(...str)
                             }
                         });
-                    }
+                    }*/
+
+                    if(typeof convert.additionalOutputArgs == `string`) convert.additionalOutputArgs = module.exports.additionalArguments(convert.additionalOutputArgs, true);
 
                     if(convert.additionalOutputArgs) outputArgs.unshift(...convert.additionalOutputArgs);
 
@@ -2394,15 +2401,21 @@ module.exports = {
                                 } else {
                                     const lastLog = allLogs.split(`\n`).filter(Boolean).slice(-1)[0];
 
+                                    let str = [];
+
                                     if(lastLog) {
                                         console.log(`lastLog: ${lastLog.trim()}`)
     
                                         if(lastLog.includes(`:`)) {
-                                            rej(`${lastLog.split(`:`).slice(-1)[0]}`.trim())
+                                            str.push(`${lastLog.split(`:`).slice(-1)[0]}`.trim())
                                         } else {
-                                            rej(lastLog.trim())
+                                            str.push(lastLog.trim())
                                         }
-                                    } else rej(`unknown err (${code})`)
+                                    } else str.push(`unknown err (${code})`)
+
+                                    str.push(`\n\n-- FULL LOGS --\n\n| ${allLogs.split(`\n`).join(`\n| `)}`);
+
+                                    rej(str.join(``))
                                 }
                             }
                         })
