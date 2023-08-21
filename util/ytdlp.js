@@ -2399,23 +2399,21 @@ module.exports = {
                                 if(allLogs.includes(`Press [q] to stop, [?] for help`)) {
                                     rej(allLogs.split(`Press [q] to stop, [?] for help`)[1].trim());
                                 } else {
-                                    const lastLog = allLogs.split(`\n`).filter(Boolean).slice(-1)[0];
-
-                                    let str = [];
-
-                                    if(lastLog) {
-                                        console.log(`lastLog: ${lastLog.trim()}`)
+                                    if(allLogs.split(`\n`).find(s => s.trim().startsWith(`[`))) {
+                                        rej(allLogs.split(`\n`).find(s => s.trim().startsWith(`[`)).trim())
+                                    } else {
+                                        const lastLog = allLogs.split(`\n`).filter(Boolean).slice(-1)[0];
     
-                                        if(lastLog.includes(`:`)) {
-                                            str.push(`${lastLog.split(`:`).slice(-1)[0]}`.trim())
-                                        } else {
-                                            str.push(lastLog.trim())
-                                        }
-                                    } else str.push(`unknown err (${code})`)
-
-                                    str.push(`\n\n-- FULL LOGS --\n\n| ${allLogs.split(`\n`).join(`\n| `)}`);
-
-                                    rej(str.join(``))
+                                        if(lastLog) {
+                                            console.log(`lastLog: ${lastLog.trim()}`)
+        
+                                            if(lastLog.includes(`:`)) {
+                                                rej(`${lastLog.split(`:`).slice(-1)[0]}`.trim())
+                                            } else {
+                                                rej(lastLog.trim())
+                                            }
+                                        } else rej(`unknown err (${code})`)
+                                    }
                                 }
                             }
                         })
