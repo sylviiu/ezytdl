@@ -122,31 +122,27 @@ module.exports = async () => new Promise(async res => {
                 }).then(async () => {
                     console.log(`done!`);
 
-                    const extractor = require(`unzipper`).Extract({
-                        path: downloadPath
-                    });
+                    const zip = new require(`adm-zip`)(downloadPath + `.zip`);
 
-                    fs.createReadStream(saveTo).pipe(extractor);
+                    zip.extractAllTo(downloadPath, true);
+                    
+                    if(await pfs.existsSync(downloadPath + `.zip`)) await pfs.rmSync(downloadPath + `.zip`)
 
-                    extractor.on(`close`, async () => {
-                        if(await pfs.existsSync(downloadPath + `.zip`)) await pfs.rmSync(downloadPath + `.zip`)
+                    console.log(`CHMOD ${path}`)
 
-                        console.log(`CHMOD ${path}`)
-    
-                        if(!process.platform.toLowerCase().includes(`win32`)) {
-                            try {
-                                require(`child_process`).execFileSync(`chmod`, [`+x`, path])
-                            } catch(e) {
-                                await pfs.chmodSync(path, 0o777)
-                            }
-                        };
-                        
-                        ws.send({ progress: 1, version: versionStr });
+                    if(!process.platform.toLowerCase().includes(`win32`)) {
+                        try {
+                            require(`child_process`).execFileSync(`chmod`, [`+x`, path])
+                        } catch(e) {
+                            await pfs.chmodSync(path, 0o777)
+                        }
+                    };
+                    
+                    ws.send({ progress: 1, version: versionStr });
 
-                        require(`../fetchLatestVersion/pybridge`)(true);
-    
-                        ws.close()
-                    });
+                    require(`../fetchLatestVersion/pybridge`)(true);
+
+                    ws.close()
                 })
             }
         }
