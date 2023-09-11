@@ -12,7 +12,7 @@
     "string-similarity": "^4.0.4",
     "superagent": "^8.1.2",
     "which": "^3.0.1",
-    "ws": "^8.13.0",
+    "ws": "^8.14.1",
     "yargs": "^17.7.2"
   },
   "scripts": {
