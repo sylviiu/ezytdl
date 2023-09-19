@@ -41,7 +41,7 @@
     "color-scheme": "^1.0.1",
     "electron": "^26.2.1",
     "electron-builder": "^24.6.3",
-    "sharp": "^0.32.5",
+    "sharp": "^0.32.6",
     "showdown": "^2.1.0",
     "tinycolor2": "^1.6.0",
     "uglify-js": "^3.17.4"
