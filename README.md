@@ -2,12 +2,23 @@
   <img src="https://raw.githubusercontent.com/sylviiu/ezytdl/main/.github/heading.png" height="128px"/><br>
   <img src="https://github.com/sylviiu/ezytdl/actions/workflows/test-win.yml/badge.svg"/>
   <img src="https://github.com/sylviiu/ezytdl/actions/workflows/test-mac.yml/badge.svg"/>
-  <img src="https://github.com/sylviiu/ezytdl/actions/workflows/test-linux.yml/badge.svg"/>
+  <img src="https://github.com/sylviiu/ezytdl/actions/workflows/test-linux.yml/badge.svg"/><br><br>
+  <img src="https://raw.githubusercontent.com/sylviiu/ezytdl/main/.github/ezytdl-intro.gif">
 </h1>
 
-Advanced electron-based frontend for yt-dlp.
+## What is this?
 
-![Sequence 02_2-min](https://raw.githubusercontent.com/sylviiu/ezytdl/main/.github/ezytdl-intro.gif)
+**ezytdl** is an application that leverages yt-dlp and FFmpeg to provide a simple, easy-to-use interface for downloading videos from YouTube, Twitch, SoundCloud, and various other sites. It is built using [Electron](https://www.electronjs.org/), and is available for Windows, MacOS, and Linux.
+
+-----
+
+## Okay, a yt-dlp frontend, that's been done *many* times. How is this different from other ones?
+
+- **Speed:** I've created a custom [python script](https://github.com/sylviiu/ytdlp-pybridge/) that acts as a bridge between the yt-dlp executable and the Electron app, [which allows for a much faster startup time than other yt-dlp frontends.](https://github.com/sylviiu/ezytdl/issues/51#issuecomment-1686556643)
+- **Compatibility:** ezytdl is built using [Electron](https://www.electronjs.org/), which provides a cross-platform framework for building desktop applications. This means that ezytdl is available for Windows, MacOS, and Linux, and will work on all of them.
+- **Feature Rich:** ezytdl gives you the ability to utilize yt-dlp in any way you wish, and also leverages FFmpeg in more ways than one. Aside from being able to download the highest quality media a service provides and merge using FFmpeg, ezytdl also provides an easy interface to convert media you already have on your system!
+
+...and more which [softpedia detailed in their review of this app!](https://www.softpedia.com/get/Internet/Download-Managers/ezytdl.shtml)<br><sub>*Thank you Robert Condorache!*</sub>
 
 -----
 
