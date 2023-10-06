@@ -1302,7 +1302,11 @@ module.exports = {
             return thisFormat;
         }
     },
-    download: ({url, format, ext, convert, filePath, addMetadata, info, extraArguments}, updateFunc) => new Promise(async resolve => {
+    download: (opt, updateFunc) => new Promise(async resolve => {
+        //const originalOpt = { ...opt };
+
+        let { url, format, ext, convert, filePath, addMetadata, info, extraArguments } = opt;
+
         const startedDownloadMS = Date.now();
 
         const temporaryFilename = `ezytdl-` + idGen(24);
@@ -1463,7 +1467,7 @@ module.exports = {
 
             console.log(`format: ${format} / ext: ${ext}`);
 
-            const originalFilteredFormat = format;
+            const originalFilteredFormat = { ...format };
 
             thisFormat = getFormat({info, originalFilteredFormat, ext});
 
@@ -2694,9 +2698,12 @@ module.exports = {
             console.log(`--- DOWNLOADING FORMAT (${format}) ---\n`);
 
             const originalFormatObj = thisFormat;
+            const convertExists = convert && typeof convert == `object` && Object.keys(convert).filter(s => convert[s]).length;
 
             const runYtdlp = async () => {
-                thisFormat = getFormat({info, originalFilteredFormat, ext}) || originalFormatObj;
+                if(!convertExists) convert = {};
+
+                thisFormat = originalFormatObj || getFormat({info, format: originalFilteredFormat, ext});
 
                 args = [`-f`, format, url, `-o`, require(`path`).join(saveTo, temporaryFilename) + `.%(ext)s`, `--no-mtime`, ...additionalArgs];
 
@@ -2949,9 +2956,7 @@ module.exports = {
                 console.log(`running raw conversion -- inputArgs`, inputArgs, `outputArgs`, outputArgs)
 
                 runThroughFFmpeg(0, inputArgs, outputArgs, [{ url, local: true }], null, `local file conversion`).then(res);
-            } else if(downloadWithFFmpeg && ffmpegExists && (convert || originalFormat == `bv*+ba/b` || (thisFormat && thisFormat.url))) {
-                const convertExists = convert && Object.keys(convert).filter(s => convert[s]).length > 0;
-
+            } else if(downloadWithFFmpeg && ffmpegExists && (convert || (originalFormat == `bv*+ba/b` || (thisFormat && thisFormat.url)))) {
                 try {
                     await fetchFullInfo(`Getting original format (streaming with FFmpeg)...`);
     
@@ -3028,8 +3033,6 @@ module.exports = {
                     return runYtdlp();
                 } catch(e) {
                     console.error(`failed to download with FFmpeg (at root):`, e);
-
-                    if(!convertExists) convert = {};
 
                     return runYtdlp();
                 }

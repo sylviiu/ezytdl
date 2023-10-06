@@ -60,6 +60,8 @@ const sorters = {
 };
 
 module.exports = function sort(useFilter=[ `audio`, `video` ]) {
+    if(!Array.isArray(useFilter)) useFilter = [ useFilter ];
+
     const sorters2 = {};
 
     console.log(`ytdlpQualitySorters using filter`, useFilter)
