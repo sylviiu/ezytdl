@@ -203,7 +203,7 @@ contextBridge.exposeInMainWorld(`mainQueue`, {
     search: (query) => invoke(`search`, query),
     download: (obj) => send(`download`, obj),
     action: (obj) => send(`queueAction`, obj),
-    openDir: (id) => send(`openDir`, id),
+    openDir: (id) => invoke(`openDir`, id),
     deleteFiles: (id) => send(`deleteFiles`, id),
     refreshUpdates: () => send(`refreshDownloadStatuses`),
     formatStatusUpdate: (callback) => on(`formatStatusUpdate`, (_e, obj) => callback(obj)),

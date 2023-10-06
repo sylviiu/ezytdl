@@ -125,8 +125,10 @@ var initDownloadManager = (force) => {
                     //card.querySelector(`#formatDownload`).onclick = () => mainQueue.action({ action: `remove`, id: card.id.split(`-`)[1] })
                     
                     card.querySelector(`#formatDownload`).onclick = () => {
-                        mainQueue.openDir(card.id.split(`-`)[1]);
-                        mainQueue.action({ action: `remove`, id: card.id.split(`-`)[1] });
+                        mainQueue.openDir(card.id.split(`-`)[1]).then(response => {
+                            console.log(`openDir response:`, response)
+                            mainQueue.action({ action: `remove`, id: card.id.split(`-`)[1] });
+                        })
                     };
 
                     if(o.status.failed) {
