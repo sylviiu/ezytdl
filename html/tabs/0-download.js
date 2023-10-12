@@ -210,7 +210,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                             });
                         }
                     
-                        if(config.reduceAnimations) {
+                        if(config.animations.reduceAnimations) {
                             if(removeListbox && container.querySelector(`#listbox`)) {
                                 anime({
                                     targets: container.querySelector(`#listbox`),
@@ -227,7 +227,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                             growUrlBox();
                         }
                     
-                        if(config.disableAnimations) {
+                        if(config.animations.disableAnimations) {
                             wavesAnims.fadeIn();
                         } else setTimeout(() => wavesAnims.fadeIn(), duration/10)
                     });
@@ -262,7 +262,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
         
                     mainInput.enable();
                     
-                    if(config.disableAnimations) {
+                    if(config.animations.disableAnimations) {
                         input.value = url;
                         runSearch(input.value, `Fetching info...`, `getInfo`)
                     } else {
@@ -1118,7 +1118,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                         }
                     });
         
-                    if(!config.reduceAnimations && !config.disableAnimations) listboxParent.appendChild(listbox);
+                    if(!config.animations.reduceAnimations && !config.animations.disableAnimations) listboxParent.appendChild(listbox);
         
                     if(typeof parseProgress != `undefined` && parseProgress) {
                         parseProgress.remove();

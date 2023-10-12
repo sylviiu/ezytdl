@@ -177,7 +177,7 @@ var startDownload = (originalCard, opt) => {
 
     opt.extraArguments = document.getElementById(`extraArguments`) ? document.getElementById(`extraArguments`).value : ``;
 
-    if(config.reduceAnimations) {
+    if(config.animations.reduceAnimations) {
         mainQueue.download(opt);
         anime({
             targets: originalCard.children || originalCard,
@@ -188,7 +188,7 @@ var startDownload = (originalCard, opt) => {
                 if(originalCard.parentNode) originalCard.parentNode.removeChild(originalCard);
             }
         })
-    } else if(config.disableAnimations) {
+    } else if(config.animations.disableAnimations) {
         mainQueue.download(opt);
         if(originalCard.parentNode) originalCard.parentNode.removeChild(originalCard);
     } else {

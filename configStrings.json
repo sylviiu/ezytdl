@@ -3,7 +3,11 @@
     "outputFilename": "File Name Format",
     "browserConnector": "Enable Browser Connector",
     "proxy": "Proxy",
-    "downloadWithFFmpeg": "Allow Downloading with FFmpeg",
+    "ffmpegDownloading": "Allow Downloading with FFmpeg",
+    "ffmpegDownloadingExtended": {
+        "whenConverting": "When converting media",
+        "whenDownloading": "When only downloading media"
+    },
     "downloadFolders": "Create Subfolders",
     "downloadFoldersExtended": {
         "website": "Website Name",
@@ -12,8 +16,11 @@
     "downloadFromClipboard": "Allow Checking Clipboard for URLs",
     "checkForUpdates": "Check for Updates",
     "updateCheckDaysInterval": "Update Check Interval (Days)",
-    "reduceAnimations": "Reduce Animations",
-    "disableAnimations": "Disable All Animations",
+    "animations": "Animation Options",
+    "animationsExtended": {
+        "reduceAnimations": "Reduce Animations",
+        "disableAnimations": "Disable All Animations"
+    },
     "theme": "Theme",
     "font": "System Font",
     "lastMediaConversionOutputs": "Default Media Conversion",

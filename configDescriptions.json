@@ -3,7 +3,11 @@
     "outputFilename": "Change the format of the output filename. You can find the full list of fields at [yt-dlp's README](https://github.com/yt-dlp/yt-dlp#output-template)",
     "browserConnector": "When enabled, ezytdl will allow the [ezytdl browser connector](https://github.com/sylviiu/ezytdl-browser-connector) extension to connect to the app. This is useful if you want to download media from websites that offer authwalled features, such as YouTube's \"Enhanced Bitrate\" feature",
     "proxy": "Set the proxy to use when downloading media.\n\n**NOTE:** This will only work if yt-dlp supports the proxy type you are using. You can find a list of supported proxy types at [yt-dlp's README](https://github.com/yt-dlp/yt-dlp/#network-options)",
-    "downloadWithFFmpeg": "When enabled, ezytdl will download media using FFmpeg instead of yt-dlp, even when not converting any media.\n\nWhen downloading the best quality media, this will make the destination file's quality MUCH higher on certain platforms (e.g. YouTube), but please note that downloading with FFmpeg may end up being slower than downloading with yt-dlp, as it would likely be downloading multiple streams at once.\n\n**NOTE:** This option will have no effect if FFmpeg is not found on your system.",
+    "ffmpegDownloading": "When enabled, ezytdl will download media using FFmpeg instead of yt-dlp, even when not converting any media.\n\nWhen downloading the best quality media, this will make the destination file's quality MUCH higher on certain platforms (e.g. YouTube), but please note that downloading with FFmpeg may end up being slower than downloading with yt-dlp, as it would likely be downloading multiple streams at once.\n\n**NOTE:** This option will have no effect if FFmpeg is not found on your system.\n\n**NOTE:** If any options are enabled here, FFmpeg will be utilized to download \"Full Quality\" media.",
+    "ffmpegDownloadingExtended": {
+        "whenConverting": "This will allow FFmpeg to stream the original source file from the internet, and convert it to the desired format. This is useful if you want to download a segment of a media file, or if you want to download a media file in a different format than the original source file.",
+        "whenDownloading": "This will allow FFmpeg to download media from the internet. This may be marginally faster, since FFmpeg downloads the cached metadata for media and does not fetch metadata on each download"
+    },
     "downloadFolders": "Save downloaded media to a folder based on the media's metadata. This is useful if you want to organize your media files.",
     "downloadFoldersExtended": {
         "website": "The domain of the website the media is from. (e.g., media from YouTube or YouTube Music saves in `youtube.com`)",
@@ -12,8 +16,11 @@
     "downloadFromClipboard": "When enabled, ezytdl will automatically prompt you to download media from your clipboard when it detects a valid URL.",
     "checkForUpdates": "Each setting here controls what parts of ezytdl will have updates checked for. If you want to disable all auto update checking, disable all of these settings.",
     "updateCheckDaysInterval": "Set the amount of days between each update check. This is useful if you want to reduce the amount of times ezytdl checks for updates.",
-    "reduceAnimations": "Remove some animations that may perform poorly on some systems.",
-    "disableAnimations": "Disables all of the animations in the app (in a crude manner). This will not disable smaller things like progress bars, but is still useful if you want to reduce the amount of resources ezytdl uses, though reducing the animations should have a similar effect.",
+    "animations": "Options related to animations in ezytdl.",
+    "animationsExtended": {
+        "reduceAnimations": "Remove some animations that may perform poorly on some systems.",
+        "disableAnimations": "Disables all of the animations in the app (in a crude manner). This will not disable smaller things like progress bars, but is still useful if you want to reduce the amount of resources ezytdl uses, though reducing the animations should have a similar effect."
+    },
     "theme": "Set the theme of ezytdl.\n\n**OPTIONS:**\n- `system`: Use your operating system's theme.\n- `light`: Use the light theme.\n- `dark`: Use the dark theme.",
     "font": "Set the font of ezytdl.\n\n**NOTE:** This will only work if the font is installed on your system.",
     "lastMediaConversionOutputs": "Set the format ezytdl should convert media files to.",

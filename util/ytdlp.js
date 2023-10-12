@@ -13,6 +13,7 @@ const qualitySorter = require(`./ytdlpUtil/qualitySorter`);
 const { filterHeaders } = require(`./ytdlpUtil/headers`);
 const durationCurve = require(`./durationCurve`);
 const recursiveAssign = require(`./recursiveAssign`);
+const anyIsTrue = require(`./anyIsTrue`);
 
 const sortByQuality = (a, b) => {
     let retVal = 0;
@@ -1451,7 +1452,7 @@ module.exports = {
 
             const currentConfig = await require(`../getConfig`)();
 
-            const { disableHWAcceleratedConversion, outputFilename, hardwareAcceleratedConversion, advanced, downloadWithFFmpeg, proxy } = currentConfig;
+            const { disableHWAcceleratedConversion, outputFilename, hardwareAcceleratedConversion, advanced, ffmpegDownloading, proxy } = currentConfig;
 
             //console.log(`download started! (url: ${url})`, info)
 
@@ -2940,7 +2941,7 @@ module.exports = {
                 })
             }
 
-            console.log(`downloadWithFFmpeg: `, downloadWithFFmpeg, `ffmpegExists: `, ffmpegExists, `convert: `, convert, `originalFormat: `, originalFormat, `thisFormat: `, thisFormat, `ytdlpSaveExt: `, ytdlpSaveExt, `ext: `, ext)
+            console.log(`downloadWithFFmpeg: `, ffmpegDownloading, `ffmpegExists: `, ffmpegExists, `convert: `, convert, `originalFormat: `, originalFormat, `thisFormat: `, thisFormat, `ytdlpSaveExt: `, ytdlpSaveExt, `ext: `, ext)
 
             if(info._platform == `file`) {
                 if(!ffmpegExists) return resolve(update({ failed: true, status: `FFmpeg was not found on your system -- conversion aborted.` }));
@@ -2956,7 +2957,7 @@ module.exports = {
                 console.log(`running raw conversion -- inputArgs`, inputArgs, `outputArgs`, outputArgs)
 
                 runThroughFFmpeg(0, inputArgs, outputArgs, [{ url, local: true }], null, `local file conversion`).then(res);
-            } else if(downloadWithFFmpeg && ffmpegExists && (convert || (originalFormat == `bv*+ba/b` || (thisFormat && thisFormat.url)))) {
+            } else if(anyIsTrue(ffmpegDownloading) && ffmpegExists && (convert || (originalFormat == `bv*+ba/b` || (ffmpegDownloading.whenDownloading && thisFormat && thisFormat.url)))) {
                 try {
                     await fetchFullInfo(`Getting original format (streaming with FFmpeg)...`);
     

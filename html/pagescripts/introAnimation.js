@@ -58,11 +58,11 @@ ajax.onload = async () => {
         const navigationBar = document.body.querySelector(`#navigationBar`);
         const everythingElse = document.body.querySelectorAll(`body > div:not(#navigationBar)`);
     
-        if(config.disableAnimations) {
+        if(config.animations.disableAnimations) {
             document.body.style.opacity = 1;
             if(!updateBridge) callback();
             res();
-        } else if(config.reduceAnimations) {
+        } else if(config.animations.reduceAnimations) {
             const a = anime({
                 targets: document.body,
                 opacity: [0, 1],

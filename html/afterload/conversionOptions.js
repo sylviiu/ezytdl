@@ -49,7 +49,7 @@ const animateHiddenOptions = (node, ffmpegOptions, {
 
         if(immediate) {
             ffmpegOptions.style.opacity = `100%`;
-        } else if(config.reduceAnimations) {
+        } else if(config.animations.reduceAnimations) {
             anime({
                 targets: ffmpegOptions,
                 opacity: [`0%`, `100%`],
@@ -77,7 +77,7 @@ const animateHiddenOptions = (node, ffmpegOptions, {
             ffmpegOptions.style.opacity = `0%`;
             if(!ffmpegOptions.classList.contains(`d-none`)) ffmpegOptions.classList.add(`d-none`);
             if(ffmpegOptions.resetSelection) ffmpegOptions.resetSelection();
-        } else if(config.reduceAnimations) {
+        } else if(config.animations.reduceAnimations) {
             ffmpegOptions.style.maxHeight = `0px`;
             anime({
                 targets: ffmpegOptions,

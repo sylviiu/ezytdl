@@ -3,7 +3,10 @@
     "outputFilename": "[ %(webpage_url_domain)s ] %(format_id)s - %(title)s",
     "browserConnector": false,
     "proxy": "",
-    "downloadWithFFmpeg": true,
+    "ffmpegDownloading": {
+        "whenConverting": true,
+        "whenDownloading": false
+    },
     "downloadFolders": {
         "website": true,
         "artist": false
@@ -11,8 +14,10 @@
     "downloadFromClipboard": false,
     "checkForUpdates": {},
     "updateCheckDaysInterval": 1,
-    "reduceAnimations": false,
-    "disableAnimations": false,
+    "animations": {
+        "reduceAnimations": false,
+        "disableAnimations": false
+    },
     "theme": "system",
     "font": "Alata",
     "lastMediaConversionOutputs": {

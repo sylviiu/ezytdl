@@ -9,7 +9,7 @@ if(typeof rawAnimeFunc == `undefined`) {
 }
 
 var disableAnimations = () => {
-    if(typeof config == `object` && config.disableAnimations) {
+    if(typeof config == `object` && config.animations.disableAnimations) {
         console.log(`Disabling animations (crudely)`)
     
         anime = (obj) => {

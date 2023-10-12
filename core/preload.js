@@ -219,6 +219,7 @@ contextBridge.exposeInMainWorld(`changelog`, {
 
 contextBridge.exposeInMainWorld(`util`, {
     time: require(`../util/time`),
+    anyIsTrue: require(`../util/anyIsTrue`),
 })
 
 window.onerror = (msg, url, line, col, error) => send(`uiError`, { msg, url, line, col, error });
