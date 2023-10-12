@@ -2004,16 +2004,16 @@ module.exports = {
                         if(convert.trimFrom) {
                             seekArgs[0] = convert.trimFrom;
                             const ms = time(convert.trimFrom).units.ms;
-                            seek.push(Math.ceil(ms/1000));
+                            seek.push((ms/1000).toFixed(3));
                             totalDuration[0] = ms;
                         } else seek.push(0);
     
                         if(convert.trimTo) {
                             seekArgs[1] = convert.trimTo;
                             const ms = time(convert.trimTo).units.ms;
-                            seek.push(Math.ceil(ms/1000))
+                            seek.push((ms/1000).toFixed(3))
                             totalDuration[1] = ms;
-                        } else seek.push(Math.ceil(info.duration.units.ms/1000));
+                        } else seek.push((info.duration.units.ms/1000).toFixed(3));
     
                         totalTrimmedDuration = Math.max(0, (totalDuration[1] ? totalDuration[1] - totalDuration[0] : null));
     
@@ -2022,6 +2022,7 @@ module.exports = {
                             ytdlpFilename = ytdlpFilename.trim() + `.trimmed (${seek[0]}-${seek[1]})`;
                         }
                     };
+                    
                     const localCount = useFile ? useFile.filter(o => o.local).length : temporaryFiles.length;
                     const onlineCount = useFile ? useFile.filter(o => !o.local).length : 0;
 

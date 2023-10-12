@@ -396,6 +396,9 @@ const setupConvertDownload = (node, info, colorScheme) => {
             noEntries: (typeof info.entry_number == `number` ? true : (info.entries ? false : true)),
             duration: info.duration ? true : false,
             durationTimestamp: info.duration ? info.duration.timestamp != `--:--` : false,
+        }, timeOpts = {
+            allowZero: true,
+            allowMS: true,
         }
 
         const showOptions = (Object.values(params).filter(o => o).length == Object.keys(params).length) ? true : false;
@@ -422,16 +425,22 @@ const setupConvertDownload = (node, info, colorScheme) => {
 
                 const useValue = typeof value == `string` && Number(value) && !value.includes(`:`) ? `00:${value}` : value;
     
-                const time = util.time(useValue, null, {allowZero: true})
+                let time = util.time(useValue, null, timeOpts);
+
+                if(time.units.ms > info.duration.units.ms) {
+                    time = util.time(info.duration.units.ms, null, timeOpts);
+                } else if(time.units.ms < 0) {
+                    time = util.time(0, null, timeOpts);
+                }
     
-                if(source == `from` && (time.units.ms/1000)+1 > Number(trimTo.value)) {
+                if(source == `from` && time.units.ms > Number(trimTo.value)) {
                     setRange(trimTo.value);
-                    if(input) input.value = util.time((Number(trimTo.value)-1)*1000, null, {allowZero: true}).timestamp;
-                } else if(source == `to` && (time.units.ms/1000)-1 < Number(trimFrom.value)) {
+                    if(input) input.value = util.time(Number(trimTo.value), null, timeOpts).timestamp;
+                } else if(source == `to` && (time.units.ms) < Number(trimFrom.value)) {
                     if(range) setRange(trimFrom.value);
-                    if(input) input.value = util.time((Number(trimFrom.value)+1)*1000, null, {allowZero: true}).timestamp;
+                    if(input) input.value = util.time(Number(trimFrom.value), null, timeOpts).timestamp;
                 } else {
-                    if(range) setRange(time.units.ms/1000);
+                    if(range) setRange(time.units.ms);
                     if(input) input.value = time.timestamp;
                 }
             };
@@ -456,20 +465,20 @@ const setupConvertDownload = (node, info, colorScheme) => {
                 trimTo.style.width = targetWidth;
                 node.querySelector(`#trimContainer`).style.width = targetWidth;
             }
-        
-            trimFrom.oninput = () => modifyInput(trimFrom, trimFromInput, `from`, Number(trimFrom.value)*1000);
-            trimTo.oninput = () => modifyInput(trimTo, trimToInput, `to`, Number(trimTo.value)*1000);
+
+            trimFrom.oninput = () => modifyInput(trimFrom, trimFromInput, `from`, Number(trimFrom.value));
+            trimTo.oninput = () => modifyInput(trimTo, trimToInput, `to`, Number(trimTo.value));
     
             trimFromInput.oninput = () => modifyInput(trimFrom, null, `from`, trimFromInput.value, true);
             trimToInput.oninput = () => modifyInput(trimTo, null, `to`, trimToInput.value, true);
             trimFromInput.onblur = () => modifyInput(trimFrom, trimFromInput, `from`, trimFromInput.value, true);
             trimToInput.onblur = () => modifyInput(trimTo, trimToInput, `to`, trimToInput.value, true);
     
-            trimFrom.max = Math.ceil(info.duration.units.ms/1000);
+            trimFrom.max = (info.duration.units.ms);
             modifyInput(trimFrom, trimFromInput, `from`, 0, true);
     
-            trimTo.max = Math.ceil(info.duration.units.ms/1000);
-            modifyInput(trimTo, trimToInput, `to`, (Math.ceil(info.duration.units.ms/1000))*1000, true);
+            trimTo.max = (info.duration.units.ms);
+            modifyInput(trimTo, trimToInput, `to`, Number(info.duration.units.ms), true);
     
             info.trim = {};
 
