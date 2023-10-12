@@ -2702,7 +2702,7 @@ module.exports = {
             const convertExists = convert && typeof convert == `object` && Object.keys(convert).filter(s => convert[s]).length;
 
             const runYtdlp = async () => {
-                if(!convertExists) convert = {};
+                if(!convertExists) convert = null;
 
                 thisFormat = originalFormatObj || getFormat({info, format: originalFilteredFormat, ext});
 

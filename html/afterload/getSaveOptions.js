@@ -48,10 +48,12 @@ const getSaveOptions = (node, info, overrideDownloadObj, {
         addMetadata[m.id] = active
     });
 
-    console.log(`addMetadata`, addMetadata)
+    console.log(`addMetadata`, addMetadata);
+
+    let value = null;
 
     if(info.entries) {
-        return {
+        value = {
             entries: info.entries.filter(e => !e.entries).map(e => Object.assign({}, {
                 url: e.webpage_url || e.url,
                 ext: convert ? null : formatConversionTextbox.value,
@@ -63,7 +65,7 @@ const getSaveOptions = (node, info, overrideDownloadObj, {
             info,
         }
     } else {
-        return Object.assign({}, {
+        value = Object.assign({}, {
             url: info.webpage_url || info.url,
             ext: convert ? null : formatConversionTextbox.value,
             format: info.format_id || (info.formats && info.formats[0] ? info.formats[0].format_id : null),
@@ -72,5 +74,9 @@ const getSaveOptions = (node, info, overrideDownloadObj, {
             addMetadata,
             info: info
         }, overrideDownloadObj && typeof overrideDownloadObj == `object` ? overrideDownloadObj : {});
-    }
+    };
+
+    console.log(`value`, value);
+    
+    return value;
 }
