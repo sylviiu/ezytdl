@@ -10,4 +10,5 @@ build-*.json
 minified.js
 html/assets/fonts/
 html/assets/css/Alata.css
+html/assets/bootstrap/
 res/trayIcons/
