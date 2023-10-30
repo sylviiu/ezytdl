@@ -72,8 +72,7 @@ module.exports = (configObject, opts={}) => {
         console.log(`[config / ${key} / ext ${extendedKey.length}] config object passed! clearing cache...`)
         configCache.clear();
     } else if(configObject) {
-        console.log(`[config / ${key} / ext ${extendedKey.length}] config object passed! not clearing cache, but removing previous entries for this file...`);
-        configCache.delete(key);
+        console.log(`[config / ${key} / ext ${extendedKey.length}] config object passed! not clearing cache...`);
     } else console.log(`[config / ${key} / ext ${extendedKey.length}] config not cached! creating...`);
 
     const promise = new Promise(async res => {
@@ -191,6 +190,8 @@ module.exports = (configObject, opts={}) => {
             };
             
             if(configObject) {
+                configCache.delete(key);
+
                 const config = JSON.parse(await pfs.readFileSync(`${global.configPath}/${target}`));
     
                 const checkedConfig = checkKeys(`> `, `updated config object`, configObject, defaultConfig, false, false);
@@ -232,7 +233,7 @@ module.exports = (configObject, opts={}) => {
                 })
             };
 
-            const existingKey = configCache.get(key), append = {
+            const existingKey = (configCache.get(key)), append = {
                 [extendedKey]: userConfig
             }
 

@@ -20,7 +20,8 @@ dialog.get().then(content => {
     
     if(content.inputs) content.inputs.forEach(inputContent => {
         const inp = input.cloneNode(true);
-        inp.placeholder = inputContent.text;
+        if(inputContent.text) inp.placeholder = inputContent.text;
+        if(inputContent.value) inp.value = inputContent.value;
         if(inputContent.id) inp.id = inputContent.id;
     
         inp.classList.remove(`d-none`)
