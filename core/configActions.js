@@ -137,7 +137,6 @@ module.exports = (config) => ({
                         ...entries.map(([ id, preset ]) => ({
                             text: `<span>${preset.name || `(no name)`}</span><br><span style="font-size: 0.8em; color: #aaa;">${preset.description || `(no description)`}</span>`,
                             id: id,
-                            primary: true,
                         }))
                     ]
                 });
