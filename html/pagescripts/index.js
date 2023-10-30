@@ -45,7 +45,8 @@ const formatCardComputed = window.getComputedStyle(_temporaryFormatCard);
 const innerFormatCardStyle = _temporaryFormatCard.querySelector(`#innerFormatCard`).style;
 document.body.removeChild(_temporaryFormatCard);
             
-const { waves, setWavesColor } = generateWaves();
+const wavesController = generateWaves();
+const { waves, setWavesColor } = wavesController;
 
 waves.style.opacity = 0;
 
