@@ -138,10 +138,14 @@ const generateWaves = (color) => {
         },
         timeline,
         pauseWaves: (duration=1250) => {
-            timeline.setSpeed(0, { duration, easing: `linear` });
+            if(duration == 0 || config.animations.disableAnimations) {
+                timeline.speed = 0;
+            } else timeline.setSpeed(0, { duration, easing: `linear` });
         },
         resumeWaves: (duration=1250) => {
-            timeline.setSpeed(1, { duration, easing: `easeOutCirc` });
+            if(duration == 0 || config.animations.disableAnimations) {
+                timeline.speed = 1;
+            } else timeline.setSpeed(1, { duration, easing: `easeOutCirc` });
         }
     };
 
