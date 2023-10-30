@@ -19,13 +19,13 @@ const popoutButtons = createPopout({
                     headingText: `Config updated!`,
                     bodyText: `The configuration has been updated. The changes will take effect next search / info retrieval.`,
                 })
-        
-                config = newConf;
+
                 previousConfig = Object.assign({}, newConf || {});
             } else {
                 console.log(`config has NOT changed.`)
             }
 
+            config = newConf;
             postConfigHooks.forEach(h => h(newConf));
         });
     }

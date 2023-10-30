@@ -25,48 +25,72 @@ const postConfigExtensions = (userConfig) => new Promise(async res => {
 
 const configCache = new Map();
 
-module.exports = (configObject, {
-    source=`./defaultConfig.json`,
-    target=`config.json`,
-    allowNonexistentRemoval=true,
-    allowChangedDefaults=true,
-    waitForPromise=true,
-    values=false,
-    clearConfigCache=true,
-}={}) => {
+const defaultOpts = {
+    source: `./defaultConfig.json`,
+    target: `config.json`,
+    allowNonexistentRemoval: true,
+    allowChangedDefaults: true,
+    labelDefaults: false,
+    waitForPromise: true,
+    values: false,
+    clearConfigCache: true,
+}
+
+module.exports = (configObject, opts={}) => {
+    const useOpts = Object.assign({}, defaultOpts, opts);
+
+    console.log(`[CONFIG / ${useOpts.source}-${useOpts.target}] config requested!`, useOpts);
+
+    let {
+        source=`./defaultConfig.json`,
+        target=`config.json`,
+        allowNonexistentRemoval=true,
+        allowChangedDefaults=true,
+        labelDefaults=false,
+        waitForPromise=true,
+        values=false,
+        clearConfigCache=true,
+    } = useOpts;
+
     const custom = source != `./defaultConfig.json` && target != `config.json` ? true : false;
 
     const key = `${source}-${target}`;
+    const extendedKey = JSON.stringify(Object.entries(useOpts).filter(([k]) => typeof defaultOpts[k] != `undefined`).sort((a, b) => a[0] > b[0] ? 1 : -1).reduce((o, [k, v]) => Object.assign(o, { [k]: v }), {}));
 
-    if(!configObject && configCache.has(key)) {
-        //console.log(`[CONFIG / ${key}] config cached! returning`)
+    if(!configObject && configCache.has(key) && configCache.get(key)[extendedKey]) {
+        console.log(`[CONFIG / ${key} / ext ${extendedKey.length}] config cached! returning`)
+
+        const cached = configCache.get(key)[extendedKey];
+
         if(custom) {
-            return Promise.resolve(configCache.get(key));
+            return Promise.resolve(values ? Object.values(cached) : cached);
         } else {
-            return postConfigExtensions(configCache.get(key));
+            const val = postConfigExtensions(cached);
+            return values ? Object.values(val) : val;
         }
     } else if(configObject && clearConfigCache) {
-        console.log(`[CONFIG / ${key}] config object passed! clearing cache...`)
+        console.log(`[config / ${key} / ext ${extendedKey.length}] config object passed! clearing cache...`)
         configCache.clear();
     } else if(configObject) {
-        console.log(`[CONFIG / ${key}] config object passed! not clearing cache...`)
-    } else console.log(`[CONFIG / ${key}] config not cached! creating...`);
+        console.log(`[config / ${key} / ext ${extendedKey.length}] config object passed! not clearing cache, but removing previous entries for this file...`);
+        configCache.delete(key);
+    } else console.log(`[config / ${key} / ext ${extendedKey.length}] config not cached! creating...`);
 
     const promise = new Promise(async res => {
         const started = Date.now();
 
         if(custom && mainConfigPromise && waitForPromise) {
-            console.log(`[CONFIG / ${key}] waiting for main config to load...`)
+            console.log(`[config / ${key} / ext ${extendedKey.length}] waiting for main config to load...`)
             await mainConfigPromise;
         } else if(custom && mainConfigPromise && !waitForPromise) {
-            console.log(`[CONFIG / ${key}] main config is loading, but waiting for it is disabled!`)
+            console.log(`[config / ${key} / ext ${extendedKey.length}] main config is loading, but waiting for it is disabled!`)
         } else if(custom) {
-            console.log(`[CONFIG / ${key}] main config already loaded!`)
+            console.log(`[config / ${key} / ext ${extendedKey.length}] main config already loaded!`)
         } else {
-            console.log(`[CONFIG / ${key}] loading main config...`)
+            console.log(`[config / ${key} / ext ${extendedKey.length}] loading main config...`)
         };
 
-        console.log(`[CONFIG / ${key}] loading this config... (after ${Date.now() - started}ms)`)
+        console.log(`[config / ${key} / ext ${extendedKey.length}] loading this config... (after ${Date.now() - started}ms)`)
 
         try {
             const defaultConfig = Object.assign({}, require(source));
@@ -89,7 +113,7 @@ module.exports = (configObject, {
                 }
             };
     
-            const checkKeys = (logPrefix, thisKey, config, defaults, addDefaults, removeNonexistent) => {
+            const checkKeys = (logPrefix, thisKey, config, defaults, addDefaults, removeNonexistent, allowLabelDefaults) => {
                 if(removeNonexistent && allowNonexistentRemoval) {
                     for(const key of Object.keys(config)) {
                         if(typeof defaults[key] == 'undefined') {
@@ -146,6 +170,12 @@ module.exports = (configObject, {
                         }
                     }
                 };
+                
+                if(labelDefaults && allowLabelDefaults) {
+                    Object.assign(config, {
+                        _defaults: defaults,
+                    });
+                }
     
                 return config;
             }
@@ -154,8 +184,6 @@ module.exports = (configObject, {
                 const config = JSON.parse(await pfs.readFileSync(`${global.configPath}/${target}`));
     
                 const checkedConfig = checkKeys(`> `, `root config object`, config, defaultConfig, true, true);
-    
-                //console.log(config, checkedConfig)
                 
                 if(checked) {
                     fs.writeFileSync(`${global.configPath}/${target}`, JSON.stringify(checkedConfig, null, 4), { encoding: `utf-8` });
@@ -165,7 +193,7 @@ module.exports = (configObject, {
             if(configObject) {
                 const config = JSON.parse(await pfs.readFileSync(`${global.configPath}/${target}`));
     
-                const checkedConfig = checkKeys(`> `, `updated config object`, configObject, defaultConfig);
+                const checkedConfig = checkKeys(`> `, `updated config object`, configObject, defaultConfig, false, false);
 
                 const resultingConfig = Object.assign({}, config, checkedConfig)
 
@@ -175,8 +203,9 @@ module.exports = (configObject, {
     
                 if(!custom && configObject.alwaysUseLightIcon != undefined) require(`./core/downloadIcon.js`).set();
             };
-    
-            const userConfig = JSON.parse(await pfs.readFileSync(`${global.configPath}/${target}`));
+
+            const value = JSON.parse(await pfs.readFileSync(`${global.configPath}/${target}`));
+            const userConfig = checkKeys(`> `, `final config object`, value, defaultConfig, false, false, true);
 
             if(!custom) {
                 firstCheckDone = true;
@@ -201,17 +230,21 @@ module.exports = (configObject, {
                         }
                     })
                 })
+            };
+
+            const existingKey = configCache.get(key), append = {
+                [extendedKey]: userConfig
             }
-    
-            const returnValue = values ? Object.values(userConfig) : userConfig;
 
-            console.log(`[CONFIG / ${key}] config object created! (after ${Date.now() - started}ms)`)
-    
-            configCache.set(key, returnValue);
+            if(existingKey) {
+                Object.assign(configCache.get(key), append);
+            } else {
+                configCache.set(key, append);
+            }
 
-            console.log(`[CONFIG / ${key}] config cached! (after ${Date.now() - started}ms)`)
+            console.log(`[config / ${key} / ext ${extendedKey.length}] config cached! (${existingKey ? `updated existing entry for key; now has ${Object.keys(existingKey).length} entries` : `created new entry for key`}) (after ${Date.now() - started}ms)`)
 
-            res(returnValue);
+            res(values ? Object.values(userConfig) : userConfig);
         } catch(e) {
             console.error(e);
             errorHandler(e)

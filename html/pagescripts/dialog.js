@@ -31,19 +31,19 @@ dialog.get().then(content => {
     if(content.buttons) content.buttons.forEach(btnContent => {
         const btn = button.cloneNode(true);
         btn.querySelector(`#txt`).innerHTML = btnContent.text;
+        btn.querySelector(`#txt`).style.lineHeight = `13px`;
         btn.onclick = () => dialog.send(str, btnContent.id, content.inputs ? Array.from(document.getElementById(`inputs`).childNodes).filter(f => f.id).map(inp => ({id: inp.id, value: inp.value})) : undefined);
     
         if(btnContent.primary) {
-            btn.style.background = `white`;
-            btn.style.color = `black`;
+            btn.classList.remove(`ez-default`)
+            btn.classList.add(`ez-default2`)
         }
     
         console.log(btnContent);
         
-        if(!btnContent.icon && btnContent.primary) btnContent.icon = `check`;
+        if(!btnContent.icon && btnContent.primary && content.buttons.filter(b => b.primary).length == 1) btnContent.icon = `check`;
     
-        const icon = btn.querySelector(`#${btnContent.icon}`)
-        console.log(btnContent.icon, btnContent.icon, icon, btn.childNodes)
+        const icon = btn.querySelector(`#${btnContent.icon}`);
         if(icon) icon.classList.remove(`d-none`);
     
         document.getElementById(`buttons`).appendChild(btn);
@@ -61,7 +61,9 @@ dialog.get().then(content => {
     }
 
     resize(str).then(() => {
-        resize(str);
+        resize(str).then(() => {
+            console.log(`resizing done`);
+        })
     })
     
     console.log(content)
