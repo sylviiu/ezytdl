@@ -134,11 +134,11 @@ const getFullMetadata = () => new Promise(async res => {
         },
     };
 
-    for(const [name, value] of Object.keys(pkg.dependencies).sort().map(n => [n, pkg.dependencies[n]]).filter(([name]) => !name.toLowerCase().includes(`electron`))) {
+    for(const [name, value] of Object.keys(pkg.dependencies).sort().map(n => [n, pkg.dependencies[n]])) {
         obj.buildInfo.Libraries.app[name] = value.replace(`^`, ``);
     }
 
-    for(const [name, value] of Object.keys(pkg.devDependencies).sort().map(n => [n, pkg.devDependencies[n]]).filter(([name]) => !name.toLowerCase().includes(`electron`))) {
+    for(const [name, value] of Object.keys(pkg.devDependencies).sort().map(n => [n, pkg.devDependencies[n]])) {
         obj.buildInfo.Libraries.src[name] = value.replace(`^`, ``);
     }
 
