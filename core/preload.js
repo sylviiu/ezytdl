@@ -166,7 +166,7 @@ if(!preloadedConfig) invoke(`getConfig`).then(conf => {
     preloadedConfig = conf;
 })
 
-const exposedConfiguration = {
+contextBridge.exposeInMainWorld(`configuration`, {
     action: (name) => invoke(`configAction`, name),
     actionUpdate: (key, cb) => on(`configActionUpdate-${key}`, cb),
     get: (name) => new Promise(async res => {
@@ -179,9 +179,7 @@ const exposedConfiguration = {
     }),
     set: (name, newObj) => invoke(`setConfig`, [name, newObj]),
     hook: (cb) => configHooks.push(cb)
-}
-
-contextBridge.exposeInMainWorld(`configuration`, exposedConfiguration);
+});
 
 contextBridge.exposeInMainWorld(`notifications`, {
     handler: (callback) => on(`notification`, (_e, content) => callback(content)),
@@ -230,6 +228,8 @@ contextBridge.exposeInMainWorld(`preload`, {
     oncomplete: (cb) => script.addEventListener(`load`, cb)
 });
 
+let fa = null;
+
 const scriptsObj = {
     libs: () => new Promise(async res => {
         addScript(`./lib.js`).then(res).catch(async e => {
@@ -272,6 +272,32 @@ const scriptsObj = {
             });
         });
     }),
+    misc: {
+        get fa() {
+            if(!fa) {
+                const files = {
+                    fab: 'fa-brands-400.svg',
+                    far: 'fa-regular-400.svg',
+                    fas: 'fa-solid-900.svg',
+                };
+    
+                for(const file of Object.keys(files)) {
+                    const filedata = fs.readFileSync(require(`path`).join(__dirname, `../html/assets/fonts/${files[file]}`), `utf8`);
+    
+                    const o = document.createElement(`div`);
+                    o.innerHTML = filedata;
+    
+                    console.log(`svg (${file})`, o)
+
+                    files[file] = o.firstElementChild.lastChild.firstElementChild;
+                };
+
+                fa = files;
+            };
+
+            return fa;
+        }
+    },
 }
 
 contextBridge.exposeInMainWorld(`scripts`, scriptsObj);
