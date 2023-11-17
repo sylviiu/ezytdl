@@ -1,5 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
-const fs = require('fs')
+const fs = require('fs');
 
 //console.log(`preload :D`);
 
@@ -271,33 +271,7 @@ const scriptsObj = {
                 Promise.all(afterload.map(path => addScript(`./afterload/${path}`))).then(res)
             });
         });
-    }),
-    misc: {
-        get fa() {
-            if(!fa) {
-                const files = {
-                    fab: 'fa-brands-400.svg',
-                    far: 'fa-regular-400.svg',
-                    fas: 'fa-solid-900.svg',
-                };
-    
-                for(const file of Object.keys(files)) {
-                    const filedata = fs.readFileSync(require(`path`).join(__dirname, `../html/assets/fonts/${files[file]}`), `utf8`);
-    
-                    const o = document.createElement(`div`);
-                    o.innerHTML = filedata;
-    
-                    console.log(`svg (${file})`, o)
-
-                    files[file] = o.firstElementChild.lastChild.firstElementChild;
-                };
-
-                fa = files;
-            };
-
-            return fa;
-        }
-    },
+    })
 }
 
 contextBridge.exposeInMainWorld(`scripts`, scriptsObj);

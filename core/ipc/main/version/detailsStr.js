@@ -5,7 +5,7 @@ const dayOfWeek = [`Sunday`, `Monday`, `Tuesday`, `Wednesday`, `Thursday`, `Frid
 
 const iconMappings = {
     lib: {
-        app: `hdd`,
+        app: `hard-drive`,
         src: `cloud`
     }
 };
@@ -55,20 +55,20 @@ module.exports = {
 
         const details = Object.entries({
             "ezytdl": {
-                icon: `arrow-alt-circle-down`,
+                icon: `circle-down`,
             },
             "ezytdl-pybridge": {
-                icon: `save`,
+                icon: `floppy-disk`,
                 value: {
                     ...(useObj[`ezytdl-pybridge`] && Object.entries(useObj[`ezytdl-pybridge`]).map(([k, v]) => ({
                         [`\`[bridge]\` ${k}`]: {
-                            icon: `arrow-alt-circle-down`,
+                            icon: `circle-down`,
                             value: parseValue(k, v)
                         }
                     })).reduce((a, b) => Object.assign(a, b), {}) || {}),
                     ...(useObj[`yt-dlp`] && Object.entries(useObj[`yt-dlp`]).map(([k, v]) => ({
                         [`\`[yt-dlp]\` ${k}`]: {
-                            icon: `dot-circle`,
+                            icon: `circle-dot`,
                             value: parseValue(k, v)
                         }
                     })).reduce((a, b) => Object.assign(a, b), {}) || {}),

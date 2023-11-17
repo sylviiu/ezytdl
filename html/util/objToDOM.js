@@ -10,7 +10,7 @@ const _objToListItem = (k, v, depth=0) => {
     if(typeof v == `object`) {
         li.innerHTML += objToDOM(k, v, depth+1, true).innerHTML;
     } else if(typeof v == `object` && typeof v.value == `string`) {
-        const icon2 = v.icon && faIconExists(depth && [`far`, `fas`, `fab`], v.icon, true, { marginRight: `${5 - Math.min(0.12, depth*0.06)}px` });
+        const icon2 = v.icon && faIconExists(null, v.icon, true, { marginRight: `${5 - Math.min(0.12, depth*0.06)}px` });
         if(icon2) li.prepend(icon2);
         li.innerHTML += markdown.makeHtml(kv + `${v.value}`).split(`>`).slice(1).join(`>`).split(`<`).slice(0, -1).join(`<`);
     } else {
@@ -44,7 +44,7 @@ const objToDOM = (name, obj, depth=0, paragraphHeading) => {
         p.appendChild(ul);
     }
 
-    const icon = obj.icon && faIconExists(depth && [`far`, `fas`, `fab`], obj.icon, true, { marginRight: `8px` });
+    const icon = obj.icon && faIconExists(null, obj.icon, true, { marginRight: `8px` });
     if(icon) (paragraphHeading && dom || name && heading || p).prepend(icon);
     
     if(typeof obj.expanded == `object`) {
@@ -54,7 +54,7 @@ const objToDOM = (name, obj, depth=0, paragraphHeading) => {
         summary.style.display = `flex`;
         summary.style.alignItems = `center`;
 
-        summary.appendChild(icon);
+        if(icon) summary.appendChild(icon);
         summary.appendChild(p);
         details.appendChild(summary);
 
