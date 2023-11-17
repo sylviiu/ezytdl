@@ -1,11 +1,11 @@
 const child_process = require(`child_process`);
 const fs = require(`fs`);
-const which = require('which')
+const which = require('which');
 
 const yargs = require('yargs');
 const { hideBin } = require('yargs/helpers')
 
-const buildArgs = yargs(hideBin(process.argv)).argv
+const buildArgs = yargs(hideBin(process.argv)).argv;
 
 // previous store: electron-builder -c ./package-build-store.json -p never
 // previous dist: electron-builder -c ./package-build.json -p always
@@ -110,7 +110,8 @@ let fullMetadataDone = false;
 const getFullMetadata = () => new Promise(async res => {
     if(fullMetadataDone) return res(config);
 
-    const pkg = require(`./package.json`)
+    const pkg = require(`./package.json`);
+    const details = require(`./util/build/packageDetails.js`);
 
     const obj = {
         commitHash: `unk`,
@@ -134,12 +135,12 @@ const getFullMetadata = () => new Promise(async res => {
         },
     };
 
-    for(const [name, value] of Object.keys(pkg.dependencies).sort().map(n => [n, pkg.dependencies[n]])) {
-        obj.buildInfo.Libraries.app[name] = value.replace(`^`, ``);
+    for(const name of Object.keys(pkg.dependencies).sort()) {
+        obj.buildInfo.Libraries.app[name] = await details(name);
     }
 
-    for(const [name, value] of Object.keys(pkg.devDependencies).sort().map(n => [n, pkg.devDependencies[n]])) {
-        obj.buildInfo.Libraries.src[name] = value.replace(`^`, ``);
+    for(const name of Object.keys(pkg.devDependencies).sort()) {
+        obj.buildInfo.Libraries.src[name] = await details(name);
     }
 
     const git = await which(`git`, { nothrow: true });

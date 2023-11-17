@@ -4,7 +4,6 @@ var faIconExists = (faType, name, returnIcon, iconStyle) => {
 
         if(exists && returnIcon) {
             const tempElement = document.createElement(`i`);
-            console.log(`objToDOM: icon2 (${faType} / ${name})`)
             
             tempElement.className = `${faType} fa-${name}`;
     
@@ -18,8 +17,6 @@ var faIconExists = (faType, name, returnIcon, iconStyle) => {
         const fallbacks = Array.isArray(faType) && faType || [`fas`, `far`, `fab`]
 
         const found = fallbacks.map(f => faIconExists(f, name, returnIcon, iconStyle));
-
-        console.log(`objToDOM: icon3 (${faType} / ${name})`, found)
 
         return found.find(Boolean);
     }

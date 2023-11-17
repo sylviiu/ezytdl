@@ -780,7 +780,20 @@ const parseDownloadables = () => document.body.querySelector('#downloadables').c
 parseDownloadables();
 
 if(detailsStr) system.detailsStr().then(details => {
-    detailsStr.innerHTML = markdown.makeHtml(details.join(`\n`) + `\n`);
+    const arr = Object.entries(details);
+
+    console.log(`detailsStr`, arr)
+
+    detailsStr.innerHTML = ``;
+
+    for(const [k, v] of arr) {
+        console.log(`detailsStr`, k, v)
+
+        detailsStr.innerHTML += objToDOM(k, v).innerHTML
+    }
+
+    console.log(`detailsStr`, `done`)
+
     detailsStr.classList.remove(`d-none`)
 })
 
