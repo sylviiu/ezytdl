@@ -28,8 +28,8 @@ module.exports = {
             far: parseIconFile(fs.readFileSync(`./node_modules/@fortawesome/fontawesome-free/js/regular.js`, `utf8`)),
             fab: parseIconFile(fs.readFileSync(`./node_modules/@fortawesome/fontawesome-free/js/brands.js`, `utf8`)),
         };
-        
-        console.log(faTypes);
+
+        console.log(`parsed fontawesome icons\n${Object.entries(faTypes).map(([k, v]) => `${k}: ${Object.values(v).filter(Boolean).length} icons`).join(`\n`)}`);
 
         const faIconExists = (faType, name, returnIcon, iconStyle) => {
             if(faType && typeof faType == `string`) {
