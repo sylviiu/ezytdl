@@ -10,7 +10,7 @@ const buildArgs = yargs(hideBin(process.argv)).argv;
 // previous store: electron-builder -c ./package-build-store.json -p never
 // previous dist: electron-builder -c ./package-build.json -p always
 
-const config = {
+const config = Object.assign({
     "appId": "dev.sylviiu.ezytdl",
     "productName": "ezytdl",
     "artifactName": "${productName}-${platform}.${ext}",
@@ -18,28 +18,6 @@ const config = {
         "artifactName": "${productName}-${platform}-portable.${ext}"
     },
     "compression": "normal",
-    "win": {
-        "icon": "res/packageIcons/icon-512x512.ico",
-        "target": [
-            "nsis",
-            "zip"
-        ]
-    },
-    "linux": {
-        "icon": "res/packageIcons/icon-512x512.png",
-        "category": "Utility",
-        "target": [
-            "tar.gz",
-            "AppImage",
-        ]
-    },
-    "mac": {
-        "icon": "res/packageIcons/icon.icns",
-        "category": "public.app-category.utilities",
-        "target": [
-            "dmg",
-        ]
-    },
     "asar": true,
     "asarUnpack": [],
     "files": [
@@ -103,7 +81,9 @@ const config = {
         "checks/*.js"
     ],
     extraMetadata: {},
-};
+}, fs.readdirSync(`./build/targets/`).map(s => require(`./build/targets/${s}`)).reduce((a, b) => Object.assign(a, b), {}));
+
+console.log(config);
 
 let fullMetadataDone = false;
 
