@@ -3,11 +3,20 @@ const fs = require(`fs`);
 const path = require(`path`);
 const child_process = require(`child_process`);
 
+const { config, getFullMetadata } = require(`../../../build`);
 const parseVariables = require(`../../../util/parseVariables`);
 
 const filename = `ezytdl-win32.exe`;
 
-module.exports = ({ request, config, release, user }) => new Promise(async res => {
+module.exports = ({ request }) => new Promise(async res => {
+    if(!request) {
+        console.log(`skipping winget sync (request: ${request})`);
+        return res(false);
+    }
+
+    await getFullMetadata();
+
+    const release = await request(`https://api.github.com/repos/${config.extraMetadata.owner[0]}/${config.extraMetadata.owner[1]}/releases/latest`);
     const thisFile = release.assets.find(a => a.name == filename);
 
     if(!thisFile) {
@@ -67,8 +76,8 @@ module.exports = ({ request, config, release, user }) => new Promise(async res =
 
         const proc = child_process.spawn(`winget`, cmd);
 
-        proc.stdout.on(`data`, data => log.push(`[OUT] ` + data.toString().trim()));
-        proc.stderr.on(`data`, data => log.push(`[ERR] ` + data.toString().trim()));
+        proc.stdout.on(`data`, data => log.push(`[STDOUT] ` + data.toString().trim()));
+        proc.stderr.on(`data`, data => log.push(`[STDERR] ` + data.toString().trim()));
 
         proc.on(`close`, code => {            
             console.log(`winget validation exited with code ${code}`, log);
@@ -87,7 +96,8 @@ module.exports = ({ request, config, release, user }) => new Promise(async res =
         return res({ error: wingetValidate });
     } else console.log(`generated winget manifest files!`, wingetValidate);
 
-    console.log(`finding winget packages fork`);
+    const user = await request(`https://api.github.com/user`);
+    console.log(`logged in as ${user.login} (${user.name}) -- finding winget packages fork`);
 
     let parentWingetRepo = await request(`https://api.github.com/repos/microsoft/winget-pkgs`);
     let wingetRepo = await request(`https://api.github.com/repos/${user.login}/winget-pkgs`);
@@ -194,7 +204,7 @@ module.exports = ({ request, config, release, user }) => new Promise(async res =
     console.log(`creating pull request`);
 
     const body = [
-        `#### The manifest was validated (with winget ${wingetValidate.version}) before this pull request was created\n\`> ${wingetValidate.command}\` (exit code ${wingetValidate.code})\n\`\`\`\n${wingetValidate.stdout}\n\`\`\``,
+        `#### The manifest was validated (with winget ${wingetValidate.version}) before this pull request was created\n\`> ${wingetValidate.command} (exit code ${wingetValidate.code})\`\n\`\`\`\n${wingetValidate.stdout}\n\`\`\``,
     ];
 
     const details = {
