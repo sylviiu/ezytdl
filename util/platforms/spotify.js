@@ -21,11 +21,13 @@ module.exports = {
             if(body.tracks) while(body.tracks.next) {
                 n++;
                 console.log(`next page (${n})`);
-                updateStatus(`Retrieving additional tracks...`);
-                updateStatusPercent([body.tracks.items.length, body.tracks.total]);
+                if(!ignoreStderr) {
+                    updateStatus(`Retrieving additional tracks...`);
+                    updateStatusPercent([body.tracks.items.length, body.tracks.total]);
+                }
                 const next = await superagent.get(body.tracks.next).set('Authorization', `${token_type} ${access_token}`);
-                body.tracks.items = body.tracks.items.concat(next.body.tracks.items);
-                body.tracks.next = next.body.tracks.next;
+                body.tracks.items.push(...next.body.items);
+                body.tracks.next = next.body.next;
             };
 
             if(body.tracks && body.tracks.items && body.tracks.items[0].track) body.tracks.items = body.tracks.items.map((o, i) => Object.assign(body.tracks.items[i], o.track, {track: null}));
@@ -35,10 +37,12 @@ module.exports = {
             while(body.next) {
                 n++;
                 console.log(`next page (${n})`);
-                updateStatus(`Retrieving additional entries...`);
-                updateStatusPercent([body.items.length, body.total]);
+                if(!ignoreStderr) {
+                    updateStatus(`Retrieving additional tracks...`);
+                    updateStatusPercent([body.items.length, body.total]);
+                }
                 const next = await superagent.get(body.next).set('Authorization', `${token_type} ${access_token}`);
-                body.items = body.items.concat(next.body.items);
+                body.items.push(...next.body.items);
                 body.next = next.body.next;
             };
 
@@ -68,8 +72,10 @@ module.exports = {
 
                 let url = `https://api.spotify.com/v1/${endpoint.includes(`%(url)s`) ? endpoint.replace(`%(url)s`, encodeURIComponent(use)) : endpoint + `/${encodeURIComponent(use)}`}`;
 
-                updateStatus(`Resolving ${endpoint.endsWith(`s`) ? endpoint.slice(0, -1) : endpoint} with "${use}"...`);
-                updateStatusPercent([i+1, endpoints.length]);
+                if(!ignoreStderr) {
+                    updateStatus(`Resolving ${endpoint.endsWith(`s`) ? endpoint.slice(0, -1) : endpoint} with "${use}"...`);
+                    updateStatusPercent([i+1, endpoints.length]);
+                }
 
                 console.log(url)
 
@@ -98,6 +104,8 @@ module.exports = {
             if(obj.copyrights) retObj.license = obj.copyrights[0].text;
 
             const parseTrack = (track, extend) => {
+                if(!track.album && obj.type == `album`) track.album = obj;
+
                 const parsed = {
                     title: track.name,
                     artist: ((track.artists || (track.album && track.album.artists ? track.album.artists : obj.artists)) || [{name: null}])[0].name,
@@ -108,6 +116,8 @@ module.exports = {
                     id: track.id,
                     thumbnails: (track.album && track.album.images ? track.album.images : track.images ? track.images : obj.images ? obj.images : []).sort((a, b) => a.width < b.width ? 1 : -1).reverse(),
                     url: track.external_urls ? track.external_urls.spotify : null,
+                    entry_number: track.album ? track.track_number : null,
+                    entry_total: track.album ? track.album.total_tracks : null,
                     type: track.type,
                     _type: track.type,
                 };
@@ -141,6 +151,8 @@ module.exports = {
             }
 
             Object.assign(retObj, await parseTrack(obj, true));
+
+            console.log(retObj)
             
             res(retObj);
         });
