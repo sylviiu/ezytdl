@@ -74,6 +74,11 @@ jobs:
         run: |
           npm install
 
+      # install flatpak and flatpak-builder
+      - name: Install flatpak
+        run: |
+          sudo apt-get install flatpak flatpak-builder -y
+
       - name: Build app
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
