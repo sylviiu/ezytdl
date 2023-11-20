@@ -3,7 +3,7 @@ module.exports = (variableRegex = /{([^}]+)}/g, variables, string) => {
         processed: string.replace(variableRegex, (match, key) => variables[key] !== undefined && variables[key] || match),
     };
 
-    output.missing = output.processed.match(variableRegex).length;
+    output.missing = output.processed.match(variableRegex)?.length || 0;
 
     return output;
 }

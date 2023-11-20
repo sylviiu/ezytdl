@@ -96,14 +96,10 @@ const getFullMetadata = () => new Promise(async res => {
     const obj = {
         commitHash: `unk`,
         fullCommitHash: `unknown`,
+        owner: [`sylviiu`, `ezytdl`],
         branch: null,
         buildNumber: buildArgs.buildNumber || -1,
         buildInfo: {
-            "ezytdl": {
-                "Version": pkg.version,
-                "Commit Hash": pkg.fullCommitHash || `unknown`,
-                "Built": pkg.buildDate || global.startTime,
-            },
             "Electron": {
                 "Version": pkg.devDependencies.electron.replace(`^`, ``),
                 "Built with": `electron-builder ` + pkg.devDependencies['electron-builder'].replace(`^`, ``),
@@ -153,14 +149,28 @@ const getFullMetadata = () => new Promise(async res => {
                     res();
                 });
             }),
+            new Promise(async res => {
+                // owner
+                child_process.execFile(git, [`remote`, `get-url`, `origin`], (err, stdout, stderr) => {
+                    if(err) return res();
+                    if(stdout && stdout.toString && stdout.toString()) toAppend.owner = stdout.toString().trim().split(`/`).filter(Boolean).slice(-2);
+                    res();
+                });
+            }),
         ])
 
-        Object.assign(obj, {
-            commitHash: child_process.execFileSync(git, [`rev-parse`, `--short`, `HEAD`]).toString().trim(),
-        })
+        Object.assign(obj, toAppend);
     }
 
     Object.assign(config.extraMetadata, obj);
+
+    Object.assign(config.extraMetadata.buildInfo, {
+        "ezytdl": {
+            "Version": pkg.version,
+            "Commit": obj.fullCommitHash || `unknown`,
+            "Built": obj.buildDate || global.startTime,
+        },
+    });
 
     fullMetadataDone = true;
 
