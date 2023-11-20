@@ -134,7 +134,7 @@ autoUpdater.on(`error`, (e) => {
 module.exports = (manual) => new Promise(async res => {
     const pkg = require(`../package.json`);
 
-    if(global.testrun) return res(null);
+    if(global.testrun || !autoUpdater.isUpdaterActive()) return res(null);
 
     // if the last check was less than 15 minutes ago, don't check again unless it's a manual check
     if(Date.now() - lastChecked > 900000 && !manual) return res(null);
