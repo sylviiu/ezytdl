@@ -31,6 +31,7 @@ const config = {
         "target": [
             "tar.gz",
             "AppImage",
+            "flatpak"
         ]
     },
     "mac": {
@@ -39,6 +40,49 @@ const config = {
         "target": [
             "dmg",
         ]
+    },
+    "flatpak": {
+        base: "org.electronjs.Electron2.BaseApp",
+        baseVersion: "23.08",
+        runtime: "org.freedesktop.Platform",
+        runtimeVersion: "23.08",
+        finishArgs: [
+            "--socket=wayland", 
+            "--socket=x11", 
+            "--share=ipc", 
+            "--device=dri",  
+            "--socket=pulseaudio", 
+            "--filesystem=home", 
+            "--share=network", 
+            "--talk-name=org.freedesktop.Notifications", 
+            "--filesystem=xdg-videos:ro",
+            "--filesystem=xdg-pictures:ro",
+            "--filesystem=xdg-download",
+            "--talk-name=org.kde.StatusNotifierWatcher",
+            "--talk-name=com.canonical.AppMenu.Registrar",
+            "--talk-name=com.canonical.indicator.application",
+            "--talk-name=com.canonical.Unity.LauncherEntry",
+            "--own-name=org.kde.*",
+        ],
+        modules: [
+            {
+                "name" : "libvips",
+                "builddir" : true,
+                "buildsystem" : "meson",
+                "config-opts" : [
+                    "--buildtype=release",
+                    "-Ddeprecated=false",
+                    "-Dmodules=disabled"
+                ],
+                "sources" : [
+                    {
+                        "type" : "git",
+                        "url" : "https://github.com/libvips/libvips.git",
+                        "commit" : "74adb395b2ab3a15f4ec8dd734bcbd40811516fd"
+                    }
+                ]
+            }
+        ],
     },
     "beforePack": "./build/beforePack.js",
     "afterPack": "./build/afterPack.js",
