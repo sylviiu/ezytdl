@@ -19,6 +19,7 @@ const config = {
     "portable": {
         "artifactName": "${productName}-${platform}-portable.${ext}"
     },
+    "compression": "normal",
     "win": {
         "icon": "res/packageIcons/icon-512x512.ico",
         "target": [
@@ -248,10 +249,7 @@ which(`npm`).then(async npm => {
         if(process.argv.find(s => s == `store`)) {
             console.log(`Using store compression...`);
             config.compression = "store";
-        } else {
-            console.log(`Using maximum compression...`);
-            config.compression = "maximum";
-        }
+        };
         
         if(process.argv.find(s => s == `noasar`)) {
             console.log(`Disabling asar...`);
