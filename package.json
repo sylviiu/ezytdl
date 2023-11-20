@@ -4,14 +4,14 @@
   "description": "Advanced electron-based frontend for yt-dlp.",
   "main": "index.js",
   "dependencies": {
-    "electron-updater": "^6.1.1",
+    "electron-updater": "^6.1.4",
     "fix-path": "^4.0.0",
     "sanitize-filename": "^1.6.3",
-    "sharp": "^0.32.1",
+    "sharp": "^0.32.6",
     "string-similarity": "^4.0.4",
-    "superagent": "^8.0.9",
+    "superagent": "^8.1.2",
     "unzipper": "^0.10.14",
-    "which": "^3.0.1",
+    "which": "^4.0.0",
     "yargs": "^17.7.2"
   },
   "scripts": {
@@ -36,8 +36,8 @@
   "devDependencies": {
     "animejs": "^3.2.1",
     "color-scheme": "^1.0.1",
-    "electron": "^25.2.0",
-    "electron-builder": "^24.4.0",
+    "electron": "^27.1.0",
+    "electron-builder": "^24.6.4",
     "showdown": "^2.1.0",
     "tinycolor2": "^1.6.0",
     "uglify-js": "^3.17.4"
