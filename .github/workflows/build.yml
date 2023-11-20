@@ -75,9 +75,13 @@ jobs:
           npm install
 
       # install flatpak and flatpak-builder
-      - name: Install flatpak
+      - name: Install flatpak and sdk
         run: |
           sudo apt-get install flatpak flatpak-builder -y
+          sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user --no-deps --arch x86_64 --assumeyes runtime/org.freedesktop.Sdk/x86_64/23.08
+          flatpak install --user --no-deps --arch x86_64 --assumeyes runtime/org.freedesktop.Platform/x86_64/23.08
 
       - name: Build app
         env:
