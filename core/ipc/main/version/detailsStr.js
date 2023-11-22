@@ -32,6 +32,24 @@ const parseValues = (o) => {
     });
 
     return o;
+};
+
+// `${useObj[`ezytdl-pybridge`][`Supported sites`].length} sites`
+
+const mapPybridgeSites = (obj) => {
+    const individual = (o) => ({
+        [o.name]: {
+            icon: o.broken && `circle-xmark` || o.includes?.length && `circle-plus` || `circle`,
+            value: [ o.broken && `[BROKEN]`, o.description || ` `, o.includes?.length && `(+ ${o.includes.length} extra)` ].filter(Boolean).join(` `),
+            expanded: o.includes?.length && o.includes.map(o2 => ({
+                [o2.name]: mapPybridgeSites(o2)
+            })).reduce((a, b) => Object.assign(a, b), {}) || undefined
+        }
+    });
+
+    if(Array.isArray(obj)) {
+        return obj.map(individual).reduce((a, b) => Object.assign(a, b), {});
+    } else return individual(obj)[obj.name];
 }
 
 module.exports = {
@@ -53,6 +71,9 @@ module.exports = {
 
         const useObj = Object.assign({}, appVersions, require(`../../../../util/pythonBridge`).bridgeVersions || {});
 
+        const support = useObj[`ezytdl-pybridge`][`Supported sites`];
+        if(support) delete useObj[`ezytdl-pybridge`][`Supported sites`];
+
         const details = Object.entries({
             "ezytdl": {
                 icon: `circle-down`,
@@ -72,6 +93,13 @@ module.exports = {
                             value: parseValue(k, v)
                         }
                     })).reduce((a, b) => Object.assign(a, b), {}) || {}),
+                    ...(support && {
+                        "`[yt-dlp]` Supported Websites": {
+                            icon: `circle-dot`,
+                            value: `${Object.keys(support).length} sites`,
+                            expanded: mapPybridgeSites(Object.entries(support).map(([ name, obj ]) => ({ name, ...obj })))
+                        }
+                    } || {})
                 }
             },
             "Electron": {
