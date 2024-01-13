@@ -113,6 +113,8 @@ const setupConvertDownload = (node, info, colorScheme) => {
 
     const ffmpegCustomOptions = ffmpegOptions.querySelector(`#ffmpegCustomOptions`);
 
+    const downloadButton = ffmpegOptions.parentElement.lastElementChild.querySelector(`#confirmDownload`)
+
     let buttons = ffmpegOptions.querySelectorAll(`.formatPreset`);
 
     let currentSelected = null;
@@ -502,6 +504,22 @@ const setupConvertDownload = (node, info, colorScheme) => {
     setPreset(usableOption ? ffmpegOptions.querySelector(`#${usableOption}`) || null : null, true); // set default preset
 
     resetTrim(false)
+
+    const textboxes = ffmpegOptions.querySelectorAll(`input[type="text"]`);
+
+    textboxes.forEach((box, i) => {
+        box.onkeyup = (e) => {
+            const shift = (e.key == `Shift` || e.keyCode == 16);
+            const tab = (e.key == `Tab` || e.keyCode == 9);
+            const enter = (e.key == `Enter` || e.keyCode == 13);
+
+            if((shift && enter) || (enter && i == textboxes.length - 1)) {
+                downloadButton.click();
+            } else if(enter && i < textboxes.length - 1) {
+                textboxes[i+1].focus();
+            };
+        }
+    });
     
     node.querySelector(`#conversionDiv`).appendChild(node.querySelector(`#outputExtension`) || listboxTemplate.querySelector(`#outputExtension`).cloneNode(true));
 }
