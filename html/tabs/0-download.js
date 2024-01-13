@@ -1390,6 +1390,7 @@ if(!tabs[`Download`]) tabs[`Download`] = {
         
         const refreshSelectionBox = () => {
             if(!progressObj) {
+                const enterIcon = button.querySelector(`#icon`);
                 const icon = pasteButton.querySelector(`#icon`);
 
                 console.log(`plus icon classname`, icon.className)
@@ -1413,7 +1414,9 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                                 } else console.log(`failed to add url (result: ${result})`)
                             }
                         }
-                    }
+                    };
+
+                    if(enterIcon.className != `fas fa-chevron-circle-right`) enterIcon.className = `fas fa-chevron-circle-right`;
                 } else {
                     console.log(`does not match url`)
                     selectionBox.show(null, false);
@@ -1422,9 +1425,13 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                         icon.className = `far fa-clipboard`;
                         pasteButton.onclick = pasteClick;
                     }
+
+                    if(enterIcon.className != `fas fa-magnifying-glass`) enterIcon.className = `fas fa-magnifying-glass`;
                 }
             }
         }
+        
+        refreshSelectionBox();
 
         const addURL = (str) => {
             try {
