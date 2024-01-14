@@ -2072,7 +2072,7 @@ module.exports = {
     
                         totalTrimmedDuration = Math.max(0, (totalDuration[1] ? totalDuration[1] - totalDuration[0] : null));
     
-                        if(seek[0] != 0 || seek[1] != Math.ceil(info.duration.units.ms/1000)) {
+                        if(seek[0] != 0 || seek[1] != Math.ceil(info.duration.units.ms/1000).toFixed(3)) {
                             usedFilename = true;
                             ytdlpFilename = ytdlpFilename.trim() + `.trimmed (${seek[0]}-${seek[1]})`;
                         }
