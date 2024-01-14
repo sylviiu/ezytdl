@@ -14,6 +14,7 @@ const { filterHeaders } = require(`./ytdlpUtil/headers`);
 const durationCurve = require(`./durationCurve`);
 const recursiveAssign = require(`./recursiveAssign`);
 const anyIsTrue = require(`./anyIsTrue`);
+const matchingChars = require(`./matchingChars`);
 
 const sortByQuality = (a, b) => {
     let retVal = 0;
@@ -59,6 +60,7 @@ sortByQuality.video = (a, b) => {
 
 const outputTemplateRegex = /%\(\s*([^)]+)\s*\)s/g;
 const genericURLRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/i;
+const formatExtensionRegex = /^[^\s]+-(\d+)$/; // used if multiple languages are present, and will be matched against the format id
 
 const platforms = fs.readdirSync(getPath(`./util/platforms`)).map(f => 
     Object.assign(require(`../util/platforms/${f}`), {
@@ -570,7 +572,53 @@ module.exports = {
                 return o;
             });
 
-            d.formats = [...modifiedFormats.filter(o => o.audio && o.video).sort(sortByQuality), ...modifiedFormats.filter(o => o.audio && !o.video).sort(sortByQuality), ...modifiedFormats.filter(o => !o.audio && o.video).sort(sortByQuality), ...modifiedFormats.filter(o => !o.audio && !o.video).sort(sortByQuality)];
+            const useFormats = [
+                ...modifiedFormats.filter(o => o.audio && o.video).sort(sortByQuality), 
+                ...modifiedFormats.filter(o => o.audio && !o.video).sort(sortByQuality), 
+                ...modifiedFormats.filter(o => !o.audio && o.video).sort(sortByQuality), 
+                ...modifiedFormats.filter(o => !o.audio && !o.video).sort(sortByQuality)
+            ];
+            
+            if(d.formats.filter(o => o.format_id.match(formatExtensionRegex)).length > 0) {
+                // if there are multiple languages, group them together
+                
+                const newFormats = [];
+                const filterOut = [];
+
+                for(const format of d.formats.filter(o => o.format_id.split(`-`).at(-1) == `0`)) {
+                    const allLangs = d.formats.filter(o => o.format_id.split(`-`)[0] == format.format_id.split(`-`)[0]);
+
+                    const commonNote = matchingChars(allLangs.map(o => o.format_note));
+
+                    filterOut.push(...allLangs.map(o => o.format_id), format.format_id);
+
+                    newFormats.push({
+                        ...format,
+                        format_id: format.format_id.split(`-`).slice(0, -1).join(`-`),
+                        format_note: (commonNote?.matched && `${commonNote.matched} (${allLangs.length} languages)`) || `${allLangs.length} languages`,
+                        language: undefined,
+                        language_preference: undefined,
+                        langs: allLangs
+                    });
+                };
+
+                newFormats.push(...d.formats.filter(o => !filterOut.includes(o.format_id)));
+
+                d.formats = [
+                    ...newFormats.filter(o => o.audio && o.video).sort(sortByQuality), 
+                    ...newFormats.filter(o => o.audio && !o.video).sort(sortByQuality), 
+                    ...newFormats.filter(o => !o.audio && o.video).sort(sortByQuality), 
+                    ...newFormats.filter(o => !o.audio && !o.video).sort(sortByQuality)
+                ];
+            } else {
+                d.formats = useFormats
+            };
+
+            d.quickQualities = [
+                module.exports.getFormat({info: d, format: `bv*+ba/b`}),
+                module.exports.getFormat({info: d, format: `ba`}),
+                module.exports.getFormat({info: d, format: `bv`}),
+            ];
         }
 
         d.duration = time(totalTime || (d.originalDuration ? d.originalDuration*1000 : 0) || 0);
@@ -1261,33 +1309,40 @@ module.exports = {
             let useFormatsArr = info.formats.slice();
 
             if(info.is_live && !useFormatsArr.find(f => f.format_id == format)) {
-                useFormat = useFormatsArr[depth] || useFormatsArr[0]
+                useFormat = useFormatsArr[depth] || useFormatsArr.at(-1)
             } else if(format == `bv*+ba/b`) {
                 useFormat = module.exports.getFormat({info, format: `bv`, ext, depth});
 
                 if(useFormat) {
                     useFormat.audioFormat = module.exports.getFormat({info, format: `ba`, depth});
-                    if(useFormat.audioFormat.format_id == useFormat.format_id) delete useFormat.audioFormat;
+                    if(useFormat.audioFormat.format_id == useFormat.format_id) useFormat.audioFormat = undefined;
                 } else {
                     useFormat = module.exports.getFormat({info, format: `ba`, depth});
                 }
             } else if(format == `ba`) {
-                useFormatsArr = useFormatsArr.filter(f => f.audio).sort(sortByQuality.audio)
+                if(useFormatsArr.find(o => o.langs)) {
+                    useFormatsArr = [ ...useFormatsArr.filter(f => f.audio && !f.video).sort(sortByQuality.audio), ...useFormatsArr.filter(f => f.audio).sort(sortByQuality.audio) ]
+                    useFormatsArr = useFormatsArr.filter((o, i) => useFormatsArr.findIndex(f => f.format_id == o.format_id) == i)
+                } else {
+                    useFormatsArr = [ ...useFormatsArr.filter(f => f.audio && !f.video), ...useFormatsArr.filter(f => f.audio) ]
+                    useFormatsArr = useFormatsArr.filter((o, i) => useFormatsArr.findIndex(f => f.format_id == o.format_id) == i).sort(sortByQuality.audio)
+                }
 
                 if(ext && useFormatsArr.filter(o => o.ext == ext).length > 0) useFormatsArr = useFormatsArr.filter(o => o.ext == ext);
 
                 useFormat = useFormatsArr[depth]
-                if(!useFormat) useFormat = useFormatsArr[0]
+                if(!useFormat) useFormat = useFormatsArr.at(-1)
             } else if(format == `bv`) {
-                useFormatsArr = useFormatsArr.filter(f => f.video).sort(sortByQuality.video)
+                useFormatsArr = [ ...useFormatsArr.filter(f => f.video && !f.audio), ...useFormatsArr.filter(f => f.video) ]
+                useFormatsArr = useFormatsArr.filter((o, i) => useFormatsArr.findIndex(f => f.format_id == o.format_id) == i).sort(sortByQuality.video)
 
                 if(ext && useFormatsArr.filter(o => o.ext == ext).length > 0) useFormatsArr = useFormatsArr.filter(o => o.ext == ext);
 
                 useFormat = useFormatsArr.filter(f => f.video && !f.audio).sort((a,b) => ((b.vbr || 1) * (b.fps || 1) * (b.width || 1) * (b.height || 1)) - ((a.vbr || 1) * (a.fps || 1) * (a.width || 1) * (a.height || 1)))[depth]
                 if(!useFormat) useFormat = useFormatsArr.filter(f => f.video && !f.audio)[depth]
                 if(!useFormat) useFormat = useFormatsArr[depth]
-                if(!useFormat) useFormat = useFormatsArr[0]
-            } else useFormat = useFormatsArr.find(f => f.format_id == format) || useFormatsArr.filter(o => typeof o.quality == `number`).sort((a,b) => a.quality - b.quality)[depth] || useFormatsArr[depth] || useFormatsArr[0];
+                if(!useFormat) useFormat = useFormatsArr.at(-1)
+            } else useFormat = useFormatsArr.find(f => f.format_id == format) || useFormatsArr.filter(o => typeof o.quality == `number`).sort((a,b) => a.quality - b.quality)[depth] || useFormatsArr[depth] || useFormatsArr.at(-1);
         };
 
         return useFormat || null;

@@ -50,6 +50,14 @@ const getSaveOptions = (node, info, overrideDownloadObj, {
 
     console.log(`addMetadata`, addMetadata);
 
+    let addLanguage = {};
+
+    if(node.querySelector(`#languageOptions`) && !node.querySelector(`#languageOptions`).classList.contains(`d-none`)) node.querySelector(`#languageOptions`).querySelectorAll(`.btn`).forEach(m => {
+        const active = m.getAttribute(`value`) == `true`;
+        console.log(`${m.id}: ${active}`)
+        addLanguage[m.id] = active
+    });
+
     let value = null;
 
     if(info.entries) {
@@ -72,6 +80,7 @@ const getSaveOptions = (node, info, overrideDownloadObj, {
             convert: convert ? convertInfo : null,
             filePath: (node.querySelector(`#saveLocation`) ? node.querySelector(`#saveLocation`).value : null) || null,
             addMetadata,
+            addLanguage,
             info: info
         }, overrideDownloadObj && typeof overrideDownloadObj == `object` ? overrideDownloadObj : {});
     };

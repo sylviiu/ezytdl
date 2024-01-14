@@ -540,7 +540,7 @@ const conversionOptions = (node, info, colorScheme) => {
     if(info.asr) node.querySelector(`#audioSampleRate`).placeholder = `Sample Rate (${info.asr/1000}k)`
     if(info.abr) node.querySelector(`#audioBitrate`).placeholder = `Bitrate (${info.abr}k)`;
 
-    const metaButtons = node.querySelector(`#metadataOptions`).querySelectorAll(`.btn`)
+    const metaButtons = node.querySelector(`#metadataOptions`).querySelectorAll(`.btn`);
     
     if(hasFFmpeg) {
         if(info._platform == `file`) {
@@ -605,6 +605,93 @@ const conversionOptions = (node, info, colorScheme) => {
                 }
             }
         });
+
+        const languages = (info.quickQualities[1]?.langs) || (info.quickQualities[0]?.audioFormat.langs) || false;
+
+        console.log(`languages`, info.quickQualities)
+
+        if(languages) {
+            const primaryLanguage = languages.sort((a, b) => (b.language_preference || 0) - (a.language_preference || 0))[0];
+
+            console.log(`languages | primaryLanguage`, primaryLanguage)
+
+            const languageOptionsTxt = node.querySelector(`#saveLanguageText`);
+            const languageOptions = node.querySelector(`#languageOptions`);
+    
+            if(languageOptionsTxt.classList.contains(`d-none`)) languageOptionsTxt.classList.remove(`d-none`);
+            if(languageOptions.classList.contains(`d-none`)) {
+                console.log(`languages | adding buttons`)
+
+                const btn = languageOptions.querySelector(`button`);
+                const button = btn.cloneNode(true);
+                btn.remove();
+    
+                languages.forEach((l, i) => {
+                    const id = `${l.language || l.format_note || i}`;
+
+                    const thisBtn = button.cloneNode(true);
+
+                    thisBtn.id = id;
+                    thisBtn.innerHTML = thisBtn.innerHTML.replace(`(language)`, id);
+                    thisBtn.setAttribute(`value`, `true`);
+
+                    const thisIcon = thisBtn.querySelector(`#icon`);
+
+                    thisBtn.onclick = () => {
+                        if(thisBtn.getAttribute(`value`) == `true`) {
+                            thisBtn.setAttribute(`value`, `false`);
+                            if(thisIcon.classList.contains(`fa-check-circle`)) {
+                                thisIcon.classList.remove(`fa-check-circle`);
+                                thisIcon.classList.add(`fa-times-circle`);
+                            }
+            
+                            anime.remove(thisBtn);
+                            anime({
+                                targets: thisBtn,
+                                scale: 0.9,
+                                opacity: 0.65,
+                                duration: 300,
+                                easing: `easeOutExpo`,
+                            })
+                        } else {
+                            thisBtn.setAttribute(`value`, `true`);
+                            if(thisIcon.classList.contains(`fa-times-circle`)) {
+                                thisIcon.classList.remove(`fa-times-circle`);
+                                thisIcon.classList.add(`fa-check-circle`);
+                            }
+            
+                            anime.remove(thisBtn);
+                            anime({
+                                targets: thisBtn,
+                                scale: 1,
+                                opacity: 1,
+                                duration: 300,
+                                easing: `easeOutExpo`,
+                            })
+                        }
+                    }
+
+                    if(primaryLanguage.format_id !== l.format_id) {
+                        thisBtn.setAttribute(`value`, `false`);
+                        if(thisIcon.classList.contains(`fa-check-circle`)) {
+                            thisIcon.classList.remove(`fa-check-circle`);
+                            thisIcon.classList.add(`fa-times-circle`);
+                        }
+                        thisBtn.style.transform = `scale(0.9)`;
+                        thisBtn.style.opacity = 0.65;
+                    }
+
+                    console.log(`languages | adding button "${id}"`)
+
+                    languageOptions.appendChild(thisBtn);
+                });
+
+                console.log(`languages | showing language options`)
+    
+                languageOptions.classList.remove(`d-none`);
+                //languageOptions.classList.add(`d-flex`);
+            }
+        }
     } else {
         let sentNotif = false;
         metaButtons.forEach(m => {
