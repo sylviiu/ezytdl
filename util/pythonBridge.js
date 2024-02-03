@@ -111,7 +111,7 @@ module.exports = {
 
                     module.exports.bridgeProc = child_process.execFile(bridgepath, {
                         env: { ...process.env,
-                            PYBRIDGE_HEADER: `true`,
+                            PYBRIDGE_HEADER_SUPPORTED_SITES: `true`,
                         },
                         maxBuffer: 1024 * 1024 * 1024, // 1GB
                     });
