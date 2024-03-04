@@ -1,24 +1,24 @@
 sessions = {
     get: (id, config={}) => {
         if(!id) id = `default`;
-    
+
         if(!sessions[id]) {
             console.log(`----------------------------------\nCREATING NEW DOWNLOADMANAGER: ${id}\n----------------------------------`)
 
             const idGen = require(`./idGen`);
-            
+
             const { app } = require(`electron`);
 
             let lastQueueSend = 0;
             let queueSendTimeout = 0;
-            
+
             const queue = {
                 complete: [],
                 active: [],
                 paused: [],
                 queue: []
             };
-            
+
             const queueEventEmitter = new (require(`events`))();
 
             const filterUpdate = (o) => {
@@ -37,7 +37,7 @@ sessions = {
                     })
                 } else return useObj;
             }
-            
+
             let activeProgress = {};
 
             const blacklistedKeys = [`ytdlpProc`, `killFunc`, `deleteFiles`, `nextUpdateTimeout`, `updateFunc`, `ignoreUpdates`, `lastUpdateSent`];
@@ -70,38 +70,38 @@ sessions = {
 
                 return newObj;
             };
-            
+
             let ws = { send: (sendData) => id == `default` && global.window ? global.window.webContents.send(`queueUpdate`, sendData) : null };
-            
+
             let downloadStatusWs = {
                 send: (content) => {
                     if(id != `default`) return;
 
                     if(!global.window) return;
-            
+
                     if(typeof content == `object`) content = JSON.stringify(content);
-            
+
                     global.window.webContents.send(`formatStatusUpdate`, JSON.parse(content));
                 },
             };
             let lastDownloadStatus = null;
-            
+
             const sendNotification = require(`../core/sendNotification`)
-            
+
             let queueSizeWarningSent = false;
-            
+
             const updateAppBadge = () => {
                 if(id != `default`) return //console.log(`Not updating app badge for ${id} because it's not the default session.`);
 
                 const totalItems = Object.values(queue).slice(1).reduce((a,b) => a+b.length, 0);
-                
+
                 if(totalItems == 0 && queue.complete.length > 0) {
                     app.setBadgeCount();
                 } else app.setBadgeCount(totalItems);
-            
+
                 if(!queueSizeWarningSent && totalItems > 50) {
                     queueSizeWarningSent = true;
-            
+
                     if(id == `default`) sendNotification({
                         headingText: `Warning!`,
                         bodyText: `There are ${totalItems} items in the queue.\n\nDepending on your computer, having too many items in the download queue may cause the UI to slow down and/or freeze, especially if you navigate to different pages while the queue is active.\n\nIf the app does freeze, it is still working. You can check the progress of the queue in the taskbar icon.`,
@@ -109,14 +109,14 @@ sessions = {
                     });
                 }
             }
-            
+
             let lastProgress = null;
-            
+
             const updateProgressBar = () => {
                 if(id != `default`) return //console.log(`Not updating progress bar for ${id} because it's not the default session.`);
 
                 let value = 2;
-            
+
                 if(queue.active.length == 0 && queue.paused.length == 0 && queue.queue.length == 0) {
                     value = -1
                 } else if(queue.active.length == 1 && queue.paused.length == 0 && queue.queue.length == 0) {
@@ -131,16 +131,16 @@ sessions = {
                     }
                 } else {
                     const progressMax = Object.values(queue).reduce((a,b) => a+b.length, 0);
-                    
+
                     let progressCurrent = queue.complete.length;
-                    
+
                     progressCurrent += [...queue.active, ...queue.paused].reduce((a,b) => a + b && b.status && b.status.percentNum ? b.status.percentNum/100 : 0, 0);
-            
+
                     const progress = progressCurrent / progressMax;
-            
+
                     value = progress;
                 };
-            
+
                 if(value != lastProgress) {
                     lastProgress = value;
                     if(global.window) {
@@ -149,19 +149,19 @@ sessions = {
                     }
                 }
             };
-            
+
             const sendUpdate = (sendObj) => (sendObj && typeof sendObj == `object` && ws) ? ws.send({
                 type: `update`,
                 data: filteredObj(filterUpdate(sendObj))
             }) : null;
 
             let addTimeout = 0;
-            
-            const refreshQueue = (opt) => {    
+
+            const refreshQueue = (opt) => {
                 let queueModified = false;
-            
+
                 let removedItems = false;
-            
+
                 if(opt) {
                     const { action } = opt;
 
@@ -182,7 +182,7 @@ sessions = {
                             const removeEntry = (id) => {
                                 for (state of Object.keys(queue)) {
                                     let o = queue[state].findIndex(e => e.id == id);
-                        
+
                                     if(o != -1) {
                                         if(queue[state][0].ytdlpProc && !queue[state][0].ytdlpProc.killed && queue[state][0].ytdlpProc.kill) queue[state][0].ytdlpProc.kill(9)
                                         queue[state].splice(o, 1)
@@ -192,7 +192,7 @@ sessions = {
                                 }
                             }
 
-                            if(typeof id == `object`) {    
+                            if(typeof id == `object`) {
                                 for (i of id) removeEntry(i)
                             } else {
                                 removeEntry(id)
@@ -202,9 +202,9 @@ sessions = {
                             const queueID = (id) => {
                                 for (state of Object.keys(queue)) {
                                     let o = queue[state].findIndex(e => e.id == id);
-    
+
                                     console.log(`requeueing ${id} from ${state}... (${o})`, queue[state])
-                        
+
                                     if(o != -1) {
                                         queue[state].splice(o, 1)[0].queueAgain();
                                         queueModified = true;
@@ -223,9 +223,9 @@ sessions = {
 
                     if(actions[action]) actions[action](opt);
                 }
-            
+
                 console.log(`Updating queue...`)
-            
+
                 for(const o of queue.active) {
                     //console.log(`active`, o)
                     if(o.complete) {
@@ -248,7 +248,7 @@ sessions = {
                         }
                     }
                 }
-            
+
                 if(queueModified) {
                     //const conf = require(`../getConfig`)();
                     const conf = global.lastConfig;
@@ -262,7 +262,7 @@ sessions = {
                     }
 
                     let i = 0;
-            
+
                     while((queue.active.length + queue.paused.length) < maxDownloads && queue.queue.length > 0) {
                         const next = queue.queue.shift();
                         queue.active.push(next);
@@ -277,28 +277,28 @@ sessions = {
                         } else next.start();
                         i++;
                     }
-            
+
                     if(id == `default` && queue.complete.length > 0 && queue.active.length == 0 && queue.paused.length == 0 && queue.queue.length == 0 && !removedItems) sendNotification({
                         headingText: `Queue complete`,
                         bodyText: `All ${queue.complete.length} downloads have been completed.`,
                         systemAllowed: true,
                     })
                 };
-            
+
                 updateAppBadge();
                 updateProgressBar();
-                
+
                 console.log(`Queue refresh (modified: ${queueModified}) \n- ${queue.complete.length} complete\n- ${queue.active.length} active \n- ${queue.queue.length} queued`);
-                
+
                 if(queueModified && ws) {
                     const sendObj = queue;
-            
+
                     queueEventEmitter.emit(`queueUpdate`, sendObj);
 
                     refreshAll();
                 }
             }
-            
+
             const createDownloadObject = (rawOpt, rawUpdateFunc, downloadFunc) => {
                 const opt = (rawOpt && typeof rawOpt == `object`) ? (Object.assign((typeof rawOpt.length == `number` ? [] : {}), rawOpt)) : rawOpt;
 
@@ -336,7 +336,7 @@ sessions = {
                         }
 
                         if(obj.nextUpdateTimeout) clearTimeout(obj.nextUpdateTimeout);
-            
+
                         if(update.overall && update.overall.kill) obj.killFunc = () => update.overall.kill();
                         if(update.overall && update.overall.deleteFiles) obj.deleteFiles = () => update.overall.deleteFiles();
 
@@ -381,13 +381,13 @@ sessions = {
                     deleteFiles: null,
                     start: () => {
                         const index = queue.queue.findIndex(e => e.id == obj.id);
-            
+
                         if(index != -1) {
                             const thisObj = queue.queue.splice(index, 1)[0];
                             queue.active.push(thisObj);
                             console.log(`Moved ${thisObj.id} from queue to active...`)
                         }
-            
+
                         refreshQueue();
 
                         let args = [...(typeof opt == `object` && typeof opt.length == `number` ? opt : [opt])]
@@ -402,9 +402,25 @@ sessions = {
                         } else {
                             obj.updateFunc({status: `Running "${downloadFunc}"`, progressNum: -1})
                         }
-            
-                        const progress = require(`../util/ytdlp`)[downloadFunc || `download`](...args);
-                
+
+                        //const progress = require(`../util/ytdlp`)[downloadFunc || `download`](...args);
+                        let progress = require(`../util/ytdlp`);
+
+                        if(downloadFunc) {
+                            let trace = downloadFunc.split(`.`);
+                            for (var s; s=trace.shift(); ) {
+                                console.log(s)
+                                progress = progress[s];
+                            };
+    
+                            if(typeof progress != `function`) {
+                                console.log(`unable to find func at ytdlp.${downloadFunc}; resorting to download`)
+                                progress = require(`../util/ytdlp`).download;
+                            }
+                        } else progress = require(`../util/ytdlp`).download;
+
+                        progress = progress(...args);
+
                         progress.then(update => {
                             if(activeProgress[obj.id]) delete activeProgress[obj.id];
 
@@ -413,10 +429,10 @@ sessions = {
                                 obj.nextUpdateTimeout = null;
                                 obj.nextUpdateFunc();
                             };
-                            
+
                             obj.complete = true;
                             obj.ytdlpProc = null;
-            
+
                             if(downloadFunc) {
                                 obj.lastUpdateSent = 0;
 
@@ -428,14 +444,14 @@ sessions = {
 
                                 rawUpdateFunc(update);
                             }
-            
+
                             if(obj.killed) obj.status.status = `Canceled`;
 
                             obj.result = update;
-            
+
                             refreshQueue();
                         });
-            
+
                         progress.catch(e => {
                             obj.failed = true;
                             obj.ytdlpProc = null;
@@ -443,13 +459,13 @@ sessions = {
 
                             rawUpdateFunc(null);
                             //res(obj.status);
-            
+
                             refreshQueue();
                         })
                     },
                     pause: () => {
                         console.log(`Pausing ${id}`);
-            
+
                         if(obj.ytdlpProc && !obj.ytdlpProc.killed && !obj.paused) {
                             obj.paused = obj.status.status;
                             obj.updateFunc({status: `Paused`});
@@ -458,7 +474,7 @@ sessions = {
                     },
                     resume: () => {
                         console.log(`Resuming ${id}`);
-            
+
                         if(obj.ytdlpProc && !obj.ytdlpProc.killed && obj.paused) {
                             obj.updateFunc({status: `Resuming...`});
                             obj.paused = false;
@@ -467,9 +483,9 @@ sessions = {
                     },
                     cancel: () => {
                         console.log(`Canceling ${id}`);
-                        
+
                         obj.killed = true;
-            
+
                         if(obj.status && obj.status.overall && obj.status.overall.kill) {
                             try {
                                 obj.status.overall.kill();
@@ -483,7 +499,7 @@ sessions = {
                         } else {
                             console.log(`No killFunc yet for ${id}...`)
                         }
-            
+
                         if(obj.ytdlpProc) {
                             try {
                                 obj.ytdlpProc.kill();
@@ -495,19 +511,19 @@ sessions = {
                         } else {
                             console.log(`No ytdlpProc yet for ${id}...`)
                         }
-                        
+
                         obj.updateFunc({status: `Canceling...`});
                     }
                 };
-            
+
                 return obj;
             }
-            
+
             const createDownload = (opt, rawUpdateFunc, downloadFunc) => new Promise(async res => {
                 console.log(`Creating new download session: ${opt.entries ? opt.entries.length : 1} entries...`);
 
                 if(typeof rawUpdateFunc != `function`) rawUpdateFunc = () => {};
-            
+
                 if(opt.entries && typeof opt.entries.map == `function`) {
                     const objs = opt.entries.map(e => Object.assign(createDownloadObject(e, rawUpdateFunc, downloadFunc), {
                         queueAgain: () => {
@@ -525,67 +541,67 @@ sessions = {
                     refreshQueue({ action: `add`, obj });
                 }
             });
-            
+
             const getFromQueue = (id) => {
                 let o = queue.queue.find(e => e.id == id);
                 if(!o) o = queue.active.find(e => e.id == id);
                 if(!o) o = queue.paused.find(e => e.id == id);
                 if(!o) o = queue.complete.find(e => e.id == id);
-            
+
                 return o
             }
-            
+
             const queueAction = (id, action) => {
                 let o = getFromQueue(id)
-            
+
                 if(o && o[action] && typeof o[action] == `function`) {
                     o[action]();
                     return true;
                 } else return refreshQueue({ action, id });
             }
-            
+
             const setWS = (newWs) => {
                 if(ws) {
                     ws.close();
                 }
-            
+
                 ws = newWs;
 
                 refreshAll();
-                
+
                 ws.sessionID = idGen(10);
-            
+
                 ws.once(`close`, () => {
                     if(ws.sessionID == newWs.sessionID) ws = null;
                 });
             }
-            
+
             const updateStatus = (status) => {
                 if(global.window) global.window.webContents.send(`formatStatusUpdate`, status);
             }
-            
+
             const updateStatusPercent = (status) => {
                 if(global.window) global.window.webContents.send(`formatStatusPercent`, status);
             }
-            
+
             const setStatusWS = (ws) => {
                 if(downloadStatusWs) {
                     downloadStatusWs.close();
                 };
-            
+
                 downloadStatusWs = ws;
-                
+
                 ws.sessionID = idGen(10);
-            
+
                 ws.once(`close`, () => {
                     if(ws.sessionID == downloadStatusWs.sessionID) ws = null;
                 });
-            
+
                 if(lastDownloadStatus) {
                     downloadStatusWs.send(lastDownloadStatus);
                 }
             };
-            
+
             const refreshAll = () => {
                 const timeout = Math.max(0, 450 - (Date.now() - lastQueueSend));
 
@@ -606,7 +622,7 @@ sessions = {
                     downloadStatusWs.send(lastDownloadStatus);
                 }, timeout);
             }
-        
+
             sessions[id] = {
                 config: Object.assign({
                     concurrentDownloadsMult: 1,
@@ -627,7 +643,7 @@ sessions = {
                 queueEventEmitter,
             };
         }
-    
+
         return sessions[id];
     }
 }
