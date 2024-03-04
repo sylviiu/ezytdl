@@ -655,11 +655,13 @@ const createServices = () => {
                 
                 const icon = faIconExists(`fas`, `check`, true, { marginRight: `4px` });
 
-                connected.style.fontSize = `0.8em`;
-                connected.style.marginTop = `12px`;
-                connected.style.color = `rgba(255,255,255,0.85)`;
-                connected.appendChild(icon);
-                connected.innerHTML += ` Active`;
+                if(icon) {
+                    connected.style.fontSize = `0.8em`;
+                    connected.style.marginTop = `12px`;
+                    connected.style.color = `rgba(255,255,255,0.85)`;
+                    connected.appendChild(icon);
+                    connected.innerHTML += ` Active`;
+                }
 
                 element.querySelector(`#strings`).insertBefore(connected, element.querySelector(`#description`));
 
@@ -672,11 +674,13 @@ const createServices = () => {
                 
                 const icon = faIconExists(`fas`, `times`, true, { marginRight: `4px` });
 
-                connected.style.fontSize = `0.8em`;
-                connected.style.marginTop = `12px`;
-                connected.style.color = `rgba(255,255,255,0.85)`;
-                connected.appendChild(icon);
-                connected.innerHTML += ` Inactive`;
+                if(icon) {
+                    connected.style.fontSize = `0.8em`;
+                    connected.style.marginTop = `12px`;
+                    connected.style.color = `rgba(255,255,255,0.85)`;
+                    connected.appendChild(icon);
+                    connected.innerHTML += ` Inactive`;
+                }
 
                 element.querySelector(`#strings`).insertBefore(connected, element.querySelector(`#description`));
 
