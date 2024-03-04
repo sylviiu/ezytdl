@@ -252,7 +252,7 @@ module.exports = {
 
         const returnArgs = [];
 
-        const yargsResult = yargs(ffmpeg ? args.replace(/-(\w+)/g, '--$1') : args).argv
+        const yargsResult = yargs(ffmpeg ? args.replace(/(^|\s)-(\w+)/g, `$1--$2`) : args).argv
 
         const parsed = Object.entries(yargsResult)
 
@@ -2109,7 +2109,7 @@ module.exports = {
                     console.log(inputArgs)
 
                     /*if(typeof convert.additionalInputArgs == `string`) {
-                        const yargsResult = yargs(convert.additionalInputArgs.replace(/-(\w+)/g, '--$1')).argv
+                        const yargsResult = yargs(convert.additionalInputArgs.replace(/(^|\s)-(\w+)/g, `$1--$2`)).argv
                 
                         const parsed = Object.entries(yargsResult);
 
@@ -2226,7 +2226,7 @@ module.exports = {
                     }
 
                     /*if(typeof convert.additionalOutputArgs == `string`) {
-                        const yargsResult = yargs(convert.additionalOutputArgs.replace(/-(\w+)/g, '--$1')).argv
+                        const yargsResult = yargs(convert.additionalOutputArgs.replace(/(^|\s)-(\w+)/g, `$1--$2`)).argv
                 
                         const parsed = Object.entries(yargsResult);
 
