@@ -1,6 +1,53 @@
 const superagent = require('superagent');
-
 const { updateStatus, updateStatusPercent } = require(`../downloadManager`).default;
+
+// extend will just be the api token stuff
+const parseTrack = (obj, track, extend) => {
+    if(!track.album && obj?.type == `album`) track.album = obj;
+
+    const parsed = {
+        title: track.name,
+        artist: ((track.artists || (track.album && track.album.artists ? track.album.artists : obj.artists)) || [{name: null}])[0].name,
+        artist_url: ((track.artists || (track.album && track.album.artists ? track.album.artists : obj.artists)) || [{external_urls: {spotify: null}}])[0].external_urls.spotify,
+        album: track.album ? track.album.name : null,
+        license: track.copyrights ? track.copyrights[0].text : null,
+        duration: track.duration_ms / 1000,
+        id: track.id,
+        thumbnails: (track.album && track.album.images ? track.album.images : track.images ? track.images : obj.images ? obj.images : []).sort((a, b) => a.width < b.width ? 1 : -1).reverse(),
+        url: track.external_urls ? track.external_urls.spotify : null,
+        entry_number: track.album ? track.track_number : null,
+        entry_total: track.album ? track.album.total_tracks : null,
+        type: track.type,
+        _type: track.type,
+    };
+
+    parsed.creator = parsed.artist;
+    parsed.creator_url = parsed.artist_url;
+
+    if(track.tracks && track.tracks.items && track.tracks.items.length > 0) {
+        parsed.entries = obj.tracks.items.map(o => parseTrack(obj, o));
+    } else if(track.items && track.items.length > 0) {
+        parsed.entries = obj.items.map(o => parseTrack(obj, o));
+    };
+
+    if(extend) {
+        return new Promise(async res => {
+            console.log(`extending`)
+
+            if(track.type == `artist`) {
+                parsed.entries = (await module.exports.resolve(extend, { query: track.id, ignoreStderr: true, useEndpoint: `artists/%(url)s/albums?include_groups=album` })).items.map(o => parseTrack(o));
+            };
+
+            res(parsed);
+        })
+    } else {
+        if(track.type == `album` || track.type == `playlist` && !parsed.entries) {
+            parsed.entries = [{album: true}];
+        }
+
+        return parsed;
+    }
+};
 
 module.exports = {
     resolve: ({ access_token, token_type }, { query, ignoreStderr, count, useEndpoint }) => new Promise(async (res) => {
@@ -103,58 +150,32 @@ module.exports = {
 
             if(obj.copyrights) retObj.license = obj.copyrights[0].text;
 
-            const parseTrack = (track, extend) => {
-                if(!track.album && obj.type == `album`) track.album = obj;
-
-                const parsed = {
-                    title: track.name,
-                    artist: ((track.artists || (track.album && track.album.artists ? track.album.artists : obj.artists)) || [{name: null}])[0].name,
-                    artist_url: ((track.artists || (track.album && track.album.artists ? track.album.artists : obj.artists)) || [{external_urls: {spotify: null}}])[0].external_urls.spotify,
-                    album: track.album ? track.album.name : null,
-                    license: track.copyrights ? track.copyrights[0].text : null,
-                    duration: track.duration_ms / 1000,
-                    id: track.id,
-                    thumbnails: (track.album && track.album.images ? track.album.images : track.images ? track.images : obj.images ? obj.images : []).sort((a, b) => a.width < b.width ? 1 : -1).reverse(),
-                    url: track.external_urls ? track.external_urls.spotify : null,
-                    entry_number: track.album ? track.track_number : null,
-                    entry_total: track.album ? track.album.total_tracks : null,
-                    type: track.type,
-                    _type: track.type,
-                };
-
-                parsed.creator = parsed.artist;
-                parsed.creator_url = parsed.artist_url;
-
-                if(track.tracks && track.tracks.items && track.tracks.items.length > 0) {
-                    parsed.entries = obj.tracks.items.map(o => parseTrack(o));
-                } else if(track.items && track.items.length > 0) {
-                    parsed.entries = obj.items.map(o => parseTrack(o));
-                };
-
-                if(extend) {
-                    return new Promise(async res => {
-                        console.log(`extending`)
-
-                        if(track.type == `artist`) {
-                            parsed.entries = (await module.exports.resolve({ access_token, token_type }, { query: track.id, ignoreStderr: true, useEndpoint: `artists/%(url)s/albums?include_groups=album` })).items.map(o => parseTrack(o));
-                        };
-
-                        res(parsed);
-                    })
-                } else {
-                    if(track.type == `album` || track.type == `playlist` && !parsed.entries) {
-                        parsed.entries = [{album: true}];
-                    }
-
-                    return parsed;
-                }
-            }
-
-            Object.assign(retObj, await parseTrack(obj, true));
+            Object.assign(retObj, await parseTrack(obj, obj, { access_token, token_type }));
 
             console.log(retObj)
             
             res(retObj);
         });
+    }),
+    search: ({ access_token, token_type }, { query, count }) => new Promise(async res => {
+        superagent.get(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=${Math.min(50, count)}`).set('Authorization', `${token_type} ${access_token}`).then(r => r.body).then(async r => {
+            const parsed = await parseTrack(r, r, { access_token, token_type });
+            res(Object.assign(parsed, {
+                extractor: `spotify:search`,
+                extractor_key: `SpotifySearch`,
+                title: query,
+            }));
+        }).catch(e => {
+            console.error(`search error: ${e}`);
+            res(null)
+        })
+    }),
+    musicdata: ({ access_token, token_type }, id) => new Promise(async res => {
+        superagent.get(`https://api.spotify.com/v1/audio-features/${id}`).set('Authorization', `${token_type} ${access_token}`).then(r => r.body).then(async r => {
+            res(r);
+        }).catch(e => {
+            console.error(`musicdata error: ${e}`);
+            res(null)
+        })
     })
 }
