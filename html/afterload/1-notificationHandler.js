@@ -209,7 +209,7 @@ if(window.parent != window) {
     
             container.style.paddingBottom = `0px`;
     
-            if(type == `error` && !hideReportButton) {
+            /*if(type == `error` && !hideReportButton) {
                 const button = createButton(`githubIssuesButton`);
     
                 let reportStrings = [`## Type: ${type[0].toUpperCase() + type.slice(1)}`];
@@ -230,7 +230,7 @@ if(window.parent != window) {
                 button.innerHTML += `Report on GitHub`
     
                 container.appendChild(button);
-            }
+            }*/
         };
 
         if(redirect) {
