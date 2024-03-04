@@ -49,7 +49,7 @@ module.exports = (forceCheck, getBuildDate, clear) => new Promise(async (res, re
                 if(err) return res(null)
 
                 try {
-                    let version = JSON.parse((stdout ? stdout.toString().trim() : `` || stderr ? stderr.toString().trim() : ``));
+                    let version = JSON.parse((stdout ? stdout.toString('utf8').trim() : `` || stderr ? stderr.toString('utf8').trim() : ``));
 
                     require(`../pythonBridge`).bridgeVersions = version;
 
