@@ -618,8 +618,8 @@ const conversionOptions = (node, info, colorScheme) => {
             const languageOptionsTxt = node.querySelector(`#saveLanguageText`);
             const languageOptions = node.querySelector(`#languageOptions`);
     
-            if(languageOptionsTxt.classList.contains(`d-none`)) languageOptionsTxt.classList.remove(`d-none`);
-            if(languageOptions.classList.contains(`d-none`)) {
+            if(languageOptionsTxt?.classList.contains(`d-none`)) languageOptionsTxt.classList.remove(`d-none`);
+            if(languageOptions?.classList.contains(`d-none`)) {
                 console.log(`languages | adding buttons`)
 
                 const btn = languageOptions.querySelector(`button`);
