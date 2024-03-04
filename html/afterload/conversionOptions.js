@@ -1,4 +1,5 @@
 let hasFFmpeg = false;
+let auth = null;
 let enabledConversionFormats = [];
 
 const animateHiddenOptions = (node, ffmpegOptions, {
@@ -524,6 +525,35 @@ const setupConvertDownload = (node, info, colorScheme) => {
     node.querySelector(`#conversionDiv`).appendChild(node.querySelector(`#outputExtension`) || listboxTemplate.querySelector(`#outputExtension`).cloneNode(true));
 }
 
+const setupDisabledButtonWithReason = (m, title, message) => {
+    const icon = m.querySelector(`#icon`);
+
+    m.style.scale = 0.9;
+    m.style.opacity = 0.65;
+
+    let sentNotif = false;
+
+    m.onclick = () => {
+        if(!sentNotif) {
+            sentNotif = true;
+            setTimeout(() => { sentNotif = false }, 2000)
+            createNotification({
+                headingText: title,
+                bodyText: message,
+                type: `warn`
+            });
+        }
+        buttonDisabledAnim(m, {
+            opacity: [0.75, 0.65],
+        });
+    }
+
+    if(icon.classList.contains(`fa-check-circle`)) {
+        icon.classList.remove(`fa-check-circle`);
+        icon.classList.add(`fa-times-circle`);
+    }
+}
+
 const conversionOptions = (node, info, colorScheme) => {
     //node.querySelector(`#saveLocation`).placeholder = `${config && config.saveLocation ? config.saveLocation : `{default save location}`}`;
     //node.querySelector(`#saveLocation`).value = `${config && config.saveLocation ? config.saveLocation : ``}`;
@@ -569,44 +599,50 @@ const conversionOptions = (node, info, colorScheme) => {
         }
 
         metaButtons.forEach(m => {
-            const icon = m.querySelector(`#icon`);
-    
-            m.onclick = () => {
-                if(m.getAttribute(`value`) == `true`) {
-                    m.setAttribute(`value`, `false`);
-                    if(icon.classList.contains(`fa-check-circle`)) {
-                        icon.classList.remove(`fa-check-circle`);
-                        icon.classList.add(`fa-times-circle`);
+            if(m.id == `opt-saveMusicData` && !auth.spotify) {
+                setupDisabledButtonWithReason(m, `Spotify not set up!`, `To save extra data such as the BPM / initial key of a song, ezytdl will need to cross reference it with Spotify. Please set up Spotify in the settings and try again!`)
+            } else {
+                const icon = m.querySelector(`#icon`);
+        
+                m.onclick = () => {
+                    if(m.getAttribute(`value`) == `true`) {
+                        m.setAttribute(`value`, `false`);
+                        if(icon.classList.contains(`fa-check-circle`)) {
+                            icon.classList.remove(`fa-check-circle`);
+                            icon.classList.add(`fa-times-circle`);
+                        }
+        
+                        anime.remove(m);
+                        anime({
+                            targets: m,
+                            scale: 0.9,
+                            opacity: 0.65,
+                            duration: 300,
+                            easing: `easeOutExpo`,
+                        })
+                    } else {
+                        m.setAttribute(`value`, `true`);
+                        if(icon.classList.contains(`fa-times-circle`)) {
+                            icon.classList.remove(`fa-times-circle`);
+                            icon.classList.add(`fa-check-circle`);
+                        }
+        
+                        anime.remove(m);
+                        anime({
+                            targets: m,
+                            scale: 1,
+                            opacity: 1,
+                            duration: 300,
+                            easing: `easeOutExpo`,
+                        })
                     }
-    
-                    anime.remove(m);
-                    anime({
-                        targets: m,
-                        scale: 0.9,
-                        opacity: 0.65,
-                        duration: 300,
-                        easing: `easeOutExpo`,
-                    })
-                } else {
-                    m.setAttribute(`value`, `true`);
-                    if(icon.classList.contains(`fa-times-circle`)) {
-                        icon.classList.remove(`fa-times-circle`);
-                        icon.classList.add(`fa-check-circle`);
-                    }
-    
-                    anime.remove(m);
-                    anime({
-                        targets: m,
-                        scale: 1,
-                        opacity: 1,
-                        duration: 300,
-                        easing: `easeOutExpo`,
-                    })
                 }
             }
         });
 
-        const languages = (info.quickQualities[1]?.langs) || (info.quickQualities[0]?.audioFormat.langs) || false;
+        authentication.list().then(o => console.log(`spotify auth check:`, o))
+
+        const languages = (info.quickQualities?.[1]?.langs) || (info.quickQualities?.[0]?.audioFormat?.langs) || false;
 
         console.log(`languages`, info.quickQualities)
 
@@ -693,29 +729,7 @@ const conversionOptions = (node, info, colorScheme) => {
             }
         }
     } else {
-        let sentNotif = false;
-        metaButtons.forEach(m => {
-            const icon = m.querySelector(`#icon`);
-            m.style.scale = 0.9;
-            m.style.opacity = 0.65;
-            m.onclick = () => {
-                if(!sentNotif) {
-                    sentNotif = true;
-                    createNotification({
-                        headingText: `FFmpeg not found!`,
-                        bodyText: `FFmpeg is required to add metadata. Please install FFmpeg and try again.`,
-                        type: `warn`
-                    });
-                }
-                buttonDisabledAnim(m, {
-                    opacity: [0.75, 0.65],
-                });
-            }
-            if(icon.classList.contains(`fa-check-circle`)) {
-                icon.classList.remove(`fa-check-circle`);
-                icon.classList.add(`fa-times-circle`);
-            }
-        });
+        metaButtons.forEach(m => setupDisabledButtonWithReason(m, `FFmpeg not found!`, `FFmpeg is required to add metadata. Please install FFmpeg and try again.`));
 
         console.log(node.querySelector(`#confirmDownload`).parentElement, node.querySelector(`#convertDownload`))
 
