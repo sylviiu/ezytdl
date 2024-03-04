@@ -1,4 +1,5 @@
 const child_process = require('child_process');
+const enums = require(`./enums`);
 const fs = require('fs');
 const pfs = require('./promisifiedFS');
 const yargs = require('yargs');
@@ -100,10 +101,10 @@ var ffmpegAudioCodecs = null;
 
 const refreshVideoCodecs = () => {
     console.log(`refreshVideoCodecs (promise)`)
-    if(module.exports.ffmpegPath && fs.existsSync(module.exports.ffmpegPath)) {
+    if(ytdlpObj.ffmpegPath && fs.existsSync(ytdlpObj.ffmpegPath)) {
         console.log(`ffmpegPath exists!`);
 
-        ffmpegRawVideoCodecsOutput = child_process.execFileSync(module.exports.ffmpegPath, [`-codecs`, `-hide_banner`, `loglevel`, `error`]).toString().split(`-------`).slice(1).join(`-------`).trim();
+        ffmpegRawVideoCodecsOutput = child_process.execFileSync(ytdlpObj.ffmpegPath, [`-codecs`, `-hide_banner`, `loglevel`, `error`]).toString().split(`-------`).slice(1).join(`-------`).trim();
 
         ffmpegRawVideoCodecsDecodeOutput = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `V` && s[1] == `D`);
         ffmpegRawVideoCodecsEncodeOutput = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `V` && s[2] == `E`);
@@ -116,24 +117,24 @@ const refreshVideoCodecs = () => {
 }
 
 var refreshFFmpeg = () => {
-    const originalPath = module.exports.ffmpegPath;
+    const originalPath = ytdlpObj.ffmpegPath;
 
-    if(!module.exports.ffmpegPath || !fs.existsSync(module.exports.ffmpegPath)) module.exports.ffmpegPath = require(`./filenames/ffmpeg`).getPath();
+    if(!ytdlpObj.ffmpegPath || !fs.existsSync(ytdlpObj.ffmpegPath)) ytdlpObj.ffmpegPath = require(`./filenames/ffmpeg`).getPath();
 
-    if(module.exports.ffmpegPath && (!ffmpegVideoCodecs || originalPath != module.exports.ffmpegPath)) {
+    if(ytdlpObj.ffmpegPath && (!ffmpegVideoCodecs || originalPath != ytdlpObj.ffmpegPath)) {
         refreshVideoCodecs();
         return true;
-    } else if(module.exports.ffmpegPath) {
+    } else if(ytdlpObj.ffmpegPath) {
         return true;
     } else return false;
 };
 
 const refreshVideoCodecsPromise = () => new Promise(async res => {
     console.log(`refreshVideoCodecs (promise)`)
-    if(module.exports.ffmpegPath && (await pfs.existsSync(module.exports.ffmpegPath))) {
+    if(ytdlpObj.ffmpegPath && (await pfs.existsSync(ytdlpObj.ffmpegPath))) {
         console.log(`ffmpegPath exists! (promise)`);
 
-        const proc = child_process.execFile(module.exports.ffmpegPath, [`-codecs`, `-hide_banner`, `loglevel`, `error`]);
+        const proc = child_process.execFile(ytdlpObj.ffmpegPath, [`-codecs`, `-hide_banner`, `loglevel`, `error`]);
 
         let data = ``
 
@@ -158,18 +159,16 @@ const refreshVideoCodecsPromise = () => new Promise(async res => {
 })
 
 var refreshFFmpegPromise = () => new Promise(async res => {
-    const originalPath = module.exports.ffmpegPath;
+    const originalPath = ytdlpObj.ffmpegPath;
 
-    if(!module.exports.ffmpegPath || !(await pfs.existsSync(module.exports.ffmpegPath))) module.exports.ffmpegPath = await require(`./filenames/ffmpeg`).getPathPromise();
+    if(!ytdlpObj.ffmpegPath || !(await pfs.existsSync(ytdlpObj.ffmpegPath))) ytdlpObj.ffmpegPath = await require(`./filenames/ffmpeg`).getPathPromise();
 
-    if(module.exports.ffmpegPath && (!ffmpegVideoCodecs || originalPath != module.exports.ffmpegPath)) {
+    if(ytdlpObj.ffmpegPath && (!ffmpegVideoCodecs || originalPath != ytdlpObj.ffmpegPath)) {
         refreshVideoCodecsPromise().then(() => res(true));
-    } else if(module.exports.ffmpegPath) {
+    } else if(ytdlpObj.ffmpegPath) {
         res(true);
     } else res(false);
-})
-
-refreshFFmpeg();
+});
 
 const time = require(`../util/time`);
 
@@ -240,7 +239,7 @@ const sendUpdates = (proc, initialMsg) => {
     })
 }
 
-module.exports = {
+const ytdlpObj = {
     ffmpegPath: null,
     sendUpdates,
     hasFFmpeg: () => refreshFFmpeg(),
@@ -314,7 +313,7 @@ module.exports = {
 
                 if(!ignoreStderr) updateStatus(`Finished fetching info of ${queue.complete.length}/${totalLength} items!` + (failed > 0 ? ` (${failed} entries failed to resolve)` : ``) + (badEntries > 0 ? ` (${badEntries} entries failed to resolve)` : ``))
 
-                const parsed = module.exports.parseInfo(Object.assign(newInfo, {
+                const parsed = ytdlpObj.parseInfo(Object.assign(newInfo, {
                     entries: newInfo.entries ? newInfo.entries.filter(e => e && typeof e == `object`) : undefined,
                 }), true);
 
@@ -344,7 +343,7 @@ module.exports = {
                 // to keep the same order of songs
                 if(e) {
                     console.log(`new info!`);
-                    const newEntry = module.exports.parseInfo(e, true);
+                    const newEntry = ytdlpObj.parseInfo(e, true);
                     if(!newEntry.formats && newEntry.entries) {
                         const entries = newEntry.entries.filter(o => o && typeof o == `object`);
                         console.log(entries.slice(0, 2).map(o => o.thumbnails))
@@ -362,16 +361,16 @@ module.exports = {
         manager.queueEventEmitter.emit(`queueUpdate`, manager.queue);
     }),
     verifyPlaylist: (d, { extraArguments, disableFlatPlaylist, forceRun, ignoreStderr }) => new Promise(async res => {
-        if(typeof d == `object`) d = module.exports.parseInfo(d);
+        if(typeof d == `object`) d = ytdlpObj.parseInfo(d);
         if(d && forceRun) {
             console.log(`force run!`);
-            module.exports.unflatPlaylist({extraArguments, info: d, ignoreStderr}).then(res)
+            ytdlpObj.unflatPlaylist({extraArguments, info: d, ignoreStderr}).then(res)
         } else if(d && d.fullInfo == true) {
             console.log(`full info found! resolving...`);
             res(d);
         } else if(d && d.formats) {
             console.log(`formats found! resolving...`);
-            res(module.exports.parseInfo(d, true))
+            res(ytdlpObj.parseInfo(d, true))
         } else if(d && d.entries) {
             console.log(`entries found! adding time objects...`);
 
@@ -386,14 +385,14 @@ module.exports = {
 
             if(anyNoTitle) {
                 console.log(`Missing titles!`);
-                module.exports.unflatPlaylist({extraArguments, info: d, ignoreStderr}).then(res)
+                ytdlpObj.unflatPlaylist({extraArguments, info: d, ignoreStderr}).then(res)
             } else {
-                res(module.exports.parseInfo(d, disableFlatPlaylist))
+                res(ytdlpObj.parseInfo(d, disableFlatPlaylist))
             }
         } else if(!disableFlatPlaylist) {
             updateStatus(`Restarting playlist search... (there were no formats returned!!)`)
             console.log(`no formats found! starting over...`);
-            module.exports.unflatPlaylist({extraArguments, info: d, ignoreStderr}).then(res)
+            ytdlpObj.unflatPlaylist({extraArguments, info: d, ignoreStderr}).then(res)
         } else {
             sendNotification({
                 type: `error`,
@@ -544,12 +543,12 @@ module.exports = {
             d.thumbnail = typeof d.thumbnails[d.thumbnails.length - 1] == `object` ? d.thumbnails[d.thumbnails.length - 1].url : `${d.thumbnails[d.thumbnails.length - 1]}`
         }
 
-        module.exports.parseMetadata(d, root);
+        ytdlpObj.parseMetadata(d, root);
 
         const parseList = (o, i, key) => {
             if(o && typeof o == `object`) {
                 totalTime += (o.originalDuration ? o.originalDuration * 1000 : 0) || (typeof o.duration == `number` ? o.duration*1000 : typeof o.duration == `object` && o.duration?.units?.ms ? o.duration.units.ms : 0) || 0;
-                return module.exports.parseInfo(o, full, false, rawInfo, typeof i == `number` ? i+1 : null, i ? d[key].length : null);
+                return ytdlpObj.parseInfo(o, full, false, rawInfo, typeof i == `number` ? i+1 : null, i ? d[key].length : null);
             } else return o;
         }
 
@@ -615,9 +614,9 @@ module.exports = {
             };
 
             d.quickQualities = [
-                module.exports.getFormat({info: d, format: `bv*+ba/b`}),
-                module.exports.getFormat({info: d, format: `ba`}),
-                module.exports.getFormat({info: d, format: `bv`}),
+                ytdlpObj.getFormat({info: d, format: `bv*+ba/b`}),
+                ytdlpObj.getFormat({info: d, format: `ba`}),
+                ytdlpObj.getFormat({info: d, format: `bv`}),
             ];
         }
 
@@ -649,16 +648,63 @@ module.exports = {
             }
         }
 
-        d.saveLocation = module.exports.getSavePath(d);
+        d.saveLocation = ytdlpObj.getSavePath(d);
 
-        d.output_name = module.exports.getFilename(d._original_url, d, null, null, false);
+        d.output_name = ytdlpObj.getFilename(d._original_url, d, null, null, false);
 
-        return module.exports.parseMetadata(d, root);
+        return ytdlpObj.parseMetadata(d, root);
     },
+    getMusicData: (d) => new Promise(async res => {
+        let url;
+
+        const getData = () => {
+            const id = url.split(`/`).filter(Boolean).slice(-1)[0];
+            console.log(`fetching music data for id ${id}`)
+            ytdlpObj.platform.spotify.musicdata(id).then(data => {
+                console.log(`music info for ${id}`, data);
+
+                const o = {
+                    [`TKEY`]: enums.musicKey[data.key],
+                    [`TBPM`]: data.tempo,
+                };
+
+                console.log(`processed:`, o)
+                res(o);
+            })
+        };
+
+        if(authentication.check(d._original_url) == `spotify`) {
+            console.log(`_original_url was spotify, trying to use that id first`)
+            url = d._original_url;
+        } else if(authentication.check(d._request_url) == `spotify`) {
+            console.log(`_request_url was spotify, trying to use that id first`)
+            url = d._request_url;
+        } else if(authentication.check(d.original_url) == `spotify`) {
+            console.log(`original_url was spotify, trying to use that id first`)
+            url = d.original_url;
+        } else if(authentication.check(d.url) == `spotify`) {
+            console.log(`url was spotify, trying to use that id first`)
+            url = d.url;
+        } else {
+            url = await new Promise(res => {
+                ytdlpObj.findEquivalent(d, true, `platform.spotify.search`).then(equiv => {
+                    console.log(`spotify search equivalent for ${d.title} by ${d.artist}: ${equiv.title} by ${equiv.artist} (${equiv.url})`);
+                    res(equiv.url);
+                }).catch(e => {
+                    console.error(`failed getting music data:`, e)
+                    return res(null);
+                });
+            })
+        };
+
+        if(url) {
+            getData();
+        } else res(null);
+    }),
     search: ({query, count, from, extraArguments, noVerify, forceVerify, ignoreStderr}) => new Promise(async res => {
         if(!count) count = 10;
 
-        const additional = module.exports.additionalArguments(extraArguments);
+        const additional = ytdlpObj.additionalArguments(extraArguments);
 
         //console.log(`query "${query}"; count: ${count}; additional args: "${additional.join(`", "`)}"`)
 
@@ -666,7 +712,9 @@ module.exports = {
 
         const encoded = encodeURIComponent(query);
 
-        if(from == `youtubemusic`) {
+        if(from == `spotify`) {
+            return ytdlpObj.platform.spotify.search({ query, count }).then(res);
+        } else if(from == `youtubemusic`) {
             forceVerify = true;
             args.unshift(`https://music.youtube.com/search?q=${encoded}&sp=EgIQAQ%253D%253D`)
         } else if(from == `soundcloud`) {
@@ -700,7 +748,7 @@ module.exports = {
 
                 if(noVerify) {
                     return res(d);
-                } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, extraArguments, forceRun: forceVerify, ignoreStderr }).then(res);
+                } else ytdlpObj.verifyPlaylist(d, { disableFlatPlaylist: false, extraArguments, forceRun: forceVerify, ignoreStderr }).then(res);
             } catch(e) {
                 console.error(`${e}`)
                 if(!ignoreStderr) sendNotification({
@@ -812,7 +860,7 @@ module.exports = {
                     }
                 }
 
-                res(module.exports.parseInfo(Object.assign(info, {
+                res(ytdlpObj.parseInfo(Object.assign(info, {
                     url: path,
                     extractor: `system:file`,
                     extractor_key: `SystemFile`,
@@ -916,7 +964,7 @@ module.exports = {
 
                 updateStatus(`Finished fetching info of ${queue.complete.length}/${totalLength} items!` + (failed > 0 ? ` (${failed} entries not compatible)` : ``) + (badEntries > 0 ? ` (${badEntries} entries failed to resolve)` : ``) + (skipped > 0 ? ` (${skipped} folders skipped)` : ``))
 
-                const parsed = module.exports.parseInfo(newInfo, true);
+                const parsed = ytdlpObj.parseInfo(newInfo, true);
 
                 res(parsed);
 
@@ -959,7 +1007,7 @@ module.exports = {
 
         const files = await pfs.readdirSync(path);
 
-        module.exports.ffprobeFiles(path, files.map(o => require(`path`).join(path, o))).then(res)
+        ytdlpObj.ffprobeFiles(path, files.map(o => require(`path`).join(path, o))).then(res)
     }),
     ffprobe: (path) => new Promise(async res => {
         const ffprobePath = await require(`./filenames/ffmpeg`).getFFprobePromise();
@@ -990,19 +1038,19 @@ module.exports = {
         console.log(`path:`, path)
 
         if(typeof path == `object` && typeof path.length == `number`) {
-            return module.exports.ffprobeFiles(null, path).then(res);
+            return ytdlpObj.ffprobeFiles(null, path).then(res);
         } else {
             const stat = await pfs.statSync(path);
     
             if(stat.isDirectory()) {
-                return module.exports.ffprobeDir(path).then(res);
+                return ytdlpObj.ffprobeDir(path).then(res);
             } else if(stat.isFile()) {
-                return module.exports.ffprobeInfo(path).then(res);
+                return ytdlpObj.ffprobeInfo(path).then(res);
             } else return res(null);
         }
     }),
     listFormats: ({query, extraArguments, cookies=null, headers=null, ignoreStderr}) => new Promise(async res => {
-        const additional = module.exports.additionalArguments(extraArguments);
+        const additional = ytdlpObj.additionalArguments(extraArguments);
 
         if(typeof query == `object` && query.length > 0) {
             let url = `https://various-sites/yeeeeeah` // this is a fake url, it'll just parse as "various-sites"
@@ -1025,7 +1073,7 @@ module.exports = {
 
             const str = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()} at ${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
 
-            let info = module.exports.parseInfo({
+            let info = ytdlpObj.parseInfo({
                 title: `${query.length} links (${str})`,
                 extractor: `multiple:generic`,
                 extractor_key: `MultipleGeneric`,
@@ -1036,7 +1084,7 @@ module.exports = {
 
             console.log(`forged info`, info)
 
-            return module.exports.unflatPlaylist({extraArguments, info, ignoreStderr}).then(o => {
+            return ytdlpObj.unflatPlaylist({extraArguments, info, ignoreStderr}).then(o => {
                 o.entries = o.entries.map(o => Object.assign(o, { _save_location_url: url }));
                 res(o);
             });
@@ -1074,7 +1122,7 @@ module.exports = {
 
                     if(ignoreStderr) {
                         return res(d);
-                    } else module.exports.verifyPlaylist(d, { disableFlatPlaylist: false, ignoreStderr, /*forceRun: ignoreStderr ? false : true*/ }).then(res);
+                    } else ytdlpObj.verifyPlaylist(d, { disableFlatPlaylist: false, ignoreStderr, /*forceRun: ignoreStderr ? false : true*/ }).then(res);
                     //console.log(d)
                 } catch(e) {
                     console.error(`${e}`)
@@ -1096,7 +1144,7 @@ module.exports = {
 
         //console.log(`getFilename / raw: "${useTempalte}"`)
 
-        useTempalte = module.exports.parseOutputTemplate({ info: info || {}, format: format || {} }, useTempalte);
+        useTempalte = ytdlpObj.parseOutputTemplate({ info: info || {}, format: format || {} }, useTempalte);
 
         //console.log(`getFilename / before: "${useTempalte}"`)
 
@@ -1127,7 +1175,7 @@ module.exports = {
                             })
                         } else {
                             proc.kill(`SIGKILL`);
-                            return module.exports.getFilename(url, info, null, template, noParse).then(res)
+                            return ytdlpObj.getFilename(url, info, null, template, noParse).then(res)
                         }
                     }
                 })
@@ -1218,7 +1266,7 @@ module.exports = {
         })
     }),
     getMuxer: (ext) => new Promise(async res => {
-        const proc = child_process.execFile(module.exports.ffmpegPath, [`-h`, `muxer=` + ext]);
+        const proc = child_process.execFile(ytdlpObj.ffmpegPath, [`-h`, `muxer=` + ext]);
 
         let output = ``;
 
@@ -1291,7 +1339,7 @@ module.exports = {
         }) : [];
     },
     mergeInfo: (info, newInfo, full=true) => {
-        const newParsed = module.exports.parseInfo(newInfo, full);
+        const newParsed = ytdlpObj.parseInfo(newInfo, full);
 
         if(info._off_platform) {
             Object.assign(info, newParsed, { media_metadata: info.media_metadata })
@@ -1311,13 +1359,13 @@ module.exports = {
             if(info.is_live && !useFormatsArr.find(f => f.format_id == format)) {
                 useFormat = useFormatsArr[depth] || useFormatsArr.at(-1)
             } else if(format == `bv*+ba/b`) {
-                useFormat = module.exports.getFormat({info, format: `bv`, ext, depth});
+                useFormat = ytdlpObj.getFormat({info, format: `bv`, ext, depth});
 
                 if(useFormat) {
-                    useFormat.audioFormat = module.exports.getFormat({info, format: `ba`, depth});
+                    useFormat.audioFormat = ytdlpObj.getFormat({info, format: `ba`, depth});
                     if(useFormat.audioFormat.format_id == useFormat.format_id) useFormat.audioFormat = undefined;
                 } else {
-                    useFormat = module.exports.getFormat({info, format: `ba`, depth});
+                    useFormat = ytdlpObj.getFormat({info, format: `ba`, depth});
                 }
             } else if(format == `ba`) {
                 if(useFormatsArr.find(o => o.langs)) {
@@ -1349,7 +1397,7 @@ module.exports = {
     },
     getFormatInstance: (updateFunc, originalFormat) => {
         return (...data) => {
-            const thisFormat = module.exports.getFormat(...data);
+            const thisFormat = ytdlpObj.getFormat(...data);
 
             if(thisFormat) {
                 updateFunc({ formatID: thisFormat ? (`${thisFormat.format_id}` + (thisFormat.audioFormat ? `/${thisFormat.audioFormat.format_id}` : ``)) : originalFormat })
@@ -1462,8 +1510,8 @@ module.exports = {
             } else {
                 if(status) update({status})
                 try {
-                    const i = await module.exports.unflatPlaylist({info});
-                    module.exports.mergeInfo(info, i);
+                    const i = await ytdlpObj.unflatPlaylist({info});
+                    ytdlpObj.mergeInfo(info, i);
                     res(i);
                 } catch(e) {
                     console.error(e);
@@ -1513,11 +1561,11 @@ module.exports = {
 
             const originalFormat = format;
 
-            const getFormat = module.exports.getFormatInstance(updateFunc, originalFormat);
+            const getFormat = ytdlpObj.getFormatInstance(updateFunc, originalFormat);
 
             let thisFormat;
 
-            if(format == `bv*+ba/b`/* && (!module.exports.ffmpegPath || !convert)*/) format = null;
+            if(format == `bv*+ba/b`/* && (!ytdlpObj.ffmpegPath || !convert)*/) format = null;
 
             if(info.is_live && (format == `bv*+ba/b` || format == `bv` || format == `ba`)) format = null;
 
@@ -1550,7 +1598,7 @@ module.exports = {
                             const parsed = require(`path`).parse(url);
                             fullYtdlpFilename = `${parsed.name} - converted-${info.selectedConversion && info.selectedConversion.key ? info.selectedConversion.key : `customconversion`}-${Date.now()}` + (convert.ext ? `.${convert.ext.startsWith(`.`) ? convert.ext.slice(1) : convert.ext}` : parsed.ext)
                         } else {
-                            fullYtdlpFilename = await module.exports.getFilename(url, info, thisFormat, (outputFilename) + `.%(ext)s`, true);
+                            fullYtdlpFilename = await ytdlpObj.getFilename(url, info, thisFormat, (outputFilename) + `.%(ext)s`, true);
                         };
         
                         fullYtdlpFilename = sanitize(fullYtdlpFilename);
@@ -1566,7 +1614,7 @@ module.exports = {
                         const parsed = require(`path`).parse(url);
                         fullYtdlpFilename = `${parsed.name} - converted-${info.selectedConversion && info.selectedConversion.key ? info.selectedConversion.key : `customconversion`}-${Date.now()}` + (convert.ext ? `.${convert.ext.startsWith(`.`) ? convert.ext.slice(1) : convert.ext}` : parsed.ext)
                     } else {
-                        fullYtdlpFilename = module.exports.getFilename(url, info, thisFormat, (outputFilename) + `.%(ext)s`, false);
+                        fullYtdlpFilename = ytdlpObj.getFilename(url, info, thisFormat, (outputFilename) + `.%(ext)s`, false);
                     };
     
                     fullYtdlpFilename = sanitize(fullYtdlpFilename);
@@ -1595,17 +1643,17 @@ module.exports = {
 
             const ffmpegExists = await refreshFFmpegPromise();
     
-            /*if(!module.exports.ffmpegPath || !ffmpegVideoCodecs) {
+            /*if(!ytdlpObj.ffmpegPath || !ffmpegVideoCodecs) {
                 console.log(`ffmpeg not installed or codecs not present! refreshing...`);
                 ffmpegExists = await refreshFFmpegPromise();
                 console.log(`ffmpeg refreshed!`)
-            } else ffmpegExists = (module.exports.ffmpegPath ? await pfs.existsSync(module.exports.ffmpegPath) : false);*/
+            } else ffmpegExists = (ytdlpObj.ffmpegPath ? await pfs.existsSync(ytdlpObj.ffmpegPath) : false);*/
 
             //console.log(`downloading ${url};`, info && info.media_metadata ? info.media_metadata : `(no metadata)`);
     
             //console.log(saveLocation, filePath, ytdlpFilename)
 
-            const saveTo = module.exports.getSavePath(info, filePath);
+            const saveTo = ytdlpObj.getSavePath(info, filePath);
 
             update({ deleteFiles: () => purgeLeftoverFiles(saveTo), live: info.is_live ? true : false })
     
@@ -1619,7 +1667,7 @@ module.exports = {
         
             killAttempt = 0;
 
-            const additionalArgs = module.exports.additionalArguments(typeof extraArguments == `string` ? extraArguments : ``);
+            const additionalArgs = ytdlpObj.additionalArguments(typeof extraArguments == `string` ? extraArguments : ``);
 
             let args = [...additionalArgs];
 
@@ -1646,7 +1694,7 @@ module.exports = {
                         }
                     })
 
-                    if(run && addMetadata && module.exports.ffmpegPath && file && (await pfs.existsSync(target))) {
+                    if(run && addMetadata && ytdlpObj.ffmpegPath && file && (await pfs.existsSync(target))) {
                         console.log(`adding metadata...`, addMetadata)
 
                         let totalTasks = Object.values(addMetadata).filter(v => v).length + 1;
@@ -1723,6 +1771,17 @@ module.exports = {
     
                                     for(const entry of general) tags.push([entry[0], entry[1]]);
     
+                                    if(addMetadata['opt-saveMusicData']) try {
+                                        setProgress(`tags`, {progressNum: 15, status: `Retrieving additional music data...`})
+                                        const additional = await ytdlpObj.getMusicData(info);
+                                        const entries = Object.entries(additional)
+                                        console.log(`additional tags:`, entries)
+                                        for(const entry of entries) tags.push([entry[0], entry[1]]);
+                                    } catch(e) {
+                                        console.error(`failed getting additional music data (key / bpm): ${e}`);
+                                        skipped[`additional music data tag`] = `${e}`;
+                                    }
+
                                     if(addMetadata['opt-saveAsAlbum']) for(const entry of album) tags.push([entry[0], entry[1]]);
                                     
                                     setProgress(`tags`, {progressNum: 30, status: `Adding ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}...`})
@@ -1735,9 +1794,9 @@ module.exports = {
             
                                     const args = [`-y`, `-ignore_unknown`, `-i`, target + `.ezytdl`, `-id3v2_version`, `3`, `-write_id3v1`, `1`, ...meta, `-c`, `copy`, target];
             
-                                    //console.log(args);
+                                    console.log(`final tag args:`, args);
             
-                                    const proc = child_process.execFile(module.exports.ffmpegPath, args);
+                                    const proc = child_process.execFile(ytdlpObj.ffmpegPath, args);
     
                                     proc.once(`spawn`, () => {
                                         setProgress(`tags`, {progressNum: 50, status: `Adding ${tags.length} metadata tag${tags.length == 1 ? `` : `s`}... (FFmpeg spawned)`})
@@ -1770,7 +1829,7 @@ module.exports = {
                             let vcodec = null;
 
                             try {
-                                const foundCodec = await module.exports.getCodec(target);
+                                const foundCodec = await ytdlpObj.getCodec(target);
                                 vcodec = (foundCodec && !`${foundCodec}`.includes(`jpeg`) && !`${foundCodec}`.includes(`png`))
                             } catch(e) {
                                 vcodec = thisFormat && typeof thisFormat.video == `boolean` ? thisFormat.video : (typeof info.video == `boolean` ? info.video : null)
@@ -1802,7 +1861,7 @@ module.exports = {
             
                                                 ////console.log(args);
                         
-                                                const proc = child_process.execFile(module.exports.ffmpegPath, [...args, target]);
+                                                const proc = child_process.execFile(ytdlpObj.ffmpegPath, [...args, target]);
                         
                                                 //proc.stdout.on(`data`, d => {
                                                 //    console.log(d.toString().trim())
@@ -1872,7 +1931,7 @@ module.exports = {
                                                 setProgress(`thumbnail`, {progressNum, status: `Converting thumbnail` + extension + `...`})
                                                 //update({status: `Converting thumbnail` + extension + `...`})
             
-                                                const imgConvertProc = child_process.execFile(module.exports.ffmpegPath, [`-y`, `-i`, thumbnail.url, `-update`, `1`, `-vf`, `crop=min(in_w\\,in_h):min(in_w\\,in_h)`, target + `.png`]);
+                                                const imgConvertProc = child_process.execFile(ytdlpObj.ffmpegPath, [`-y`, `-i`, thumbnail.url, `-update`, `1`, `-vf`, `crop=min(in_w\\,in_h):min(in_w\\,in_h)`, target + `.png`]);
             
                                                 imgConvertProc.stdout.on(`data`, d => {
                                                     //console.log(d.toString().trim())
@@ -1910,10 +1969,10 @@ module.exports = {
                             }*/
                         }
                     } else {
-                        console.log(`no metadata to add! (run: ${run}) (ffmpeg installed: ${module.exports.ffmpegPath ? true : false}) (file: ${file ? true : false})`);
+                        console.log(`no metadata to add! (run: ${run}) (ffmpeg installed: ${ytdlpObj.ffmpegPath ? true : false}) (file: ${file ? true : false})`);
                         if(!run && addMetadata) {
                             Object.entries(addMetadata).filter(v => v[1] && !v[0].startsWith(`opt-`)).forEach(k => skipped[k[0]] = `Download was canceled.`);
-                        } else if(!module.exports.ffmpegPath) {
+                        } else if(!ytdlpObj.ffmpegPath) {
                             Object.entries(addMetadata).filter(v => v[1] && !v[0].startsWith(`opt-`)).forEach(k => skipped[k[0]] = `FFmpeg wasn't found.`);
                         } else if(!file || !await pfs.existsSync(target)) {
                             Object.entries(addMetadata).filter(v => v[1] && !v[0].startsWith(`opt-`)).forEach(k => skipped[k[0]] = `File wasn't found.`);
@@ -2026,7 +2085,7 @@ module.exports = {
 
                 //filenames.push(ytdlpFilename)
     
-                //if(!useFile && !fs.existsSync(previousFilename)) previousFilename = await module.exports.getFilename(url, info, thisFormat, temporaryFilename + `.%(ext)s`, true);
+                //if(!useFile && !fs.existsSync(previousFilename)) previousFilename = await ytdlpObj.getFilename(url, info, thisFormat, temporaryFilename + `.%(ext)s`, true);
     
                 //if(!useFile) filenames.push(previousFilename)
 
@@ -2041,7 +2100,7 @@ module.exports = {
 
                     ext = `.${rawExt}`
 
-                    const destinationCodec = await module.exports.getMuxer(ext.slice(1));
+                    const destinationCodec = await ytdlpObj.getMuxer(ext.slice(1));
 
                     //if(!destinationCodec.compatible) return fallback(`Could not convert to ${ext.toUpperCase()} -- unable to find muxer details.`, true);
 
@@ -2124,7 +2183,7 @@ module.exports = {
                         });
                     }*/
 
-                    if(typeof convert.additionalInputArgs == `string`) convert.additionalInputArgs = module.exports.additionalArguments(convert.additionalInputArgs, true);
+                    if(typeof convert.additionalInputArgs == `string`) convert.additionalInputArgs = ytdlpObj.additionalArguments(convert.additionalInputArgs, true);
 
                     if(convert.additionalInputArgs) inputArgs.unshift(...convert.additionalInputArgs);
 
@@ -2152,9 +2211,9 @@ module.exports = {
                         for(const file of (useFile ? useFile : temporaryFiles.map(f => require(`path`).join(saveTo, f)))) {
                             if(!width || !height) {
                                 if(typeof file == `object`) {
-                                    var { width, height } = await module.exports.getResolution(file.url, Object.assign({}, filterHeaders(info._headers), file.http_headers));
+                                    var { width, height } = await ytdlpObj.getResolution(file.url, Object.assign({}, filterHeaders(info._headers), file.http_headers));
                                 } else {
-                                    var { width, height } = await module.exports.getResolution(file);
+                                    var { width, height } = await ytdlpObj.getResolution(file);
                                 }
                             }
                         };
@@ -2241,7 +2300,7 @@ module.exports = {
                         });
                     }*/
 
-                    if(typeof convert.additionalOutputArgs == `string`) convert.additionalOutputArgs = module.exports.additionalArguments(convert.additionalOutputArgs, true);
+                    if(typeof convert.additionalOutputArgs == `string`) convert.additionalOutputArgs = ytdlpObj.additionalArguments(convert.additionalOutputArgs, true);
 
                     if(convert.additionalOutputArgs) outputArgs.unshift(...convert.additionalOutputArgs);
 
@@ -2340,7 +2399,7 @@ module.exports = {
 
                         console.log(args2)
     
-                        proc = child_process.execFile(module.exports.ffmpegPath, [`-y`, ...args2]);
+                        proc = child_process.execFile(ytdlpObj.ffmpegPath, [`-y`, ...args2]);
 
                         let closed = false;
 
@@ -2517,7 +2576,7 @@ module.exports = {
                                         originalVideoCodec = file.vcodec.split(`.`)[0];
                                     } else if(file.video) {
                                         codecPromises.push(new Promise(async r => {
-                                            if(!originalVideoCodec) originalVideoCodec = await module.exports.getCodec(file.url, false, Object.assign({}, filterHeaders(info._headers), file.http_headers));
+                                            if(!originalVideoCodec) originalVideoCodec = await ytdlpObj.getCodec(file.url, false, Object.assign({}, filterHeaders(info._headers), file.http_headers));
                                             r();
                                         }));
                                     };
@@ -2526,18 +2585,18 @@ module.exports = {
                                         originalAudioCodec = file.acodec.split(`.`)[0];
                                     } else if(file.audio) {
                                         codecPromises.push(new Promise(async r => {
-                                            if(!originalAudioCodec) originalAudioCodec = await module.exports.getCodec(file.url, true, Object.assign({}, filterHeaders(info._headers), file.http_headers));
+                                            if(!originalAudioCodec) originalAudioCodec = await ytdlpObj.getCodec(file.url, true, Object.assign({}, filterHeaders(info._headers), file.http_headers));
                                             r();
                                         }));
                                     };
                                 } else {
                                     codecPromises.push(new Promise(async r => {
-                                        originalVideoCodec = await module.exports.getCodec(file.url, false, Object.assign({}, filterHeaders(info._headers), file.http_headers));
+                                        originalVideoCodec = await ytdlpObj.getCodec(file.url, false, Object.assign({}, filterHeaders(info._headers), file.http_headers));
                                         r();
                                     }));
 
                                     codecPromises.push(new Promise(async r => {
-                                        originalAudioCodec = await module.exports.getCodec(file.url, true, Object.assign({}, filterHeaders(info._headers), file.http_headers));
+                                        originalAudioCodec = await ytdlpObj.getCodec(file.url, true, Object.assign({}, filterHeaders(info._headers), file.http_headers));
                                         r();
                                     }));
                                 }
@@ -2551,12 +2610,12 @@ module.exports = {
                                 if(!originalExtensions.includes(fileExt)) originalExtensions.push(fileExt);
 
                                 if(!originalVideoCodec) codecPromises.push(new Promise(async r => {
-                                    originalVideoCodec = await module.exports.getCodec(require(`path`).join(saveTo, f));
+                                    originalVideoCodec = await ytdlpObj.getCodec(require(`path`).join(saveTo, f));
                                     r();
                                 }));
     
                                 if(!originalAudioCodec) codecPromises.push(new Promise(async r => {
-                                    originalAudioCodec = await module.exports.getCodec(require(`path`).join(saveTo, f), true);
+                                    originalAudioCodec = await ytdlpObj.getCodec(require(`path`).join(saveTo, f), true);
                                     r();
                                 }));
                             };
@@ -2598,9 +2657,9 @@ module.exports = {
                         return fallback(`Could not convert the audio stream to ${convert.audioCodec.toString().toUpperCase()} -- target codec not supported by installed build of FFmpeg.`, true);
                     }
     
-                    let compatibleDecoders = module.exports.getHardwareTranscoders(false, transcoders, originalVideoCodec);
+                    let compatibleDecoders = ytdlpObj.getHardwareTranscoders(false, transcoders, originalVideoCodec);
     
-                    let compatibleEncoders = module.exports.getHardwareTranscoders(true, transcoders, targetCodec);
+                    let compatibleEncoders = ytdlpObj.getHardwareTranscoders(true, transcoders, targetCodec);
 
                     console.log(`compatible decoders for ${originalVideoCodec}: `, compatibleDecoders, `compatible encoders for ${targetCodec}: `, compatibleEncoders)
 
@@ -2793,8 +2852,8 @@ module.exports = {
                     }
                 }
                 
-                if(!module.exports.ffmpegPath && addMetadata && addMetadata.tags) args.push(`--add-metadata`, `--no-write-playlist-metafiles`);
-                if(!module.exports.ffmpegPath && addMetadata && addMetadata.thumbnail) args.push(`--embed-thumbnail`, `--no-write-thumbnail`);
+                if(!ytdlpObj.ffmpegPath && addMetadata && addMetadata.tags) args.push(`--add-metadata`, `--no-write-playlist-metafiles`);
+                if(!ytdlpObj.ffmpegPath && addMetadata && addMetadata.thumbnail) args.push(`--embed-thumbnail`, `--no-write-thumbnail`);
                 
                 console.log(`saveTo: ` + saveTo, `\n- ` + args.join(`\n- `))
         
@@ -2831,7 +2890,7 @@ module.exports = {
                 proc.once('info', newInfo => {
                     console.log(`INFODUMP RECEIVED`);
                     
-                    module.exports.mergeInfo(info, newInfo);
+                    ytdlpObj.mergeInfo(info, newInfo);
 
                     getFilename(); // it won't update if the filename was already used in writing the file
                 })
@@ -2894,7 +2953,7 @@ module.exports = {
             
                             //console.log(`saveTo: ` + saveTo, `\n- ` + args.join(`\n- `))
             
-                            proc = child_process.execFile(module.exports.ffmpegPath, args);
+                            proc = child_process.execFile(ytdlpObj.ffmpegPath, args);
                     
                             update({saveLocation: saveTo, url, format, kill: () => {
                                 console.log(`killing ffmpeg stream...`)
@@ -2934,7 +2993,7 @@ module.exports = {
                                     killAttempt++
                                 }, live: false, percentNum: 0});
             
-                                proc = child_process.execFile(module.exports.ffmpegPath, [`-i`, require(`path`).join(saveTo, temporaryFilename + `.${ytdlpSaveExt}`), `-c`, `copy`, `-y`, require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`]);
+                                proc = child_process.execFile(ytdlpObj.ffmpegPath, [`-i`, require(`path`).join(saveTo, temporaryFilename + `.${ytdlpSaveExt}`), `-c`, `copy`, `-y`, require(`path`).join(saveTo, ytdlpFilename) + `.${ext}`]);
             
                                 update({status: `Remuxing to ${`${ytdlpSaveExt}`.toUpperCase()}`, kill: () => {
                                     killAttempt++
@@ -3115,8 +3174,10 @@ module.exports = {
             resolve(update({ failed: true, status: `${e.toString()}` }))
         }
     }),
-    findEquivalent: (info, ignoreStderr) => new Promise(async res => {
-        const instanceName = `findEquivalent-${info.extractor}-${info.id}-${idGen(16)}`;
+    findEquivalent: (d, ignoreStderr, platform) => new Promise(async res => {
+        const instanceName = `findEquivalent-${d.extractor}-${d.id}-${idGen(16)}`;
+
+        let info = structuredClone(d);
 
         const manager = downloadManager.get(instanceName, {staggered: true, noSendErrors: true});
 
@@ -3140,7 +3201,7 @@ module.exports = {
 
                 if(info && info.entries) info.entries = info.entries.filter(o => !o._needs_original)
 
-                res(module.exports.parseInfo(info, true));
+                res(ytdlpObj.parseInfo(info, true));
 
                 downloadManager[instanceName].timeout = setTimeout(() => {
                     if(downloadManager[instanceName]) {
@@ -3229,7 +3290,8 @@ module.exports = {
             resultsInfo.entries = resultsInfo.entries.filter(a => a && a !== undefined && typeof a == `object` && typeof a.similarity == `number`).sort((a, b) => b.similarity - a.similarity);
 
             if(resultsInfo && resultsInfo.entries && resultsInfo.entries[0] && (resultsInfo.entries[0].media_metadata || resultsInfo.entries[0].url)) {
-                return module.exports.parseInfo(Object.assign(thisInfo, {
+                return ytdlpObj.parseInfo(Object.assign(thisInfo, {
+                    id: resultsInfo.entries[0].id,
                     url: resultsInfo.entries[0].media_metadata ? resultsInfo.entries[0].media_metadata.url.source_url : resultsInfo.entries[0].url,
                     formats: resultsInfo.entries[0].formats,
                     _needs_original: false,
@@ -3243,75 +3305,101 @@ module.exports = {
             manager.createDownload([{query: `"${e.artist}" - ${e.title}`, from: `youtube`, count: 15, noVerify: true, ignoreStderr}, false], (e) => {
                 if(e) {
                     console.log(`new info!`);
-                    const match = match(entry, module.exports.parseInfo(e));
+                    const match = match(entry, ytdlpObj.parseInfo(e));
                     console.log(`added "${entry.title}" (id: ${entry.id} / url: ${entry.url}) to index ${i}`)
                 } else badEntries++;
-            }, `search`);
+            }, platform || `search`);
         } else {
             manager.createDownload([{query: `"${info.artist}" - ${info.title}`, from: `youtube`, count: 15, noVerify: true, ignoreStderr}, false], (e) => {
                 if(e) {
                     console.log(`new info!`);
-                    match(info, module.exports.parseInfo(e));
+                    match(info, ytdlpObj.parseInfo(e));
                     console.log(`added "${info.title}" (id: ${info.id} / url: ${info.url})`)
                 } else badEntries++;
-            }, `search`);
+            }, platform || `search`);
         }
 
         manager.queueEventEmitter.emit(`queueUpdate`, manager.queue);
-    })
+    }),
+
+    platform: {
+        ytdlp: {}
+    },
 };
 
-const blacklistedAuths = [`download`, `ffprobeInfo`, `ffprobeDir`, `ffprobe`]
+refreshFFmpeg();
 
-for(const entry of Object.entries(module.exports).filter(o => typeof o[1] == `function`)) {
+const blacklistedAuths = [`download`, `ffprobeInfo`, `ffprobeDir`, `ffprobe`];
+
+for (const platform of platforms) {
+    ytdlpObj.platform[platform.name] = {};
+
+    for (const [ name, func ] of Object.entries(platform).filter(o => typeof o[1] == `function`)) {
+        ytdlpObj.platform[platform.name][name] = (...args) => new Promise(async (res, rej) => {
+            const ignoreStderr = (args[0] && typeof args[0] == `object` && args[0].ignoreStderr) || false
+            if(ignoreStderr) updateStatus(`Getting authentication token...`)
+            authentication.getToken(platform.name).then(token => {
+                if(token) {
+                    func(token, ...args).then(o => {
+                        const parseObj = (o) => (o && typeof o == `object`) ? Object.assign(o, {
+                            extractor: o.extractor || platform.name.toLowerCase() + (o.type ? `:${o.type.toLowerCase()}` : ``),
+                            extractor_key: o.extractor_key || platform.name[0].toUpperCase() + platform.name.slice(1) + (o.type ? o.type[0].toUpperCase() + o.type.slice(1) : ``),
+                            _off_platform: true,
+                            _platform: platform.name,
+                            _needs_original: true,
+                        }) : o;
+
+                        const parsed = ytdlpObj.parseInfo(parseObj(o));
+
+                        if(parsed.entries) parsed.entries = parsed.entries.filter(o => o && typeof o == `object`).map(parseObj)
+
+                        if(!parsed.entries) {
+                            ytdlpObj.findEquivalent(parsed, ignoreStderr).then(equivalent => {
+                                ytdlpObj.verifyPlaylist(Object.assign({}, parsed, equivalent, {fullInfo: false}), { forceRun: true, ignoreStderr }).then(o => {
+                                    // res(Object.assign(parsed, { formats: o.formats, }));
+                                    res(ytdlpObj.mergeInfo(parsed, o));
+                                }).catch(rej);
+                            }).catch(rej);
+                        } else res(parsed)
+                    }).catch(rej);
+                } else {
+                    console.log(`failed to auth`)
+                    return func(...args).then(res).catch(rej);
+                }
+            }).catch(rej)
+        })
+    }
+};
+
+for(const entry of Object.entries(ytdlpObj).filter(o => typeof o[1] == `function`)) {
     const name = entry[0];
     const func = entry[1];
 
-    if(!module.exports.ytdlp) module.exports.ytdlp = {};
+    if(!ytdlpObj.platform.ytdlp) ytdlpObj.platform.ytdlp = {};
+    ytdlpObj.platform.ytdlp[name] = func;
 
-    module.exports.ytdlp[name] = func;
-
-    module.exports[name] = (...args) => {
+    ytdlpObj[name] = (...args) => {
         const authType = !blacklistedAuths.find(o => o == name) ? authentication.check(args[0] && typeof args[0] == `object` && typeof args[0].query == `string` ? args[0].query : ``) : null
         if(args[0] && typeof args[0] == `object` && args[0].query && authType) {
-            const { ignoreStderr } = args[0];
-
-            const doFunc = platforms.find(p => p.name == authType)[name];
+            //const doFunc = platforms.find(p => p.name == authType)[name];
+            const doFunc = ytdlpObj.platform[authType][name];
             console.log(`authenticated request! (type: ${authType}) (function exists? ${doFunc ? true : false})`);
             if(doFunc) {
                 console.log(`running function...`)
                 return new Promise(async (res, rej) => {
-                    if(!ignoreStderr) updateStatus(`Getting authentication token...`)
-                    authentication.getToken(authType).then(token => {
-                        if(token) {
-                            doFunc(token, ...args).then(o => {
-                                const parseObj = (o) => Object.assign(o, {
-                                    extractor: authType.toLowerCase() + (o.type ? `:${o.type.toLowerCase()}` : ``),
-                                    extractor_key: authType[0].toUpperCase() + authType.slice(1) + (o.type ? o.type[0].toUpperCase() + o.type.slice(1) : ``),
-                                    _off_platform: true,
-                                    _platform: authType,
-                                    _needs_original: true,
-                                })
-
-                                const parsed = module.exports.parseInfo(parseObj(o));
-
-                                if(parsed.entries) parsed.entries = parsed.entries.filter(o => o && typeof o == `object`).map(parseObj)
-    
-                                if(!parsed.entries) {
-                                    module.exports.findEquivalent(parsed, ignoreStderr, false, true).then(equivalent => {
-                                        module.exports.verifyPlaylist(Object.assign({}, equivalent, {fullInfo: false}), { forceRun: true, ignoreStderr }).then(o => {
-                                            // res(Object.assign(parsed, { formats: o.formats, }));
-                                            res(module.exports.mergeInfo(parsed, o));
-                                        }).catch(rej);
-                                    }).catch(rej);
-                                } else res(parsed)
-                            }).catch(rej);
-                        } else {
-                            console.log(`failed to auth`)
-                            return func(...args).then(res).catch(rej);
+                    doFunc(...args).then(res).catch(async e => {
+                        console.log(`failed platform func, trying built in ytdlp platform!`)
+                        try {
+                            const attmpt2 = func(...args);
+                            if(attmpt2.then) {
+                                attmpt2.then(res)
+                            } else return res(attmpt2)
+                        } catch(e) {
+                            rej(e);
                         }
-                    }).catch(rej)
+                    })
                 })
+                doFunc(...args)
             } else {
                 console.log(`no function found!`)
                 return func(...args)
@@ -3319,3 +3407,7 @@ for(const entry of Object.entries(module.exports).filter(o => typeof o[1] == `fu
         } else return func(...args)
     }
 }
+
+module.exports = ytdlpObj;
+
+console.log(`defined exports`)
