@@ -41,7 +41,11 @@ module.exports = (forceCheck, getBuildDate, clear) => new Promise(async (res, re
                 });
             });*/
             
-            child_process.execFile(path, [`--version-json`], (err, stdout, stderr) => {
+            child_process.execFile(path, [`--version-json`], {
+                env: { ...process.env,
+                    PYBRIDGE_HEADER_SUPPORTED_SITES: `true`,
+                },
+            }, (err, stdout, stderr) => {
                 if(err) return res(null)
 
                 try {

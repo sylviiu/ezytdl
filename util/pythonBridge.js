@@ -110,9 +110,6 @@ module.exports = {
                     updateStatus(`Starting bridge process; this may take a bit (${currentStep}/${steps})...`)
 
                     module.exports.bridgeProc = child_process.execFile(bridgepath, {
-                        env: { ...process.env,
-                            PYBRIDGE_HEADER_SUPPORTED_SITES: `true`,
-                        },
                         maxBuffer: 1024 * 1024 * 1024, // 1GB
                     });
         
