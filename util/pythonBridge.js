@@ -196,7 +196,6 @@ module.exports = {
                     }
 
                     module.exports.bridgeProc.stderr.on(`data`, d => parseLog(d, `ERR`));
-                    module.exports.bridgeProc.stdout.on(`data`, d => parseLog(d, `OUT`));
 
                     let existingData = ``;
 
@@ -209,18 +208,15 @@ module.exports = {
 
                         if(!data.includes(`\n\r`)) {
                             existingData += data;
-                            console.log(`existingData (appended): ${existingData.length}`)
                             return;
                         } else {
                             if(existingData) {
                                 data = existingData + data;
-                                console.log(`existingData (reset): ${data.length}`)
                                 existingData = ``;
-                            } else console.log(`existingData (nothing; no reset): ${data.length}`)
+                            }
 
                             const parse = (msg) => {
                                 const data = JSON.parse(msg.toString().trim());
-                                console.log(`bridge data for id ${data.id} (exists: ${module.exports.idHooks.find(h => h.id == data.id) ? `yes` : `no`}): [${data.type}] ${data.content.length}`);
                                 if(data.id) {
                                     module.exports.idHooks.filter(h => h.id == data.id).forEach(h => h.func(data));
                                 };
