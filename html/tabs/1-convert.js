@@ -89,6 +89,10 @@ tabs[`Convert`] = {
             system.hasFFmpeg().then(has => {
                 hasFFmpeg = has;
             });
+
+            authentication.list().then(Object.entries).then(list => {
+                auth = list.map(p => ({[p[0]]: p[1].authSaved})).reduce((a,b) => Object.assign(a,b), {});
+            })
         
             configuration.get(`ffmpegPresets`).then(o => {
                 enabledConversionFormats = o.filter(o => config.ffmpegPresets[o.key]);
