@@ -655,51 +655,55 @@ const ytdlpObj = {
         return ytdlpObj.parseMetadata(d, root);
     },
     getMusicData: (d) => new Promise(async res => {
-        let url;
-
-        const getData = () => {
-            const id = url.split(`/`).filter(Boolean).slice(-1)[0];
-            console.log(`fetching music data for id ${id}`)
-            ytdlpObj.platform.spotify.musicdata(id).then(data => {
-                console.log(`music info for ${id}`, data);
-
-                const o = {
-                    [`TKEY`]: enums.musicKey[data.key],
-                    [`TBPM`]: data.tempo,
-                };
-
-                console.log(`processed:`, o)
-                res(o);
-            })
-        };
-
-        if(authentication.check(d._original_url) == `spotify`) {
-            console.log(`_original_url was spotify, trying to use that id first`)
-            url = d._original_url;
-        } else if(authentication.check(d._request_url) == `spotify`) {
-            console.log(`_request_url was spotify, trying to use that id first`)
-            url = d._request_url;
-        } else if(authentication.check(d.original_url) == `spotify`) {
-            console.log(`original_url was spotify, trying to use that id first`)
-            url = d.original_url;
-        } else if(authentication.check(d.url) == `spotify`) {
-            console.log(`url was spotify, trying to use that id first`)
-            url = d.url;
-        } else {
-            url = await new Promise(res => {
-                ytdlpObj.findEquivalent(d, true, `platform.spotify.search`).then(equiv => {
-                    console.log(`spotify search equivalent for ${d.title} by ${d.artist}: ${equiv.title} by ${equiv.artist} (${equiv.url})`);
-                    res(equiv.url);
-                }).catch(e => {
-                    console.error(`failed getting music data:`, e)
-                    return res(null);
-                });
-            })
-        };
-
-        if(url) {
-            getData();
-        } else res(null);
+        try {
+            let url;
+    
+            const getData = () => {
+                const id = url.split(`/`).filter(Boolean).slice(-1)[0];
+                console.log(`fetching music data for id ${id}`)
+                ytdlpObj.platform.spotify.musicdata(id).then(data => {
+                    console.log(`music info for ${id}`, data);
+    
+                    const o = {
+                        [`TKEY`]: enums.musicKey[data.key],
+                        [`TBPM`]: data.tempo,
+                    };
+    
+                    console.log(`processed:`, o)
+                    res(o);
+                })
+            };
+    
+            if(authentication.check(d._original_url) == `spotify`) {
+                console.log(`_original_url was spotify, trying to use that id first`)
+                url = d._original_url;
+            } else if(authentication.check(d._request_url) == `spotify`) {
+                console.log(`_request_url was spotify, trying to use that id first`)
+                url = d._request_url;
+            } else if(authentication.check(d.original_url) == `spotify`) {
+                console.log(`original_url was spotify, trying to use that id first`)
+                url = d.original_url;
+            } else if(authentication.check(d.url) == `spotify`) {
+                console.log(`url was spotify, trying to use that id first`)
+                url = d.url;
+            } else {
+                url = await new Promise(res => {
+                    ytdlpObj.findEquivalent(d, true, `platform.spotify.search`).then(equiv => {
+                        console.log(`spotify search equivalent for ${d.title} by ${d.artist}: ${equiv.title} by ${equiv.artist} (${equiv.url})`);
+                        res(equiv.url);
+                    }).catch(e => {
+                        console.error(`failed getting music data:`, e)
+                        return res(null);
+                    });
+                })
+            };
+    
+            if(url) {
+                getData();
+            } else res(null);
+        } catch(e) {
+            res(null);
+        }
     }),
     search: ({query, count, from, extraArguments, noVerify, forceVerify, ignoreStderr}) => new Promise(async res => {
         if(!count) count = 10;
@@ -1559,6 +1563,20 @@ const ytdlpObj = {
 
             //console.log(`download started! (url: ${url})`, info)
 
+            let additionalTags = false;
+
+            if(addMetadata['opt-saveMusicData']) additionalTags = new Promise(async (res, rej) => {
+                try {
+                    const additional = await ytdlpObj.getMusicData(info);
+                    const entries = Object.entries(additional);
+                    console.log(`additional tags:`, entries);
+                    return res(entries.map(o => [o[0], o[1]]));
+                } catch(e) {
+                    console.error(`failed getting additional music data (key / bpm): ${e}`);
+                    rej(`${e}`);
+                }
+            })
+
             const originalFormat = format;
 
             const getFormat = ytdlpObj.getFormatInstance(updateFunc, originalFormat);
@@ -1771,12 +1789,11 @@ const ytdlpObj = {
     
                                     for(const entry of general) tags.push([entry[0], entry[1]]);
     
-                                    if(addMetadata['opt-saveMusicData']) try {
-                                        setProgress(`tags`, {progressNum: 15, status: `Retrieving additional music data...`})
-                                        const additional = await ytdlpObj.getMusicData(info);
-                                        const entries = Object.entries(additional)
-                                        console.log(`additional tags:`, entries)
-                                        for(const entry of entries) tags.push([entry[0], entry[1]]);
+                                    if(additionalTags) try {
+                                        setProgress(`tags`, {progressNum: 15, status: `Retrieving additional music data...`});
+                                        const additional = await additionalTags;
+                                        console.log(`additional tags:`, additional)
+                                        for(const entry of additional) tags.push([entry[0], entry[1]]);
                                     } catch(e) {
                                         console.error(`failed getting additional music data (key / bpm): ${e}`);
                                         skipped[`additional music data tag`] = `${e}`;
