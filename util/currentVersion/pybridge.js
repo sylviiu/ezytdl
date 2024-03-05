@@ -40,16 +40,10 @@ module.exports = (forceCheck, getBuildDate, clear) => new Promise(async (res, re
                     }
                 });
             });*/
-            
-            child_process.execFile(path, [`--version-json`], {
-                env: { ...process.env,
-                    PYBRIDGE_HEADER_SUPPORTED_SITES: `true`,
-                },
-            }, (err, stdout, stderr) => {
-                if(err) return res(null)
 
+            const parse = (data) => new Promise(async (res, rej) => {
                 try {
-                    let version = JSON.parse((stdout ? stdout.toString('utf8').trim() : `` || stderr ? stderr.toString('utf8').trim() : ``));
+                    let version = JSON.parse(data);
 
                     require(`../pythonBridge`).bridgeVersions = version;
 
@@ -87,6 +81,20 @@ module.exports = (forceCheck, getBuildDate, clear) => new Promise(async (res, re
                 } catch(e) {
                     rej(e);
                 }
+            });
+            
+            child_process.execFile(path, [`--version-json`], {
+                env: { ...process.env,
+                    PYBRIDGE_HEADER_SUPPORTED_SITES: `true`,
+                },
+            }, (err, stdout, stderr) => {
+                parse(stdout ? stdout.toString('utf8').trim() : `` || stderr ? stderr.toString('utf8').trim() : ``).then(res).catch(e => {
+                    child_process.execFile(path, [`--version-json`], (err, stdout, stderr) => {
+                        parse(stdout ? stdout.toString('utf8').trim() : `` || stderr ? stderr.toString('utf8').trim() : ``).then(res).catch(e => {
+                            return res(null);
+                        })
+                    });
+                })
             });
         } else {
             console.log(`File doesn't exist, returning null`);
