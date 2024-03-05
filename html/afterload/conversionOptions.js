@@ -526,6 +526,8 @@ const setupConvertDownload = (node, info, colorScheme) => {
 }
 
 const setupDisabledButtonWithReason = (m, title, message) => {
+    m.setAttribute(`value`, `false`);
+    
     const icon = m.querySelector(`#icon`);
 
     m.style.scale = 0.9;
