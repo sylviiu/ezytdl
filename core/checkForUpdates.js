@@ -137,7 +137,7 @@ module.exports = (manual) => new Promise(async res => {
     if(global.testrun) return res(null);
 
     // if the last check was less than 15 minutes ago, don't check again unless it's a manual check
-    if(Date.now() - lastChecked > 900000/* && !manual*/) return res(null);
+    if(Date.now() - lastChecked > 900000 && !manual) return res(null);
 
     const { nightlyUpdates } = await require(`../getConfig`)()
 
@@ -149,7 +149,7 @@ module.exports = (manual) => new Promise(async res => {
     if((!nightlyUpdates && pkg.version.includes(`-dev.`))) {
         autoUpdater.currentVersion = `1.0.0`;
         AppUpdater.currentVersion = `1.0.0`;
-    } else if((nightlyUpdates && !pkg.version.includes(`-dev.`))) {
+    } else {
         autoUpdater.currentVersion = pkg.version;
         AppUpdater.currentVersion = pkg.version;
     }
@@ -187,14 +187,15 @@ module.exports = (manual) => new Promise(async res => {
             headingText: `Already checking for updates!`,
             bodyText: `ezytdl is already checking for updates!`,
         });
-        return res(null)
-    }
-    
-    if(!global.updateAvailable || manual) {
+        res(null)
+    } else if(!global.updateAvailable || manual) {
         promises.push({res});
         setProgress({ progress: -1, status: `Checking for updates...` });
         autoUpdater.checkForUpdates();
-    } else res(null);
+    } else {
+        console.log(`refusing to check for updates; updateavailable? ${global.updateAvailable}; manual? ${manual}; checking? ${checkingForUpdates}`)
+        res(null);
+    }
 });
 
 module.exports.setProgress = setProgress;
