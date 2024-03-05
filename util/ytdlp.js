@@ -671,6 +671,9 @@ const ytdlpObj = {
     
                     console.log(`processed:`, o)
                     res(o);
+                }).catch(e => {
+                    console.error(`error at music data parsing: ${e}`)
+                    res(null);
                 })
             };
     
