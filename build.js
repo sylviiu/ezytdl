@@ -356,7 +356,7 @@ if(require.main == module) {
         
                     console.log(`Spawning npm with args "${procArgs.join(` `)}"`);
                     
-                    const proc = child_process.spawn(npm, procArgs, { stdio: "inherit" });
+                    const proc = child_process.spawn(npm, procArgs, { stdio: "inherit", shell: true });
                     
                     proc.on(`close`, async (code) => {
                         console.log(`Build closed with code ${code}`);

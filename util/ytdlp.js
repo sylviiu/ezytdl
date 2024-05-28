@@ -3236,7 +3236,7 @@ const ytdlpObj = {
             const originalTitle = thisInfo.media_metadata.general.title;
             const originalArtist = thisInfo.media_metadata.general.artist;
 
-            resultsInfo.entries = resultsInfo.entries.map(result => {
+            resultsInfo.entries = resultsInfo.entries?.map(result => {
                 const { title, artist } = result.media_metadata.general;
 
                 result.similarities = {};
@@ -3305,7 +3305,7 @@ const ytdlpObj = {
                         return result;
                     } else return undefined; // if this result doesn't have a duration, AND other results have durations, don't return it
                 } else return undefined;
-            });
+            }) || [];
 
             resultsInfo.entries = resultsInfo.entries.filter(a => a && a !== undefined && typeof a == `object` && typeof a.similarity == `number`).sort((a, b) => b.similarity - a.similarity);
 

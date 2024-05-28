@@ -602,7 +602,9 @@ const conversionOptions = (node, info, colorScheme) => {
 
         metaButtons.forEach(m => {
             if(m.id == `opt-saveMusicData` && !auth.spotify) {
-                setupDisabledButtonWithReason(m, `Spotify not set up!`, `To save extra data such as the BPM / initial key of a song, ezytdl will need to cross reference it with Spotify. Please set up Spotify in the settings and try again!`)
+                m.setAttribute(`value`, `false`);
+                m.style.display = `none`;
+                //setupDisabledButtonWithReason(m, `Spotify not set up!`, `To save extra data such as the BPM / initial key of a song, ezytdl will need to cross reference it with Spotify. Please set up Spotify in the settings and try again!`)
             } else {
                 const icon = m.querySelector(`#icon`);
         
@@ -638,7 +640,11 @@ const conversionOptions = (node, info, colorScheme) => {
                             easing: `easeOutExpo`,
                         })
                     }
-                }
+                };
+
+                if(m.id == `opt-saveMusicData` && !(info.genres || info.genre)) {
+                    while(m.getAttribute(`value`) != `false`) m.onclick();
+                };
             }
         });
 
@@ -731,7 +737,13 @@ const conversionOptions = (node, info, colorScheme) => {
             }
         }
     } else {
-        metaButtons.forEach(m => setupDisabledButtonWithReason(m, `FFmpeg not found!`, `FFmpeg is required to add metadata. Please install FFmpeg and try again.`));
+        metaButtons.forEach(m => {
+            if(m.id == `opt-saveMusicData` && !auth.spotify) {
+                m.setAttribute(`value`, `false`);
+                m.style.display = `none`;
+                //setupDisabledButtonWithReason(m, `Spotify not set up!`, `To save extra data such as the BPM / initial key of a song, ezytdl will need to cross reference it with Spotify. Please set up Spotify in the settings and try again!`)
+            } else setupDisabledButtonWithReason(m, `FFmpeg not found!`, `FFmpeg is required to add metadata. Please install FFmpeg and try again.`)
+        });
 
         console.log(node.querySelector(`#confirmDownload`).parentElement, node.querySelector(`#convertDownload`))
 

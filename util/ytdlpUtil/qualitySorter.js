@@ -1,3 +1,5 @@
+const numRegex = /-?\d+(\.\d+)?/g;
+
 const sorters = {
     // go by a.quality and b.quality, higher should go first
     // if there is no quality, send before the ones with quality
@@ -13,6 +15,26 @@ const sorters = {
                 } else if(a.quality && !b.quality) {
                     return -1;
                 } else if(b.quality && !a.quality) {
+                    return 1;
+                } else return 0;
+            } else return 0;
+        },
+        filter: [`audio`, `video`]
+    },
+    formatID: {
+        func: (a,b) => {
+            const aID = Number(a.format_id?.match(numRegex)?.[0] || undefined);
+            const bID = Number(b.format_id?.match(numRegex)?.[0] || undefined);
+            if(aID || bID) {
+                if(aID == bID) {
+                    return 0;
+                } else if(aID > bID) {
+                    return -1;
+                } else if(aID < bID) {
+                    return 1;
+                } else if(aID && !bID) {
+                    return -1;
+                } else if(bID && !aID) {
                     return 1;
                 } else return 0;
             } else return 0;
