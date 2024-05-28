@@ -10,6 +10,8 @@ const buildArgs = yargs(hideBin(process.argv)).argv;
 // previous store: electron-builder -c ./package-build-store.json -p never
 // previous dist: electron-builder -c ./package-build.json -p always
 
+let buildDir = null;
+
 const config = Object.assign({
     "appId": "dev.sylviiu.ezytdl",
     "productName": "ezytdl",
@@ -221,14 +223,15 @@ if(require.main == module) {
             }
         
             const start = async (testrun) => {
+                console.log(`starting! (buildDir: "${buildDir}")`);
                 if(process.argv.find(s => s == `--from-source`)) {
                     console.log(`Running from source...`)
                     spawnProc(`npm`, __dirname, testrun)
                 } else {
                     if(process.platform == `darwin`) {
-                        spawnProc(require(`path`).join(__dirname, `dist`, `mac`, `${config.productName}.app`, `Contents`, `MacOS`, `${config.productName}`), require(`path`).join(__dirname, `dist`), testrun)
+                        spawnProc(require(`path`).join(buildDir, `${config.productName}.app`, `Contents`, `MacOS`, `${config.productName}`), require(`path`).join(__dirname, `dist`), testrun)
                     } else {
-                        const folder = fs.readdirSync(`./dist`).find(s => s.endsWith(`-unpacked`) && fs.existsSync(`./dist/` + s + `/`));
+                        const folder = buildDir ? require(`path`).parse(buildDir).base : null;
                     
                         if(!folder) {
                             console.log(`No unpacked folder found!`);
@@ -255,18 +258,21 @@ if(require.main == module) {
             };
         
             const build = () => new Promise(async res => {
-                if(process.argv.find(s => s == `--from-source`)) {
-                    console.log(`packing (not building)...`)
-                    child_process.execFileSync(await which(`node`), [`build`, `nopack`, `nightly`, `--build-number`, `1`], { stdio: "inherit" });
-                    console.log(`packed!`);
-                    res();
-                } else {
-                    console.log(`packing...`)
-                    child_process.execFileSync(await which(`node`), [`build`, `pack`, `nightly`, `--build-number`, `1`], { stdio: "inherit" });
-                    console.log(`packed!`);
-                    res();
-                }
-            })
+                const args = (process.argv.find(s => s == `--from-source`)) ? [`build`, `nopack`, `nightly`, `--build-number`, `1`] : [`build`, `pack`, `nightly`, `--build-number`, `1`];
+
+                console.log(`packing...`);
+                child_process.execFile(await which(`node`), args, {}, (error, stdout, stderr) => {
+                    if(error) {
+                        return console.error(`failed to build:`, error);
+                    } else {
+                        console.log(`packed!`);
+                        const str = stdout.toString().split(`\n`).filter(Boolean);
+                        const outDir = str.find(s => s.includes(`appOutDir=dist`))
+                        if(outDir) buildDir = require(`path`).join(__dirname, `dist`, outDir.split(`appOutDir=dist`)[1]);
+                        res(buildDir);
+                    }
+                });
+            });
         
             if(process.argv.find(s => s == `start`)) {
                 console.log(`running start`)
