@@ -6,7 +6,7 @@
   "dependencies": {
     "adm-zip": "^0.5.12",
     "auto-launch": "^5.0.6",
-    "electron-updater": "^6.1.8",
+    "electron-updater": "^6.2.1",
     "node-html-parser": "^6.1.13",
     "sanitize-filename": "^1.6.3",
     "shell-env": "^4.0.1",
