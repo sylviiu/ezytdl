@@ -46,6 +46,6 @@
     "sharp": "^0.33.4",
     "showdown": "^2.1.0",
     "tinycolor2": "^1.6.0",
-    "uglify-js": "^3.17.4"
+    "uglify-js": "^3.19.0"
   }
 }
