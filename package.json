@@ -4,16 +4,16 @@
   "description": "Advanced electron-based frontend for yt-dlp.",
   "main": "index.js",
   "dependencies": {
-    "adm-zip": "^0.5.12",
+    "adm-zip": "^0.5.16",
     "auto-launch": "^5.0.6",
-    "electron-updater": "^6.1.8",
+    "electron-updater": "^6.3.9",
     "node-html-parser": "^6.1.13",
     "sanitize-filename": "^1.6.3",
     "shell-env": "^4.0.1",
     "string-similarity": "^4.0.4",
-    "superagent": "^9.0.2",
-    "which": "^4.0.0",
-    "ws": "^8.17.0",
+    "superagent": "^10.1.0",
+    "which": "^5.0.0",
+    "ws": "^8.18.0",
     "yargs": "^17.7.2"
   },
   "scripts": {
@@ -36,16 +36,16 @@
   },
   "homepage": "https://github.com/sylviiu/ezytdl#readme",
   "devDependencies": {
-    "@fontsource/alata": "^5.0.13",
-    "@fortawesome/fontawesome-free": "^6.5.2",
+    "@fontsource/alata": "^5.1.1",
+    "@fortawesome/fontawesome-free": "^6.6.0",
     "animejs": "^3.2.2",
     "bootstrap": "^5.3.3",
     "color-scheme": "^1.0.1",
-    "electron": "^30.0.8",
-    "electron-builder": "^24.13.3",
-    "sharp": "^0.33.4",
+    "electron": "^32.2.0",
+    "electron-builder": "^25.1.8",
+    "sharp": "^0.33.5",
     "showdown": "^2.1.0",
     "tinycolor2": "^1.6.0",
-    "uglify-js": "^3.17.4"
+    "uglify-js": "^3.19.3"
   }
 }
