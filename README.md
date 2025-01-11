@@ -6,6 +6,16 @@
   <img src="https://raw.githubusercontent.com/sylviiu/ezytdl/main/.github/ezytdl-intro.gif">
 </h1>
 
+## MUCH more spaced out updates / "hiatus"
+
+i've been working more as a video editor for the past year, and to be entirely honest, i have found very little spare time or motivation to continue providing valuable updates. i <em>do</em> still use ezytdl to this day, and i've noticed a lot of things that i can improve or fix, but it's become incredibly difficult to scrape together the motivation to do anything about it :(
+
+don't get me wrong, i'm incredibly happy this project exists, and overall it remains one of the things i'm most proud of being able to put together, but everything i've been working on here's essentially come to a halt. i still have some untested local changes saved on my computer, but it's difficult to push a commit because i can't really guarantee that i can commit to the project as much as i once did. the codebase needs quite a bit of refactoring at this point, and that's just a task i can't really say i'm up for right now. sure, updates can still be done on the current codebase, but not to the extent that i usually want.
+
+if you'd like to commit to the project, i'm open to pull requests - again, the codebase is pretty bad, so i can't blame you if you don't want to lol. i will however likely come back every once in a while to patch a specific bug that bothers me enough, or to update dependencies to make sure vulnerabilities don't get too bad :^)
+
+-----
+
 ## What is this?
 
 **ezytdl** is an application that leverages yt-dlp and FFmpeg to provide a simple, easy-to-use interface for downloading videos from YouTube, Twitch, SoundCloud, and various other sites. It is built using [Electron](https://www.electronjs.org/), and is available for Windows, MacOS, and Linux.
