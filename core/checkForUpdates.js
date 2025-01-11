@@ -139,20 +139,23 @@ module.exports = (manual) => new Promise(async res => {
     // if the last check was less than 15 minutes ago, don't check again unless it's a manual check
     if(Date.now() - lastChecked > 900000 && !manual) return res(null);
 
-    const { nightlyUpdates } = await require(`../getConfig`)()
+    //const { nightlyUpdates } = await require(`../getConfig`)()
 
-    const nightlyAllowed = nightlyUpdates ? true : false;
+    //const nightlyAllowed = nightlyUpdates ? true : false;
     
-    autoUpdater.allowPrerelease = nightlyAllowed;
-    AppUpdater.allowPrerelease = nightlyAllowed;
+    autoUpdater.allowPrerelease = true;
+    AppUpdater.allowPrerelease = true;
 
-    if((!nightlyUpdates && pkg.version.includes(`-dev.`))) {
+    /*if((!nightlyUpdates && pkg.version.includes(`-dev.`))) {
         autoUpdater.currentVersion = `1.0.0`;
         AppUpdater.currentVersion = `1.0.0`;
     } else {
         autoUpdater.currentVersion = pkg.version;
         AppUpdater.currentVersion = pkg.version;
-    }
+    }*/
+   
+    autoUpdater.currentVersion = pkg.version;
+    AppUpdater.currentVersion = pkg.version;
 
     autoUpdater.allowDowngrade = true;
     AppUpdater.allowDowngrade = true;

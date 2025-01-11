@@ -36,6 +36,5 @@
     "autoLaunch": "Launch on System Startup",
     "logsEnabled": "Enable Runtime Logs",
     "defaultWindowControls": "Use System Window Controls",
-    "nightlyUpdates": "Dev Updates",
     "advanced": "Show Advanced Options"
 }

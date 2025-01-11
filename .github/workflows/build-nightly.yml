@@ -69,8 +69,8 @@ jobs:
           name: ${{ env.RELEASE_NAME }}
           commit: ${{ github.sha }}
           draft: true
-          prerelease: true
-          makeLatest: false
+          prerelease: false
+          makeLatest: true
           bodyFile: ${{ env.BODY_PATH }}
           omitBody: false
           omitBodyDuringUpdate: true

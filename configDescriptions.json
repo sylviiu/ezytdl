@@ -36,6 +36,5 @@
     "autoLaunch": "When enabled, ezytdl will automatically launch when you log into your computer. This is useful if you want to use the browser connector extension without having to manually launch ezytdl each time you log in.",
     "logsEnabled": "Allows ezytdl to log information to the console. This is useful for debugging and/or bug reporting.",
     "defaultWindowControls": "If this is enabled, ezytdl will use your operating system's default window border & controls. This will only be applied on the next launch of ezytdl.",
-    "nightlyUpdates": "When enabled, ezytdl will install dev updates when available. This is useful if you want to test new features before they are released -- but beware, these updates may be unstable!",
     "advanced": "When enabled, ezytdl will show more options when using the app. This is useful if you want to input direct command line arguments."
 }
