@@ -26,7 +26,7 @@ const setProgress = (opt) => {
 const notifyWithInfo = (info, downloaded) => {
     while(promises.length) promises.pop().res(true);
 
-    global.updateAvailable = info.version;
+    global.updateAvailable = info.version.slice(6);
 
     if(global.window) global.window.webContents.send(`updateAvailable`);
 
@@ -71,7 +71,7 @@ const notifyWithInfo = (info, downloaded) => {
     }
 
     const opt = {
-        headingText: `Update available! (${info.version})`,
+        headingText: `Update available! (${info.releaseName})`,
         bodyText: (`${date} -- "${global.updateAvailable}" `) + (downloaded ? `is available to download!` : `will be installed when you exit!`)
     };
 
@@ -153,7 +153,7 @@ module.exports = (manual) => new Promise(async res => {
         autoUpdater.currentVersion = pkg.version;
         AppUpdater.currentVersion = pkg.version;
     }*/
-   
+
     autoUpdater.currentVersion = pkg.version;
     AppUpdater.currentVersion = pkg.version;
 
