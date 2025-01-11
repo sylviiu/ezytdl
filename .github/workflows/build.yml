@@ -1,4 +1,4 @@
-name: ezytdl distributable build
+name: ezytdl nightly distributable build
 run-name: ${{ github.actor }} - ${{ github.event_name }} - ${{ github.sha }}
 
 on:
@@ -29,9 +29,9 @@ jobs:
       - name: Get release metadata
         id: get_release_metadata
         run: |
-          echo "TAG_NAME=$(node -e "console.log(require('./package.json').version)")" >> "$GITHUB_ENV"
+          echo "TAG_NAME=dev.${{github.run_number}}" >> "$GITHUB_ENV"
           echo "RELEASE_TITLE=${{ inputs.name }}" >> "$GITHUB_ENV"
-          echo "RELEASE_NAME=v$(node -e "console.log(require('./package.json').version)") - ${{ inputs.name }}" >> "$GITHUB_ENV"
+          echo "RELEASE_NAME=dev.${{github.run_number}} - ${{ inputs.name }}" >> "$GITHUB_ENV"
           echo "BODY_PATH=$(echo "$(pwd)/release-notes.md")" >> "$GITHUB_ENV"
 
       - name: Create release notes
@@ -54,12 +54,11 @@ jobs:
           omitBodyDuringUpdate: true
   
   linux-dist:
+    needs: release_info
+
     runs-on: ubuntu-22.04
 
-    needs: release_info
-
-    permissions:
-      contents: write
+    permissions: write-all
 
     steps:
       - name: Checkout repo
@@ -68,7 +67,7 @@ jobs:
       - name: Install Node.js & NPM
         uses: actions/setup-node@main
         with:
-          node-version: '18'
+          node-version: "18"
 
       - name: Install npm deps
         run: |
@@ -78,12 +77,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm run dist
+          npm run nightly -- --build-number ${{github.run_number}}
   macos-dist:
+    needs: release_info
+
     runs-on: macos-latest
 
-    needs: release_info
-
     permissions: write-all
 
     steps:
@@ -93,7 +92,7 @@ jobs:
       - name: Install Node.js & NPM
         uses: actions/setup-node@main
         with:
-          node-version: '18'
+          node-version: "18"
 
       - name: Install npm deps
         run: |
@@ -103,12 +102,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm run dist
+          npm run nightly -- --build-number ${{github.run_number}}
   windows-dist:
+    needs: release_info
+
     runs-on: windows-latest
 
-    needs: release_info
-
     permissions: write-all
 
     steps:
@@ -118,7 +117,7 @@ jobs:
       - name: Install Node.js & NPM
         uses: actions/setup-node@main
         with:
-          node-version: '18'
+          node-version: "18"
 
       - name: Install npm deps
         run: |
@@ -128,4 +127,27 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm run dist
+          npm run nightly -- --build-number ${{github.run_number}}
+  #release:
+  #  needs: [linux-dist, macos-dist, windows-dist, release_info]
+  #  name: "Release the build"
+  #  runs-on: "ubuntu-latest"
+
+  #  permissions: write-all
+
+  #  steps:
+  #    - name: Publish
+  #      uses: eregon/publish-release@v1
+  #      env:
+  #        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #      with:
+  #        release_id: ${{ needs.release_info.outputs.release_id }}
+
+  #    - name: Delete older nightly builds
+  #      uses: dev-drprasad/delete-older-releases@v0.2.1
+  #      with:
+  #        keep_latest: 3
+  #        delete_tags: true
+  #        delete_tag_pattern: dev
+  #      env:
+  #        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
