@@ -1,4 +1,4 @@
-name: ezytdl nightly distributable build
+name: ezytdl distributable build
 run-name: ${{ github.actor }} - ${{ github.event_name }} - ${{ github.sha }}
 
 on:

@@ -3,10 +3,3 @@
     <strong>Release v{version}</strong>
 </h1>
 
-
-
---------------
-
-### Changelog
-
-{commitList}
