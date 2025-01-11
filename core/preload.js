@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 const fs = require('fs');
 
 //console.log(`preload :D`);
@@ -119,6 +119,7 @@ contextBridge.exposeInMainWorld(`system`, {
     hasFFprobe: () => invoke(`hasFFprobe`),
     bridgeNeedsDownload: () => invoke(`bridgeNeedsDownload`),
     pickFile: (opt) => invoke(`pickFile`, opt),
+    showFilePath: (file) => webUtils.getPathForFile(file),
     pickFolder: (opt) => invoke(`pickFolder`, opt),
     on: (type, cb) => on(`system-${type}`, (_e, obj) => cb(obj)),
 });

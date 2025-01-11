@@ -1091,12 +1091,27 @@ tabs[`Convert`] = {
         }
         
         const processURL = () => {
+            const currentSearchTags = getSearchTags(container);
+
             const url = input.value + getSearchTags().reduce((a, b) => a + b, ``);
         
             if(url.length > 0) {        
                 console.log (`clicc`, url)
             
-                runSearch(input.value, `Running search...`, `ffprobe`)
+                //runSearch(input.value, `Running search...`, `ffprobe`)
+                
+                if(searchTags.length > 0) {
+                    if(currentSearchTags.length === 1) {
+                        clearSearchTags();
+                        input.value = currentSearchTags[0];
+                        runSearch(input.value, `Probing info...`, `ffprobe`)
+                    } else {
+                        if(input.value) addToList();
+                        runSearch(``, `Probing info...`, `ffprobe`)
+                    }
+                } else {
+                    runSearch(input.value, `Running search...`, `ffprobe`)
+                }
             };
         }
         
@@ -1105,10 +1120,18 @@ tabs[`Convert`] = {
         document.addEventListener(`drop`, e => {
             e.preventDefault();
             e.stopPropagation();
-        
-            if(e.dataTransfer.files.length > 0) {
-                input.value = e.dataTransfer.files[0].path;
-                processURL();
+            
+            if(e?.dataTransfer?.files?.length > 0) {
+                console.log(e.dataTransfer.files)
+
+                /*if(e.dataTransfer.files.length > 1) {
+                    e.dataTransfer.files.forEach(file => addToList(system.showFilePath(file)));
+                } else {
+                    input.value = system.showFilePath(e.dataTransfer.files[0]);
+                }*/
+                
+                //Object.values(e.dataTransfer.files).forEach(file => addToList(system.showFilePath(file)));
+                Object.values(e.dataTransfer.files).forEach(file => console.log(addToList(system.showFilePath(file))));
             };
         })
         
@@ -1140,6 +1163,24 @@ tabs[`Convert`] = {
         input.addEventListener(`click`, refreshSelectionBox);
         input.addEventListener(`blur`, () => setTimeout(() => !changesMadeToInput ? selectionBox.hide(null, true) : null, 100));
         //input.addEventListener(`focus`, () => !changesMadeToInput ? selectionBox.hide(null, true) : null);
+
+        const addToList = (inp) => {
+            try {
+                inp = inp || input.value;
+    
+                const splitter = navigator.platform == `Win32` ? `\\` : `/`;
+    
+                let name = inp.split(splitter).slice(-1)[0];
+    
+                if(name.length > 16) name = `${name.slice(0, 12)}...${name.slice(-4)}`
+    
+                createSearchTag({ url: inp, name })
+    
+                if(inp == input.value) input.value = ``;
+
+                return true;
+            } catch(e) {return false}
+        }
         
         input.addEventListener(`keyup`, (e) => {
             if(input.disabled) return;
@@ -1147,17 +1188,7 @@ tabs[`Convert`] = {
             const enter = (e.key == `Enter` || e.keyCode == 13);
 
             if(enter && (e.shiftKey || (navigator.platform.startsWith(`Mac`) ? e.metaKey : e.altKey)) && input.value) {
-                try {
-                    const splitter = navigator.platform == `Win32` ? `\\` : `/`;
-
-                    let name = input.value.split(splitter).slice(-1)[0];
-
-                    if(name.length > 8) name = `${name.slice(0, 4)}...${name.slice(-4)}`
-
-                    createSearchTag({ url: input.value, name })
-
-                    input.value = ``;
-                } catch(e) {}
+                addToList();
             } else if(enter) processURL();
         });
     }
