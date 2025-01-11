@@ -29,7 +29,7 @@ jobs:
       - name: Get release metadata
         id: get_release_metadata
         run: |
-          echo "TAG_NAME=dev.${{github.run_number}}" >> "$GITHUB_ENV"
+          echo "TAG_NAME=$(node -e "console.log(require('./package.json').version)")-dev.${{github.run_number}}" >> "$GITHUB_ENV"
           echo "RELEASE_TITLE=${{ inputs.name }}" >> "$GITHUB_ENV"
           echo "RELEASE_NAME=dev.${{github.run_number}} - ${{ inputs.name }}" >> "$GITHUB_ENV"
           echo "BODY_PATH=$(echo "$(pwd)/release-notes.md")" >> "$GITHUB_ENV"
