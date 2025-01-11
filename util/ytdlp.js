@@ -97,19 +97,34 @@ var ffmpegRawVideoCodecsDecodeOutput = null;
 var ffmpegRawVideoCodecsEncodeOutput = null;
 
 var ffmpegVideoCodecs = null;
+var ffmpegVideoCodecsMap = new Map();
 var ffmpegAudioCodecs = null;
 
-const refreshVideoCodecs = () => {
-    console.log(`refreshVideoCodecs (promise)`)
-    if(ytdlpObj.ffmpegPath && fs.existsSync(ytdlpObj.ffmpegPath)) {
+const refreshVideoCodecs = (dedicatedData) => {
+    console.log(`refreshVideoCodecs${dedicatedData ? ` (data already fed though)` : ``}`)
+    if(dedicatedData || (ytdlpObj.ffmpegPath && fs.existsSync(ytdlpObj.ffmpegPath))) {
         console.log(`ffmpegPath exists!`);
 
-        ffmpegRawVideoCodecsOutput = child_process.execFileSync(ytdlpObj.ffmpegPath, [`-codecs`, `-hide_banner`, `loglevel`, `error`]).toString().split(`-------`).slice(1).join(`-------`).trim();
+        ffmpegRawVideoCodecsOutput = (dedicatedData || child_process.execFileSync(ytdlpObj.ffmpegPath, [`-codecs`, `-hide_banner`, `loglevel`, `error`])).toString().split(`-------`).slice(1).join(`-------`).trim();
 
         ffmpegRawVideoCodecsDecodeOutput = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `V` && s[1] == `D`);
         ffmpegRawVideoCodecsEncodeOutput = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `V` && s[2] == `E`);
 
-        ffmpegVideoCodecs = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `V`).map(s => s.split(` `)[2]);
+        ffmpegVideoCodecsMap = new Map();
+        ffmpegVideoCodecs = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `V`).map(s => {
+            const str = s.split(` `)[2];
+
+            const decoders = s.match(/\(decoders: ([a-zA-Z0-9 \-_]+)?\)/)?.[1].split(` `) || [];
+            const encoders = s.match(/\(encoders: ([a-zA-Z0-9 \-_]+)?\)/)?.[1].split(` `) || [];
+
+            ffmpegVideoCodecsMap.set(str, {
+                preCodec: (codec) => decoders.find(s => s.endsWith(codec)) || null,
+                postCodec: (codec) => encoders.find(s => s.endsWith(codec)) || null,
+                raw: s
+            });
+
+            return str;
+        });
         ffmpegAudioCodecs = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `A`).map(s => s.split(` `)[2]);
     
         //console.log(ffmpegVideoCodecs, `decode:`, ffmpegRawVideoCodecsDecodeOutput, `encode:`, ffmpegRawVideoCodecsEncodeOutput);
@@ -143,13 +158,15 @@ const refreshVideoCodecsPromise = () => new Promise(async res => {
         proc.once(`close`, code => {
             if(code != 0) return res(null);
 
-            ffmpegRawVideoCodecsOutput = data;
+            /*ffmpegRawVideoCodecsOutput = data;
     
             ffmpegRawVideoCodecsDecodeOutput = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `V` && s[1] == `D`);
             ffmpegRawVideoCodecsEncodeOutput = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `V` && s[2] == `E`);
     
             ffmpegVideoCodecs = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `V`).map(s => s.split(` `)[2]);
-            ffmpegAudioCodecs = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `A`).map(s => s.split(` `)[2]);
+            ffmpegAudioCodecs = ffmpegRawVideoCodecsOutput.split(`\n`).filter(s => s[3] == `A`).map(s => s.split(` `)[2]);*/
+
+            refreshVideoCodecs(data);
     
             res();
         })
@@ -1310,39 +1327,124 @@ const ytdlpObj = {
                 const regex = /\(\s*([^)]+)\s*\)/g
 
                 let valid = false;
+                let method = `(none available)`;
 
-                let use = (encode ? ffmpegRawVideoCodecsEncodeOutput : ffmpegRawVideoCodecsDecodeOutput).filter(s => s.includes(codec));
-                let useRegex = (encode ? ffmpegRawVideoCodecsEncodeOutput : ffmpegRawVideoCodecsDecodeOutput).filter(s => s.includes(codec) && s.match(regex));
-
-                if(useRegex.length > 0) {
-                    for(const s of useRegex) {
-                        for(const match of s.match(regex)) {
-                            if(match.includes(encode ? `encoders` : `decoders`) && match.includes(str)) {
-                                valid = true;
+                if((!encode && o.pre.includes(`-c:v`)) || (encode && o.post.includes(`-c:v`))) {
+                    let use = (encode ? ffmpegRawVideoCodecsEncodeOutput : ffmpegRawVideoCodecsDecodeOutput).filter(s => s.includes(codec));
+                    let useRegex = (encode ? ffmpegRawVideoCodecsEncodeOutput : ffmpegRawVideoCodecsDecodeOutput).filter(s => s.includes(codec) && s.match(regex));
+    
+                    if(useRegex.length > 0) {
+                        for(const s of useRegex) {
+                            for(const match of s.match(regex)) {
+                                if(match.includes(encode ? `encoders` : `decoders`) && match.includes(str)) {
+                                    valid = 1;
+                                    break;
+                                }
+                            };
+        
+                            if(valid) {
+                                method = `codec search (useRegex)`
                                 break;
                             }
-                        };
-    
-                        if(valid) break;
-                    }
-                } else {
-                    for(const s of use) {
-                        if(s.includes(str)) valid = true;
-    
-                        if(valid) break;
-                    }
+                        }
+                    } else {
+                        for(const s of use) {
+                            if(s.includes(str)) valid = 1;
+        
+                            if(valid) {
+                                method = `codec search (use)`
+                                break;
+                            }
+                        }
+                    };
+                } else if(!encode && o.pre.includes(`-hwaccel`)) {
+                    valid = 2;
+                    method = `hwaccel argument`
                 };
 
-                console.log(`found in ${useRegex.length > 0 ? `useRegex` : `use`} ${str} - ${valid}`)
+                console.log(`[${encode ? `encode` : `decode`}/${o.string}] found in ${method} ${str} - ${valid}`)
 
                 return valid
             } else return false;
         }).map(o => {
+            const postCodec = (o.post.includes(`-c:v`) ? o.post[o.post.indexOf(`-c:v`)+1].split(`_`)?.[1]?.split(`_`)?.[1] : null) || o.string;
+            const preCodec = (o.pre.includes(`-c:v`) ? o.pre[o.pre.indexOf(`-c:v`)+1].split(`_`)?.[1]?.split(`_`)?.[1] : null) || o.string;
+
+            //const foundPreCodec = ffmpegVideoCodecs.find(s => s == codec);
+            //const foundPostCodec = ffmpegVideoCodecs.find(s => s == codec);
+            const foundPreCodec = ffmpegVideoCodecsMap.get(codec)?.preCodec(preCodec);
+            const foundPostCodec = ffmpegVideoCodecsMap.get(codec)?.postCodec(postCodec);
+
+            console.log(`[${encode ? `encode` : `decode`}/foundcodec]`, codec, preCodec, foundPreCodec, postCodec, foundPostCodec);
+
+            let usePre, usePost, preAccel = false, postAccel = false;
+
+            let useCodecName = null;
+
+            if(encode) {
+                if(foundPostCodec && o.post.includes(`-c:v`)) {
+                    console.log(`replacing existing post video codec arg with ${foundPostCodec}`)
+                    usePost = [...o.post.slice(0, o.post.indexOf(`-c:v`)+1), foundPostCodec, ...o.post.slice(o.post.indexOf(`-c:v`)+2)];
+                    console.log(usePost);
+                    postAccel = true;
+                    useCodecName = foundPostCodec;
+                } else if(foundPostCodec) {
+                    console.log(`adding new post video codec arg with ${foundPostCodec}`)
+                    usePost = [...o.post, `-c:v`, foundPreCodec];
+                    console.log(usePost)
+                    postAccel = true;
+                    useCodecName = foundPostCodec;
+                } else if(o.post.includes(`-c:v`)) {
+                    console.log(`removing existing post video codec arg`)
+                    const indexOfPost = o.post.indexOf(`-c:v`);
+                    usePost = [...o.post.slice(0, indexOfPost), ...o.post.slice(indexOfPost+2)];
+                } else usePost = o.post;
+    
+                if(!useCodecName) useCodecName = `[software]`;
+            } else {
+                if(foundPreCodec && o.pre.includes(`-c:v`)) {
+                    console.log(`replacing existing pre video codec arg with ${foundPreCodec}`);
+                    usePre = [...o.pre.slice(0, o.pre.indexOf(`-c:v`)+1), foundPreCodec, ...o.pre.slice(o.pre.indexOf(`-c:v`)+2)];
+                    console.log(usePre)
+                    preAccel = true;
+                    useCodecName = foundPreCodec;
+                } else if(foundPreCodec) {
+                    console.log(`adding new pre video codec arg with ${foundPreCodec}`)
+                    usePre = [...o.pre, `-c:v`, foundPreCodec];
+                    console.log(usePre)
+                    preAccel = true;
+                    useCodecName = foundPreCodec;
+                } else if(o.pre.includes(`-c:v`)) {
+                    console.log(`removing existing pre video codec arg`)
+                    const indexOfPre = o.pre.indexOf(`-c:v`);
+                    usePre = [...o.pre.slice(0, indexOfPre), ...o.pre.slice(indexOfPre+2)];
+                } else usePre = o.pre;
+    
+                if(o.pre.includes(`-hwaccel`)) {
+                    preAccel = true;
+                    console.log(`utilizing existing pre hwaccel arg`)
+                    if(!useCodecName) useCodecName = `${o.name.split(` `)[0]} hwaccel*`;
+                }
+            }
+
+            /*return Object.assign({}, o, {
+                pre: foundPreCodec ? [...o.pre.slice(0, o.pre.indexOf(`-c:v`)+1), foundPreCodec, ...o.pre.slice(o.pre.indexOf(`-c:v`)+2)],
+                post: foundPostCodec?.postCodec(postCodec) || codec,
+                codecName: codec + `_` + o.string
+            });*/
+
             return Object.assign({}, o, {
+                pre: usePre,
+                post: usePost,
+                preAccel, postAccel,
+                codecName: useCodecName || `--`
+            })
+
+            /*return Object.assign({}, o, {
                 pre: o.pre.includes(`-c:v`) ? o.pre.map(s => s.startsWith(`h264_`) ? `${codec}_${s.split(`_`).slice(1).join(`_`)}` : s) : [...o.pre, `-c:v`, `${codec}_${o.string}`],
                 post: o.post.includes(`-c:v`) ? o.post.map(s => s.startsWith(`h264_`) ? `${codec}_${s.split(`_`).slice(1).join(`_`)}` : s) : [...o.post, `-c:v`, `${codec}_${o.string}`],
                 codecName: codec + `_` + o.string
-            })
+            })*/
         }) : [];
     },
     mergeInfo: (info, newInfo, full=true) => {
@@ -2700,7 +2802,9 @@ const ytdlpObj = {
                         const originalCodecArgs = (codecArgs[originalCodec || ``] || {});
                         const targetCodecArgs = (codecArgs[targetCodec || ``] || {});
 
-                        console.log(`codecArgs: `, codecArgs)
+                        console.log(`codecArgs: `, codecArgs);
+
+                        const indexofVF = outputArgs.indexOf(`-vf`);
 
                         if(compatibleDecoders.length > 0 && compatibleEncoders.length > 0) {
                             for(const decoder of compatibleDecoders) {
@@ -2708,19 +2812,35 @@ const ytdlpObj = {
 
                                 for(const encoder of compatibleEncoders) {
                                     const encoderArgs = (targetCodecArgs[encoder.string] || targetCodecArgs[`default`] || {}).post;
-    
-                                    console.log(`codecArgs for decoder (${originalCodec} / ${decoder.string}):`, decoderArgs)
-                                    console.log(`codecArgs for encoder (${targetCodec} / ${encoder.string}):`, encoderArgs)
 
+                                    const useOutputArgs = (indexofVF != -1 && encoder.vf) ? [...outputArgs.slice(0, indexofVF+1), outputArgs[indexofVF+1].split(`,`).map(s => {
+                                        const toMatch = new RegExp(`${Object.keys(encoder.vf).join(`|`)}`);
+                                        const matched = s.match(toMatch)
+                                        if(matched?.[0] && encoder.vf[matched[0]]) {
+                                            return s.replace(matched[0], encoder.vf[matched[0]])
+                                        } else return s;
+                                    }).join(`,`), ...outputArgs.slice(indexofVF+2)] : indexofVF != -1 ? [...outputArgs.slice(0, indexofVF+1), `format=yuv420p,hwdownload,${outputArgs[indexofVF+1]},${encoder.vf?.[`hwupload`] || `hwupload`}`, ...outputArgs.slice(indexofVF+2)] : null
+                                    console.log(`encoder useOutputArgs`, useOutputArgs);
+
+                                    console.log(`codecArgs for decoder (${decoder.codecName || `${originalCodec} / ${decoder.string}`}):`, decoderArgs)
+                                    console.log(`codecArgs for encoder (${encoder.codecName || `${targetCodec} / ${encoder.string}`}):`, encoderArgs)
+                                    //codecName
                                     appendArgs({
-                                        string: `${originalCodec || originalExtension.toUpperCase()}_${decoder.string} -> ${targetCodec || ext.slice(1).toUpperCase()}_${encoder.string}`,
+                                        //string: `${decoder.codecName || `${originalCodec || originalExtension.toUpperCase()}_${decoder.string}`} -> ${encoder.codecName || `${targetCodec || ext.slice(1).toUpperCase()}_${encoder.string}`}`,
+                                        string: `${decoder.codecName} -> ${encoder.codecName}`,
                                         hardware: `Full`,
-                                        decoder: decoder.name,
-                                        encoder: encoder.name
+                                        decoder: decoder.codecName || decoder.name,
+                                        encoder: encoder.codecName || encoder.name,
+                                        useOutputArgs
                                     }, [
-                                        (decoderArgs && encoderArgs ? [...decoder.pre, ...decoderArgs, ...inputArgs, ...encoder.post, ...encoderArgs, ...outputArgs] : null), 
+                                        (decoderArgs && encoderArgs && useOutputArgs ? [...decoderArgs, ...decoder.pre, ...inputArgs, ...encoder.post, ...encoderArgs, ...useOutputArgs] : null), 
+                                        (encoderArgs && useOutputArgs ? [...decoder.pre, ...inputArgs, ...encoder.post, ...encoderArgs, ...useOutputArgs] : null), 
+                                        (decoderArgs && useOutputArgs ? [...decoderArgs, ...decoder.pre, ...inputArgs, ...encoder.post, ...useOutputArgs] : null), 
+                                        (useOutputArgs ? [...decoder.pre, ...inputArgs, ...encoder.post, ...useOutputArgs] : null),
+
+                                        (decoderArgs && encoderArgs ? [...decoderArgs, ...decoder.pre, ...inputArgs, ...encoder.post, ...encoderArgs, ...outputArgs] : null), 
                                         (encoderArgs ? [...decoder.pre, ...inputArgs, ...encoder.post, ...encoderArgs, ...outputArgs] : null), 
-                                        (decoderArgs ? [...decoder.pre, ...decoderArgs, ...inputArgs, ...encoder.post, ...outputArgs] : null), 
+                                        (decoderArgs ? [...decoderArgs, ...decoder.pre, ...inputArgs, ...encoder.post, ...outputArgs] : null), 
                                         [...decoder.pre, ...inputArgs, ...encoder.post, ...outputArgs]
                                     ]);
                                 }
@@ -2731,15 +2851,16 @@ const ytdlpObj = {
                             for(const decoder of compatibleDecoders) {
                                 const decoderArgs = (originalCodecArgs[decoder.string] || originalCodecArgs[`default`] || {}).pre;
                                 
-                                console.log(`codecArgs for decoder (${originalCodec} / ${decoder.string}):`, decoderArgs)
+                                console.log(`codecArgs for decoder (${decoder.codecName || `${originalCodec} / ${decoder.string}`}):`, decoderArgs)
                                 
                                 appendArgs({
-                                    string: `${originalCodec || originalExtension.toUpperCase()}_${decoder.string} -> ${targetCodec || ext.slice(1).toUpperCase()} (CPU)`,
+                                    //string: `${originalCodec || originalExtension.toUpperCase()}_${decoder.string} -> ${targetCodec || ext.slice(1).toUpperCase()} (CPU)`,
+                                    string: `${decoder.codecName} -> ${targetCodec || ext.slice(1).toUpperCase()} (CPU)`,
                                     hardware: `Partial`,
-                                    decoder: decoder.name,
+                                    decoder: decoder.codecName || decoder.name,
                                     encoder: `Software`
                                 }, [
-                                    (decoderArgs ? [...decoder.pre, ...decoderArgs, ...inputArgs, ...(convert.videoCodec ? [`-c:v`, `${convert.videoCodec}`] : []), ...outputArgs] : null), 
+                                    (decoderArgs ? [...decoderArgs, ...decoder.pre, ...inputArgs, ...(convert.videoCodec ? [`-c:v`, `${convert.videoCodec}`] : []), ...outputArgs] : null), 
                                     [...decoder.pre, ...inputArgs, ...(convert.videoCodec ? [`-c:v`, `${convert.videoCodec}`] : []), ...outputArgs]
                                 ]);
                             }
@@ -2749,15 +2870,29 @@ const ytdlpObj = {
                             for(const encoder of compatibleEncoders) {
                                 const encoderArgs = (targetCodecArgs[encoder.string] || targetCodecArgs[`default`] || {}).post;
 
-                                console.log(`codecArgs for encoder (${targetCodec} / ${encoder.string}):`, encoderArgs)
+                                const useOutputArgs = (indexofVF != -1 && encoder.vf) ? [...outputArgs.slice(0, indexofVF+1), outputArgs[indexofVF+1].split(`,`).map(s => {
+                                    const toMatch = new RegExp(`${Object.keys(encoder.vf).join(`|`)}`);
+                                    const matched = s.match(toMatch)
+                                    if(matched?.[0] && encoder.vf[matched[0]]) {
+                                        return s.replace(matched[0], encoder.vf[matched[0]])
+                                    } else return s;
+                                }).join(`,`), ...outputArgs.slice(indexofVF+2)] : indexofVF != -1 ? [...outputArgs.slice(0, indexofVF+1), `format=yuv420p,hwdownload,${outputArgs[indexofVF+1]},${encoder.vf?.[`hwupload`] || `hwupload`}`, ...outputArgs.slice(indexofVF+2)] : null
+                                console.log(`encoder useOutputArgs`, useOutputArgs);
+
+                                console.log(`codecArgs for encoder (${encoder.codecName || `${targetCodec} / ${encoder.string}`}):`, encoderArgs)
 
                                 appendArgs({
-                                    string: `${originalCodec || originalExtension.toUpperCase()} (CPU) -> ${targetCodec || ext.slice(1).toUpperCase()}_${encoder.string}`,
+                                    //string: `${originalCodec || originalExtension.toUpperCase()} (CPU) -> ${targetCodec || ext.slice(1).toUpperCase()}_${encoder.string}`,
+                                    string: `${originalCodec || originalExtension.toUpperCase()} (CPU) -> ${encoder.codecName}`,
                                     hardware: `Partial`,
                                     decoder: `Software`,
-                                    encoder: encoder.name
+                                    encoder: encoder.codecName || encoder.name,
+                                    useOutputArgs
                                 }, [
-                                    (encoderArgs ? [...inputArgs, ...encoder.post, ...encoderArgs, ...outputArgs] : null), 
+                                    (encoderArgs && useOutputArgs ? [...inputArgs, ...encoder.post, ...encoderArgs, ...useOutputArgs] : null),
+                                    (useOutputArgs ? [...inputArgs, ...encoder.post, ...useOutputArgs] : null),
+
+                                    (encoderArgs ? [...inputArgs, ...encoder.post, ...encoderArgs, ...outputArgs] : null),
                                     [...inputArgs, ...encoder.post, ...outputArgs]
                                 ]);
                             }
@@ -2776,7 +2911,7 @@ const ytdlpObj = {
                     console.log(`attemptArgs`, attemptArgs);
 
                     for(const i in attemptArgs) {
-                        const { string, hardware, decoder, encoder, args } = attemptArgs[i];
+                        const { string, hardware, decoder, encoder, args, useOutputArgs } = attemptArgs[i];
 
                         try {
                             console.log(`Attempting conversion using ${hardware} hardware acceleration: ${string}`)
@@ -2788,7 +2923,8 @@ const ytdlpObj = {
                                 details: [
                                     `${hardware} hardware acceleration`,
                                     `- decode: ${decoder}\n- encode: ${encoder}`,
-                                    `args:\n- ${args.join(`\n- `)}`
+                                    `args:\n- ${args.join(`\n- `)}`,
+                                    ...(useOutputArgs ? [`specific output args:\n- ${useOutputArgs.join(`\n- `)}`] : [])
                                 ],
                                 msg: `${e}`
                             });

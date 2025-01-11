@@ -3,23 +3,31 @@
         "name": "Nvidia / NVENC (auto)",
         "platform": ["win32", "linux"],
         "string": "nvenc",
-        "pre": ["-hwaccel", "auto"],
-        "post": ["-c:v", "h264_nvenc"]
+        "pre": ["-hwaccel", "cuda", "-hwaccel_output_format", "cuda"],
+        "post": ["-c:v", "h264_nvenc"],
+        "vf": {
+            "scale": "scale_cuda",
+            "hwupload": "hwupload_cuda"
+        }
     },
     "nvidia-nvenc-buffered": {
         "name": "Nvidia / NVENC (buffered)",
         "description": "This includes the \"extra hw frames\" FFmpeg option, which is required for some GPUs. Use this if auto doesn't work.",
         "platform": ["win32", "linux"],
         "string": "nvenc",
-        "pre": ["-hwaccel", "auto", "-extra_hw_frames", "10"],
-        "post": ["-c:v", "h264_nvenc"]
+        "pre": ["-hwaccel", "cuda", "-hwaccel_output_format", "cuda", "-extra_hw_frames", "10"],
+        "post": ["-c:v", "h264_nvenc"],
+        "vf": {
+            "scale": "scale_cuda",
+            "hwupload": "hwupload_cuda"
+        }
     },
     "nvidia-cuvid": {
         "name": "Nvidia / CUVID",
         "description": "This platform is deprecated by FFmpeg. Please use NVENC if possible.",
         "platform": ["win32", "linux"],
         "string": "cuvid",
-        "pre": ["-hwaccel", "auto"],
+        "pre": ["-hwaccel", "auto", "-c:v", "h264_cuvid"],
         "post": ["-c:v", "h264_cuvid"]
     },
     "intel-qsv": {
@@ -27,7 +35,10 @@
         "platform": ["win32", "linux"],
         "string": "qsv",
         "pre": ["-hwaccel", "auto"],
-        "post": ["-c:v", "h264_qsv"]
+        "post": ["-c:v", "h264_qsv"],
+        "vf": {
+            "scale": "scale_qsv"
+        }
     },
     "amd-amf": {
         "name": "AMD / Advanced Media Framework",
@@ -42,7 +53,10 @@
         "platform": ["linux"],
         "string": "vaapi",
         "pre": ["-hwaccel", "vaapi", "-hwaccel_output_format", "vaapi"],
-        "post": ["-c:v", "h264_vaapi"]
+        "post": ["-c:v", "h264_vaapi"],
+        "vf": {
+            "scale": "scale_vaapi"
+        }
     },
     "apple-videotoolbox": {
         "name": "Apple / VideoToolbox",

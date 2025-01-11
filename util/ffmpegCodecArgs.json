@@ -20,5 +20,10 @@
         "qsv": {
             "post": ["-profile:v", "main10", "-preset", "medium"]
         }
+    },
+    "av1": {
+        "nvenc": {
+            "pre": ["-c:v", "av1"]
+        }
     }
 }
