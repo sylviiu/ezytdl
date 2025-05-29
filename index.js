@@ -7,7 +7,7 @@ global.headless = process.argv.find(s => s == `--headless`) ? true : false;
 
 const mode = (require(`yargs`).parse(process.argv)["run-script"] || `main`).toLowerCase();
 
-console.log(`Starting ezytdl v${require(`./package.json`).version} in mode "${mode}"`)
+console.log(`Starting ezytdl v${require(`./package.json`).version} in mode "${mode}" (first arg: ${process.argv0})`)
 
 const { app, ipcMain } = require(`electron`);
 

@@ -493,3 +493,5 @@ const housekeeping = () => {
 if(typeof introAnimation != `undefined`) {
     introAnimation.wait(() => housekeeping())
 } else housekeeping();
+
+enableDropper();

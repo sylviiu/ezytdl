@@ -1,9 +1,11 @@
-if(typeof everything != `undefined`) {
+const enableDropper = () => {
     const fileUploadThing = document.createElement(`div`);
     fileUploadThing.id = `uploadtarget`
     fileUploadThing.style.width = `100vw`;
     fileUploadThing.style.height = `calc(100vh - 80px)`;
     fileUploadThing.style.position = `absolute`;
+    fileUploadThing.style.top = `80px`;
+    fileUploadThing.style.left = `0px`;
     fileUploadThing.style.display = `flex`;
     fileUploadThing.style.visibility = `hidden`;
     fileUploadThing.style.pointerEvents = `none`;
@@ -69,13 +71,14 @@ if(typeof everything != `undefined`) {
                 easing: `easeOutExpo`,
                 duration: 1000,
             });
-            anime.remove(everything);
+            /*anime.remove(everything);
             anime({
                 targets: everything,
                 filter: `blur(8px)`,
                 easing: `easeOutExpo`,
                 duration: 500
-            })
+            })*/
+            if(!everything.classList.contains('blurred')) everything.classList.add('blurred');
         },
         processing: () => {
             uploadIcon.style.display = `none`;
@@ -103,13 +106,14 @@ if(typeof everything != `undefined`) {
                 easing: `easeOutExpo`,
                 duration: 1000,
             });
-            anime.remove(everything);
+            /*anime.remove(everything);
             anime({
                 targets: everything,
                 filter: `blur(0px)`,
                 easing: `easeOutExpo`,
                 duration: 500
-            })
+            })*/
+            if(everything.classList.contains('blurred')) everything.classList.remove('blurred');
         }
     }
 
@@ -142,9 +146,9 @@ if(typeof everything != `undefined`) {
 
         uploadThing.processing();
 
-        const files = Object.values(e.dataTransfer.files).map(f => system.showFilePath(f));
-
         if(e?.dataTransfer?.files?.length > 0) {
+            const files = Object.values(e.dataTransfer.files).map(f => system.showFilePath(f));
+            
             const tab = await selectTab(`Convert`);
 
             console.log(`adding ${files.join(`, `)}`);

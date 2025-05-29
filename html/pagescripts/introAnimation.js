@@ -56,7 +56,9 @@ ajax.onload = async () => {
         console.log(`loaded scripts!`);
     
         const navigationBar = document.body.querySelector(`#navigationBar`);
-        const everythingElse = document.body.querySelectorAll(`body > div:not(#navigationBar)`);
+        const everythingElse = document.body.querySelectorAll(`body > div:not(#navigationBar):not(#uploadtarget)`);
+
+        console.log(`affected for animation:`, everythingElse)
     
         if(config.animations.disableAnimations) {
             document.body.style.opacity = 1;

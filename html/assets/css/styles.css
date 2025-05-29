@@ -31,3 +31,12 @@ body {
   border-radius: 3px;
 }
 
+div#everythingContainer {
+  filter: blur(0px);
+  transition: filter, 0.75s cubic-bezier(.14,.92,0,1);
+}
+
+div#everythingContainer.blurred {
+  filter: blur(8px);
+  transition: filter, 2s cubic-bezier(.08,.60,.06,1.01);
+}
