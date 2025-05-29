@@ -56,7 +56,8 @@ const createPopout = ({
         const button = o.element;
         const href = o.href || o.element.href;
 
-        if(button.id) button.id += `-popout`
+        if(button.id) button.id += `-popout`;
+        button.style.zIndex = `9999999999`;
 
         console.log(`Setting button "${name}" as popout to href "${href}"`);
 
@@ -108,6 +109,7 @@ const createPopout = ({
                 console.log(`loading "${href}"`);
 
                 const h = document.createElement(`iframe`);
+                h.style.zIndex = `9999999999`;
 
                 frame = h;
 

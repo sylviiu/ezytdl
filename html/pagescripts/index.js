@@ -274,16 +274,18 @@ getTabs().then(async tabs => {
         }
     }
     
-    selectTab = (tabName) => {
+    selectTab = async (tabName) => {
         const tab = tabs[tabName];
         const currentTab = selectedTab ? tabs[selectedTab] : null;
     
         const indexOfNew = tabKeys.indexOf(tabName);
         const indexOfCurrent = tabKeys.indexOf(selectedTab);
+
+        let moved = null;
     
-        (async () => {
+        await (async () => {
             if(!transitioning && tab && selectedTab != tabName) {
-                console.log(`selecting tab "${tabName}"`)
+                console.log(`selecting tab "${tabName}"`);
 
                 transitioning = true;
 
@@ -295,6 +297,7 @@ getTabs().then(async tabs => {
                     const result = await tab.canSwitch();
     
                     if(!result) {
+                        moved = false;
                         console.log(`not selecting tab "${tabName}" because canSwitch returned false`)
                         transitioning = false;
                         if(!previousSelectedTab) {
@@ -358,6 +361,8 @@ getTabs().then(async tabs => {
                         currentTab.button.querySelector(`#icon`).classList.add(`far`);
                     };
                 };
+
+                moved = true;
         
                 if(!tab.content.parentElement) {
                     currentContent = tab.content;
@@ -390,12 +395,13 @@ getTabs().then(async tabs => {
                 } else transitioning = false;
             } else {
                 console.log(`not selecting tab "${tabName}" because it is already selected or it does not exist`);
+                moved = false;
             }
         })();
 
         const returnValue = tab || currentTab;
 
-        console.log(`returning ${returnValue.name}`)
+        console.log(`returning ${returnValue.name}`);
 
         return returnValue;
     };

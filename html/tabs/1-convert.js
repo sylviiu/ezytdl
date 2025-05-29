@@ -16,6 +16,8 @@ tabs[`Convert`] = {
             })
         })
     }),
+    pendingList: [],
+    addToList: (...inp) => tabs[`Convert`].pendingList.push(...inp),
     initializePage: (container, { setBackground, wavesAnims, colorScheme }) => {
         const urlBox = container.querySelector(`#urlBox`);
         const innerUrlBox = container.querySelector(`#innerUrlBox`);
@@ -1106,7 +1108,7 @@ tabs[`Convert`] = {
                         input.value = currentSearchTags[0];
                         runSearch(input.value, `Probing info...`, `ffprobe`)
                     } else {
-                        if(input.value) addToList();
+                        if(input.value) tabs[`Convert`].addToList();
                         runSearch(``, `Probing info...`, `ffprobe`)
                     }
                 } else {
@@ -1117,7 +1119,7 @@ tabs[`Convert`] = {
         
         button.onclick = () => processURL();
         
-        document.addEventListener(`drop`, e => {
+        /*document.addEventListener(`drop`, e => {
             e.preventDefault();
             e.stopPropagation();
             
@@ -1125,15 +1127,15 @@ tabs[`Convert`] = {
                 console.log(e.dataTransfer.files)
 
                 /*if(e.dataTransfer.files.length > 1) {
-                    e.dataTransfer.files.forEach(file => addToList(system.showFilePath(file)));
+                    e.dataTransfer.files.forEach(file => tabs[`Convert`].addToList(system.showFilePath(file)));
                 } else {
                     input.value = system.showFilePath(e.dataTransfer.files[0]);
-                }*/
+                }
                 
-                //Object.values(e.dataTransfer.files).forEach(file => addToList(system.showFilePath(file)));
-                Object.values(e.dataTransfer.files).forEach(file => console.log(addToList(system.showFilePath(file))));
+                //Object.values(e.dataTransfer.files).forEach(file => tabs[`Convert`].addToList(system.showFilePath(file)));
+                Object.values(e.dataTransfer.files).forEach(file => console.log(tabs[`Convert`].addToList(system.showFilePath(file))));
             };
-        })
+        })*/
         
         const refreshSelectionBox = () => {
             if(!progressObj) {
@@ -1164,9 +1166,11 @@ tabs[`Convert`] = {
         input.addEventListener(`blur`, () => setTimeout(() => !changesMadeToInput ? selectionBox.hide(null, true) : null, 100));
         //input.addEventListener(`focus`, () => !changesMadeToInput ? selectionBox.hide(null, true) : null);
 
-        const addToList = (inp) => {
+        tabs[`Convert`].addToList = (inp) => {
             try {
                 inp = inp || input.value;
+
+                console.log(`FILE ADDED: ${inp}`);
     
                 const splitter = navigator.platform == `Win32` ? `\\` : `/`;
     
@@ -1180,6 +1184,10 @@ tabs[`Convert`] = {
 
                 return true;
             } catch(e) {return false}
+        };
+
+        while(tabs[`Convert`].pendingList.length) {
+            tabs[`Convert`].addToList(tabs[`Convert`].pendingList.shift());
         }
         
         input.addEventListener(`keyup`, (e) => {
@@ -1188,7 +1196,7 @@ tabs[`Convert`] = {
             const enter = (e.key == `Enter` || e.keyCode == 13);
 
             if(enter && (e.shiftKey || (navigator.platform.startsWith(`Mac`) ? e.metaKey : e.altKey)) && input.value) {
-                addToList();
+                tabs[`Convert`].addToList();
             } else if(enter) processURL();
         });
     }
