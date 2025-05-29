@@ -85,6 +85,10 @@ var theme = ({
             "background-color": `${lightMode ? `rgb(255,255,255)` : `rgb(0,0,0)`} !important`,
             "color": `${lightMode ? `rgb(0,0,0)` : `rgb(255,255,255)`} !important`,
         },*/
+        ".ez-logo": {
+            "color": `white !important`,
+            "filter": `invert(${lightMode ? `1` : `0`}) !important`
+        },
         "a": {
             "color": `${lightMode ? `rgba(0,0,0)` : `rgba(255,255,255)`} !important`,
         },

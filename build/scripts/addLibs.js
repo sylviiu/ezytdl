@@ -2,7 +2,7 @@ const fs = require('fs');
 
 module.exports = {
     scripts: {
-        animejs: `./node_modules/animejs/lib/anime.min.js`,
+        animejs: `./node_modules/animejs/lib/anime.min.cjs`,
         showdown: `./node_modules/showdown/dist/showdown.min.js`,
         tinycolor: `./node_modules/tinycolor2/dist/tinycolor-min.js`,
         "color-scheme": `./node_modules/color-scheme/lib/color-scheme.min.js`,

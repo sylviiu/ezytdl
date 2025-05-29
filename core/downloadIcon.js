@@ -53,10 +53,10 @@ module.exports = {
                 } else {
                     nativeIcon = nativeImage.createEmpty();
 
-                    const sizes = Object.keys(iconFile).map(Number)
+                    const sizes = Object.keys(iconFile).map(Number);
 
-                    for(let i in sizes) {
-                        const size = sizes[i];
+                    for(const size of sizes) {
+                        console.log(`getting size ${size}`);
                         const path = await getPath(`./${iconFile[`${size}`]}`, false, false, true);
                         const icon = await pfs.readFileSync(path);
         
@@ -69,7 +69,9 @@ module.exports = {
                             });
                         } else {
                             nativeIcon = nativeImage.createFromBuffer(icon);
-                        }
+                        };
+
+                        console.log(`next!`)
                     };
                 }
 

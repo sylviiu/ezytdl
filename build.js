@@ -37,6 +37,7 @@ const config = Object.assign({
         "res/*.*",
         "res/trayIcons/*",
         "res/img/*",
+        "res/svg/*",
         "res/packageIcons/*",
         "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
         "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",

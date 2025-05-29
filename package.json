@@ -6,14 +6,14 @@
   "dependencies": {
     "adm-zip": "^0.5.16",
     "auto-launch": "^5.0.6",
-    "electron-updater": "^6.3.9",
+    "electron-updater": "^6.6.2",
     "node-html-parser": "^7.0.1",
     "sanitize-filename": "^1.6.3",
     "shell-env": "^4.0.1",
     "string-similarity": "^4.0.4",
-    "superagent": "^10.1.1",
+    "superagent": "^10.2.1",
     "which": "^5.0.0",
-    "ws": "^8.18.0",
+    "ws": "^8.18.2",
     "yargs": "^17.7.2"
   },
   "scripts": {
@@ -36,14 +36,14 @@
   },
   "homepage": "https://github.com/sylviiu/ezytdl#readme",
   "devDependencies": {
-    "@fontsource/alata": "^5.1.2",
+    "@fontsource/alata": "^5.2.5",
     "@fortawesome/fontawesome-free": "^6.7.2",
-    "animejs": "^3.2.2",
-    "bootstrap": "^5.3.3",
+    "animejs": "^4.0.2",
+    "bootstrap": "^5.3.6",
     "color-scheme": "^1.0.1",
-    "electron": "^33.3.1",
-    "electron-builder": "^25.1.8",
-    "sharp": "^0.33.5",
+    "electron": "^36.3.2",
+    "electron-builder": "^26.0.12",
+    "sharp": "^0.34.2",
     "showdown": "^2.1.0",
     "tinycolor2": "^1.6.0",
     "uglify-js": "^3.19.3"

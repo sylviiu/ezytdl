@@ -23,7 +23,7 @@ const iconToPNG = (name, icon, size, negate) => new Promise(async res => {
 
 module.exports = {
     icons: {
-        noQueue: `regular/circle-down.svg`,
+        noQueue: `./res/svg/circle-eyes.svg`,
         active: `solid/circle-down.svg`,
         complete: `solid/circle-check.svg`,
         mixed: `solid/circle-dot.svg`,
@@ -83,7 +83,7 @@ module.exports = {
                     if(inv) iconFile = iconFile.slice(0, -3);
 
                     if(typeof module.exports.icons[iconFile] == `string`) {
-                        const str = path.join(svgPath, module.exports.icons[iconFile]);
+                        const str = module.exports.icons[iconFile].startsWith(`.`) ? module.exports.icons[iconFile] : path.join(svgPath, module.exports.icons[iconFile]);
 
                         await Promise.all([
                             new Promise(async r => {
