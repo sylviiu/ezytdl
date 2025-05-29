@@ -7,7 +7,7 @@ const lock = Object.entries(require(`../../package-lock.json`).packages)
     .map(([k, v]) => ({ [k.split(`node_modules/`).pop()]: v }))
     .reduce((a, b) => Object.assign(a, b), {});
 
-console.log(`lock`, lock)
+//console.log(`lock`, lock)
 
 module.exports = (name) => new Promise(async res => {
     const resObj = {};

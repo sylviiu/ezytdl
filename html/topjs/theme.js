@@ -45,6 +45,8 @@ var theme = ({
     const parseRGB = ({r,g,b}, a) => `rgb${a ? `a` : ``}(${r},${g},${b}${a ? `,${a}` : ``})`;
     
     //`rgb(${colorScheme.light.r}, ${colorScheme.light.g}, ${colorScheme.light.b})`
+    const currentColor = typeof currentColorScheme == `object` ? currentColorScheme : ((typeof systemColors == `object` ? systemColors : [])[0]);
+    const current = lightMode ? `dark` : `light`
 
     const newRules = {
         ".ez-navbar": {
@@ -86,8 +88,16 @@ var theme = ({
             "color": `${lightMode ? `rgb(0,0,0)` : `rgb(255,255,255)`} !important`,
         },*/
         ".ez-logo": {
-            "color": `white !important`,
-            "filter": `invert(${lightMode ? `1` : `0`}) !important`
+            "fill": `${lightMode ? `black` : `white`} !important`
+        },
+        ".ez-logo-letter": {
+            "fill": `${lightMode ? `black` : `white`} !important`
+        },
+        ".ez-logo-head": {
+            "fill": `${lightMode ? `black` : `white`} !important`
+        },
+        ".ez-logo-tail": {
+            "fill": `${lightMode ? `black` : `white`} !important`
         },
         "a": {
             "color": `${lightMode ? `rgba(0,0,0)` : `rgba(255,255,255)`} !important`,
@@ -100,6 +110,34 @@ var theme = ({
         },
     };
 
+    // logo coloring
+    if(currentColor && lightMode) {
+        Object.assign(newRules, {
+            ".ez-logo-letter": {
+                "fill": `${currentColor ? parseRGB(currentColor.dark) : `white`}`
+            },
+            ".ez-logo-tail": {
+                "fill": `${currentColor ? parseRGB(currentColor.dark) : `white`}`
+            },
+        });
+    } else {
+        Object.assign(newRules, {
+            ".ez-logo": {
+                "fill": `white`
+            },
+            ".ez-logo-letter": {
+                "fill": `${currentColor ? parseRGB(currentColor.lighter) : `black`}`
+            },
+            ".ez-logo-tail": {
+                "fill": `${currentColor ? parseRGB(currentColor.standard) : `white`}`,
+                "filter": "grayscale(0.4)"
+            },
+            ".ez-logo-head": {
+                "fill": `${currentColor ? parseRGB(currentColor.light) : `white`}`
+            },
+        });
+    }
+
     const fonts = [`Alata`, `sans-serif`];
 
     if(config.font) fonts.unshift(config.font);
@@ -110,17 +148,13 @@ var theme = ({
         "font-family": fonts.join(`, `),
     };
 
-    const currentColor = typeof currentColorScheme == `object` ? currentColorScheme : ((typeof systemColors == `object` ? systemColors : [])[0]);
-
     if(currentColor) {
-        const current = lightMode ? `dark` : `light`
-
         const applyColorScheme = (className, colorScheme) => {
             for(const type of [``, `-light`, `-dark`]) {
                 newRules[`${className}` + type] = {
                     "background-color": `${parseRGB(colorScheme[type.slice(1) || current])} !important`,
                     "color": `${(type.slice(1) || current) == `light` ? `rgb(0,0,0)` : `rgb(255,255,255)`} !important`,
-                }
+                };
             }
         }
 

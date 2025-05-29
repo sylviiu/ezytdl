@@ -50,7 +50,23 @@
 }
 
 .ez-logo {
-  color: white !important;
+  fill: black;
+  transition: fill, 2s cubic-bezier(.08,.60,.06,1.01);
+}
+
+.ez-logo-letter {
+  fill: black;
+  transition: fill, 2s cubic-bezier(.08,.60,.06,1.01);
+}
+
+.ez-logo-head {
+  fill: black;
+  transition: fill, 2s cubic-bezier(.08,.60,.06,1.01);
+}
+
+.ez-logo-tail {
+  fill: black;
+  transition: fill, 2s cubic-bezier(.08,.60,.06,1.01);
 }
 
 .ez-text {
