@@ -1199,5 +1199,9 @@ tabs[`Convert`] = {
                 tabs[`Convert`].addToList();
             } else if(enter) processURL();
         });
+        
+        requestAnimationFrame(() => {
+            refreshSelectionBox();
+        })
     }
 }

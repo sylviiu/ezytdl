@@ -10,8 +10,10 @@ const generateWaves = (color) => {
     parentDiv.classList.add(`d-flex`);
     parentDiv.classList.add(`justify-content-center`)
     parentDiv.classList.add(`align-items-end`)
+    parentDiv.style.zIndex = `-50`;
     parentDiv.style.width = `100vw`;
-    parentDiv.style.position = `absolute`;
+    parentDiv.style.position = `fixed`;
+    parentDiv.style.pointerEvents = `none`;
     parentDiv.style.bottom = `0`;
     parentDiv.style.left = `0`;
 

@@ -1434,8 +1434,6 @@ if(!tabs[`Download`]) tabs[`Download`] = {
                 }
             }
         }
-        
-        refreshSelectionBox();
 
         const addURL = (str) => {
             try {
@@ -1504,5 +1502,9 @@ if(!tabs[`Download`]) tabs[`Download`] = {
         resultsCountInput.addEventListener(`keyup`, (e) => {
             if(e.key == `Enter` || e.keyCode == 13) processURL();
         });
+        
+        requestAnimationFrame(() => {
+            refreshSelectionBox();
+        })
     }
 }

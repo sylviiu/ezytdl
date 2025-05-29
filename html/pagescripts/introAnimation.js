@@ -77,13 +77,30 @@ ajax.onload = async () => {
             }); a._onDocumentVisibility = () => {};
             if(updateBridge) setTimeout(() => res(), 500);
         } else {
+            let started = 0;
+            let total = 1 + everythingElse.length;
+
+            const introStarted = () => {
+                started++;
+                if(started >= total) {
+                    console.log(`${started}/${total} started!`);
+                    started = -Infinity;
+                    requestAnimationFrame(() => {
+                        anime({
+                            targets: document.body,
+                            opacity: 1,
+                            duration: 1250,
+                            easing: `easeInOutSine`
+                        })
+                    })
+                } else if(started > 0) console.log(`${started} started, ${total - started} left to go`)
+            }
+
             const a = anime({
                 targets: navigationBar,
                 top: [`0px`, navigationBar.style.top],
                 duration: 1500,
-                begin: () => {
-                    document.body.style.opacity = 1;
-                },
+                changeBegin: introStarted,
                 complete: () => res(),
                 easing: `easeOutExpo`,
             }); a._onDocumentVisibility = () => {};
@@ -96,8 +113,8 @@ ajax.onload = async () => {
                 marginTop: [`500vh`, element.style.marginTop || `0px`],
                 duration: 2500,
                 easing: `easeOutExpo`,
-                begin: () => {
-                    document.body.style.opacity = 1;
+                changeBegin: () => {
+                    introStarted();
                     if(!updateBridge) callback();
                 },
                 complete: () => {
