@@ -5,7 +5,7 @@ module.exports = {
     verify: {
         theme: (userConfig) => {
             console.log(`verifying theme...`)
-            if(userConfig.theme != `system` && userConfig.theme != `dark` && userConfig.theme != `light`) userConfig.theme = `system`;
+            if(userConfig.style.theme != 0 && userConfig.style.theme != 1 && userConfig.style.theme != 2) userConfig.style.theme = 0;
             return userConfig
         },
         font: (userConfig) => new Promise(async res => {

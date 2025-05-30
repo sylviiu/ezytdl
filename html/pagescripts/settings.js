@@ -14,24 +14,44 @@ document.getElementById(`settingsBox`).querySelector(`#options`).childNodes.forE
 const settingsBox = document.getElementById(`settingsBox`).cloneNode(true);
 document.getElementById(`settingsBox`).parentNode.removeChild(document.getElementById(`settingsBox`));
 
-const getObject = (key, optionsObj) => {
+// const isSelection = (typeof config[key] == `number` && config.descriptions[key + `Extended`]?.length)
+const getObject = (key, optionsObj, useConf) => {
     const obj = {};
 
+    let o = useConf || config;
+
+    console.log(`fetching object of ${key}`)
     optionsObj.childNodes.forEach(child => {
-        if(child.id && child.id != `save` && !child.classList.contains(`d-none`)) {
-            let id = typeof (key ? config[key] : config)[child.id];
+        if(child.id && child.id != `save` && !child.classList.contains(`d-none`) && !optionsObj.classList.contains(`selection`)) {
+            const prop = child.id.startsWith(`arr`) ? child.id.slice(3) : child.id
+            console.log(`fetching object of ${key} > ${prop} (${child.id})`);
+
+            console.log(`key: ${key} / prop: ${prop} / type: ${typeof o[key]}`, o)
+
+            const useObj = key ? o[key] : o;
+            if(!useObj) return console.warn(`no obj found for ${key}`)
+            let id = typeof (useObj[prop]);
             
-            console.log(optionsObj.parentNode.id + ` > ` + optionsObj.id + ` > ` + child.id + `: ` + id)
+            console.log(optionsObj.parentNode.id + ` > ` + optionsObj.id + ` > ` + prop + `: ` + id);
+
+            let method = ``;
 
             if(id == `object`) {
+                method = `sub-options`
                 obj[child.id] = getObject(child.id, child.querySelector(`#options`));
+            } else if(id == `number` && o.descriptions[key + `Extended`]?.[prop + `Extended`]?.length) {
+                method = `nested switch`;
+                obj[child.id] = parseInt(child.querySelector(`#boolean[value="true"]:not(.d-none)`).parentNode.parentNode.id.slice(3));
             } else {
+                method = `raw value`
                 obj[child.id] = child.querySelector(`#${id}`).value;
             }
+
+            console.log(`fetching object of ${key} > ${prop} complete: ${obj[child.id]} (id: ${id}, by ${method})`, useObj);
         }
     });
 
-    console.log(`obj of ${optionsObj.id}:`, obj)
+    console.log(`obj of ${key}:`, obj)
 
     return obj;
 };
@@ -217,7 +237,7 @@ const addFilenameFunctionality = () => {
 const cardObjs = {};
 
 const createCard = (key, string, description, config, parentNode, cardFormatting, depth) => {
-    console.log(`key`, key, `name / string`, string, `config / strings`, config && config.strings ? config.strings : null, `config / descriptions`, config && config.descriptions ? config.descriptions : null);
+    console.log(`CREATECARD`, `key`, key, `name / string`, string, `config / strings`, config && config.strings ? config.strings : null, `config / descriptions`, config && config.descriptions ? config.descriptions : null);
 
     if(key.endsWith(`Extended`)) return;
 
@@ -249,24 +269,35 @@ const createCard = (key, string, description, config, parentNode, cardFormatting
         parentNode.appendChild(newCard)
     } else console.log(`already present`);
 
-    const card = parentNode.querySelector(`#` + key)
+    const card = parentNode.querySelector(`#` + key);
 
     cards.push(card);
 
-    console.log(`card:`, card)
+    console.log(`card for ${key} (at depth ${depth}):`, card);
 
-    card.querySelector(`#name`).innerHTML = markdown.makeHtml(string);
-
-    if(description) {
-        card.querySelector(`#description`).innerHTML = markdown.makeHtml(description);
-        if(card.querySelector(`#description`).classList.contains(`d-none`)) card.querySelector(`#description`).classList.remove(`d-none`);
-        card.querySelector(`#description`).style.marginBottom = `-10px`;
-        if(!cardFormatting) {
-            card.querySelector(`#description`).style.fontSize = `0.8em`;
-            card.querySelector(`#name`).style.marginBottom = `-15px`
-        }
+    if(config.compact) {
+        /*card.querySelector(`#name`).style.marginRight = `revert`;
+        card.querySelector(`#name`).style.marginBottom = `-12px`;
+        card.querySelector(`#strings`).style.width = `revert`;
+        card.classList.add(`flex-column`);
+        card.style.padding = `8px 0px`;
+        card.querySelector(`#options`).style.width = `revert`;
+        if(!card.querySelector(`#description`).classList.contains(`d-none`)) card.querySelector(`#description`).classList.add(`d-none`);*/
+        card.querySelector(`#strings`).classList.add(`d-none`)
     } else {
-        if(!card.querySelector(`#description`).classList.contains(`d-none`)) card.querySelector(`#description`).classList.add(`d-none`);
+        card.querySelector(`#name`).innerHTML = markdown.makeHtml(string);
+
+        if(description) {
+            card.querySelector(`#description`).innerHTML = markdown.makeHtml(description);
+            if(card.querySelector(`#description`).classList.contains(`d-none`)) card.querySelector(`#description`).classList.remove(`d-none`);
+            card.querySelector(`#description`).style.marginBottom = `-10px`;
+            if(!cardFormatting) {
+                card.querySelector(`#description`).style.fontSize = `0.8em`;
+                card.querySelector(`#name`).style.marginBottom = `-15px`
+            }
+        } else {
+            if(!card.querySelector(`#description`).classList.contains(`d-none`)) card.querySelector(`#description`).classList.add(`d-none`);
+        }
     }
 
     if(config.actions[key]) {
@@ -329,9 +360,11 @@ const createCard = (key, string, description, config, parentNode, cardFormatting
         }
     }
 
-    console.log(`type: ${typeof config[key]}`)
+    console.log(`type: ${typeof config[key]}`);
 
-    if(typeof config[key] == `object`) {
+    const isSelection = (typeof config[key] == `number` && config.descriptions[key + `Extended`]?.length)
+
+    if(typeof config[key] == `object` || isSelection) {
         //card.querySelector(`#strings`).style.width = `33%`;
         card.querySelector(`#strings`).style.maxWidth = `33%`;
 
@@ -372,23 +405,62 @@ const createCard = (key, string, description, config, parentNode, cardFormatting
             saveBtn.parentNode.removeChild(saveBtn);
         };
 
-        for(e of Object.entries(config[key])) {
-            const name = config.strings[key + `Extended`] && config.strings[key + `Extended`][e[0]] ? config.strings[key + `Extended`][e[0]] : (e[0][0].toUpperCase() + e[0].slice(1));
-            const description = config.descriptions[key + `Extended`] && config.descriptions[key + `Extended`][e[0]] ? config.descriptions[key + `Extended`][e[0]] : null;
-            createCard(e[0], name, description, {
-                descriptions: config.descriptions[key + `Extended`] || {}, 
-                strings: config.strings[key + `Extended`] || {},
-                actions: config.actions[key + `Extended`] || {},
-                disableInputs,
-                [e[0]]: e[1] 
-            }, opt, false, depth+1)
-        };
+        if(isSelection) {
+            opt.classList.add(`selection`)
+
+            opt.classList.remove(`flex-column`);
+            opt.classList.add(`flex-row`);
+
+            opt.style.borderWidth = `0px`;
+            opt.style.borderColor = `transparent`;
+            opt.style.borderStyle = `none`;
+
+            if(depth >= 1) {
+                opt.style.position = `relative`;
+                opt.style.right = `-8px`;
+                console.log(`old (c) radius: ${opt.style.borderRadius}`);
+                const mult = (depth * 4 * 1.5)
+                opt.style.borderRadius = `${parseInt(opt.style.borderRadius) - (depth * 4 * 1.5)}px`;
+                console.log(`new (c) radius: ${opt.style.borderRadius} (changed: ${mult}; depth: ${depth})`);
+            } else {
+                opt.style.borderRadius = `0px`;
+            }
+
+            for(i in config.descriptions[key + `Extended`]) {
+                const value = config[key] == i ? true : false;
+                const name = config.strings[key + `Extended`] && config.strings[key + `Extended`][i] ? config.strings[key + `Extended`][i] : (i);
+                const description = config.descriptions[key + `Extended`] && config.descriptions[key + `Extended`][i] ? config.descriptions[key + `Extended`][i] : null;
+                console.log(`creating integer button for ${key} (${i}; value is ${value})\n- ${name}\n- ${description}`, config)
+                createCard(`arr${i}`, name, description, {
+                    descriptions: config.descriptions[key + `Extended`] || {}, 
+                    strings: config.strings[key + `Extended`] || {},
+                    actions: config.actions[key + `Extended`] || {},
+                    disableInputs,
+                    compact: true,
+                    [`arr${i}`]: value
+                }, opt, false, depth+1)
+            }
+        } else {
+            for(e of Object.entries(config[key])) {
+                const name = config.strings[key + `Extended`] && config.strings[key + `Extended`][e[0]] ? config.strings[key + `Extended`][e[0]] : (e[0][0].toUpperCase() + e[0].slice(1));
+                const description = config.descriptions[key + `Extended`] && config.descriptions[key + `Extended`][e[0]] ? config.descriptions[key + `Extended`][e[0]] : null;
+                createCard(e[0], name, description, {
+                    descriptions: config.descriptions[key + `Extended`] || {}, 
+                    strings: config.strings[key + `Extended`] || {},
+                    actions: config.actions[key + `Extended`] || {},
+                    disableInputs,
+                    [e[0]]: e[1] 
+                }, opt, false, depth+1)
+            };
+        }
 
         cardObjs[key] = opt;
         
         //card.querySelector(`#save`).onclick = () => updateConfig({ [key]: getObject(key, opt) });
     } else {
-        if(card.querySelector(`#strings`)) card.querySelector(`#strings`).style.width = `100%`;
+        if(!config.compact && card.querySelector(`#strings`)) card.querySelector(`#strings`).style.width = `100%`;
+
+        console.log(`card type: ${typeof config[key]}`);
 
         const input = card.querySelector(`#${typeof config[key]}`);
 
@@ -409,22 +481,37 @@ const createCard = (key, string, description, config, parentNode, cardFormatting
         } else if(typeof config[key] == `boolean`) {
             let btn = card.querySelector(`#boolean`);
 
+            if(config.compact) {
+                btn.innerHTML = string;
+                if(description) btn.setAttribute(`title`, description);
+
+                card.style.width = `fit-content`;
+                card.style.marginLeft = `8px`;
+            }
+
             const disabledBG = `rgb(255,145,145)`
 
-            const setFalse = () => {
-                btn.value = `false`;
-                btn.innerHTML = `Disabled`;
-                btn.style.background = disabledBG
+            const setFalse = (val) => {
+                (val || btn).value = `false`;
+                if(!config.compact) (val || btn).innerHTML = `Disabled`;
+                (val || btn).style.background = disabledBG
             };
 
             const setTrue = () => {
                 btn.value = `true`;
-                btn.innerHTML = `Enabled`;
+                if(!config.compact) btn.innerHTML = `Enabled`;
                 btn.style.background = `#FFFFFF`
             };
 
             let updateBtn = () => {
                 showSaveBox();
+
+                if(key.startsWith(`arr`)) {
+                    const others = parentNode.querySelectorAll(`#boolean:not(.d-none)`)
+                    console.log(`disabling other buttons!`, others);
+                    others.forEach(setFalse);
+                }
+
                 if(btn.value == `false`) {
                     setTrue()
                 } else {

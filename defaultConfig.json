@@ -18,8 +18,10 @@
         "reduceAnimations": false,
         "disableAnimations": false
     },
-    "theme": "system",
-    "font": "Alata",
+    "style": {
+        "theme": 0,
+        "font": "Alata"
+    },
     "lastMediaConversionOutputs": {
         "audio": "mp3",
         "video": "mp4"

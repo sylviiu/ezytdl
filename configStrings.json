@@ -21,8 +21,12 @@
         "reduceAnimations": "Reduce Animations",
         "disableAnimations": "Disable All Animations"
     },
-    "theme": "Theme",
-    "font": "System Font",
+    "style": "Appearance",
+    "styleExtended": {
+        "theme": "Mode",
+        "themeExtended": [ "System", "Light", "Dark" ],
+        "font": "System Font"
+    },
     "lastMediaConversionOutputs": "Default Media Conversion",
     "lastMediaConversionOutputsExtended": {
         "audio": "Audio Format",

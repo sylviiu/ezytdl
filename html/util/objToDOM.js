@@ -21,7 +21,7 @@ const _objToListItem = (k, v, depth=0) => {
 }
 
 const objToDOM = (name, obj, depth=0, paragraphHeading) => {
-    console.log(`objToDOM: ${name} (depth ${depth}) (${typeof obj})`, obj, name)
+    //console.log(`objToDOM: ${name} (depth ${depth}) (${typeof obj})`, obj, name)
 
     const dom = document.createElement(`div`);
 
@@ -62,11 +62,11 @@ const objToDOM = (name, obj, depth=0, paragraphHeading) => {
         Object.entries(obj.expanded).forEach(([k, v]) => ul.appendChild(_objToListItem(k, v, depth)))
         details.appendChild(ul);
 
-        console.log(`objToDOM: details`, obj, details)
+        //console.log(`objToDOM: details`, obj, details)
 
         dom.appendChild(details);
     } else {
-        console.log(`objToDOM: p`, obj, p)
+        //console.log(`objToDOM: p`, obj, p)
 
         dom.appendChild(p);
     };

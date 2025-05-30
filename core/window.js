@@ -79,7 +79,7 @@ module.exports = (notDefault, overrideArgs) => new Promise(async res => {
     if(currentWindow && !notDefault) return res(currentWindow);
 
     if(notDefault && currentWindow) {
-        const lightTheme = (conf.theme == `light` ? true : (nativeTheme.shouldUseDarkColors ? false : true));
+        const lightTheme = (conf.style.theme == 1 ? true : (nativeTheme.shouldUseDarkColors ? false : true));
 
         const bg = lightTheme ? `rgb(245,245,245)` : `rgb(10,10,10)`;
 

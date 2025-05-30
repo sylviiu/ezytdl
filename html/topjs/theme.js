@@ -21,11 +21,11 @@ var theme = ({
 
     let lightMode = false;
 
-    switch(config.theme) {
-        case `dark`:
+    switch(config.style.theme) {
+        case 2:
             lightMode = false;
             break;
-        case `light`:
+        case 1:
             lightMode = true;
             break;
         default:
