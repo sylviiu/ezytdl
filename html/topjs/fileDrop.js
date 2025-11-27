@@ -1,4 +1,4 @@
-const enableDropper = () => {
+var enableDropper = () => {
     const fileUploadThing = document.createElement(`div`);
     fileUploadThing.id = `uploadtarget`
     fileUploadThing.style.width = `100vw`;

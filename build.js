@@ -21,7 +21,7 @@ const config = Object.assign({
     },
     compression: "normal",
     asar: true,
-    asarUnpack: [
+    extraResources: [
         "res/media/hw-accel-test.mp4"
     ],
     files: [
