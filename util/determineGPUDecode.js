@@ -1,8 +1,9 @@
-const { getPathPromise, getPath } = require(`./filenames/ffmpeg`)
+const { getPath: getFFmpegPath } = require(`./filenames/ffmpeg`)
 const { spawn } = require('child_process');
 const { app } = require(`electron`);
 const { Stream } = require('stream');
 
+const getPath = require(`../util/getPath`);
 const fs = require('fs');
 const pfs = require('./promisifiedFS')
 
@@ -10,7 +11,7 @@ const idGen = require(`./idGen`);
 const ytdlp = require(`./ytdlp`)
 const superagent = require(`superagent`);
 
-const constructPromise = (name, accelArgs, file, codec) => new Promise(async (res) => {
+const constructPromise = (ffmpegPath, name, accelArgs, file, codec) => new Promise(async (res) => {
     let pre = (accelArgs.pre || []).slice(0);
     let post = (accelArgs.post || []).slice(0);
 
@@ -23,7 +24,7 @@ const constructPromise = (name, accelArgs, file, codec) => new Promise(async (re
 
     console.log(`[FFMPEG/HW -- TESTING] ${name} with codec ${codec}: ${post[post.indexOf(`-c:v`) + 1]}`)
 
-    const proc = spawn(await getPathPromise(), args);
+    const proc = spawn(ffmpegPath, args);
 
     let complete = false;
 
@@ -62,69 +63,49 @@ const constructPromise = (name, accelArgs, file, codec) => new Promise(async (re
 })
 
 module.exports = (link, platforms, setProgress) => {
-    let path = getPath();
+    let ffmpegPath = getFFmpegPath();
     
-    if(!path || !require('fs').existsSync(path)) {
+    if(!ffmpegPath || !require('fs').existsSync(ffmpegPath)) {
         return null;
     } else {
-        return new Promise((res, rej) => {
-            setProgress(`Downloading file...`, -1)
+        return new Promise(async (res, rej) => {
+            setProgress(`Fetching file...`, -1)
 
-            const tempPath = app.getPath(`temp`);
+            const destination = await getPath(`res/media/hw-accel-test.mp4`, true, false, true);
+            console.log(`destination: ${destination}`);
 
-            const filename = link.split(`/`).slice(-1)[0];
+            if(!destination) return rej(`failed to find test media!`);
 
-            const destination = require(`path`).join(tempPath, idGen(24) + `-` + filename);
+            setProgress(`Getting video codec...`, 50);
 
-            console.log(`destination: ${destination}`)
-    
-            const writeStream = fs.createWriteStream(destination, { flags: `w` });
-    
-            const pt = new Stream.PassThrough();
+            const videoCodec = await ytdlp.getCodec(destination);
 
-            pt.pipe(writeStream);
-    
-            const req = superagent.get(link).set(`User-Agent`, `node`);
+            if(!videoCodec) return rej(`Could not get video codec of "${destination}"`)
 
-            req.pipe(pt).on(`progress`, event => {
-                console.log(event)
-                if(event.progress) setProgress(`Downloading file...`, Math.round(event.progress))
-            });
+            setProgress(`Running tests on ${platforms.length} platforms...`, -1)
 
-            writeStream.once(`finish`, async () => {
-                setProgress(`Getting video codec...`, 50);
+            const transcoders = await require(`./configs`).ffmpegGPUArgs();
 
-                const videoCodec = await ytdlp.getCodec(destination);
+            let tested = {};
 
-                if(!videoCodec) return rej(`Could not get video codec of "${destination}"`)
+            for(const transcoder of platforms) {
+                console.log(`[FFMPEG/HW -- USING] ${transcoder}`)
 
-                setProgress(`Running tests on ${platforms.length} platforms...`, -1)
+                tested[transcoder] = constructPromise(ffmpegPath, transcoder, transcoders[transcoder], destination, videoCodec)
+            };
 
-                const transcoders = await require(`./configs`).ffmpegGPUArgs();
-    
-                let tested = {};
-    
-                for(const transcoder of platforms) {
-                    console.log(`[FFMPEG/HW -- USING] ${transcoder}`)
+            let i = 1;
 
-                    tested[transcoder] = constructPromise(transcoder, transcoders[transcoder], destination, videoCodec)
-                };
+            for(const transcoder of platforms) tested[transcoder].then(() => setProgress(`Running tests on ${platforms.length} platforms...`, (i++ / platforms.length) * 100))
 
-                let i = 1;
+            Promise.allSettled(Object.values(tested)).then(async (results) => {
+                let o = {};
 
-                for(const transcoder of platforms) tested[transcoder].then(() => setProgress(`Running tests on ${platforms.length} platforms...`, (i++ / platforms.length) * 100))
-    
-                Promise.allSettled(Object.values(tested)).then(async (results) => {
-                    let o = {};
-    
-                    results.map(o => o.value).filter(o => o).forEach(result => o[result.name] = result.works);
-    
-                    res({
-                        codec: videoCodec,
-                        results: o
-                    });
+                results.map(o => o.value).filter(o => o).forEach(result => o[result.name] = result.works);
 
-                    if(await pfs.existsSync(destination)) pfs.unlinkSync(destination);
+                res({
+                    codec: videoCodec,
+                    results: o
                 });
             });
         });

@@ -3,7 +3,7 @@ const enableDropper = () => {
     fileUploadThing.id = `uploadtarget`
     fileUploadThing.style.width = `100vw`;
     fileUploadThing.style.height = `calc(100vh - 80px)`;
-    fileUploadThing.style.position = `absolute`;
+    fileUploadThing.style.position = `fixed`;
     fileUploadThing.style.top = `80px`;
     fileUploadThing.style.left = `0px`;
     fileUploadThing.style.display = `flex`;

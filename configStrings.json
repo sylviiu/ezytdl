@@ -1,7 +1,6 @@
 {
     "saveLocation": "Save Location",
     "outputFilename": "File Name Format",
-    "browserConnector": "Enable Browser Connector",
     "proxy": "Proxy",
     "ffmpegDownloading": "Allow Downloading with FFmpeg",
     "ffmpegDownloadingExtended": {
@@ -19,13 +18,20 @@
     "animations": "Animation Options",
     "animationsExtended": {
         "reduceAnimations": "Reduce Animations",
-        "disableAnimations": "Disable All Animations"
+        "disableAnimations": "Disable All Animations",
+        "disableWaves": "Disable Idle Waves"
     },
     "style": "Appearance",
     "styleExtended": {
         "theme": "Mode",
         "themeExtended": [ "System", "Light", "Dark" ],
-        "font": "System Font"
+        "font": "System Font",
+        "logoColors": "Logo Coloring",
+        "colors": "Tab Colors",
+        "colorsExtended": {
+            "download": "Download",
+            "convert": "Convert"
+        }
     },
     "lastMediaConversionOutputs": "Default Media Conversion",
     "lastMediaConversionOutputsExtended": {

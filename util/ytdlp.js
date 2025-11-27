@@ -637,7 +637,7 @@ const ytdlpObj = {
             ];
         }
 
-        d.duration = time(totalTime || (d.originalDuration ? d.originalDuration*1000 : 0) || 0);
+        d.duration = time(totalTime || ((d.section_start || d.section_end) ? ((d.section_end ? d.section_end * 1000 : (d.originalDuration || 0)) - (d.section_start ? d.section_start * 1000 : 0)) : (d.originalDuration ? d.originalDuration*1000 : 0) || 0));
 
         const key = d.ie_key || d.extractor_key || (d.extractor ? d.extractor.split(`:`).slice(-1)[0][0].toUpperCase() + d.extractor.split(`:`).slice(-1)[0].slice(1) : null) || ``;
 

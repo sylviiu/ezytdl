@@ -1,7 +1,6 @@
 {
     "saveLocation": "Set the directory where media files are saved.",
     "outputFilename": "Change the format of the output filename. You can find the full list of fields at [yt-dlp's README](https://github.com/yt-dlp/yt-dlp#output-template)\n\n*you can drag and drop these blocks :D*",
-    "browserConnector": "When enabled, ezytdl will allow the [ezytdl browser connector](https://github.com/sylviiu/ezytdl-browser-connector) extension to connect to the app. This is useful if you want to download media from websites that offer authwalled features, such as YouTube's \"Enhanced Bitrate\" feature",
     "proxy": "Set the proxy to use when downloading media.\n\n**NOTE:** This will only work if yt-dlp supports the proxy type you are using. You can find a list of supported proxy types at [yt-dlp's README](https://github.com/yt-dlp/yt-dlp/#network-options)",
     "ffmpegDownloading": "When enabled, ezytdl will download media using FFmpeg instead of yt-dlp, even when not converting any media.\n\nWhen downloading the best quality media, this will make the destination file's quality MUCH higher on certain platforms (e.g. YouTube), but please note that downloading with FFmpeg may end up being slower than downloading with yt-dlp, as it would likely be downloading multiple streams at once.\n\n**NOTE:** This option will have no effect if FFmpeg is not found on your system.\n\n**NOTE:** If any options are enabled here, FFmpeg will be utilized to download \"Full Quality\" media.",
     "ffmpegDownloadingExtended": {
@@ -19,13 +18,20 @@
     "animations": "Options related to animations in ezytdl.",
     "animationsExtended": {
         "reduceAnimations": "Remove some animations that may perform poorly on some systems.",
-        "disableAnimations": "Disables all of the animations in the app (in a crude manner). This will not disable smaller things like progress bars, but is still useful if you want to reduce the amount of resources ezytdl uses, though reducing the animations should have a similar effect."
+        "disableAnimations": "Disables all of the animations in the app (in a crude manner). This will not disable smaller things like progress bars, but is still useful if you want to reduce the amount of resources ezytdl uses, though reducing the animations should have a similar effect.",
+        "disableWaves": "Removes the waves that appear in the main screen. May be useful for some systems that aren't able to handle it as well, or if you'd just like a more minimal setup."
     },
     "style": "Customize the appearance of ezytdl.",
     "styleExtended": {
         "theme": "Switch between the light / dark theme.",
         "themeExtended": [ "Uses the mode reported by your operating system.", "Forces the light theme", "Forces the dark theme" ],
-        "font": "Set the font of ezytdl.\n\n**NOTE:** This will only work if the font is installed on your system."
+        "font": "Set the font of ezytdl.\n\n**NOTE:** This will only work if the font is installed on your system.",
+        "logoColors": "Enabling this will personalize the heading logo's colors to the color scheme selected.",
+        "colors": "Apply a custom color scheme to each tab!\n\n**NOTE:** Any changes to the color scheme will only apply after a full restart of the app!",
+        "colorsExtended": {
+            "download": "Set the primary color for the Download tab",
+            "convert": "Set the primary color for the Convert tab"
+        }
     },
     "lastMediaConversionOutputs": "Set the format ezytdl should convert media files to.",
     "lastMediaConversionOutputsExtended": {

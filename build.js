@@ -13,16 +13,18 @@ const buildArgs = yargs(hideBin(process.argv)).argv;
 let buildDir = null;
 
 const config = Object.assign({
-    "appId": "dev.sylviiu.ezytdl",
-    "productName": "ezytdl",
-    "artifactName": "${productName}-${platform}.${ext}",
-    "portable": {
-        "artifactName": "${productName}-${platform}-portable.${ext}"
+    appId: "dev.sylviiu.ezytdl",
+    productName: "ezytdl",
+    artifactName: "${productName}-${platform}.${ext}",
+    portable: {
+        artifactName: "${productName}-${platform}-portable.${ext}"
     },
-    "compression": "normal",
-    "asar": true,
-    "asarUnpack": [],
-    "files": [
+    compression: "normal",
+    asar: true,
+    asarUnpack: [
+        "res/media/hw-accel-test.mp4"
+    ],
+    files: [
         "html/*.html",
         "html/*.js",
         "html/assets/**/*",
@@ -103,11 +105,11 @@ const getFullMetadata = () => new Promise(async res => {
         branch: null,
         buildNumber: buildArgs.buildNumber || -1,
         buildInfo: {
-            "Electron": {
-                "Version": pkg.devDependencies.electron.replace(`^`, ``),
+            Electron: {
+                Version: pkg.devDependencies.electron.replace(`^`, ``),
                 "Built with": `electron-builder ` + pkg.devDependencies['electron-builder'].replace(`^`, ``),
             },
-            "Libraries": {
+            Libraries: {
                 app: {},
                 src: {}
             }
@@ -168,10 +170,10 @@ const getFullMetadata = () => new Promise(async res => {
     Object.assign(config.extraMetadata, obj);
 
     Object.assign(config.extraMetadata.buildInfo, {
-        "ezytdl": {
-            "Version": pkg.version,
-            "Commit": obj.fullCommitHash || `unknown`,
-            "Built": obj.buildDate || global.startTime,
+        ezytdl: {
+            Version: pkg.version,
+            Commit: obj.fullCommitHash || `unknown`,
+            Built: obj.buildDate || global.startTime,
         },
     });
 
@@ -300,11 +302,11 @@ if(require.main == module) {
                 if(process.argv.find(s => s == `publish`)) {
                     console.log(`Publishing...`);
                     config.publish = {
-                        "provider": "github",
-                        "owner": "sylviiu",
-                        "repo": "ezytdl",
-                        "vPrefixedTagName": false,
-                        "releaseType": "draft"
+                        provider: "github",
+                        owner: "sylviiu",
+                        repo: "ezytdl",
+                        vPrefixedTagName: false,
+                        releaseType: "draft"
                     };
                 } else if(process.argv.find(s => s == `nightly`)) {
                     console.log(`Using nightly build...`);
@@ -321,11 +323,11 @@ if(require.main == module) {
                     //config.appId += `nightly`;
                     
                     config.publish = {
-                        "provider": "github",
-                        "owner": "sylviiu",
-                        "repo": "ezytdl",
-                        "vPrefixedTagName": false,
-                        "releaseType": "draft"
+                        provider: "github",
+                        owner: "sylviiu",
+                        repo: "ezytdl",
+                        vPrefixedTagName: false,
+                        releaseType: "draft"
                     };
                 }
         

@@ -148,6 +148,8 @@ if(window.parent != window) {
         container.onclick = onClick;
     
         container.classList.add(`notificationBox`)
+
+        container.style.zIndex = `9999999999999999`;
     
         container.style.color = `white`
     

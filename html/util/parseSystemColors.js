@@ -1,4 +1,4 @@
-const parseSystemColors = ({ r, g, b }) => {
+const parseSystemColors = ({ r, g, b, customTheme }) => {
     const range = (val) => {
         val = Math.round(val)
     
@@ -13,19 +13,54 @@ const parseSystemColors = ({ r, g, b }) => {
 
     for(let i = 0; i < strings.length; i++) {
         if(strings[i].length == 1) strings[i] = `0` + strings[i];
-    }
+    };
 
     const originalHex = `#${strings.join(``)}`
 
-    const hex = tinycolor(originalHex).saturate(50).toHexString().replace(`#`, ``)
+    console.log(`ORIGINAL COLOR HEX`, originalHex)
 
-    const colors = scm.from_hex(hex)
-    .scheme('analogic')
-    .distance(0.9)
-    .add_complement(true)
-    .variation('pastel')
-    .web_safe(true)
-    .colors();
+    const hex = tinycolor(originalHex).saturate(50).toHexString().replace(`#`, ``);
+
+    const customColors = [];
+
+    const createScheme = (hex) => {
+        const value = scm
+        .scheme('analogic')
+        .distance(0.9)
+        .add_complement(true)
+        .variation('pastel')
+        .web_safe(true)
+        .from_hex(hex)
+        .colors();
+
+        return value;
+    }
+
+    if(customTheme && typeof customTheme == `object`) {
+        const cobj = customTheme;
+
+        if(cobj.download) {
+            let dl = createScheme(cobj.download.slice(1))
+            customColors[0] = dl[0]
+            customColors[1] = dl[1]
+            customColors[2] = dl[2]
+        }
+
+        if(cobj.convert) {
+            let cv = createScheme(cobj.convert.slice(1))
+            customColors[4] = cv[0]
+            customColors[5] = cv[1]
+            customColors[6] = cv[2]
+        };
+
+        console.log(`CUSTOM THEME COLORS`, cobj, customColors)
+    }
+
+    const baseColors = createScheme(hex);
+
+    const colors = Object.assign([], baseColors, customColors);
+
+    console.log(`color scheme`, colors, `base`, baseColors, `custom`, customColors, `cfg`, customTheme)
 
     const createColorsObj = (...index) => {
         const standard = colors[index[0]];
@@ -33,6 +68,8 @@ const parseSystemColors = ({ r, g, b }) => {
         const darker = tinycolor(`#` + colors[index[1]]).saturate(-15).toHexString().replace(`#`, ``);
         const light = tinycolor(`#` + colors[index[2]]).toHexString().replace(`#`, ``);
         const lighter = tinycolor(`#` + colors[index[2]]).saturate(45).toHexString().replace(`#`, ``);
+
+        console.log(`CREATING COLORS FOR`, index, index.map(n => colors[n]))
 
         const colorsObj = {
             standard: {
@@ -67,5 +104,5 @@ const parseSystemColors = ({ r, g, b }) => {
         return colorsObj
     };
 
-    return [ createColorsObj(0, 1, 2), createColorsObj(4, 5, 6), createColorsObj(8, 9, 10), createColorsObj(12, 13, 14) ]
+    return [ createColorsObj(0, 1, 2), createColorsObj(4, 5, 6)/*, createColorsObj(8, 9, 10), createColorsObj(12, 13, 14)*/ ]
 }

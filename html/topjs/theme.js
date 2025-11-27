@@ -33,10 +33,13 @@ var theme = ({
             break;
     };
 
-    if(from == `auto` && (usingLightMode == lightMode && usingFont == config.font)) return;
+    console.log(`colors:`, usingColors, JSON.stringify(config.style.colors))
+    if(from == `auto` && (usingLightMode == lightMode && usingFont == config.style.font && usingLogoColor == config.style.logoColors && usingColors == JSON.stringify(config.style.colors))) return;
 
     usingLightMode = lightMode;
-    usingFont = config.font;
+    usingFont = config.style.font;
+    usingLogoColor = config.style.logoColors;
+    usingColors = JSON.stringify(config.style.colors);
 
     const styleElement = document.getElementById(`themeStyle`) || document.createElement(`style`);
 
@@ -46,6 +49,7 @@ var theme = ({
     
     //`rgb(${colorScheme.light.r}, ${colorScheme.light.g}, ${colorScheme.light.b})`
     const currentColor = typeof currentColorScheme == `object` ? currentColorScheme : ((typeof systemColors == `object` ? systemColors : [])[0]);
+    console.log(`currentColor`, currentColor)
     const current = lightMode ? `dark` : `light`
 
     const newRules = {
@@ -111,7 +115,7 @@ var theme = ({
     };
 
     // logo coloring
-    if(currentColor && lightMode) {
+    if(config.style.logoColors && currentColor && lightMode) {
         Object.assign(newRules, {
             ".ez-logo-letter": {
                 "fill": `${currentColor ? parseRGB(currentColor.dark) : `white`}`
@@ -120,7 +124,7 @@ var theme = ({
                 "fill": `${currentColor ? parseRGB(currentColor.dark) : `white`}`
             },
         });
-    } else {
+    } else if(config.style.logoColors) {
         Object.assign(newRules, {
             ".ez-logo": {
                 "fill": `white`
@@ -140,7 +144,7 @@ var theme = ({
 
     const fonts = [`Alata`, `sans-serif`];
 
-    if(config.font) fonts.unshift(config.font);
+    if(config.style.font) fonts.unshift(config.style.font);
 
     console.log(`fonts`, fonts);
 
@@ -194,6 +198,8 @@ if(typeof themeHooks == `undefined`) {
     themeHook = (cb) => themeHooks.push(cb);
     usingLightMode = null;
     usingFont = null;
+    usingLogoColor = null;
+    usingColors = null;
     configuration.hook(theme);
 }
 

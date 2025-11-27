@@ -18,7 +18,7 @@ if(typeof config == `undefined`) {
 }
 
 var systemColors = parseSystemColors(system.colors());
-console.log(`systemColors: `, systemColors)
+console.log(`systemColors: `, systemColors);
 
 var currentColorScheme = systemColors[0];
 

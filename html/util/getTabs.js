@@ -1,6 +1,8 @@
 const tabs = {};
 
 const getTabs = () => new Promise(async res => {
+    if(Object.keys(tabs).length) return res(tabs);
+    
     const parse = () => {
         console.log(`tabs:`, tabs)
         

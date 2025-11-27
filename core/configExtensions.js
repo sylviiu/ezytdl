@@ -1,8 +1,39 @@
+const sendNotification = require(`./sendNotification`);
 const pfs = require(`../util/promisifiedFS`);
 const getPath = require(`../util/getPath`);
 
 module.exports = {
     verify: {
+        style: (userConfig => {
+            // theme
+            if(userConfig.style.theme != 0 && userConfig.style.theme != 1 && userConfig.style.theme != 2) {
+                userConfig.style.theme = 0;
+            };
+
+            // hex colors
+            const regex = /([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})/
+            for(const [tab, rawColor] of Object.entries(userConfig.style.colors)) {
+                if(!rawColor) continue;
+
+                console.log(`verifying color for tab ${tab}: ${rawColor}`);
+                const color = rawColor.match(regex);
+
+                if(color) {
+                    console.log(`color verified :)`);
+                    userConfig.style.colors[tab] = `#${color[0]}`
+                } else {
+                    console.warn(`color for ${tab} not real!`);
+                    userConfig.style.colors[tab] = "";
+                    sendNotification({
+                        type: `error`,
+                        headingText: `Invalid color for the ${tab} tab!`,
+                        bodyText: `"${rawColor}" is not a valid color! Make sure any values entered are in hex code format (RRGGBB) and try again.`
+                    })
+                }
+            }
+
+            return userConfig
+        }),
         theme: (userConfig) => {
             console.log(`verifying theme...`)
             if(userConfig.style.theme != 0 && userConfig.style.theme != 1 && userConfig.style.theme != 2) userConfig.style.theme = 0;
@@ -11,14 +42,14 @@ module.exports = {
         font: (userConfig) => new Promise(async res => {
             console.log(`verifying font...`)
             if(global.window && global.window.webContents) {
-                if(userConfig.font) {
-                    global.window.webContents.send(`fontExists`, userConfig.font);
-                    require(`electron`).ipcMain.once(`fontExists-${userConfig.font}`, (event, exists) => {
-                        if(!exists) userConfig.font = `Alata`;
+                if(userConfig.style.font) {
+                    global.window.webContents.send(`fontExists`, userConfig.style.font);
+                    require(`electron`).ipcMain.once(`fontExists-${userConfig.style.font}`, (event, exists) => {
+                        if(!exists) userConfig.style.font = `Alata`;
                         return res(userConfig);
                     });
                 } else {
-                    userConfig.font = `Alata`;
+                    userConfig.style.font = `Alata`;
                     return res(userConfig);
                 }
             } else res(userConfig);
@@ -119,8 +150,8 @@ module.exports = {
         yeah: (userConfig) => {
             const d = new Date();
 
-            if(d.getMonth() == 4 && d.getDate() == 1) {
-                userConfig.font = `Comic Sans MS`;
+            if(d.getMonth() == 3 && d.getDate() == 1) {
+                userConfig.style.font = `Comic Sans MS`;
             };
 
             return userConfig;

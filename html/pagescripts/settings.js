@@ -22,7 +22,7 @@ const getObject = (key, optionsObj, useConf) => {
 
     console.log(`fetching object of ${key}`)
     optionsObj.childNodes.forEach(child => {
-        if(child.id && child.id != `save` && !child.classList.contains(`d-none`) && !optionsObj.classList.contains(`selection`)) {
+        if(child.id && child.id != `save` && !child.classList.contains(`d-none`) && (useConf || !optionsObj.classList.contains(`nested`))) {
             const prop = child.id.startsWith(`arr`) ? child.id.slice(3) : child.id
             console.log(`fetching object of ${key} > ${prop} (${child.id})`);
 
@@ -38,7 +38,7 @@ const getObject = (key, optionsObj, useConf) => {
 
             if(id == `object`) {
                 method = `sub-options`
-                obj[child.id] = getObject(child.id, child.querySelector(`#options`));
+                obj[child.id] = getObject(child.id, child.querySelector(`#options`), useObj);
             } else if(id == `number` && o.descriptions[key + `Extended`]?.[prop + `Extended`]?.length) {
                 method = `nested switch`;
                 obj[child.id] = parseInt(child.querySelector(`#boolean[value="true"]:not(.d-none)`).parentNode.parentNode.id.slice(3));
@@ -116,7 +116,10 @@ const showSaveBox = () => {
             const newConfig = getNewConfig();
             console.log(`newConfig:`, newConfig);
         
-            updateConfig(newConfig).then(() => removeSaveBox(node));
+            updateConfig(newConfig).then(() => {
+                //useWindow.theme({from: `manual`});
+                removeSaveBox(node)
+            });
         }
 
         node.querySelector(`#revert`).onclick = (e) => {
@@ -302,7 +305,8 @@ const createCard = (key, string, description, config, parentNode, cardFormatting
 
     if(config.actions[key]) {
         if(!card.querySelector(`#action`).innerHTML.includes(config.actions[key].name)) card.querySelector(`#action`).innerHTML += config.actions[key].name;
-        if(!config.actions[key].manuallySavable && !card.querySelector(`#save`).classList.contains(`d-none`)) card.querySelector(`#save`).classList.add(`d-none`)
+        if(!config.actions[key].manuallySavable && !card.querySelector(`#save`).classList.contains(`d-none`)) card.querySelector(`#save`).classList.add(`d-none`);
+        if(!card.querySelector(`#action`).style.pointerEvents) card.querySelector(`#action`).style.pointerEvents = `all`
         if(card.querySelector(`#action`).classList.contains(`d-none`)) {
             card.querySelector(`#action`).classList.remove(`d-none`);
 
@@ -360,6 +364,13 @@ const createCard = (key, string, description, config, parentNode, cardFormatting
         }
     }
 
+    if(depth >= 1) {
+        card.querySelector(`#strings`).querySelectorAll(`h6`).forEach(elm => {
+            elm.style.minWidth = `0px`;
+            elm.style.textWrap = `auto`;
+        })
+    }
+
     console.log(`type: ${typeof config[key]}`);
 
     const isSelection = (typeof config[key] == `number` && config.descriptions[key + `Extended`]?.length)
@@ -405,9 +416,11 @@ const createCard = (key, string, description, config, parentNode, cardFormatting
             saveBtn.parentNode.removeChild(saveBtn);
         };
 
-        if(isSelection) {
-            opt.classList.add(`selection`)
+        if(depth >= 1) {
+            opt.classList.add(`nested`)
+        }
 
+        if(isSelection) {
             opt.classList.remove(`flex-column`);
             opt.classList.add(`flex-row`);
 
@@ -470,6 +483,10 @@ const createCard = (key, string, description, config, parentNode, cardFormatting
             const elm = card.querySelector(`#string`);
             elm.ondrop = (e) => e.preventDefault();
             elm.value = config[key];
+
+            if(depth >= 1) {
+                card.querySelector(`#options`)
+            }
 
             console.log(parentNode)
 
@@ -856,13 +873,24 @@ const parseDownloadables = () => document.body.querySelector('#downloadables').c
             if(txt.classList.contains(`d-none`)) {
                 txt.classList.remove(`d-none`);
                 txt.style.opacity = 0;
-                const bounds = txt.getBoundingClientRect();
                 txt.style.maxHeight = 0;
                 anime({
                     targets: txt,
                     opacity: 1,
                     maxHeight: [`0px`, `100px`],
-                })
+                });
+
+                const btnGPU = n.querySelector(`#btn-gpu`);
+                if(btnGPU && v != `false` && btnGPU.classList.contains(`d-none`)) {
+                    btnGPU.classList.remove(`d-none`);
+                    btnGPU.classList.add(`d-flex`);
+                    btnGPU.onclick = (e) => {
+                        e.preventDefault();
+                        const card = document.querySelector(`#hardwareAcceleratedConversion`);
+                        card.scrollIntoView();
+                        card.querySelector(`#action`).onclick();
+                    }
+                }
             }
         });
     }

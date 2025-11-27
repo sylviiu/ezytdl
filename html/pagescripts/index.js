@@ -39,6 +39,18 @@ update.event(m => {
     }
 })
 
+/*postConfigHooks.push(() => {
+    systemColors = parseSystemColors(system.colors());
+    console.log(`systemColors: `, systemColors);
+
+    for(const [ tabName, value ] of Object.entries(tabs)) {
+        if(typeof value._colorScheme != `undefined`) {
+            console.log(`UPDATING EXISTING COLORSCHEME FOR ${tabName}`)
+            tabs[tabName].colorScheme = systemColors[value._colorScheme]
+        } else console.log(`EXISTING COLORSCHEME NOT PARSED YET FOR ${tabName}`)
+    }
+})*/
+
 const _temporaryFormatCard = document.getElementById(`formatCard`).cloneNode(true);
 document.body.appendChild(_temporaryFormatCard);
 const formatCardComputed = window.getComputedStyle(_temporaryFormatCard);
@@ -116,7 +128,7 @@ const getWaveAnims = (tabName) => {
     return {
         fadeIn: () => {
             wavesOpt[tabName] = true;
-            if(selectedTab == tabName) {
+            if(selectedTab == tabName && !config.animations.disableWaves) {
                 console.log(`fading in waves for tab "${tabName}"`)
                 waveAnims.fadeIn();
             } else console.log(`not fading in waves for tab "${tabName}" because it is not selected (current: ${selectedTab})`)
@@ -132,12 +144,14 @@ const getWaveAnims = (tabName) => {
 };
 
 const refreshWaves = () => {
-    if(wavesOpt[selectedTab]) {
+    if(wavesOpt[selectedTab] && !config.animations.disableWaves) {
         waveAnims.fadeIn();
     } else {
         waveAnims.fadeOut();
     }
 }
+
+postConfigHooks.push(() => refreshWaves())
 
 const searchBoxHeights = () => [`${window.innerHeight - 80}px`, `225px`]
 
@@ -319,11 +333,9 @@ getTabs().then(async tabs => {
 
                 await localStorage.setItem(`selectedTab`, tabName);
 
-                console.log(`selecting tab "${tabName}" - set storage key!`)
-    
-                const colorScheme = systemColors[tab.colorScheme];
-    
-                currentColorScheme = colorScheme;
+                console.log(`selecting tab "${tabName}" - set storage key!`);
+
+                currentColorScheme = systemColors[tab.colorScheme];
 
                 theme({from: `manual`});
     
@@ -334,7 +346,7 @@ getTabs().then(async tabs => {
         
                 initializeTab(tab);
     
-                console.log(`new color scheme`, colorScheme);
+                console.log(`new color scheme`, window.currentColorScheme);
                 
                 if(tab.button.classList.contains(`ez-default`)) tab.button.classList.remove(`ez-default`);
                 if(!tab.button.classList.contains(`ez-selected`)) tab.button.classList.add(`ez-selected`);
@@ -472,7 +484,7 @@ getTabs().then(async tabs => {
     setTimeout(() => {
         const tab = selectTab(lastUsedTab);
 
-        getWaveAnims(lastUsedTab).fadeIn();
+        if(!config.animations.disableWaves) getWaveAnims(lastUsedTab).fadeIn();
 
         if(searchStr) {
             const { content, processURL } = tab;
