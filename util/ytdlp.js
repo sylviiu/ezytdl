@@ -2900,7 +2900,7 @@ const ytdlpObj = {
                     }
                     
                     appendArgs({
-                        string: convert.videoCodec ? `${originalCodec || originalExtension.toUpperCase()} (CPU) -> ${targetCodec || convert.videoCodec || ext.slice(1).toUpperCase()} (CPU)` : `no conversion`,
+                        string: convert.videoCodec ? `${originalCodec || originalExtension.toUpperCase()} (CPU) -> ${targetCodec || convert.videoCodec || ext.slice(1).toUpperCase()} (CPU)` : `default conversion`,
                         hardware: `None`,
                         decoder: `Software`,
                         encoder: `Software`
