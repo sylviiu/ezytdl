@@ -173,8 +173,10 @@ ajax.onload = async () => {
         let inProgress = true;
 
         update.event(m => {
-            if(m.complete) inProgress = false;
-            popout.setCloseable(!inProgress);
+            if(m.complete) {
+                window.location.href = `./index.html`
+            } //inProgress = false;
+            //popout.setCloseable(!inProgress);
         });
 
         popout.setCloseable(false);
