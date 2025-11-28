@@ -72,8 +72,8 @@ module.exports = {
                     updateStatusPercent([body.tracks.items.length, body.tracks.total]);
                 }
                 const next = await fetch(body.tracks.next, { headers: { 'Authorization': `${token_type} ${access_token}` } }).then(r => r.json());
-                body.tracks.items.push(...next.body.items);
-                body.tracks.next = next.body.next;
+                body.tracks.items.push(...next.items);
+                body.tracks.next = next.next;
             };
 
             if(body.tracks && body.tracks.items && body.tracks.items[0].track) body.tracks.items = body.tracks.items.map((o, i) => Object.assign(body.tracks.items[i], o.track, {track: null}));
@@ -87,9 +87,9 @@ module.exports = {
                     updateStatus(`Retrieving additional tracks...`);
                     updateStatusPercent([body.items.length, body.total]);
                 }
-                const next = await fetch(body.next, { headers: { 'Authorization': `${token_type} ${access_token}` } })
-                body.items.push(...next.body.items);
-                body.next = next.body.next;
+                const next = await fetch(body.next, { headers: { 'Authorization': `${token_type} ${access_token}` } }).then(r => r.json())
+                body.items.push(...next.items);
+                body.next = next.next;
             };
 
             if(body.items && body.items[0].track) body.items = body.items.map((o, i) => Object.assign(body.items[i], o.track, {track: null}));
@@ -127,15 +127,21 @@ module.exports = {
 
                 fetch(url, { headers: { 'Authorization': `${token_type} ${access_token}` } }).then(async r => {
                     if(r.status == 200) {
-                        r.json().then(async response => {
-                            if(response.body && !response.body.error) body = response.body;
+                        r.json().then(async resp => {
+                            if(resp && !resp.error) body = resp;
                             res();
                         }).catch(e => {
                             console.error(`${e}`);
                             res();
                         });
                     } else {
-                        console.error(`spotify returned code ${r.status}`);
+                        console.error(`spotify returned code ${r.status} (${token_type} ${access_token})`);
+                        try {
+                            const j = await r.json();
+                            console.error(j)
+                        } catch(e) {
+                            console.error(`failed buffering data`)
+                        }
                         res();
                     }
                 })

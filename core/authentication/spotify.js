@@ -19,11 +19,11 @@ module.exports = {
                 method: `post`,
                 headers: { "Authorization": `Basic ${new Buffer.from(clientID + `:` + clientSecret).toString('base64')}` },
                 body: data,
-            }).then(r => {
+            }).then(async r => {
                 if(r.status == 401) {
                     return res({ value: null, message: `Client ID or Client Secret was not valid.` });
                 } else if(r.status == 200) {
-                    token = r.text();
+                    token = await r.json();
 
                     res({ value: token, message: null });
 

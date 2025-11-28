@@ -2788,10 +2788,10 @@ const ytdlpObj = {
                     let attemptArgs = [];
 
                     const appendArgs = (obj, argumentsArr) => {
-                        arguments = argumentsArr.filter(a => a && Array.isArray(a) && a.length > 0);
+                        let filteredArgs = argumentsArr.filter(a => a && Array.isArray(a) && a.length > 0);
 
-                        if(!attemptArgs.find(a => a.decoder == obj.decoder && a.encoder == obj.encoder)) arguments.forEach((args, i) => {
-                            const o = Object.assign({}, obj, { string: (arguments.length > 1 ? (obj.string + ` [${Number(i)+1}/${arguments.length}]`) : obj.string), args })
+                        if(!attemptArgs.find(a => a.decoder == obj.decoder && a.encoder == obj.encoder)) filteredArgs.forEach((args, i) => {
+                            const o = Object.assign({}, obj, { string: (filteredArgs.length > 1 ? (obj.string + ` [${Number(i)+1}/${filteredArgs.length}]`) : obj.string), args })
                             attemptArgs.push(o);
                         });
                     }
