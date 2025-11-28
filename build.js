@@ -1,9 +1,11 @@
+process.env.PATH = `${require('path').join(__dirname, `node_modules`, `.bin`)}${process.platform == `win32` ? `;` : `:`}${process.env.PATH}`
+
 const child_process = require(`child_process`);
 const fs = require(`fs`);
 const which = require('which');
 
 const yargs = require('yargs');
-const { hideBin } = require('yargs/helpers')
+const { hideBin } = require('yargs/helpers');
 
 const buildArgs = yargs(hideBin(process.argv)).argv;
 
@@ -185,203 +187,215 @@ const getFullMetadata = () => new Promise(async res => {
 })
 
 if(require.main == module) {
-    getFullMetadata().then(() => {
+    getFullMetadata().then(async () => {
         const pkg = JSON.parse(fs.readFileSync(`./package.json`).toString());
+
+        const npm = await which(`npm`);
+        //const node = await which(`node`);
+        const eb = await which(`electron-builder`);
         
-        which(`npm`).then(async npm => {
-            const spawnProc = (path, cwd, testrun) => {
-                const spawnPath = path == `npm` ? npm : path;
-        
-                console.log(`Spawning ${spawnPath} at cwd ${cwd}`);
-        
-                const proc = child_process.spawn(spawnPath, path == `npm` ? [`run`, `s`, `--`, ...(testrun ? [`--testrun`] : [])] : [...(testrun ? [`--testrun`] : [])], { cwd });
-        
-                let passed = false;
-        
-                const data = data => {
-                    const str = data.toString().trim();
-                    console.log(str);
-        
-                    if(str.includes(`TESTRUN PASSED.`)) {
-                        console.log(`Passed testrun!`);
-                        passed = true;
-                    }
-                }
-        
-                proc.stdout.on(`data`, data);
-                proc.stderr.on(`data`, data);
-        
-                proc.on(`error`, (err) => {
-                    console.log(`Testrun errored with ${err}`);
-                    global.quitting = true;
-                    process.exit(1);
-                })
-        
-                proc.on(`close`, (code) => {
-                    const exitWithCode = passed ? 0 : 1
-                    console.log(`Testrun closed with code ${code}; exiting with code ${exitWithCode}`);
-                    global.quitting = true;
-                    process.exit(exitWithCode);
-                });
+        const spawnProc = (path, cwd, testrun) => {
+            const spawnPath = path || null;
+    
+            console.log(`Spawning ${spawnPath} at cwd ${cwd}`);
+    
+            let proc;
+
+            if(path) {
+                proc = child_process.spawn(spawnPath, path == `npm` ? [`run`, `s`, `--`, ...(testrun ? [`--testrun`] : [])] : [...(testrun ? [`--testrun`] : [])], { cwd });
+            } else {
+                proc = child_process.spawn(`electron`, [`.`, ...(testrun ? [`--testrun`] : [])], { cwd })
             }
-        
-            const start = async (testrun) => {
-                console.log(`starting! (buildDir: "${buildDir}")`);
-                if(process.argv.find(s => s == `--from-source`)) {
-                    console.log(`Running from source...`)
-                    spawnProc(`npm`, __dirname, testrun)
+
+            //const proc = child_process.spawn(spawnPath, path == `npm` ? [`run`, `s`, `--`, ...(testrun ? [`--testrun`] : [])] : [...(testrun ? [`--testrun`] : [])], { cwd });
+
+            let passed = false;
+    
+            const data = data => {
+                const str = data.toString().trim();
+                console.log(str);
+    
+                if(str.includes(`TESTRUN PASSED.`)) {
+                    console.log(`Passed testrun!`);
+                    passed = true;
+                }
+            }
+    
+            proc.stdout.on(`data`, data);
+            proc.stderr.on(`data`, data);
+    
+            proc.on(`error`, (err) => {
+                console.log(`Testrun errored with ${err}`);
+                global.quitting = true;
+                process.exit(1);
+            })
+    
+            proc.on(`close`, (code) => {
+                const exitWithCode = passed ? 0 : 1
+                console.log(`Testrun closed with code ${code}; exiting with code ${exitWithCode}`);
+                global.quitting = true;
+                process.exit(exitWithCode);
+            });
+        }
+    
+        const start = async (testrun) => {
+            console.log(`starting! (buildDir: "${buildDir}")`);
+            if(process.argv.find(s => s == `--from-source`)) {
+                console.log(`Running from source...`)
+                spawnProc(null, __dirname, testrun)
+            } else {
+                if(process.platform == `darwin`) {
+                    spawnProc(require(`path`).join(buildDir, `${config.productName}.app`, `Contents`, `MacOS`, `${config.productName}`), require(`path`).join(__dirname, `dist`), testrun)
                 } else {
-                    if(process.platform == `darwin`) {
-                        spawnProc(require(`path`).join(buildDir, `${config.productName}.app`, `Contents`, `MacOS`, `${config.productName}`), require(`path`).join(__dirname, `dist`), testrun)
+                    const folder = buildDir ? require(`path`).parse(buildDir).base : null;
+                
+                    if(!folder) {
+                        console.log(`No unpacked folder found!`);
+                        process.exit(1);
                     } else {
-                        const folder = buildDir ? require(`path`).parse(buildDir).base : null;
-                    
-                        if(!folder) {
-                            console.log(`No unpacked folder found!`);
+                        console.log(`Found unpacked folder ${folder}!`);
+                
+                        const file = fs.readdirSync(`./dist/${folder}/`).find(s => s.startsWith(`ezytdl`));
+                
+                        if(!file) {
+                            console.log(`No file found!`);
                             process.exit(1);
                         } else {
-                            console.log(`Found unpacked folder ${folder}!`);
-                    
-                            const file = fs.readdirSync(`./dist/${folder}/`).find(s => s.startsWith(`ezytdl`));
-                    
-                            if(!file) {
-                                console.log(`No file found!`);
-                                process.exit(1);
-                            } else {
-                                console.log(`Found file ${file}!`);
-                    
-                                const cwd = require(`path`).join(__dirname, `dist`, folder)
-                                const path = require(`path`).join(cwd, file);
-                    
-                                spawnProc(path, cwd, testrun)
-                            }
+                            console.log(`Found file ${file}!`);
+                
+                            const cwd = require(`path`).join(__dirname, `dist`, folder)
+                            const path = require(`path`).join(cwd, file);
+                
+                            spawnProc(path, cwd, testrun)
                         }
                     }
                 }
-            };
-        
-            const build = () => new Promise(async res => {
-                const args = (process.argv.find(s => s == `--from-source`)) ? [`build`, `nopack`, `nightly`, `--build-number`, `1`] : [`build`, `pack`, `nightly`, `--build-number`, `1`];
-
-                console.log(`packing...`);
-                child_process.execFile(await which(`node`), args, {}, (error, stdout, stderr) => {
-                    if(error) {
-                        return console.error(`failed to build:`, error);
-                    } else {
-                        console.log(`packed!`);
-                        const str = stdout.toString().split(`\n`).filter(Boolean);
-                        const outDir = str.find(s => s.includes(`appOutDir=dist`))
-                        if(outDir) buildDir = require(`path`).join(__dirname, `dist`, outDir.split(`appOutDir=dist`)[1]);
-                        res(buildDir);
-                    }
-                });
-            });
-        
-            if(process.argv.find(s => s == `start`)) {
-                console.log(`running start`)
-                build().then(() => start(false))
-            } else if(process.argv.find(s => s == `test`)) {
-                console.log(`running test`)
-                build().then(() => start(true))
-            } else {
-                console.log(`Building for ${process.platform}... (${process.env["CSC_LINK"] && process.env["CSC_KEY_PASSWORD"] ? "SIGNED" : "UNSIGNED"})`);
-                
-                if(process.argv.find(s => s == `store`)) {
-                    console.log(`Using store compression...`);
-                    config.compression = "store";
-                } else {
-                    console.log(`Using ${config.compression} compression...`);
-                    //config.compression = "maximum";
-                }
-                
-                if(process.argv.find(s => s == `noasar`)) {
-                    console.log(`Disabling asar...`);
-                    config.asar = false;
-                }
-                
-                if(process.argv.find(s => s == `publish`)) {
-                    console.log(`Publishing...`);
-                    config.publish = {
-                        provider: "github",
-                        owner: "sylviiu",
-                        repo: "ezytdl",
-                        vPrefixedTagName: false,
-                        releaseType: "draft"
-                    };
-                } else if(process.argv.find(s => s == `nightly`)) {
-                    console.log(`Using nightly build...`);
-        
-                    if(!buildArgs.buildNumber) {
-                        console.log(`No build number found! (--build-number)`);
-                        process.exit(1);
-                    }
-                
-                    config.extraMetadata.version = `${pkg.version}-dev.${buildArgs.buildNumber}`;
-                
-                    //config.productName += `nightly`;
-                
-                    //config.appId += `nightly`;
-                    
-                    config.publish = {
-                        provider: "github",
-                        owner: "sylviiu",
-                        repo: "ezytdl",
-                        vPrefixedTagName: false,
-                        releaseType: "draft"
-                    };
-                }
-        
-                console.log(`Building:\n| ${config.productName} (${config.appId})\n| version: ${config.extraMetadata.version}\n| commit: ${config.extraMetadata.commitHash}\n| full commit: ${config.extraMetadata.fullCommitHash}\n| build number: ${config.extraMetadata.buildNumber}`)
-        
-                if(process.argv.find(s => s == `pack`)) {
-                    console.log(`Pack flag found (removing targets)...`);
-        
-                    config.win.target = [];
-                    config.linux.target = [];
-                    config.mac.target = [];
-                }
-        
-                if(process.argv.find(s => s == `nopack`) || process.argv.find(s => s == `pack`)) {
-                    console.log(`Not fully building, removing signatures...`);
-                    
-                    delete process.env["CSC_LINK"];
-                    delete process.env["CSC_KEY_PASSWORD"];
-                }
-        
-                if(!process.argv.find(s => s == `nopack`)) {
-                    config.extraMetadata.buildDate = Date.now();
-
-                    console.log(`Running beforePack...`);
-
-                    await require(`./build/beforePack.js`)(config);
-        
-                    fs.writeFileSync(`./build.json`, JSON.stringify(config, null, 4));
-                    
-                    console.log(`Wrote config!`);
-                    
-                    console.log(`Spawning npm at ${npm}`);
-        
-                    const procArgs = [`run`, `electron-builder`, `--`, `-c`, `./build.json`, ...(process.argv.find(s => s == `pack`) ? [`--dir`] : []), ...(config.publish ? [`-p`, `always`] : [`-p`, `never`])]
-        
-                    console.log(`Spawning npm with args "${procArgs.join(` `)}"`);
-                    
-                    const proc = child_process.spawn(npm, procArgs, { stdio: "inherit", shell: true });
-                    
-                    proc.on(`close`, async (code) => {
-                        console.log(`Build closed with code ${code}`);
-
-                        console.log(`Running afterPack`);
-
-                        await require(`./build/afterPack.js`)(config);
-                    
-                        if(fs.existsSync(`./build.json`)) fs.unlinkSync(`./build.json`);
-                    })
-                } else {
-                    console.log(`Not packing (nopack arg sent)`);
-                    process.exit(0);
-                }
             }
-        })
+        };
+    
+        const build = () => new Promise(async res => {
+            const args = (process.argv.find(s => s == `--from-source`)) ? [`build`, `nopack`, `nightly`, `--build-number`, `1`] : [`build`, `pack`, `nightly`, `--build-number`, `1`];
+
+            console.log(`packing...`);
+            child_process.execFile(await which(`node`), args, {}, (error, stdout, stderr) => {
+                if(error) {
+                    return console.error(`failed to build:`, error);
+                } else {
+                    console.log(`packed!`);
+                    const str = stdout.toString().split(`\n`).filter(Boolean);
+                    const outDir = str.find(s => s.includes(`appOutDir=dist`))
+                    if(outDir) buildDir = require(`path`).join(__dirname, `dist`, outDir.split(`appOutDir=dist`)[1]);
+                    res(buildDir);
+                }
+            });
+        });
+    
+        if(process.argv.find(s => s == `start`)) {
+            console.log(`running start`)
+            build().then(() => start(false))
+        } else if(process.argv.find(s => s == `test`)) {
+            console.log(`running test`)
+            build().then(() => start(true))
+        } else {
+            console.log(`Building for ${process.platform}... (${process.env["CSC_LINK"] && process.env["CSC_KEY_PASSWORD"] ? "SIGNED" : "UNSIGNED"})`);
+            
+            if(process.argv.find(s => s == `store`)) {
+                console.log(`Using store compression...`);
+                config.compression = "store";
+            } else {
+                console.log(`Using ${config.compression} compression...`);
+                //config.compression = "maximum";
+            }
+            
+            if(process.argv.find(s => s == `noasar`)) {
+                console.log(`Disabling asar...`);
+                config.asar = false;
+            }
+            
+            if(process.argv.find(s => s == `publish`)) {
+                console.log(`Publishing...`);
+                config.publish = {
+                    provider: "github",
+                    owner: "sylviiu",
+                    repo: "ezytdl",
+                    vPrefixedTagName: false,
+                    releaseType: "draft"
+                };
+            } else if(process.argv.find(s => s == `nightly`)) {
+                console.log(`Using nightly build...`);
+    
+                if(!buildArgs.buildNumber) {
+                    console.log(`No build number found! (--build-number)`);
+                    process.exit(1);
+                }
+            
+                config.extraMetadata.version = `${pkg.version}-dev.${buildArgs.buildNumber}`;
+            
+                //config.productName += `nightly`;
+            
+                //config.appId += `nightly`;
+                
+                config.publish = {
+                    provider: "github",
+                    owner: "sylviiu",
+                    repo: "ezytdl",
+                    vPrefixedTagName: false,
+                    releaseType: "draft"
+                };
+            }
+    
+            console.log(`Building:\n| ${config.productName} (${config.appId})\n| version: ${config.extraMetadata.version}\n| commit: ${config.extraMetadata.commitHash}\n| full commit: ${config.extraMetadata.fullCommitHash}\n| build number: ${config.extraMetadata.buildNumber}`)
+    
+            if(process.argv.find(s => s == `pack`)) {
+                console.log(`Pack flag found (removing targets)...`);
+    
+                config.win.target = [];
+                config.linux.target = [];
+                config.mac.target = [];
+            }
+    
+            if(process.argv.find(s => s == `nopack`) || process.argv.find(s => s == `pack`)) {
+                console.log(`Not fully building, removing signatures...`);
+                
+                delete process.env["CSC_LINK"];
+                delete process.env["CSC_KEY_PASSWORD"];
+            }
+    
+            if(!process.argv.find(s => s == `nopack`)) {
+                config.extraMetadata.buildDate = Date.now();
+
+                console.log(`Running beforePack...`);
+
+                await require(`./build/beforePack.js`)(config);
+    
+                fs.writeFileSync(`./build.json`, JSON.stringify(config, null, 4));
+                
+                console.log(`Wrote config!`);
+                
+                //console.log(`Spawning npm at ${npm}`);
+                console.log(`Spawning electron-builder at ${eb}`)
+    
+                //const procArgs = [`run`, `electron-builder`, `--`, `-c`, `./build.json`, ...(process.argv.find(s => s == `pack`) ? [`--dir`] : []), ...(config.publish ? [`-p`, `always`] : [`-p`, `never`])]
+                const procArgs = [`-c`, `./build.json`, ...(process.argv.find(s => s == `pack`) ? [`--dir`] : []), ...(config.publish ? [`-p`, `always`] : [`-p`, `never`])]
+    
+                console.log(`Spawning eb with args "${procArgs.join(` `)}"`);
+                
+                const proc = child_process.spawn(eb, procArgs, { stdio: "inherit", shell: true });
+                
+                proc.on(`close`, async (code) => {
+                    console.log(`Build closed with code ${code}`);
+
+                    console.log(`Running afterPack`);
+
+                    await require(`./build/afterPack.js`)(config);
+                
+                    if(fs.existsSync(`./build.json`)) fs.unlinkSync(`./build.json`);
+                })
+            } else {
+                console.log(`Not packing (nopack arg sent)`);
+                process.exit(0);
+            }
+        }
     })
 } else {
     module.exports = { config, getFullMetadata: () => getFullMetadata() };

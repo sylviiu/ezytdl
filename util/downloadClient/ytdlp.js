@@ -111,64 +111,59 @@ module.exports = async () => new Promise(async res => {
                 console.log(`Found target file! (${file} / ${download.size} size); downloading ${download.name} from "${download.browser_download_url}"`);
     
                 const writeStream = fs.createWriteStream(`${downloadPath}` + `.zip`, { flags: `w` });
-    
-                const req = require('superagent').get(download.browser_download_url).set(`User-Agent`, `node`);
-
-                if(process.env["GITHUB_TOKEN"] && global.testrun) {
-                    console.log(`[TESTRUN] GITHUB_TOKEN found in environment! Authorizing this release request`)
-                    req.set(`Authorization`, process.env["GITHUB_TOKEN"])
-                }
-    
-                const pt = new Stream.PassThrough();
-    
-                req.pipe(pt);
-                pt.pipe(writeStream);
-    
                 let totalData = 0;
-    
-                pt.on(`data`, d => {
-                    const progress = totalData += Buffer.byteLength(d) / download.size;
-    
-                    ws.send({ progress, version });
-    
-                    //console.log(`Downloaded ` + Math.round(progress * 100) + `% ...`)
-                })
-    
-                writeStream.on(`finish`, async () => {
-                    console.log(`done!`);
 
-                    const chmod = async (path) => {
-                        console.log(`CHMOD ${path}`)
-
-                        if(!process.platform.toLowerCase().includes(`win32`)) {
-                            try {
-                                require(`child_process`).execFileSync(`chmod`, [`+x`, path])
-                            } catch(e) {
-                                await pfs.chmodSync(path, 0o777)
-                            }
+                fetch(download.browser_download_url, {
+                    headers: {
+                        "User-Agent": "node",
+                        "Authorization": global.testrun && process.env["GITHUB_TOKEN"] || undefined
+                    }
+                }).then(async r => {
+                    if(r.status == 200) {
+                        for await (const chunk of r.body) {
+                            const data = Buffer.from(chunk);
+                            const progress = (totalData += Buffer.byteLength(chunk)) / size;
+                            ws.send({ progress, version });
+                            writeStream.write(data);
                         }
-        
-                        ws.close();
+
+                        writeStream.close();
+
+                        console.log(`done!`);
+
+                        const chmod = async (path) => {
+                            console.log(`CHMOD ${path}`)
+
+                            if(!process.platform.toLowerCase().includes(`win32`)) {
+                                try {
+                                    require(`child_process`).execFileSync(`chmod`, [`+x`, path])
+                                } catch(e) {
+                                    await pfs.chmodSync(path, 0o777)
+                                }
+                            }
+            
+                            ws.close();
+                        }
+
+                        if(downloadFile.endsWith(`.zip`)) {
+                            await pfs.mkdirSync(downloadPath, { recursive: true, failOnError: false });
+
+                            const extractor = require(`unzipper`).Extract({
+                                path: downloadPath
+                            });
+
+                            await pfs.createReadStream(downloadPath + `.zip`).pipe(extractor);
+
+                            extractor.on(`close`, async () => {
+                                await pfs.unlinkSync(downloadPath + `.zip`);
+                                const newPath = require(`../filenames/ytdlp`).getPath()
+                                chmod(newPath);
+                            });
+                        } else {
+                            chmod(downloadPath)
+                        }
                     }
-
-                    if(downloadFile.endsWith(`.zip`)) {
-                        await pfs.mkdirSync(downloadPath, { recursive: true, failOnError: false });
-
-                        const extractor = require(`unzipper`).Extract({
-                            path: downloadPath
-                        });
-
-                        await pfs.createReadStream(downloadPath + `.zip`).pipe(extractor);
-
-                        extractor.on(`close`, async () => {
-                            await pfs.unlinkSync(downloadPath + `.zip`);
-                            const newPath = require(`../filenames/ytdlp`).getPath()
-                            chmod(newPath);
-                        });
-                    } else {
-                        chmod(downloadPath)
-                    }
-                })
+                });
             }
         }
     })

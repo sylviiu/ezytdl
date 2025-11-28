@@ -1,4 +1,3 @@
-const superagent = require('superagent');
 const { updateStatus, updateStatusPercent } = require(`../downloadManager`).default;
 
 // extend will just be the api token stuff
@@ -72,7 +71,7 @@ module.exports = {
                     updateStatus(`Retrieving additional tracks...`);
                     updateStatusPercent([body.tracks.items.length, body.tracks.total]);
                 }
-                const next = await superagent.get(body.tracks.next).set('Authorization', `${token_type} ${access_token}`);
+                const next = await fetch(body.tracks.next, { headers: { 'Authorization': `${token_type} ${access_token}` } }).then(r => r.json());
                 body.tracks.items.push(...next.body.items);
                 body.tracks.next = next.body.next;
             };
@@ -88,7 +87,7 @@ module.exports = {
                     updateStatus(`Retrieving additional tracks...`);
                     updateStatusPercent([body.items.length, body.total]);
                 }
-                const next = await superagent.get(body.next).set('Authorization', `${token_type} ${access_token}`);
+                const next = await fetch(body.next, { headers: { 'Authorization': `${token_type} ${access_token}` } })
                 body.items.push(...next.body.items);
                 body.next = next.body.next;
             };
@@ -124,15 +123,22 @@ module.exports = {
                     updateStatusPercent([i+1, endpoints.length]);
                 }
 
-                console.log(url)
+                console.log(url);
 
-                superagent.get(url).set('Authorization', `${token_type} ${access_token}`).then(async response => {
-                    if(response.body && !response.body.error) body = response.body;
-                    res();
-                }).catch(e => {
-                    console.error(`${e}`);
-                    res();
-                });
+                fetch(url, { headers: { 'Authorization': `${token_type} ${access_token}` } }).then(async r => {
+                    if(r.status == 200) {
+                        r.json().then(async response => {
+                            if(response.body && !response.body.error) body = response.body;
+                            res();
+                        }).catch(e => {
+                            console.error(`${e}`);
+                            res();
+                        });
+                    } else {
+                        console.error(`spotify returned code ${r.status}`);
+                        res();
+                    }
+                })
             });
 
             if(body) break;
@@ -158,7 +164,11 @@ module.exports = {
         });
     }),
     search: ({ access_token, token_type }, { query, count }) => new Promise(async res => {
-        superagent.get(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=${Math.min(50, count)}`).set('Authorization', `${token_type} ${access_token}`).then(r => r.body).then(async r => {
+        fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=${Math.min(50, count)}`, {
+            headers: {
+                Authorization: `${token_type} ${access_token}`
+            }
+        }).then(r => r.json()).then(async r => {
             const parsed = await parseTrack(r, r, { access_token, token_type });
             res(Object.assign(parsed, {
                 extractor: `spotify:search`,
@@ -171,7 +181,9 @@ module.exports = {
         })
     }),
     musicdata: ({ access_token, token_type }, id) => new Promise(async res => {
-        superagent.get(`https://api.spotify.com/v1/audio-features/${id}`).set('Authorization', `${token_type} ${access_token}`).then(r => r.body).then(async r => {
+        fetch(`https://api.spotify.com/v1/audio-features/${id}`, {
+            headers: { Authorization: `${token_type} ${access_token}` }
+        }).then(r => r.json()).then(async r => {
             res(r);
         }).catch(e => {
             console.error(`musicdata error: ${e}`);

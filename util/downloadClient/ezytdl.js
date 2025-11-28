@@ -66,62 +66,39 @@ module.exports = async () => {
                 require('fs').mkdirSync(downloadPath, { recursive: true, failOnError: false });
     
                 const writeStream = fs.createWriteStream(require(`path`).join(`${downloadPath}`, download.name), { flags: `w` });
-    
-                const req = require('superagent').get(download.browser_download_url).set(`User-Agent`, `node`);
-
-                if(process.env["GITHUB_TOKEN"] && global.testrun) {
-                    console.log(`[TESTRUN] GITHUB_TOKEN found in environment! Authorizing this release request`)
-                    req.set(`Authorization`, process.env["GITHUB_TOKEN"])
-                }
-    
-                const pt = new Stream.PassThrough();
-    
-                req.pipe(pt);
-                pt.pipe(writeStream);
-    
                 let totalData = 0;
-    
-                pt.on(`data`, d => {
-                    const progress = totalData += Buffer.byteLength(d) / download.size;
-    
-                    ws.send({ progress, version });
-    
-                    //console.log(`Downloaded ` + Math.round(progress * 100) + `% ...`)
-                })
-    
-                writeStream.on(`finish`, () => {
-                    console.log(`done!`);
 
-                    if(!platform().toLowerCase().includes(`win32`)) fs.chmodSync(require(`path`).join(`${downloadPath}`, download.name), 0o777);
+                fetch(download.browser_download_url, {
+                    headers: {
+                        "User-Agent": "node",
+                        "Authorization": global.testrun && process.env["GITHUB_TOKEN"] || undefined
+                    }
+                }).then(r => {
+                    if(r.status == 200) {
+                        for await (const chunk of r.body) {
+                            const data = Buffer.from(chunk);
+                            const progress = (totalData += Buffer.byteLength(chunk)) / size;
+                            ws.send({ progress, version });
+                            writeStream.write(data);
+                        }
 
-                    require(`../../core/quit`)(true).then(async r => {
-                        if(r) {
-                            require(`electron`).app.releaseSingleInstanceLock();
+                        writeStream.close();
 
-                            global.quitting = true;
+                        console.log(`done!`);
 
-                            await require(`electron`).shell.openPath(require(`path`).join(`${downloadPath}`, download.name));
+                        if(!platform().toLowerCase().includes(`win32`)) fs.chmodSync(require(`path`).join(`${downloadPath}`, download.name), 0o777);
 
-                            //require(`electron`).app.quit();
+                        require(`../../core/quit`)(true).then(async r => {
+                            if(r) {
+                                require(`electron`).app.releaseSingleInstanceLock();
 
-                            /*const proc = require(`child_process`).spawn(require(`path`).join(`${downloadPath}`, download.name), { detached: true });
-                            proc.unref();
+                                global.quitting = true;
 
-                            proc.once(`spawn`, () => {
-                                proc.stderr.unpipe()
-                                proc.stderr.destroy()
-                                proc.stdout.unpipe()
-                                proc.stdout.destroy()
-                                proc.stdin.end()
-                                proc.stdin.destroy()
-    
-                                require(`electron`).app.quit();
-                            })*/
-                        } else ws.close();
-                    })
-    
-                    //ws.close();
-                })
+                                await require(`electron`).shell.openPath(require(`path`).join(`${downloadPath}`, download.name));
+                            } else ws.close();
+                        })
+                    }
+                });
             }
         }
     })

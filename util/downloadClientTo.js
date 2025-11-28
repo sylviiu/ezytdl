@@ -16,27 +16,27 @@ module.exports = ({ws, version, str, url, size, downloadPath}) => new Promise(as
         await pfs.mkdirSync(folder, { recursive: true });
     
         const writeStream = fs.createWriteStream(downloadPath, { flags: `w` });
-    
-        const req = require('superagent').get(url).set(`User-Agent`, `node`);
-    
-        if(process.env["GITHUB_TOKEN"] && global.testrun) {
-            console.log(`[TESTRUN] GITHUB_TOKEN found in environment! Authorizing this release request`)
-            req.set(`Authorization`, process.env["GITHUB_TOKEN"])
-        }
-        
-        const pt = new Stream.PassThrough();
-        
         let totalData = 0;
-    
-        pt.on(`data`, d => {
-            const progress = totalData += Buffer.byteLength(d) / size;
-            ws.send({ progress, version });
-        })
-    
-        writeStream.on(`finish`, () => res());
-    
-        pt.pipe(writeStream);
-        req.pipe(pt);
+
+        fetch(url, {
+            headers: {
+                "User-Agent": `node`,
+                "Authorization": global.testrun && process.env["GITHUB_TOKEN"] || undefined
+            }
+        }).then(async r => {
+            for await (const chunk of r.body) {
+                const data = Buffer.from(chunk);
+                const progress = (totalData += Buffer.byteLength(chunk)) / size;
+                ws.send({ progress, version });
+                writeStream.write(data);
+            }
+
+            writeStream.close();
+
+            writeStream.once(`close`, () => {
+                res();
+            })
+        });
     } catch(e) {
         console.error(e)
         rej(e);

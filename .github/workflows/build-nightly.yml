@@ -67,7 +67,7 @@ jobs:
       - name: Install Node.js & NPM
         uses: actions/setup-node@main
         with:
-          node-version: "18"
+          node-version: "24"
 
       - name: Install npm deps
         run: |
@@ -92,7 +92,7 @@ jobs:
       - name: Install Node.js & NPM
         uses: actions/setup-node@main
         with:
-          node-version: "18"
+          node-version: "24"
 
       - name: Install npm deps
         run: |
@@ -117,7 +117,7 @@ jobs:
       - name: Install Node.js & NPM
         uses: actions/setup-node@main
         with:
-          node-version: "18"
+          node-version: "24"
 
       - name: Install npm deps
         run: |

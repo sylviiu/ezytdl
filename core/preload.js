@@ -80,7 +80,7 @@ const addScript = (path, type) => new Promise(async (res, rej) => {
 let systemColors = localStorage.getItem(`systemColors`) ? (JSON.parse(localStorage.getItem(`systemColors`)).standard ? JSON.parse(localStorage.getItem(`systemColors`)).standard : JSON.parse(localStorage.getItem(`systemColors`))) : { r: 255, g: 255, b: 255 };
 
 invoke(`systemColors`).then(c => {
-    //console.log(`systemColors`, c);
+    console.log(`invoke systemColors`, c);
     systemColors = c;
     localStorage.setItem(`systemColors`, JSON.stringify(systemColors));
 })

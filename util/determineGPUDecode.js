@@ -9,7 +9,6 @@ const pfs = require('./promisifiedFS')
 
 const idGen = require(`./idGen`);
 const ytdlp = require(`./ytdlp`)
-const superagent = require(`superagent`);
 
 const constructPromise = (ffmpegPath, name, accelArgs, file, codec) => new Promise(async (res) => {
     let pre = (accelArgs.pre || []).slice(0);

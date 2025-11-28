@@ -1,5 +1,3 @@
-const superagent = require(`superagent`);
-
 let token = null;
 
 module.exports = {
@@ -13,25 +11,27 @@ module.exports = {
     getToken: ({ clientID, clientSecret }) => new Promise(async res => {
         if(!token) {
             if(!clientID || !clientSecret) return res({ value: null, message: `No Client ID or Secret was provided!` });
-    
-            const req = superagent.post(`https://accounts.spotify.com/api/token`)
-            
-            req.set(`Authorization`, `Basic ${new Buffer.from(clientID + `:` + clientSecret).toString('base64')}`)
-            req.type(`form`).send({ grant_type: `client_credentials` })
-            
-            req.then(r => {
-                if(r.status == 401) return res({ value: null, message: `Client ID or Client Secret was not valid.` });
-                else if(r.status == 200) {
-                    token = r.body;
+
+            const data = new URLSearchParams();
+            data.append(`grant_type`, `client_credentials`)
+
+            fetch(`https://accounts.spotify.com/api/token`, {
+                method: `post`,
+                headers: { "Authorization": `Basic ${new Buffer.from(clientID + `:` + clientSecret).toString('base64')}` },
+                body: data,
+            }).then(r => {
+                if(r.status == 401) {
+                    return res({ value: null, message: `Client ID or Client Secret was not valid.` });
+                } else if(r.status == 200) {
+                    token = r.text();
 
                     res({ value: token, message: null });
 
                     if(module.exports.tokenTimeout) clearTimeout(module.exports.tokenTimeout);
 
                     if(r.body.expires_in) module.exports.tokenTimeout = setTimeout(() => token = null, r.body.expires_in * 1000);
-                }
-                else return res({ value: null, message: `An unknown error occurred.` });
-            }).catch(e =>  res({ value: null, message: `${e}` }));
+                } else return res({ value: null, message: `An unknown error occurred.` });
+            }).catch(e => res({ value: null, message: `${e}` }));
         } else res({ value: token, message: null })
     }),
     setup: () => new Promise(async res => {
