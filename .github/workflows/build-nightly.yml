@@ -77,7 +77,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm run publish -- --build-number ${{github.run_number}}
+          npm run dist -- --build-number ${{github.run_number}}
   macos-dist:
     needs: release_info
 
@@ -102,7 +102,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm run publish -- --build-number ${{github.run_number}}
+          npm run dist -- --build-number ${{github.run_number}}
   windows-dist:
     needs: release_info
 
@@ -127,7 +127,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm run publish -- --build-number ${{github.run_number}}
+          npm run dist -- --build-number ${{github.run_number}}
   #release:
   #  needs: [linux-dist, macos-dist, windows-dist, release_info]
   #  name: "Release the build"
