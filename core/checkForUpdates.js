@@ -154,8 +154,8 @@ module.exports = (manual) => new Promise(async res => {
         AppUpdater.currentVersion = pkg.version;
     }*/
 
-    autoUpdater.currentVersion = pkg.version;
-    AppUpdater.currentVersion = pkg.version;
+    //autoUpdater.currentVersion = pkg.version;
+    //AppUpdater.currentVersion = pkg.version;
 
     autoUpdater.allowDowngrade = true;
     AppUpdater.allowDowngrade = true;
