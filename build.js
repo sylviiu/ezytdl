@@ -176,6 +176,7 @@ const getFullMetadata = () => new Promise(async res => {
             Version: pkg.version,
             Commit: obj.fullCommitHash || `unknown`,
             Built: obj.buildDate || global.startTime,
+            "Art / Logos": "Made with love by&nbsp;[**Cloucri**](https://x.com/cloucri)&nbsp;and&nbsp;[**Stenis**](https://stenis.cargo.site)&nbsp;"
         },
     });
 
