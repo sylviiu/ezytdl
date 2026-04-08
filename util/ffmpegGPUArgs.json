@@ -2,6 +2,7 @@
     "nvidia-nvenc-auto": {
         "name": "Nvidia / NVENC (auto)",
         "platform": ["win32", "linux"],
+        "arch": ["ia32", "x64"],
         "string": "nvenc",
         "pre": ["-hwaccel", "cuda", "-hwaccel_output_format", "cuda"],
         "post": ["-c:v", "h264_nvenc"],
@@ -14,6 +15,7 @@
         "name": "Nvidia / NVENC (buffered)",
         "description": "This includes the \"extra hw frames\" FFmpeg option, which is required for some GPUs. Use this if auto doesn't work.",
         "platform": ["win32", "linux"],
+        "arch": ["ia32", "x64"],
         "string": "nvenc",
         "pre": ["-hwaccel", "cuda", "-hwaccel_output_format", "cuda", "-extra_hw_frames", "10"],
         "post": ["-c:v", "h264_nvenc"],
@@ -22,17 +24,10 @@
             "hwupload": "hwupload_cuda"
         }
     },
-    "nvidia-cuvid": {
-        "name": "Nvidia / CUVID",
-        "description": "This platform is deprecated by FFmpeg. Please use NVENC if possible.",
-        "platform": ["win32", "linux"],
-        "string": "cuvid",
-        "pre": ["-hwaccel", "auto", "-c:v", "h264_cuvid"],
-        "post": ["-c:v", "h264_cuvid"]
-    },
     "intel-qsv": {
         "name": "Intel / Quick Sync Video",
         "platform": ["win32", "linux"],
+        "arch": ["ia32", "x64"],
         "string": "qsv",
         "pre": ["-hwaccel", "auto"],
         "post": ["-c:v", "h264_qsv"],
@@ -44,9 +39,21 @@
         "name": "AMD / Advanced Media Framework",
         "description": "AMD's encoders are generally much worse in quality [(benchmarks @ tomshardware.com)](https://www.tomshardware.com/news/amd-intel-nvidia-video-encoding-performance-quality-tested) than Nvidia's or Intel's. If you have a beefy enough CPU, you should disable all hardware acceleration instead.",
         "platform": ["win32", "linux"],
+        "arch": ["ia32", "x64"],
         "string": "amf",
         "pre": ["-hwaccel", "auto"],
         "post": ["-c:v", "h264_amf"]
+    },
+    "windows-mf": {
+        "name": "Windows Media Foundation",
+        "description": "Windows Media Foundation provides a general interface for every device with hardware acceleration. Useful for devices that has no specialized support in FFmpeg (such as Qualcomm Snapdragon).",
+        "platform": ["win32"],
+        "string": "mf",
+        "pre": ["-hwaccel", "d3d12va"],
+        "post": ["-c:v", "h264_mf", "-hw_encoding", "1"],
+        "vf": {
+            "scale": "scale_npp"
+        }
     },
     "mesa-vaapi": {
         "name": "Mesa / VAAPI",

@@ -71,7 +71,7 @@ module.exports = {
         gpuArgs: (defaultConfig) => new Promise(async res => {
             const gpuArgs = await require(`../util/configs`).ffmpegGPUArgs(null, { waitForPromise: false });
             for(const key of Object.keys(gpuArgs)) {
-                if(gpuArgs[key].platform.includes(process.platform)) {
+                if(gpuArgs[key].platform.includes(process.platform) && (!gpuArgs[key].arch || gpuArgs[key].arch?.includes(process.arch))) {
                     defaultConfig.hardwareAcceleratedConversion[key] = false;
                 }
             };
