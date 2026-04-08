@@ -2,8 +2,17 @@ module.exports = {
     "win": {
         "icon": "res/packageIcons/icon-512x512.ico",
         "target": [
-            "nsis",
-            "zip"
+            {
+                target: "nsis",
+                arch: [
+                    "x64",
+                    "arm64"
+                ]
+            },
+            {
+                target: "zip",
+                arch: "x64"
+            }
         ]
     },
     "linux": {
