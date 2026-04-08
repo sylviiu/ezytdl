@@ -5,7 +5,9 @@ module.exports = (clear) => {
 
     if(lastRequest) return Promise.resolve(lastRequest);
 
-    const req = require(`../githubReleasesRequest`)(`eugeneware`, `ffmpeg-static`);
+    let repo = process.platform == `win32` ? [`BtbN`, `FFmpeg-Builds`] : [`eugeneware`, `ffmpeg-static`]
+
+    const req = require(`../githubReleasesRequest`)(...repo);
 
     req.then(o => {
         if(o && typeof o == `object` && !o.error) lastRequest = o;

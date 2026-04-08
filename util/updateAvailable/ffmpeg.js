@@ -6,12 +6,16 @@ module.exports = {
         const currentVersion = current || (await require(`../currentVersion/ffmpeg`)(true, true));
 
         if(latestVersion) {
-            const latestVersionName = (latestVersion.name.match(/[\d*]*\.[\d*]*/) || [latestVersion.name])[0]
+            const latestVersionName = (latestVersion.name.match(/[\d*]*\.[\d*]*/) || [latestVersion.name])[0];
+
+            console.log(`LATEST VERSION NAME: ${latestVersionName}`);
+
+            const latestComparableName = latestVersionName.match(/[0-9-]{4,}/)[0].replace(/-/g, '')
         
-            if(currentVersion == latestVersionName) {
+            if(currentVersion == (latestComparableName || latestVersionName)) {
                 return res(false)
             } else {
-                return res(latestVersionName)
+                return res(latestComparableName || latestVersionName)
             }
         } else rej(`Failed retrieving info.`)
     })

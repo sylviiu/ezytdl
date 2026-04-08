@@ -28,7 +28,12 @@ module.exports = (forceCheck, getBuildDate, clear) => new Promise(async (res, re
                 const versionString = stdout.toString().trim();
         
                 currentVersion = versionString.split(`version `)[1].trim().split(` `)[0];
-                currentVersion = (currentVersion.match(/[\d*]*\.[\d*]*/) || [currentVersion])[0].trim();
+
+                if(process.platform == `win32`) {
+                    currentVersion = versionString.split(`-`).slice(-1)[0].match(/[0-9]+/)[0];
+                } else {
+                    currentVersion = (currentVersion.match(/[\d*]*\.[\d*]*/) || [currentVersion])[0].trim();
+                }
 
                 if(path == systemPath) currentVersion += ` (system)`;
 
