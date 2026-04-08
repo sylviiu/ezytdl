@@ -8,6 +8,9 @@
         },
         "qsv": {
             "post": ["-profile:v", "high", "-preset", "medium"]
+        },
+        "mf": {
+            "post": ["-quality:v", "0"]
         }
     },
     "hevc": {
@@ -19,11 +22,17 @@
         },
         "qsv": {
             "post": ["-profile:v", "main10", "-preset", "medium"]
+        },
+        "mf": {
+            "post": ["-quality:v", "0"]
         }
     },
     "av1": {
         "nvenc": {
             "pre": ["-c:v", "av1"]
+        },
+        "mf": {
+            "post": ["-quality:v", "0"]
         }
     }
 }

@@ -2428,7 +2428,7 @@ const ytdlpObj = {
 
                     console.log(`ffmpeg arguments`, inputArgs, outputArgs)
     
-                    const spawnFFmpeg = (rawArgs2, name) => new Promise(async (resolveFFmpeg, rej) => {
+                    const spawnFFmpeg = (rawArgs2, name, namefromlog) => new Promise(async (resolveFFmpeg, rej) => {
                         let args2 = rawArgs2.slice(0);
 
                         if(killAttempt > 0) {
@@ -2438,7 +2438,13 @@ const ytdlpObj = {
                             //return res(`Download canceled.`, true);
                         };
 
-                        let destinationStr = `to ${(destinationCodec ? destinationCodec.name : null) || `${ext}`.toUpperCase()} using ${name}...`
+                        let namefromlogRegex = namefromlog && new RegExp(namefromlog[0])
+
+                        let overrideName;
+
+                        let craftDestStr = (useName) => `converting to ${(destinationCodec ? destinationCodec.name : null) || `${ext}`.toUpperCase()} using ${useName}...`
+
+                        let destinationStr = craftDestStr(name)
 
                         let keywords = [];
 
@@ -2451,8 +2457,8 @@ const ytdlpObj = {
                                 let ia = convert.additionalOutputArgs.indexOf(`-c:a`);
                                 let newacodec = ia > -1 ? convert.additionalOutputArgs[ia+1] : null;
                                 keywords.push(`saving (with original video format; converting audio${(newacodec ? ` to ${newacodec}` : ``) || (destinationCodec && destinationCodec.audioCodec ? ` to ${destinationCodec.audioCodec}` : ``)})`)
-                            } else keywords.push(`converting ${destinationStr}`)
-                        } else keywords.push(`converting ${destinationStr}`)
+                            } else keywords.push(destinationStr)
+                        } else keywords.push(destinationStr)
 
                         if(convert.trimFrom || convert.trimTo) keywords.unshift(`trimming`);
 
@@ -2495,13 +2501,17 @@ const ytdlpObj = {
 
                         let status = ``;
 
-                        if(keywords.length == 1) {
-                            status = `${keywords[0][0].toUpperCase() + keywords[0].slice(1)}`;
-                        } else if(keywords.length == 2) {
-                            status = `${keywords[0][0].toUpperCase() + keywords[0].slice(1)} and ${keywords[1]}`;
-                        } else {
-                            status = `${keywords.slice(0, -1).map((s, i) => i == 0 ? s[0].toUpperCase() + s.slice(1) : s).join(`, `)} and ${keywords.slice(-1)[0]}`;
-                        }
+                        const updStatus = () => {
+                            if(keywords.length == 1) {
+                                status = `${keywords[0][0].toUpperCase() + keywords[0].slice(1)}`;
+                            } else if(keywords.length == 2) {
+                                status = `${keywords[0][0].toUpperCase() + keywords[0].slice(1)} and ${keywords[1]}`;
+                            } else {
+                                status = `${keywords.slice(0, -1).map((s, i) => i == 0 ? s[0].toUpperCase() + s.slice(1) : s).join(`, `)} and ${keywords.slice(-1)[0]}`;
+                            }
+                        };
+
+                        updStatus();
 
                         console.log(`status: ${status}`)
 
@@ -2556,6 +2566,15 @@ const ytdlpObj = {
                             if(data.includes(`Output #0`) && data.includes(`to '`)) {
                                 const filename = data.split(`Output #0`)[1].split(`to '`)[1].split(`:`).slice(0, -1).join(`:`).slice(0, -1);
                                 if(obj.destinationFile != filename) update({ destinationFile: filename })
+                            }
+
+                            if(namefromlog && !overrideName) {
+                                console.log(`OVERRIDE NAME POSSIBLE, looking for ${namefromlog[0]} at pos ${namefromlog[1]}`)
+                                overrideName = data.match(namefromlogRegex)?.[namefromlog[1]];
+                                if(overrideName) {
+                                    keywords.splice(keywords.indexOf(destinationStr), 1, craftDestStr(`device ` + overrideName));
+                                    updStatus();
+                                }
                             }
 
                             if(data.includes(`Opening`)) {
@@ -2831,6 +2850,7 @@ const ytdlpObj = {
                                         hardware: `Full`,
                                         decoder: decoder.codecName || decoder.name,
                                         encoder: encoder.codecName || encoder.name,
+                                        namefromlog: decoder.name == encoder.name ? (encoder.namefromlog || decoder.namefromlog) : null, // there's a chance this doesn't exist
                                         useOutputArgs
                                     }, [
                                         (decoderArgs && encoderArgs && useOutputArgs ? [...decoderArgs, ...decoder.pre, ...inputArgs, ...encoder.post, ...encoderArgs, ...useOutputArgs] : null), 
@@ -2911,11 +2931,11 @@ const ytdlpObj = {
                     console.log(`attemptArgs`, attemptArgs);
 
                     for(const i in attemptArgs) {
-                        const { string, hardware, decoder, encoder, args, useOutputArgs } = attemptArgs[i];
+                        const { string, hardware, decoder, encoder, namefromlog, args, useOutputArgs } = attemptArgs[i];
 
                         try {
                             console.log(`Attempting conversion using ${hardware} hardware acceleration: ${string}`)
-                            const conversionProc = await spawnFFmpeg([`-hide_banner`, ...args], `(${Number(i)+1}/${attemptArgs.length}) ${string}`);
+                            const conversionProc = await spawnFFmpeg([`-hide_banner`, ...args], `(${Number(i)+1}/${attemptArgs.length}) ${string}`, namefromlog);
                             return res(conversionProc);
                         } catch(e) {
                             appendError({

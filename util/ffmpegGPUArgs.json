@@ -51,9 +51,7 @@
         "string": "mf",
         "pre": ["-hwaccel", "d3d12va"],
         "post": ["-c:v", "h264_mf", "-hw_encoding", "1"],
-        "vf": {
-            "scale": "scale_npp"
-        }
+        "namefromlog": ["(\\[D3D12VA\\s+@\\s+[0-9a-zA-Z]+\\]).+(Using device)[^(]+\\((.+)\\).", 3]
     },
     "mesa-vaapi": {
         "name": "Mesa / VAAPI",
