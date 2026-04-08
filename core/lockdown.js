@@ -23,7 +23,7 @@ module.exports = (window, firstRun) => {
 
     window.webContents.setWindowOpenHandler((e) => {
         console.log(`prevented new window;`, e.url)
-        if(e.url && e.url.startsWith(`file:///`)) {
+        if(e.url && e.url.startsWith(`file:`)) {
             window.loadFile(path.join(__dirname.split(`core`).slice(0, -1).join(`core`), `html`, e.url.split(`/`).slice(-1)[0]));
         } else if(e.url) urlHandler(null, e.url)
         return { action: `deny` }

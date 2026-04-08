@@ -507,3 +507,4 @@ if(typeof introAnimation != `undefined`) {
 } else housekeeping();
 
 enableDropper();
+console.log(`finished index prep`)

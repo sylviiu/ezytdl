@@ -1,4 +1,6 @@
 var enableDropper = () => {
+    console.log(`DROPPER BEING ENABLED`)
+
     const fileUploadThing = document.createElement(`div`);
     fileUploadThing.id = `uploadtarget`
     fileUploadThing.style.width = `100vw`;
@@ -138,7 +140,21 @@ var enableDropper = () => {
     fileUploadThing.addEventListener(`dragenter`, dragHandle);
     fileUploadThing.addEventListener(`dragover`, dragHandle);
 
-    fileUploadThing.addEventListener(`drop`, async e => {
+    system.fileDropHandler(async files => {
+        uploadThing.processing();
+
+        console.log(`DROPPED FILES wk:`, files)
+
+        const tab = await selectTab(`Convert`);
+
+        console.log(`adding ${files.join(`, `)}`, tab);
+
+        files.forEach(f => tab.addToList(f));
+
+        uploadThing.hide();
+    })
+
+    /*fileUploadThing.addEventListener(`drop`, async e => {
         e.preventDefault();
         e.stopPropagation();
 
@@ -147,8 +163,13 @@ var enableDropper = () => {
         uploadThing.processing();
 
         if(e?.dataTransfer?.files?.length > 0) {
-            const files = Object.values(e.dataTransfer.files).map(f => system.showFilePath(f));
-            
+            //const files = Object.values(e.dataTransfer.files).map(f => system.showFilePath(f));
+            //const files = Array.from(e.dataTransfer.files).map(f => require('electron').webUtils.getPathForFile(f));
+            //const files = await system.getDroppedFiles(e.dataTransfer.files);
+            const files = await getFilesFromDrop(e);
+
+            console.log(`DROPPED FILES wk:`, files)
+
             const tab = await selectTab(`Convert`);
 
             console.log(`adding ${files.join(`, `)}`);
@@ -157,7 +178,7 @@ var enableDropper = () => {
         }
 
         uploadThing.hide();
-    });
+    });*/
 
     /*fileUploadThing.addEventListener('mouseleave', e => {
         console.log(`left window`);

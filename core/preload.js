@@ -102,6 +102,17 @@ contextBridge.exposeInMainWorld(`authentication`, {
     list: () => invoke(`listAuths`),
 });
 
+let filedropcb = () => {};
+
+window.addEventListener(`drop`, e => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const files = Object.values(e.dataTransfer.files).map(f => webUtils.getPathForFile(f));
+
+    return filedropcb(files);
+})
+
 contextBridge.exposeInMainWorld(`system`, {
     loading: () => invoke(`loading`),
     detailsStr: () => invoke(`detailsStr`),
@@ -120,6 +131,9 @@ contextBridge.exposeInMainWorld(`system`, {
     bridgeNeedsDownload: () => invoke(`bridgeNeedsDownload`),
     pickFile: (opt) => invoke(`pickFile`, opt),
     showFilePath: (file) => webUtils.getPathForFile(file),
+    fileDropHandler: (cb) => {
+        filedropcb = cb;
+    },
     pickFolder: (opt) => invoke(`pickFolder`, opt),
     on: (type, cb) => on(`system-${type}`, (_e, obj) => cb(obj)),
 });
