@@ -118,8 +118,8 @@ const refreshVideoCodecs = (dedicatedData) => {
             const encoders = s.match(/\(encoders: ([a-zA-Z0-9 \-_]+)?\)/)?.[1].split(` `) || [];
 
             ffmpegVideoCodecsMap.set(str, {
-                preCodec: (codec) => decoders.find(s => s.endsWith(codec)) || null,
-                postCodec: (codec) => encoders.find(s => s.endsWith(codec)) || null,
+                preCodec: (codec) => decoders.find(s => s.endsWith(`_` + codec)) || null,
+                postCodec: (codec) => encoders.find(s => s.endsWith(`_` + codec)) || null,
                 raw: s
             });
 
