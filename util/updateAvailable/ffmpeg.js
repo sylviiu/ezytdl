@@ -10,7 +10,7 @@ module.exports = {
 
             console.log(`LATEST VERSION NAME: ${latestVersionName}`);
 
-            const latestComparableName = latestVersionName.match(/[0-9-]{4,}/)[0].replace(/-/g, '')
+            const latestComparableName = latestVersionName.match(/[0-9-]{4,}/)?.[0]?.replace(/-/g, '')
         
             if(currentVersion == (latestComparableName || latestVersionName)) {
                 return res(false)
